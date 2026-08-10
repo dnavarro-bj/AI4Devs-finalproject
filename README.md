@@ -164,7 +164,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 **SoilMix** (catálogo de mezclas de tierra reutilizables)
 
-* `id`: UUID. Clave primaria.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre identificativo de la mezcla (p. ej. "Sustrato mineral de drenaje rápido").
 * `organicPercentage`: Int. Porcentaje de componente orgánico (0-100).
 * `mineralPercentage`: Int. Porcentaje de componente mineral (0-100). `organicPercentage + mineralPercentage` debe sumar 100.
@@ -173,44 +173,44 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 **Species** (ficha de especie — base de conocimiento determinista de cuidados recomendados)
 
-* `id`: UUID. Clave primaria.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `scientificName`: String. Nombre científico (género + epíteto).
 * `commonName`: String. Nombre común.
 * `minHumidity` / `maxHumidity`: Int. Rango de humedad recomendado (%).
 * `minTemperature` / `maxTemperature`: Int. Rango de temperatura recomendado (°C).
 * `minLightHours` / `maxLightHours`: Int. Horas de luz recomendadas al día.
 * `wateringGuideline`: String. Frecuencia orientativa de riego (p. ej. "cada 10-20 días").
-* `soilMixId`: UUID. Clave foránea → `SoilMix.id`. Mezcla de tierra recomendada para la especie.
+* `soilMixId`: TSID. Clave foránea → `SoilMix.id`. Mezcla de tierra recomendada para la especie.
 
 **Location** (catálogo de localizaciones)
 
-* `id`: UUID. Clave primaria.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre identificativo de la localización (p. ej. "Invernadero 1", "Bandeja A3"). Catálogo plano, sin jerarquía en el MVP.
 
 **Plant** (ejemplar de la colección)
 
-* `id`: UUID. Clave primaria.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `nickname`: String. Nombre o código identificativo del ejemplar.
-* `locationId`: UUID. Clave foránea → `Location.id`.
-* `speciesId`: UUID. Clave foránea → `Species.id`.
+* `locationId`: TSID. Clave foránea → `Location.id`.
+* `speciesId`: TSID. Clave foránea → `Species.id`.
 * `createdAt`: Timestamp.
 * *(Pendiente de decidir)*: campos de override individual (p. ej. `wateringOverride`, `lightOverride`, `temperatureOverride`) para permitir que un ejemplar concreto se aparte de los rangos de su especie sin perder la herencia de los campos no modificados, según lo hablado en la sección de personalización de cuidados.
 
 **Tag** (catálogo de etiquetas de búsqueda)
 
-* `id`: UUID. Clave primaria.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre de la etiqueta (p. ej. "globular", "pequeño", "sin espinas", "híbrido"). Único.
 
 **PlantTag** (tabla intermedia de la relación N:M entre `Plant` y `Tag`)
 
-* `plantId`: UUID. Clave foránea → `Plant.id`.
-* `tagId`: UUID. Clave foránea → `Tag.id`.
+* `plantId`: TSID. Clave foránea → `Plant.id`.
+* `tagId`: TSID. Clave foránea → `Tag.id`.
 * Clave primaria compuesta (`plantId`, `tagId`).
 
 **CareRecord** (lectura/cuidado registrado manualmente)
 
-* `id`: UUID. Clave primaria.
-* `plantId`: UUID. Clave foránea → `Plant.id`.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
+* `plantId`: TSID. Clave foránea → `Plant.id`.
 * `humidity`: Int.
 * `temperature`: Int.
 * `lightHours`: Int.
@@ -220,8 +220,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 **AIRecommendation** (salida de la IA asociada a una lectura)
 
-* `id`: UUID. Clave primaria.
-* `careRecordId`: UUID. Clave foránea → `CareRecord.id`.
+* `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
+* `careRecordId`: TSID. Clave foránea → `CareRecord.id`.
 * `riskLevel`: String/Enum. Nivel de riesgo (bajo, moderado, alto).
 * `recommendationText`: String. Explicación y acción recomendada.
 * `createdAt`: Timestamp.

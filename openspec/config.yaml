@@ -24,10 +24,19 @@ context: |
   - Cada change de OpenSpec se deriva de un ticket (T-XX) y referencia sus historias de usuario
   - Una rama y una PR por change; el change se archiva en la misma PR que lo implementa
 
+  Convenciones técnicas transversales (detalle y porqué en docs/adr/):
+  - ADR-001: migraciones Flyway SQL versionadas; Hibernate ddl-auto=validate
+  - ADR-002: invariantes de dominio también como CHECK/UNIQUE/FK en la base de datos
+  - ADR-003: claves primarias TSID (bigint ordenado por tiempo, generado en aplicación con hypersistence-tsid)
+  - ADR-004: tests de integración contra PostgreSQL real con Testcontainers (nunca H2)
+
 rules:
   proposal:
     - Referenciar siempre el ticket (T-XX) y las historias de usuario (0.x) que originan el change
     - Incluir una sección de "Non-goals" para acotar el alcance
+  design:
+    - Consultar docs/adr/ antes de decidir; referenciar el ADR aplicable en lugar de re-decidir
+    - Si surge una decisión transversal nueva (aplicable a futuros changes), proponer promocionarla a un ADR nuevo en docs/adr/
   specs:
     - Escenarios en formato WHEN/THEN, en español
   tasks:

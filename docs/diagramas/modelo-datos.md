@@ -13,7 +13,7 @@ erDiagram
     TAG ||--o{ PLANT_TAG : "se asigna en"
 
     SOIL_MIX {
-        UUID id PK
+        TSID id PK
         string name
         int organicPercentage
         int mineralPercentage
@@ -23,7 +23,7 @@ erDiagram
     }
 
     SPECIES {
-        UUID id PK
+        TSID id PK
         string scientificName
         string commonName
         int minHumidity
@@ -33,35 +33,35 @@ erDiagram
         int minLightHours
         int maxLightHours
         string wateringGuideline
-        UUID soilMixId FK
+        TSID soilMixId FK
     }
 
     LOCATION {
-        UUID id PK
+        TSID id PK
         string name
     }
 
     PLANT {
-        UUID id PK
+        TSID id PK
         string nickname
-        UUID locationId FK
-        UUID speciesId FK
+        TSID locationId FK
+        TSID speciesId FK
         timestamp createdAt
     }
 
     TAG {
-        UUID id PK
+        TSID id PK
         string name
     }
 
     PLANT_TAG {
-        UUID plantId FK
-        UUID tagId FK
+        TSID plantId FK
+        TSID tagId FK
     }
 
     CARE_RECORD {
-        UUID id PK
-        UUID plantId FK
+        TSID id PK
+        TSID plantId FK
         int humidity
         int temperature
         int lightHours
@@ -71,8 +71,8 @@ erDiagram
     }
 
     AI_RECOMMENDATION {
-        UUID id PK
-        UUID careRecordId FK
+        TSID id PK
+        TSID careRecordId FK
         string riskLevel
         string recommendationText
         timestamp createdAt

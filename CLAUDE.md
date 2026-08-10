@@ -12,6 +12,7 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 | Historias de usuario (una por archivo; `0.x` = en alcance del MVP, `F.x` = fuera de alcance/roadmap) | [docs/user-stories/](docs/user-stories/README.md) |
 | Tickets de trabajo (uno por archivo, `T-01`…`T-07`) | [docs/tickets/](docs/tickets/README.md) |
 | Diagramas (modelo de datos y flujo E2E, en Mermaid) | [docs/diagramas/](docs/diagramas/) |
+| ADRs — decisiones técnicas transversales (`ADR-NNN`) | [docs/adr/](docs/adr/README.md) |
 | Backend | [backend/](backend/) |
 | Frontend | [frontend/](frontend/) |
 | Infraestructura local (Docker Compose) | [iac/local/](iac/local/) |
