@@ -32,6 +32,15 @@ docker compose up --build
 
 Levanta PostgreSQL, el backend (`:8080`) y el frontend (`:3000`). Ver [iac/local/README.md](iac/local/README.md).
 
+## Workflow: spec-driven development con OpenSpec
+
+Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fission-AI/OpenSpec) (CLI `openspec`, requiere Node 24: `nvm use 24`). Contexto y reglas del proyecto en [openspec/config.yaml](openspec/config.yaml).
+
+* `openspec/specs/` describe lo **ya construido**; `openspec/changes/` lo que está **en curso**. Las specs se materializan al archivar cada change: no se escriben por adelantado.
+* Cada change se deriva de un ticket (`T-XX`) y referencia sus historias de usuario (`0.x`).
+* Ciclo por change: `/opsx:propose` → revisión humana de proposal/specs/tasks (`openspec validate <change>`) → `/opsx:apply` → tests en verde → `/opsx:archive`.
+* Una rama y una PR por change; el change se archiva en la misma PR que lo implementa.
+
 ## Estado del proyecto
 
-Solo hay documentación y esqueleto de infraestructura (Dockerfiles, docker-compose). Backend y frontend aún no tienen código de aplicación.
+Solo hay documentación y esqueleto de infraestructura (Dockerfiles, docker-compose). Backend y frontend aún no tienen código de aplicación. OpenSpec está inicializado; aún no hay changes ni specs.
