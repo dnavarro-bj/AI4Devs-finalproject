@@ -29,6 +29,7 @@ context: |
   - ADR-002: invariantes de dominio también como CHECK/UNIQUE/FK en la base de datos
   - ADR-003: claves primarias TSID (bigint ordenado por tiempo, generado en aplicación con hypersistence-tsid)
   - ADR-004: tests de integración contra PostgreSQL real con Testcontainers (nunca H2)
+  - ADR-005: TDD — los escenarios WHEN/THEN de las specs se escriben como tests antes que el código
 
 rules:
   proposal:
@@ -40,4 +41,10 @@ rules:
   specs:
     - Escenarios en formato WHEN/THEN, en español
   tasks:
-    - Tareas pequeñas y verificables; incluir tareas explícitas de tests
+    - Tareas pequeñas y verificables
+    - Orden test-first (ADR-005), cada bloque funcional empieza por las tareas de test de sus escenarios (rojo) seguidas de la implementación que las pone en verde
+
+operations:
+  apply:
+    guidance:
+      - "TDD (ADR-005): escribir primero el test del escenario y verlo fallar, después la implementación mínima que lo pone en verde, después refactorizar. No escribir código de producción sin un test en rojo que lo justifique."

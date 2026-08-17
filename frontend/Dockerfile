@@ -1,16 +1,15 @@
-# Frontend - Nuxt 3 / Vue 3
-# Espera un proyecto Nuxt 3 estándar (package.json, nuxt.config.ts, ...) en este directorio.
+# Frontend - Nuxt 4 / Vue 3 (yarn)
 
 # ---- Build stage ----
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN yarn build
 
 # ---- Runtime stage ----
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 ENV NITRO_PORT=3000 NITRO_HOST=0.0.0.0
 COPY --from=build /app/.output ./.output

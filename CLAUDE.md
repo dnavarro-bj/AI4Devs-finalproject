@@ -41,6 +41,7 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 * Cada change se deriva de un ticket (`T-XX`) y referencia sus historias de usuario (`0.x`).
 * Ciclo por change: `/opsx:propose` → revisión humana de proposal/specs/tasks (`openspec validate <change>`) → `/opsx:apply` → tests en verde → `/opsx:archive`.
 * Una rama y una PR por change; el change se archiva en la misma PR que lo implementa.
+* Desarrollo con **TDD** ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de las specs se escriben como tests antes que el código, también fuera del flujo de OpenSpec.
 
 ## Estado del proyecto
 

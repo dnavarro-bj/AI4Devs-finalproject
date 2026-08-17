@@ -1,0 +1,23 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: cactify
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cactify}
+    username: ${SPRING_DATASOURCE_USERNAME:cactify}
+    password: ${SPRING_DATASOURCE_PASSWORD:cactify}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
