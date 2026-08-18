@@ -16,6 +16,6 @@ docker compose up --build
 |---|---|---|
 | `db` | 5432 | PostgreSQL 16 |
 | `backend` | 8080 | API Spring Boot ([../../backend](../../backend)) |
-| `frontend` | 3000 | Nuxt 3 ([../../frontend](../../frontend)) |
+| `frontend` | 3000 | Nuxt 4 ([../../frontend](../../frontend)) |
 
 Requiere que `backend/` y `frontend/` contengan ya el código de la aplicación (ver sus respectivos `Dockerfile`); de momento solo existe el esqueleto de infraestructura.

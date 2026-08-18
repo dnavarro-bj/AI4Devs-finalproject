@@ -2,10 +2,10 @@
 # Espera un proyecto Gradle estándar (build.gradle.kts, gradlew, src/...) en este directorio.
 
 # ---- Build stage ----
-FROM gradle:8-jdk21 AS build
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 COPY . .
-RUN gradle bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre-alpine

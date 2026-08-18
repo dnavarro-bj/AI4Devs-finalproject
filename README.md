@@ -108,7 +108,7 @@ Funcionalidades principales:
 > Pendiente de formalizar en Mermaid. Propuesta de alto nivel:
 
 ```text
-[Frontend: Nuxt 3 / Vue 3 / Pinia]
+[Frontend: Nuxt 4 / Vue 3 / Pinia]
             │  HTTP (API REST)
             ▼
 [Backend: Kotlin + Spring Boot 3 (Spring Web, Spring Data JPA)]
@@ -121,7 +121,7 @@ Arquitectura en capas típica de Spring Boot (controller → service → reposit
 
 ### **2.2. Descripción de componentes principales:**
 
-* **Frontend**: Nuxt 3 + Vue 3 + Pinia (gestión de estado). Tailwind como opción para estilos.
+* **Frontend**: Nuxt 4 + Vue 3 + Pinia (gestión de estado). Tailwind como opción para estilos.
 * **Backend**: Kotlin + Spring Boot 3, con Spring Web para la API REST y Spring Data JPA para la persistencia.
 * **Base de datos**: PostgreSQL.
 * **IA**: integración con la API de OpenAI mediante un servicio dedicado que construye un prompt estructurado (especie + lecturas + historial corto) y devuelve una recomendación.

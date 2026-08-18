@@ -10,6 +10,7 @@ Aplican las convenciones transversales ya decididas en los ADRs del proyecto ([d
 * [ADR-002](../../../docs/adr/ADR-002-restricciones-en-base-de-datos.md): invariantes de dominio también como restricciones en base de datos.
 * [ADR-003](../../../docs/adr/ADR-003-tsid-como-clave-primaria.md): claves primarias TSID (`bigint`, generado en aplicación con `hypersistence-tsid`).
 * [ADR-004](../../../docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md): tests de integración contra PostgreSQL real con Testcontainers.
+* [ADR-006](../../../docs/adr/ADR-006-aislamiento-del-dominio.md): dominio aislado (versión laxa) — las entidades JPA de este change **son** el modelo de dominio (Jakarta Persistence permitido), pero solo se acceden desde fuera vía servicios de `application`; no aplica todavía a T-01 porque este change no tiene capa web, pero condiciona T-02 en adelante.
 
 ## Goals / Non-Goals
 
@@ -30,7 +31,7 @@ Decisiones específicas de este change (las transversales están en los ADRs ref
 
 1. **Concreción de ADR-002 en este esquema**: `CHECK` en `soil_mix` para `organic_percentage + mineral_percentage = 100` y `ph_min <= ph_max`; `NOT NULL` en `species.scientific_name`, `plant.species_id` y `care_record.recorded_at`; unicidad de tags con índice funcional `UNIQUE (lower(trim(name)))`.
 2. **Seeds como migración versionada** (`V2__seed.sql`) con TSIDs fijos y literales, no generados. Flyway garantiza ejecución única (escenario de idempotencia) y los ids estables facilitan los tests E2E de T-07. Consecuencia directa de ADR-003: la base de datos no puede generar TSIDs, así que las seeds los llevan explícitos.
-3. **Entidades JPA en Kotlin con plugin `kotlin-jpa`** (constructores sin argumentos generados) y clases normales, no `data class` (problemas conocidos de `equals`/`hashCode` con proxies de Hibernate). Nombres de columna en snake_case vía la naming strategy por defecto de Spring Boot. El id TSID se genera en la entidad al construirla (`TSID.Factory.getTsid()` como default), sin `@GeneratedValue`.
+3. **Entidades JPA en Kotlin con plugin `kotlin-jpa`** (constructores sin argumentos generados) y clases normales, no `data class` (problemas conocidos de `equals`/`hashCode` con proxies de Hibernate). Nombres de columna en snake_case vía la naming strategy por defecto de Spring Boot. El id TSID se genera en la entidad al construirla (`TSID.Factory.getTsid()` como default), sin `@GeneratedValue`. Estas entidades son el modelo de dominio (ADR-006): solo llevan anotaciones Jakarta Persistence, nada de Spring/Hibernate en su lógica.
 
 ## Risks / Trade-offs
 

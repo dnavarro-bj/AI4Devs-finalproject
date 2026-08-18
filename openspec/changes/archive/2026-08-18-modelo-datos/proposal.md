@@ -39,3 +39,4 @@ Ninguna (no existen specs previas; es el primer change del proyecto).
 * `backend/`: pasa de contener solo un Dockerfile a tener el proyecto Spring Boot (build Gradle, configuración, migraciones Flyway, entidades JPA y sus tests).
 * `iac/local/`: puede requerir ajustes menores del docker-compose/variables de entorno para que el backend ejecute migraciones al arrancar.
 * Nuevas dependencias: Spring Boot 3, Spring Data JPA, Flyway, driver PostgreSQL, Kotlin JVM.
+* `frontend/`: se adelantó el bootstrap de un proyecto Nuxt 4 + Vue 3 + Pinia (yarn) fuera del alcance de este change — pertenece a T-05 (ver Non-goals). Se deja documentado aquí para que no se confunda con trabajo de `data-model`.

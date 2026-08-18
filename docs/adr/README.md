@@ -18,3 +18,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-003](ADR-003-tsid-como-clave-primaria.md) | TSID como clave primaria | Aceptado |
 | [ADR-004](ADR-004-testcontainers-para-tests-de-integracion.md) | Testcontainers para tests de integración | Aceptado |
 | [ADR-005](ADR-005-tdd.md) | Desarrollo dirigido por tests (TDD) | Aceptado |
+| [ADR-006](ADR-006-aislamiento-del-dominio.md) | Aislamiento del dominio (DDD) | Aceptado |

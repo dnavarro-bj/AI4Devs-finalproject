@@ -5,7 +5,7 @@
 
 ## Descripción
 
-Construir la pantalla principal (Nuxt 3 / Vue 3 / Pinia) donde el usuario ve el inventario de plantas, puede darlas de alta, seleccionar su especie, ver los rangos recomendados y lanzar la generación de una recomendación de IA.
+Construir la pantalla principal (Nuxt 4 / Vue 3 / Pinia) donde el usuario ve el inventario de plantas, puede darlas de alta, seleccionar su especie, ver los rangos recomendados y lanzar la generación de una recomendación de IA.
 
 ## Alcance
 

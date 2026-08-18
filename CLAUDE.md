@@ -20,7 +20,7 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 ## Stack
 
 * **Backend**: Kotlin + Spring Boot 3 (Spring Web, Spring Data JPA) + PostgreSQL + OpenAI API.
-* **Frontend**: Nuxt 3 + Vue 3 + Pinia.
+* **Frontend**: Nuxt 4 + Vue 3 + Pinia.
 * **Entidades principales**: `Species`, `Plant`, `CareRecord`, `AIRecommendation` (ver [docs/diagramas/modelo-datos.md](docs/diagramas/modelo-datos.md)).
 
 ## Arrancar en local

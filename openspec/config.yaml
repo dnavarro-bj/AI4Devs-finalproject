@@ -8,7 +8,7 @@ context: |
 
   Tech stack:
   - Backend: Kotlin + Spring Boot 3 (Spring Web, Spring Data JPA) + PostgreSQL + OpenAI API (:8080)
-  - Frontend: Nuxt 3 + Vue 3 + Pinia (:3000)
+  - Frontend: Nuxt 4 + Vue 3 + Pinia (:3000)
   - Infra local: Docker Compose en iac/local/
 
   Entidades principales: Species, Plant, CareRecord, AIRecommendation
