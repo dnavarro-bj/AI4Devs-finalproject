@@ -3,6 +3,7 @@
 **Estado:** Aceptado
 **Fecha:** 2026-08-10
 **Origen:** change `modelo-datos` (T-01)
+**Revisado parcialmente por:** [ADR-008](ADR-008-identificadores-tipados.md) — la representación en el API es cadena decimal, no base32; el resto sigue vigente
 
 ## Contexto
 
@@ -10,7 +11,7 @@ La documentación inicial del modelo (README §3, diagrama, ticket T-01) propon�
 
 ## Decisión
 
-Las claves primarias son **TSID** (Time-Sorted ID): entero de 64 bits ordenado por tiempo, almacenado como `bigint` en PostgreSQL y **generado en la aplicación** con la librería `io.hypersistence:hypersistence-tsid`. En las APIs se expondrá en su representación canónica de cadena (Crockford base32, 13 caracteres).
+Las claves primarias son **TSID** (Time-Sorted ID): entero de 64 bits ordenado por tiempo, almacenado como `bigint` en PostgreSQL y **generado en la aplicación** con la librería `io.hypersistence:hypersistence-tsid`. En las APIs se expondrá en su representación canónica de cadena (Crockford base32, 13 caracteres). <!-- Revisado por ADR-008: en el API los identificadores viajan como cadena decimal, no base32. -->
 
 Este ADR supersede la elección de UUID registrada en la documentación inicial; README y diagrama quedan actualizados, el ticket T-01 se conserva tal como se redactó.
 

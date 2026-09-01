@@ -1,10 +1,9 @@
 package com.cactify.domain
 
-import io.hypersistence.tsid.TSID
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.Id
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
@@ -14,8 +13,8 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "care_record")
 class CareRecord(
-  @Id
-  val id: Long = TSID.Factory.getTsid().toLong(),
+  @EmbeddedId
+  val id: CareRecordId = CareRecordId.create(),
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "plant_id", nullable = false)

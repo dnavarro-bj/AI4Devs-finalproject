@@ -1,6 +1,6 @@
 package com.cactify
 
-import com.cactify.domain.SpeciesRepository
+import com.cactify.domain.repos.SpeciesRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.test.assertEquals

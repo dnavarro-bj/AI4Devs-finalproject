@@ -18,4 +18,7 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-003](ADR-003-tsid-como-clave-primaria.md) | TSID como clave primaria | Aceptado |
 | [ADR-004](ADR-004-testcontainers-para-tests-de-integracion.md) | Testcontainers para tests de integración | Aceptado |
 | [ADR-005](ADR-005-tdd.md) | Desarrollo dirigido por tests (TDD) | Aceptado |
-| [ADR-006](ADR-006-aislamiento-del-dominio.md) | Aislamiento del dominio (DDD) | Aceptado |
+| [ADR-006](ADR-006-aislamiento-del-dominio.md) | Aislamiento del dominio (DDD) | Aceptado (enmendado en T-02) |
+| [ADR-007](ADR-007-enums-de-dominio.md) | Enums de dominio y sus converters | Aceptado |
+| [ADR-008](ADR-008-identificadores-tipados.md) | Identificadores tipados y su representación en el API | Aceptado |
+| [ADR-009](ADR-009-paginacion-obligatoria.md) | Paginación obligatoria en los endpoints de índice | Aceptado |

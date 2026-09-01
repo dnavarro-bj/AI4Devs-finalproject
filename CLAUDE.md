@@ -23,6 +23,33 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 * **Frontend**: Nuxt 4 + Vue 3 + Pinia.
 * **Entidades principales**: `Species`, `Plant`, `CareRecord`, `AIRecommendation` (ver [docs/diagramas/modelo-datos.md](docs/diagramas/modelo-datos.md)).
 
+### Estructura del backend
+
+Disciplina de capas de [ADR-006](docs/adr/ADR-006-aislamiento-del-dominio.md), `web` → `application` → `domain`, con `infrastructure` implementando los puertos:
+
+```
+com.cactify
+├── domain           Entidades JPA, identificadores tipados, repos/ (puertos), specs/
+├── application      Servicios de caso de uso y dto/ (DTOs de respuesta + PageResponse)
+├── infrastructure   persistence/ (interfaces Spring Data) y persistence/converters/
+└── web
+    ├── controllers    Controllers REST y sus cuerpos de petición
+    └── errors         Manejador global de errores y el cuerpo ErrorResponse
+```
+
+Reglas que ya están en verde y conviene no romper:
+
+* Los controllers **solo** inyectan servicios de `application`; nunca repositorios ni entidades.
+* Los servicios devuelven **DTOs**, nunca entidades: `open-in-view` está apagado y el mapeo tiene que ocurrir dentro de la transacción.
+* `domain` no importa tipos de Spring salvo `Specification`, `Page` y `Pageable`.
+* Los puertos viven en `domain/repos` y se implementan con una sola interfaz `JpaXRepository : XRepository, JpaRepository<…>` en `infrastructure/persistence`, sin clase adaptadora. La búsqueda por id se llama `findOneById` (`findById` lo ocupa Spring Data devolviendo `Optional`).
+
+### Convenciones del API
+
+* Los identificadores viajan como **cadena decimal** en todo el JSON, de entrada y de salida ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
+* **Todos** los listados van paginados con el envelope `PageResponse` (`content`, `totalElements`, `totalPages`, `pageNumber`, `pageSize`); no existe el listado sin límite, tampoco en los puertos ([ADR-009](docs/adr/ADR-009-paginacion-obligatoria.md)).
+* Los errores tienen un cuerpo uniforme `{status, error, message, path}`. Una referencia inexistente o un cuerpo inválido nunca es un `500`.
+
 ## Arrancar en local
 
 ```bash
@@ -45,4 +72,8 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 
 ## Estado del proyecto
 
-Solo hay documentación y esqueleto de infraestructura (Dockerfiles, docker-compose). Backend y frontend aún no tienen código de aplicación. OpenSpec está inicializado; aún no hay changes ni specs.
+* **T-01 (`modelo-datos`)**: esquema Flyway, datos semilla y entidades JPA. Archivado.
+* **T-02 (`api-crud-plantas`)**: API REST del inventario y de los catálogos — `POST/GET /plants`, `GET /plants/{id}`, `PUT /plants/{id}/tags`, `POST/GET /locations`, `POST/GET /tags`, con filtros combinables por `tag` (repetible, semántica AND) y `location`. Implementado y en verde.
+* **Pendiente**: T-03 (lecturas de cultivo), T-04 (recomendaciones de IA), T-05/T-06 (frontend), T-07.
+
+El frontend sigue siendo el esqueleto de Nuxt: aún no tiene código de aplicación.

@@ -1,14 +1,13 @@
 package com.cactify.domain
 
-import io.hypersistence.tsid.TSID
 import jakarta.persistence.Entity
-import jakarta.persistence.Id
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Table
 
 @Entity
 @Table(name = "location")
 class Location(
-  @Id
-  val id: Long = TSID.Factory.getTsid().toLong(),
+  @EmbeddedId
+  val id: LocationId = LocationId.create(),
   var name: String,
 )

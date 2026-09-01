@@ -8,12 +8,18 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:cactify}
     password: ${SPRING_DATASOURCE_PASSWORD:cactify}
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+  data:
+    web:
+      pageable:
+        default-page-size: ${PAGE_SIZE_DEFAULT:25}
+        max-page-size: ${PAGE_SIZE_MAX:500}
   flyway:
     enabled: true
     locations: classpath:db/migration

@@ -13,12 +13,13 @@ version = "0.0.1-SNAPSHOT"
 description = "Backend for Cactify"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
-// Sin spring-boot-starter-web ni Bean Validation todavia: este change (modelo-datos) solo cubre
-// esquema + entidades JPA. La capa REST llega en T-02 (ver design.md del change).
 val testContainerVersion = "2.0.2"
 
 dependencies {
+  implementation("org.springframework.boot:spring-boot-starter-web")
+  implementation("org.springframework.boot:spring-boot-starter-validation")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
   implementation(kotlin("reflect"))
   implementation("io.hypersistence:hypersistence-tsid:2.1.4")
 

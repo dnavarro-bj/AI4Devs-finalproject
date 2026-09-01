@@ -97,7 +97,22 @@ Funcionalidades principales:
 
 ### **1.4. Instrucciones de instalación:**
 
-> Pendiente de definir hasta que se concrete la implementación (backend, frontend, base de datos, migraciones y semillas de datos).
+Requisitos: Docker y Docker Compose. Todo lo demás (JDK, Node, PostgreSQL) va dentro de los contenedores.
+
+```bash
+cd iac/local
+cp .env.example .env   # ajusta las variables si hace falta
+docker compose up --build
+```
+
+Levanta PostgreSQL, el backend en `:8080` y el frontend en `:3000`. Al arrancar, el backend aplica las migraciones de Flyway y carga los datos semilla (mezclas de tierra, especies, localizaciones y tags), así que la API queda usable sin ningún paso manual. Detalle y variables disponibles en [iac/local/README.md](iac/local/README.md).
+
+Para ejecutar la suite de tests del backend hace falta Docker en marcha (los tests de integración levantan un PostgreSQL real con Testcontainers):
+
+```bash
+cd backend
+./gradlew test
+```
 
 ---
 
@@ -128,7 +143,33 @@ Arquitectura en capas típica de Spring Boot (controller → service → reposit
 
 ### **2.3. Descripción de alto nivel del proyecto y estructura de ficheros**
 
-> Pendiente hasta iniciar la implementación.
+Monorepo con el backend, el frontend, la infraestructura local y la documentación viva del proyecto:
+
+```text
+backend/     Kotlin + Spring Boot 3 (API REST, JPA, Flyway)
+frontend/    Nuxt 4 + Vue 3 + Pinia
+iac/local/   Docker Compose para levantar el entorno completo
+docs/        ADRs, tickets, historias de usuario y diagramas
+openspec/    Specs de lo construido y changes en curso (spec-driven development)
+```
+
+El backend sigue la disciplina de capas de [ADR-006](docs/adr/ADR-006-aislamiento-del-dominio.md) — `web` → `application` → `domain`, con `infrastructure` implementando los puertos:
+
+```text
+com.cactify
+├── domain           Entidades JPA e identificadores tipados, más:
+│   ├── repos          Puertos de repositorio (interfaces propias, sin Spring)
+│   └── specs          Specifications de consulta (filtros del inventario)
+├── application      Servicios de caso de uso, y:
+│   └── dto            DTOs de respuesta y el envelope PageResponse
+├── infrastructure
+│   └── persistence    Interfaces Spring Data que implementan los puertos, y converters/
+└── web
+    ├── controllers    Controllers REST y sus cuerpos de petición
+    └── errors         Manejador global de errores y el cuerpo ErrorResponse
+```
+
+Las dos reglas que sostienen la estructura: los controllers solo conocen `application` (nunca repositorios ni entidades), y los servicios devuelven DTOs ya montados dentro de la transacción, con `spring.jpa.open-in-view` apagado.
 
 ### **2.4. Infraestructura y despliegue**
 
@@ -140,11 +181,26 @@ Propuesta:
 
 ### **2.5. Seguridad**
 
-> Pendiente de definir (autenticación, gestión de secretos de la API de IA, validación de entradas, etc.).
+Implementado:
+
+* **Validación de entradas en dos niveles**: sintáctica en los cuerpos de petición con Bean Validation (campos obligatorios, no en blanco), y semántica en la capa de aplicación (que la especie, la localización y los tags referenciados existan). La base de datos sigue siendo la última red con sus `FK`, `CHECK` y `UNIQUE` ([ADR-002](docs/adr/ADR-002-restricciones-en-base-de-datos.md)).
+* **Errores controlados**: un manejador global traduce todo fallo de validación o referencia inexistente a `400`/`404`/`409` con un cuerpo uniforme; nada de esto se propaga como `500` ni filtra trazas.
+* **Secretos por variable de entorno**: la clave de la API de IA y las credenciales de base de datos no viven en el repositorio (`iac/local/.env.example` documenta las variables, `.env` está ignorado).
+
+Pendiente: autenticación y autorización. El MVP es monousuario por decisión de alcance.
 
 ### **2.6. Tests**
 
-> Pendiente. Se prevé al menos un test E2E del flujo principal: crear planta → registrar lectura → generar recomendación de IA.
+Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
+
+Suite actual del backend (`./gradlew test`), **87 tests en verde**:
+
+* **Esquema y datos**: que las migraciones apliquen sobre base limpia y sean idempotentes, que las restricciones de dominio rechacen lo que deben y que las semillas no se dupliquen al reiniciar.
+* **Mapeo**: que cada entidad viaje de ida y vuelta por su identificador tipado, y que la asociación `Plant` ↔ `Tag` asigne, reemplace y vacíe correctamente.
+* **API**: el ciclo HTTP completo con MockMvc —serialización, validación, manejador de errores y SQL— para el alta y el detalle de plantas, la asignación de tags, los filtros combinables del inventario, los catálogos y la paginación.
+* **Consultas**: cada `Specification` por separado, que la consulta de recuento de la paginación no se rompa con el `fetch`, y que el listado no dispare un N+1 al mapear el DTO.
+
+Pendiente: el test E2E del flujo completo (crear planta → registrar lectura → generar recomendación de IA), que llega con T-03 y T-04.
 
 ---
 
@@ -157,10 +213,12 @@ Propuesta:
 ```text
 SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ────< (N) CareRecord (1) ──── (1) AIRecommendation
                                     Location (1) ────< (N) ┘
-                                       Plant (N) ──── (N) Tag   (a través de PlantTag)
+                                       Plant (N) ──── (N) Tag   (tabla de unión plant_tag)
 ```
 
 ### **3.2. Descripción de entidades principales:**
+
+> Todos los `id` son TSID ([ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)), almacenados como `bigint`. En el código cada entidad tiene su **tipo de identificador propio** (`PlantId`, `SpeciesId`, `LocationId`…) para que el compilador impida cruzarlos, y en el API viajan como **cadena decimal** para no perder precisión en el cliente JavaScript ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
 
 **SoilMix** (catálogo de mezclas de tierra reutilizables)
 
@@ -201,11 +259,12 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre de la etiqueta (p. ej. "globular", "pequeño", "sin espinas", "híbrido"). Único.
 
-**PlantTag** (tabla intermedia de la relación N:M entre `Plant` y `Tag`)
+**plant_tag** (tabla de unión de la relación N:M entre `Plant` y `Tag`)
 
 * `plantId`: TSID. Clave foránea → `Plant.id`.
 * `tagId`: TSID. Clave foránea → `Tag.id`.
 * Clave primaria compuesta (`plantId`, `tagId`).
+* No tiene entidad propia en el código: al no llevar columnas más allá de su clave, se mapea como la asociación `@ManyToMany` de `Plant`, y el reemplazo del conjunto de tags es una operación de dominio (`plant.updateTags(...)`) en lugar de un borrado e inserción de filas orquestado desde el servicio.
 
 **CareRecord** (lectura/cuidado registrado manualmente)
 
@@ -230,18 +289,50 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 ## 4. Especificación de la API
 
-> Endpoints principales del flujo E2E (formato OpenAPI pendiente de detallar):
+### Convenciones transversales
 
-1. `POST /plants` — crea una planta (nickname, ubicación, especie).
-2. `POST /plants/{id}/care-records` — registra una lectura manual (humedad, temperatura, horas de luz, acidez del sustrato, riego) para una planta.
-3. `GET /plants/{id}/care-records/{careRecordId}/recommendation` — obtiene/genera la recomendación de IA asociada a una lectura.
-4. `POST /soil-mixes` — crea una mezcla de tierra (nombre, % orgánico, % mineral, descripción).
-5. `GET /soil-mixes` — lista el catálogo de mezclas de tierra disponibles.
-6. `POST /species` / `PUT /species/{id}` — crea o actualiza una especie, incluyendo la referencia a su `soilMixId`.
-7. `POST /locations` / `GET /locations` — crea/lista el catálogo de localizaciones.
-8. `POST /tags` / `GET /tags` — crea/lista el catálogo de tags.
-9. `PUT /plants/{id}/tags` — asigna/reemplaza el conjunto de tags de una planta.
-10. `GET /plants?tag={tagId}&location={locationId}` — filtra el inventario de plantas por tag y/o localización.
+Tres reglas aplican a **todos** los endpoints:
+
+* **Identificadores como cadena**: en las respuestas y en los cuerpos de petición, los `id` son cadenas decimales (`"882687672222443468"`), nunca números JSON — un TSID supera `2^53` y un cliente JavaScript lo redondearía en silencio ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
+* **Listados siempre paginados** ([ADR-009](docs/adr/ADR-009-paginacion-obligatoria.md)). Admiten `?page=` y `?size=`, y devuelven el mismo envelope. El tamaño por defecto (25) y el máximo (500) se configuran por variable de entorno (`PAGE_SIZE_DEFAULT`, `PAGE_SIZE_MAX`); un `size` por encima del máximo se recorta y la respuesta declara el aplicado:
+
+  ```json
+  { "content": [ … ], "totalElements": 42, "totalPages": 2, "pageNumber": 0, "pageSize": 25 }
+  ```
+
+* **Errores con cuerpo uniforme**. Ninguna validación fallida ni referencia inexistente se propaga como `5xx`:
+
+  ```json
+  { "status": 400, "error": "Bad Request", "message": "La especie '999999999' no existe", "path": "/plants" }
+  ```
+
+  `400` para lo inválido en el cuerpo o los parámetros, `404` para lo que falta en la ruta, `409` para un nombre de tag ya existente.
+
+### Endpoints implementados (T-02)
+
+| Método y ruta | Qué hace |
+|---|---|
+| `POST /plants` | Crea una planta (`nickname`, `locationId`, `speciesId`). Especie y localización deben existir. |
+| `GET /plants` | Lista el inventario paginado. Filtros opcionales y combinables: `location` y `tag` (repetible, semántica **AND**: la planta debe tener todos los indicados). |
+| `GET /plants/{id}` | Detalle de una planta, con sus tags y los datos de cuidado heredados de su especie. |
+| `PUT /plants/{id}/tags` | Reemplaza el conjunto completo de tags (`{"tagIds": [...]}`). Idempotente; una lista vacía deja la planta sin tags. |
+| `POST /locations` · `GET /locations` | Crea y lista el catálogo de localizaciones. |
+| `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
+
+Ejemplo de filtrado combinado:
+
+```
+GET /plants?tag=400001&tag=400002&location=300002&page=0&size=25
+```
+
+### Endpoints previstos
+
+| Método y ruta | Ticket |
+|---|---|
+| `POST /plants/{id}/care-records` — registra una lectura manual (humedad, temperatura, horas de luz, acidez, riego) | T-03 |
+| `GET /plants/{id}/care-records/{careRecordId}/recommendation` — obtiene/genera la recomendación de IA de una lectura | T-04 |
+| `POST /soil-mixes` · `GET /soil-mixes` — catálogo de mezclas de tierra | Sin ticket; el MVP las consume de las semillas |
+| `POST /species` · `PUT /species/{id}` — alta y edición de especies | Sin ticket; ídem |
 
 ---
 

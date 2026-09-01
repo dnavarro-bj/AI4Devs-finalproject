@@ -23,6 +23,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-cactify}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-cactify}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      PAGE_SIZE_DEFAULT: ${PAGE_SIZE_DEFAULT:-25}
+      PAGE_SIZE_MAX: ${PAGE_SIZE_MAX:-500}
     ports:
       - "8080:8080"
     depends_on:
