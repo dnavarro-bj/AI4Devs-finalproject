@@ -193,12 +193,13 @@ Pendiente: autenticación y autorización. El MVP es monousuario por decisión d
 
 Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
 
-Suite actual del backend (`./gradlew test`), **134 tests en verde**:
+Suite actual del backend (`./gradlew test`), **164 tests en verde**:
 
 * **Esquema y datos**: que las migraciones apliquen sobre base limpia y sean idempotentes, que las restricciones de dominio rechacen lo que deben y que las semillas no se dupliquen al reiniciar.
 * **Mapeo**: que cada entidad viaje de ida y vuelta por su identificador tipado, y que la asociación `Plant` ↔ `Tag` asigne, reemplace y vacíe correctamente.
 * **API**: el ciclo HTTP completo con MockMvc —serialización, validación, manejador de errores y SQL— para el alta y el detalle de plantas, la asignación de tags, los filtros combinables del inventario, los catálogos y la paginación.
 * **Consultas**: cada `Specification` por separado, que la consulta de recuento de la paginación no se rompa con el `fetch`, y que el listado no dispare un N+1 al mapear el DTO.
+* **Invariantes de dominio**: que cada entidad rechace crearse o modificarse en un estado inválido. Son los únicos tests del backend que **no arrancan un contenedor**: una regla del modelo no necesita base de datos para probarse, porque el rechazo ocurre antes de intentar persistir.
 * **Lecturas de cultivo**: alta con y sin fecha del cliente, rechazo de fechas futuras y de valores fuera de rango, orden descendente con desempate estable, y que pintar el historial no dispare una consulta por lectura ni genere ninguna recomendación.
 * **Fechas y auditoría**: que un instante sobreviva a la ida y vuelta con la precisión que guarda la columna, que la salida del API no dependa de la zona horaria de la máquina, y que las marcas de creación y modificación se sellen con el reloj inyectado —congelable en los tests— y avancen solo cuando deben.
 
@@ -220,6 +221,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 ### **3.2. Descripción de entidades principales:**
 
+> Cada entidad es dueña de su consistencia interna: sus reglas se comprueban al construirla y al modificarla, y una entidad no puede existir en un estado que las viole ([ADR-011](docs/adr/ADR-011-invariantes-de-negocio-en-el-dominio.md)). Las invariantes de cada una se anotan abajo junto a sus campos.
+>
 > Todos los `id` son TSID ([ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)), almacenados como `bigint`. En el código cada entidad tiene su **tipo de identificador propio** (`PlantId`, `SpeciesId`, `LocationId`…) para que el compilador impida cruzarlos, y en el API viajan como **cadena decimal** para no perder precisión en el cliente JavaScript ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
 >
 > Todas las entidades llevan además `createdAt` y `updatedAt` —instantes en `timestamptz`, sellados por la aplicación y respaldados por un `DEFAULT` en la base de datos— que se omiten en las listas de abajo por no repetirlos ocho veces ([ADR-010](docs/adr/ADR-010-fechas-y-auditoria.md)). Toda fecha del sistema es un instante y se expone en el API en tiempo universal.
@@ -229,8 +232,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre identificativo de la mezcla (p. ej. "Sustrato mineral de drenaje rápido").
 * `organicPercentage`: Int. Porcentaje de componente orgánico (0-100).
-* `mineralPercentage`: Int. Porcentaje de componente mineral (0-100). `organicPercentage + mineralPercentage` debe sumar 100.
-* `phMin` / `phMax`: Decimal. Rango de pH (acidez) recomendado para esta mezcla (p. ej. 5.5-6.5). `phMin` no puede ser mayor que `phMax`.
+* `mineralPercentage`: Int. Porcentaje de componente mineral (0-100). **Invariantes**: cada porcentaje entre 0 y 100, y su suma exactamente 100.
+* `phMin` / `phMax`: Decimal. Rango de pH (acidez) recomendado para esta mezcla (p. ej. 5.5-6.5). **Invariantes**: ambos entre 0 y 14, y `phMin <= phMax`.
 * `description`: String. Notas u componentes orientativos (p. ej. "akadama, pómez, turba").
 
 **Species** (ficha de especie — base de conocimiento determinista de cuidados recomendados)
@@ -241,6 +244,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `minHumidity` / `maxHumidity`: Int. Rango de humedad recomendado (%).
 * `minTemperature` / `maxTemperature`: Int. Rango de temperatura recomendado (°C).
 * `minLightHours` / `maxLightHours`: Int. Horas de luz recomendadas al día.
+* **Invariantes**: en los tres rangos, el mínimo no puede superar al máximo; los nombres y la pauta de riego no pueden quedar en blanco.
 * `wateringGuideline`: String. Frecuencia orientativa de riego (p. ej. "cada 10-20 días").
 * `soilMixId`: TSID. Clave foránea → `SoilMix.id`. Mezcla de tierra recomendada para la especie.
 
@@ -252,7 +256,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 **Plant** (ejemplar de la colección)
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
-* `nickname`: String. Nombre o código identificativo del ejemplar.
+* `nickname`: String. Nombre o código identificativo del ejemplar. **Invariante**: no puede quedar en blanco.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
 * *(Pendiente de decidir)*: campos de override individual (p. ej. `wateringOverride`, `lightOverride`, `temperatureOverride`) para permitir que un ejemplar concreto se aparte de los rangos de su especie sin perder la herencia de los campos no modificados, según lo hablado en la sección de personalización de cuidados.
@@ -278,6 +282,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `lightHours`: Int.
 * `waterAmountMl`: Int. Cantidad de riego.
 * `soilPh`: Decimal. Acidez del sustrato medida en el momento de la lectura.
+* **Invariantes**: cada medida, si viene informada, dentro de su escala (humedad 0-100, horas de luz 0-24, temperatura -50 a 80, riego no negativo, acidez 0-14); **al menos una** informada; y la fecha no puede ser futura más allá del margen configurado. Se registra por `CareRecord.record(...)`, la única puerta.
 * `recordedAt`: Instante en que se tomó la lectura. Lo aporta el cliente si lo conoce —la app móvil de F.5 registrará sin conexión y sincronizará más tarde— y, si no, lo sella el servidor al recibirla.
 
 **AIRecommendation** (salida de la IA asociada a una lectura)

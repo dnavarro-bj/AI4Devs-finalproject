@@ -50,6 +50,12 @@ context: |
     `AuditingListener` con el **único** `Clock` del sistema, inyectado (nadie más llama a
     `Instant.now()`); el listener vive en `domain` sin anotaciones de Spring y lo construye un
     `@Bean` de `infrastructure`
+  - ADR-011: cada entidad es dueña de su consistencia interna; las invariantes se expresan con
+    `require(...)` en un bloque `init` —nunca con anotaciones— y los campos van con `private set`,
+    de modo que el cambio pase por métodos de dominio que revalidan; si una invariante necesita un
+    colaborador (un reloj), se expresa en una factoría del `companion object` que lo recibe como
+    parámetro, y el constructor primario se cierra; `web` solo admite comprobaciones de tipo y de
+    rango, y las reglas que consultan otras filas siguen en `application`
 
 rules:
   proposal:

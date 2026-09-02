@@ -1,8 +1,8 @@
 package com.cactify.domain
 
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.EmbeddedId
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
@@ -15,17 +15,28 @@ import org.hibernate.annotations.BatchSize
 class Plant(
   @EmbeddedId
   override val id: PlantId = PlantId.create(),
-  var nickname: String,
+  nickname: String,
+  location: Location,
+  species: Species,
+) : AbstractEntity<PlantId>() {
+
+  var nickname: String = nickname
+    private set
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "location_id", nullable = false)
-  var location: Location,
+  var location: Location = location
+    private set
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "species_id", nullable = false)
-  var species: Species,
+  var species: Species = species
+    private set
 
-) : AbstractEntity<PlantId>() {
+  init {
+    require(nickname.isNotBlank()) { "El nickname de la planta es obligatorio" }
+  }
+
   /**
    * `plant_tag` es una tabla de unión pura (sin columnas propias), así que se mapea como la
    * relación N:M y no como entidad asociativa. `@BatchSize` es lo que evita el N+1 al recorrer

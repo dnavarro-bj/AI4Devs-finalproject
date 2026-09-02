@@ -3,9 +3,7 @@ package com.cactify.web.controllers
 import com.cactify.application.CareRecordService
 import com.cactify.application.dto.CareRecordResponse
 import com.cactify.application.dto.PageResponse
-import com.cactify.web.validation.NotFarInFuture
 import jakarta.validation.Valid
-import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Max
@@ -48,14 +46,13 @@ data class CreateCareRecordRequest(
   @field:DecimalMax("14.0", message = "la acidez está fuera de la escala de pH")
   val soilPh: BigDecimal? = null,
 
-  @field:NotFarInFuture(message = "no puede estar en el futuro")
+  /**
+   * La fecha no lleva anotación: que no sea futura depende del reloj y del margen configurado, y
+   * `web` solo comprueba tipos y rangos (ADR-011). La regla vive en `CareRecord.record(...)`,
+   * igual que la de "al menos un valor", que mira los cinco campos a la vez.
+   */
   val recordedAt: Instant? = null,
-) {
-  /** Una lectura sin ningún valor no es una lectura. */
-  @get:AssertTrue(message = "la lectura debe llevar al menos un valor")
-  val atLeastOneValue: Boolean
-    get() = listOfNotNull(humidity, temperature, lightHours, waterAmountMl, soilPh).isNotEmpty()
-}
+)
 
 @RestController
 @RequestMapping("/plants/{id}/care-records")

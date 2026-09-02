@@ -10,13 +10,14 @@ import com.cactify.domain.PlantId
 import com.cactify.domain.repos.AIRecommendationRepository
 import com.cactify.domain.repos.CareRecordRepository
 import com.cactify.domain.repos.PlantRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 @Service
 class CareRecordService(
@@ -24,6 +25,7 @@ class CareRecordService(
   private val plantRepository: PlantRepository,
   private val aiRecommendationRepository: AIRecommendationRepository,
   private val clock: Clock,
+  @Value("\${cactify.care-records.max-future-skew}") private val maxFutureSkew: Duration,
 ) {
 
   /** Los datos de una lectura nueva, ya despegados de la forma del mensaje HTTP. */
@@ -40,14 +42,16 @@ class CareRecordService(
   fun create(plantId: String, command: NewCareRecord): CareRecordResponse {
     val plant = requirePlant(plantId)
     val record = careRecordRepository.save(
-      CareRecord(
+      CareRecord.record(
         plant = plant,
         humidity = command.humidity,
         temperature = command.temperature,
         lightHours = command.lightHours,
         waterAmountMl = command.waterAmountMl,
         soilPh = command.soilPh,
-        recordedAt = stamp(command.recordedAt),
+        recordedAt = command.recordedAt,
+        clock = clock,
+        maxFutureSkew = maxFutureSkew,
       ),
     )
     // Recién creada: todavía no puede tener recomendación.
@@ -70,13 +74,6 @@ class CareRecordService(
     return PageResponse.of(page) { it.toResponse(byRecord[it.id]) }
   }
 
-  /**
-   * La fecha la aporta el cliente o, en su defecto, la sella el reloj. En ambos casos se recorta a
-   * microsegundos, la precisión que guarda `timestamptz`: sin el recorte, la fecha de la respuesta
-   * no sería la que queda persistida (ADR-010).
-   */
-  private fun stamp(given: Instant?): Instant =
-    (given ?: clock.instant()).truncatedTo(ChronoUnit.MICROS)
 
   private fun requirePlant(plantId: String): Plant =
     plantRepository.findOneById(PlantId.from(plantId)) ?: throw PlantNotFoundException(plantId)

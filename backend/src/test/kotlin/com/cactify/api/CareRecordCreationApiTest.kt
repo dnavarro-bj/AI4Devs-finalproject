@@ -154,7 +154,7 @@ class CareRecordCreationApiTest : AbstractApiIntegrationTest() {
     )
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))
-      .andExpect(jsonPath("$.message").value(containsString("recordedAt")))
+      .andExpect(jsonPath("$.message").value(containsString("fecha")))
   }
 
   @Test

@@ -1,7 +1,7 @@
 package com.cactify.domain
 
-import jakarta.persistence.Entity
 import jakarta.persistence.EmbeddedId
+import jakarta.persistence.Entity
 import jakarta.persistence.Table
 
 @Entity
@@ -9,5 +9,13 @@ import jakarta.persistence.Table
 class Tag(
   @EmbeddedId
   override val id: TagId = TagId.create(),
-  var name: String,
-) : AbstractEntity<TagId>()
+  name: String,
+) : AbstractEntity<TagId>() {
+
+  var name: String = name
+    private set
+
+  init {
+    require(name.isNotBlank()) { "El nombre del tag es obligatorio" }
+  }
+}

@@ -11,6 +11,8 @@ import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -121,7 +123,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
     val species = newSpecies(soilMix, "Typedus carus")
     val location = Location(name = "Typed care location")
     val plant = Plant(nickname = "Juanito tipado", location = location, species = species)
-    val careRecord = CareRecord(plant = plant, humidity = 40, temperature = 22, lightHours = 8, recordedAt = Instant.now())
+    val careRecord = CareRecord.record(plant = plant, humidity = 40, temperature = 22, lightHours = 8, recordedAt = null, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
     val recommendation = AIRecommendation(careRecord = careRecord, riskLevel = "bajo", recommendationText = "Todo correcto")
 
     entityManager.persist(soilMix)

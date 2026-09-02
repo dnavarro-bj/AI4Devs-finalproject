@@ -4,6 +4,7 @@ import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
 import com.cactify.application.PlantNotFoundException
 import jakarta.servlet.http.HttpServletRequest
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -52,6 +53,17 @@ class ApiExceptionHandler {
   fun onTypeMismatch(ex: MethodArgumentTypeMismatchException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     badRequest("Parámetro '${ex.name}' con formato inválido", request)
 
+  /**
+   * Una invariante del dominio rechazada. El dato que llega sigue siendo inválido, así que la
+   * respuesta es `400` como cualquier otro cuerpo mal formado; pero se registra, porque llegar
+   * hasta aquí significa que la validación de `web` y la regla del dominio han divergido.
+   */
+  @ExceptionHandler(IllegalArgumentException::class)
+  fun onDomainInvariant(ex: IllegalArgumentException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+    log.warn("Invariante de dominio rechazada en {}: {}", request.requestURI, ex.message)
+    return badRequest(ex.message ?: "La petición no es válida", request)
+  }
+
   @ExceptionHandler(InvalidReferenceException::class)
   fun onInvalidReference(ex: InvalidReferenceException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     badRequest(ex.message ?: "Referencia inválida", request)
@@ -80,6 +92,10 @@ class ApiExceptionHandler {
         path = request.requestURI,
       ),
     )
+
+  private companion object {
+    val log = LoggerFactory.getLogger(ApiExceptionHandler::class.java)
+  }
 
   private fun rootMessage(ex: Throwable): String? {
     var cause: Throwable? = ex

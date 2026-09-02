@@ -53,7 +53,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
     val createdAt = location.createdAt
 
     clock.advanceBy(Duration.ofMinutes(30))
-    location.name = "Auditada al modificar, renombrada"
+    location.rename("Auditada al modificar, renombrada")
     entityManager.flush()
 
     assertEquals(createdAt, location.createdAt, "createdAt no debe cambiar al modificar")

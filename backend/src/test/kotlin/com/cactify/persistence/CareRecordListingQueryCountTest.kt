@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -40,10 +42,12 @@ class CareRecordListingQueryCountTest : AbstractIntegrationTest() {
     val plant = Plant(nickname = "Bola con muchas lecturas", location = location, species = species)
     entityManager.persist(plant)
     repeat(12) { i ->
-      val record = CareRecord(
+      val record = CareRecord.record(
         plant = plant,
         humidity = i,
         recordedAt = Instant.parse("2026-08-01T10:00:00Z").plusSeconds(i.toLong()),
+        clock = Clock.systemUTC(),
+        maxFutureSkew = Duration.ofMinutes(5),
       )
       entityManager.persist(record)
       // La mitad con recomendación, para que el mapa no se resuelva trivialmente vacío.

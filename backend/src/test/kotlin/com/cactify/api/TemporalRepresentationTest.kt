@@ -14,6 +14,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -75,7 +77,7 @@ class TemporalRepresentationTest : AbstractApiIntegrationTest() {
     val location = entityManager.find(Location::class.java, LocationId.from(seededLocationId))
     val plant = Plant(nickname = "Bola temporal", location = location, species = species)
     entityManager.persist(plant)
-    val record = CareRecord(plant = plant, humidity = 30, recordedAt = recordedAt)
+    val record = CareRecord.record(plant = plant, humidity = 30, recordedAt = recordedAt, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
     entityManager.persist(record)
     return record
   }
