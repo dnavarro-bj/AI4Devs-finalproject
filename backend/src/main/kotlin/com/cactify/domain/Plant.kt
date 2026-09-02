@@ -1,6 +1,5 @@
 package com.cactify.domain
 
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.EmbeddedId
@@ -10,15 +9,12 @@ import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.BatchSize
-import org.hibernate.annotations.Generated
-import org.hibernate.generator.EventType
-import java.time.OffsetDateTime
 
 @Entity
 @Table(name = "plant")
 class Plant(
   @EmbeddedId
-  val id: PlantId = PlantId.create(),
+  override val id: PlantId = PlantId.create(),
   var nickname: String,
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -29,11 +25,7 @@ class Plant(
   @JoinColumn(name = "species_id", nullable = false)
   var species: Species,
 
-  /** La pone la base de datos (`DEFAULT now()`); `@Generated` la lee de vuelta tras el insert. */
-  @Column(name = "created_at", insertable = false, updatable = false)
-  @Generated(event = [EventType.INSERT])
-  var createdAt: OffsetDateTime? = null,
-) {
+) : AbstractEntity<PlantId>() {
   /**
    * `plant_tag` es una tabla de unión pura (sin columnas propias), así que se mapea como la
    * relación N:M y no como entidad asociativa. `@BatchSize` es lo que evita el N+1 al recorrer

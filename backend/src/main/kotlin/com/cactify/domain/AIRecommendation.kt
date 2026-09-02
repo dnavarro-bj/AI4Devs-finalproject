@@ -7,13 +7,12 @@ import jakarta.persistence.EmbeddedId
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import java.time.OffsetDateTime
 
 @Entity
 @Table(name = "ai_recommendation")
 class AIRecommendation(
   @EmbeddedId
-  val id: AIRecommendationId = AIRecommendationId.create(),
+  override val id: AIRecommendationId = AIRecommendationId.create(),
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "care_record_id", nullable = false)
@@ -25,6 +24,4 @@ class AIRecommendation(
   @Column(name = "recommendation_text", nullable = false)
   var recommendationText: String,
 
-  @Column(name = "created_at", insertable = false, updatable = false)
-  var createdAt: OffsetDateTime? = null,
-)
+) : AbstractEntity<AIRecommendationId>()

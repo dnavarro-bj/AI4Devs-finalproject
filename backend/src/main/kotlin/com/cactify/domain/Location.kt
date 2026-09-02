@@ -8,6 +8,6 @@ import jakarta.persistence.Table
 @Table(name = "location")
 class Location(
   @EmbeddedId
-  val id: LocationId = LocationId.create(),
+  override val id: LocationId = LocationId.create(),
   var name: String,
-)
+) : AbstractEntity<LocationId>()

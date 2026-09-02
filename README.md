@@ -193,12 +193,13 @@ Pendiente: autenticación y autorización. El MVP es monousuario por decisión d
 
 Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
 
-Suite actual del backend (`./gradlew test`), **87 tests en verde**:
+Suite actual del backend (`./gradlew test`), **97 tests en verde**:
 
 * **Esquema y datos**: que las migraciones apliquen sobre base limpia y sean idempotentes, que las restricciones de dominio rechacen lo que deben y que las semillas no se dupliquen al reiniciar.
 * **Mapeo**: que cada entidad viaje de ida y vuelta por su identificador tipado, y que la asociación `Plant` ↔ `Tag` asigne, reemplace y vacíe correctamente.
 * **API**: el ciclo HTTP completo con MockMvc —serialización, validación, manejador de errores y SQL— para el alta y el detalle de plantas, la asignación de tags, los filtros combinables del inventario, los catálogos y la paginación.
 * **Consultas**: cada `Specification` por separado, que la consulta de recuento de la paginación no se rompa con el `fetch`, y que el listado no dispare un N+1 al mapear el DTO.
+* **Fechas y auditoría**: que un instante sobreviva a la ida y vuelta con la precisión que guarda la columna, que la salida del API no dependa de la zona horaria de la máquina, y que las marcas de creación y modificación se sellen con el reloj inyectado —congelable en los tests— y avancen solo cuando deben.
 
 Pendiente: el test E2E del flujo completo (crear planta → registrar lectura → generar recomendación de IA), que llega con T-03 y T-04.
 
@@ -219,6 +220,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 ### **3.2. Descripción de entidades principales:**
 
 > Todos los `id` son TSID ([ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)), almacenados como `bigint`. En el código cada entidad tiene su **tipo de identificador propio** (`PlantId`, `SpeciesId`, `LocationId`…) para que el compilador impida cruzarlos, y en el API viajan como **cadena decimal** para no perder precisión en el cliente JavaScript ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
+>
+> Todas las entidades llevan además `createdAt` y `updatedAt` —instantes en `timestamptz`, sellados por la aplicación y respaldados por un `DEFAULT` en la base de datos— que se omiten en las listas de abajo por no repetirlos ocho veces ([ADR-010](docs/adr/ADR-010-fechas-y-auditoria.md)). Toda fecha del sistema es un instante y se expone en el API en tiempo universal.
 
 **SoilMix** (catálogo de mezclas de tierra reutilizables)
 
@@ -251,7 +254,6 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `nickname`: String. Nombre o código identificativo del ejemplar.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
-* `createdAt`: Timestamp.
 * *(Pendiente de decidir)*: campos de override individual (p. ej. `wateringOverride`, `lightOverride`, `temperatureOverride`) para permitir que un ejemplar concreto se aparte de los rangos de su especie sin perder la herencia de los campos no modificados, según lo hablado en la sección de personalización de cuidados.
 
 **Tag** (catálogo de etiquetas de búsqueda)
@@ -275,7 +277,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `lightHours`: Int.
 * `waterAmountMl`: Int. Cantidad de riego.
 * `soilPh`: Decimal. Acidez del sustrato medida en el momento de la lectura.
-* `recordedAt`: Timestamp (automático).
+* `recordedAt`: Instante en que se tomó la lectura. Lo aporta el cliente si lo conoce —la app móvil de F.5 registrará sin conexión y sincronizará más tarde— y, si no, lo sella el servidor al recibirla.
 
 **AIRecommendation** (salida de la IA asociada a una lectura)
 
@@ -283,7 +285,6 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `careRecordId`: TSID. Clave foránea → `CareRecord.id`.
 * `riskLevel`: String/Enum. Nivel de riesgo (bajo, moderado, alto).
 * `recommendationText`: String. Explicación y acción recomendada.
-* `createdAt`: Timestamp.
 
 ---
 

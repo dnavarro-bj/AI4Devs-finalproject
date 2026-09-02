@@ -12,12 +12,6 @@ import org.springframework.data.jpa.domain.Specification
  */
 interface PlantRepository {
   fun save(plant: Plant): Plant
-
-  /**
-   * Baja el insert en el acto, para que la `created_at` que pone la base de datos vuelva a la
-   * entidad antes de que el servicio construya el DTO.
-   */
-  fun saveAndFlush(plant: Plant): Plant
   fun findOneById(id: PlantId): Plant?
   fun findAll(spec: Specification<Plant>?, pageable: Pageable): Page<Plant>
 }

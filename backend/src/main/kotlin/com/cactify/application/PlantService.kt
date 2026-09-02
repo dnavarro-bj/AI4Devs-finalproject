@@ -41,7 +41,7 @@ class PlantService(
   fun create(nickname: String, locationId: String, speciesId: String): PlantDetailResponse {
     val location = requireLocation(locationId)
     val species = requireSpecies(speciesId)
-    val plant = plantRepository.saveAndFlush(
+    val plant = plantRepository.save(
       Plant(nickname = nickname.trim(), location = location, species = species),
     )
     return plant.toDetail()

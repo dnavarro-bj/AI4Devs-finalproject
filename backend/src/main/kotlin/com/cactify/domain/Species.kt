@@ -11,7 +11,7 @@ import jakarta.persistence.Table
 @Table(name = "species")
 class Species(
   @EmbeddedId
-  val id: SpeciesId = SpeciesId.create(),
+  override val id: SpeciesId = SpeciesId.create(),
   var scientificName: String,
   var commonName: String,
   var minHumidity: Int,
@@ -25,4 +25,4 @@ class Species(
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "soil_mix_id", nullable = false)
   var soilMix: SoilMix,
-)
+) : AbstractEntity<SpeciesId>()

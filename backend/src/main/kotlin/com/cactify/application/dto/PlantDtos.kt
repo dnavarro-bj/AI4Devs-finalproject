@@ -1,6 +1,6 @@
 package com.cactify.application.dto
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /** Datos de cuidado que la planta hereda de su especie. */
 data class SpeciesCareResponse(
@@ -26,7 +26,7 @@ data class SpeciesSummaryResponse(
 data class PlantDetailResponse(
   val id: String,
   val nickname: String,
-  val createdAt: OffsetDateTime?,
+  val createdAt: Instant?,
   val location: LocationResponse,
   val species: SpeciesCareResponse,
   val tags: List<TagResponse>,
@@ -35,7 +35,7 @@ data class PlantDetailResponse(
 data class PlantSummaryResponse(
   val id: String,
   val nickname: String,
-  val createdAt: OffsetDateTime?,
+  val createdAt: Instant?,
   val location: LocationResponse,
   val species: SpeciesSummaryResponse,
 )

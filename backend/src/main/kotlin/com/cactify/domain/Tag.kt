@@ -8,6 +8,6 @@ import jakarta.persistence.Table
 @Table(name = "tag")
 class Tag(
   @EmbeddedId
-  val id: TagId = TagId.create(),
+  override val id: TagId = TagId.create(),
   var name: String,
-)
+) : AbstractEntity<TagId>()

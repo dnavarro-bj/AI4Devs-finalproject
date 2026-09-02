@@ -22,3 +22,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-007](ADR-007-enums-de-dominio.md) | Enums de dominio y sus converters | Aceptado |
 | [ADR-008](ADR-008-identificadores-tipados.md) | Identificadores tipados y su representación en el API | Aceptado |
 | [ADR-009](ADR-009-paginacion-obligatoria.md) | Paginación obligatoria en los endpoints de índice | Aceptado |
+| [ADR-010](ADR-010-fechas-y-auditoria.md) | Fechas como `Instant` y marcas de auditoría en toda entidad | Aceptado |

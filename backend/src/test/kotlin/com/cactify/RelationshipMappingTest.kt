@@ -11,7 +11,7 @@ import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
-import java.time.OffsetDateTime
+import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -124,7 +124,7 @@ class RelationshipMappingTest : AbstractIntegrationTest() {
   @Test
   fun `a care record and its AI recommendation round-trip back to their plant`() {
     val plant = persistPlant("Juanito", "care")
-    val careRecord = CareRecord(plant = plant, humidity = 40, temperature = 22, lightHours = 8, waterAmountMl = 150, soilPh = BigDecimal("6.2"), recordedAt = OffsetDateTime.now())
+    val careRecord = CareRecord(plant = plant, humidity = 40, temperature = 22, lightHours = 8, waterAmountMl = 150, soilPh = BigDecimal("6.2"), recordedAt = Instant.now())
     val recommendation = AIRecommendation(careRecord = careRecord, riskLevel = "bajo", recommendationText = "Todo correcto")
 
     entityManager.persist(careRecord)

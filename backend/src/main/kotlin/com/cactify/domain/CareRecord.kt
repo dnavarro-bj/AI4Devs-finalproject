@@ -8,13 +8,13 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.math.BigDecimal
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Entity
 @Table(name = "care_record")
 class CareRecord(
   @EmbeddedId
-  val id: CareRecordId = CareRecordId.create(),
+  override val id: CareRecordId = CareRecordId.create(),
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "plant_id", nullable = false)
@@ -31,5 +31,5 @@ class CareRecord(
   var soilPh: BigDecimal? = null,
 
   @Column(name = "recorded_at", nullable = false)
-  var recordedAt: OffsetDateTime,
-)
+  var recordedAt: Instant,
+) : AbstractEntity<CareRecordId>()

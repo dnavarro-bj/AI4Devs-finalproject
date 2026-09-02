@@ -8,11 +8,11 @@ import jakarta.persistence.Table
 @Table(name = "soil_mix")
 class SoilMix(
   @EmbeddedId
-  val id: SoilMixId = SoilMixId.create(),
+  override val id: SoilMixId = SoilMixId.create(),
   var name: String,
   var organicPercentage: Int,
   var mineralPercentage: Int,
   var phMin: java.math.BigDecimal,
   var phMax: java.math.BigDecimal,
   var description: String? = null,
-)
+) : AbstractEntity<SoilMixId>()

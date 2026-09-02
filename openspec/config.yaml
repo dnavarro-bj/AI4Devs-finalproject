@@ -45,6 +45,11 @@ context: |
   - ADR-009: ningún endpoint de índice devuelve una colección sin límite; todo listado se sirve con
     el envelope `PageResponse` y orden estable por `@SortDefault`, con tamaño por defecto y máximo
     configurables; los puertos tampoco exponen `findAll()` sin paginar
+  - ADR-010: toda fecha del dominio es un `Instant` sobre `timestamptz`, con la sesión JDBC en UTC;
+    toda entidad hereda de `AbstractEntity`, que aporta `createdAt`/`updatedAt` selladas por
+    `AuditingListener` con el **único** `Clock` del sistema, inyectado (nadie más llama a
+    `Instant.now()`); el listener vive en `domain` sin anotaciones de Spring y lo construye un
+    `@Bean` de `infrastructure`
 
 rules:
   proposal:

@@ -1,0 +1,38 @@
+# Tasks: fechas-y-auditoria
+
+Orden test-first según [ADR-005](../../../docs/adr/ADR-005-tdd.md): cada bloque empieza por los tests de sus escenarios (rojo) y sigue con la implementación que los pone en verde. Los escenarios de referencia están en [`specs/data-model/spec.md`](specs/data-model/spec.md); el cómo, en [`design.md`](design.md).
+
+Este change es un refactor de base: **los 87 tests que ya existen son la red principal**. Cualquiera que se ponga rojo por algo que no sea un cambio declarado en el proposal es un fallo, no un ajuste.
+
+## 1. Esquema: las marcas de tiempo en las ocho tablas
+
+- [x] 1.1 Escribir los tests de los escenarios "Fila insertada directamente por SQL" y "Marca de tiempo nula" (insertar por SQL una fila de `location` sin marcas y comprobar que quedan informadas; forzar `created_at = NULL` y comprobar que se rechaza), siguiendo el estilo de `DomainConstraintsTest`; el `assertFailsWith<DataIntegrityViolationException>` va como **última** sentencia porque la violación aborta la transacción — deben fallar
+- [x] 1.2 Escribir el test que comprueba que las ocho tablas tienen `created_at` y `updated_at` `NOT NULL`, consultando `information_schema.columns`, en la línea del test de las 8 tablas de `SchemaMigrationTest` — debe fallar
+- [x] 1.3 Escribir `V3__audit_timestamps.sql`: `created_at` y `updated_at` en `soil_mix`, `species`, `location`, `tag`, `plant_tag` y `care_record`, y solo `updated_at` en `plant` y `ai_recommendation`, todas `TIMESTAMPTZ NOT NULL DEFAULT now()` (decisión 6); verificar que 1.1 y 1.2 pasan y que `SchemaMigrationTest`, `SeedDataTest` y `DomainConstraintsTest` siguen en verde **sin tocarlos**
+
+## 2. `Instant` en el dominio y en el borde
+
+- [x] 2.1 Escribir los tests de los tres escenarios de "Representación temporal de las fechas" (una fecha persistida se recupera como el mismo instante; una fecha con desplazamiento horario distinto del universal se guarda como el instante equivalente; y la fecha que devuelve el API llega en tiempo universal) — deben fallar
+- [x] 2.2 Fijar `hibernate.jdbc.time_zone: UTC` en `application.yml` (decisión 1); verificar que el contexto arranca y que la suite pasa igual con la JVM en `Europe/Madrid` que en UTC, ejecutándola con `-Duser.timezone=Europe/Madrid`
+- [x] 2.3 Migrar a `Instant` las cuatro fechas: `Plant.createdAt`, `AIRecommendation.createdAt`, `CareRecord.recordedAt` y los dos `createdAt` de `application/dto/PlantDtos.kt`, ajustando los tests que construyen fechas; verificar que 2.1 pasa y que la suite completa sigue en verde
+
+## 3. Reloj único, `AbstractEntity` y la herencia de las siete entidades
+
+- [x] 3.1 Implementar el bean `Clock` (`Clock.systemUTC()`) en un `@Configuration` de `infrastructure` —primer bean del proyecto, y el que heredará después `api-lecturas-cultivo`— y un doble de test que permita **fijar y adelantar** el instante, porque el escenario de modificación necesita que el tiempo se mueva y un `Clock.fixed` no sirve (decisión 4); verificar que el contexto arranca y que un test puede sustituir el `Clock` por el doble
+- [x] 3.2 Escribir los tests de los escenarios "Fila creada por la aplicación" y "Fila modificada por la aplicación" con el reloj congelado, asertando **instantes exactos**: al persistir, ambas marcas iguales al instante fijado; tras adelantar el reloj y modificar la entidad, `updatedAt` igual al instante nuevo y `createdAt` intacto — deben fallar
+- [x] 3.3 Escribir el test del escenario "Tabla de unión sin entidad" (asignar tags a una planta y comprobar por SQL que las filas de `plant_tag` llevan sus dos marcas informadas, sin que ninguna entidad las gestione) — debe fallar
+- [x] 3.4 Implementar `AbstractEntity<K : EntityId<*>>` en `domain` como `@MappedSuperclass` con `createdAt`/`updatedAt` de `setter` interno y `@EntityListeners(AuditingListener::class)`, más la clase `AuditingListener` en `domain` —Kotlin puro, con `@PrePersist` y `@PreUpdate` y el `Clock` por constructor, sin ninguna anotación de Spring (decisiones 2 y 4)—; verificar que compila y que `domain` no ha ganado ningún import de Spring
+- [x] 3.5 Declarar el `@Bean` que construye `AuditingListener` con el `Clock` en el `@Configuration` de `infrastructure`, y verificar que Hibernate usa **esa** instancia y no una creada por su cuenta: con el reloj congelado, la marca de una entidad recién persistida debe ser exactamente el instante fijado. Si no lo fuera, `SpringBeanContainer` no está resolviendo el listener y el arranque debe fallar en vez de sellar con otro reloj (riesgo anotado en el design)
+- [x] 3.6 Hacer que las siete entidades hereden de `AbstractEntity`, declarando su identificador como `@EmbeddedId override val id: XId`, y retirar de `Plant` y `AIRecommendation` sus `createdAt` propios junto con el `@Generated(event = [EventType.INSERT])` y el `insertable = false` de `Plant` (decisión 2); verificar que 3.2 y 3.3 pasan y que `TypedIdMappingTest` y `RelationshipMappingTest` siguen en verde — si Hibernate rechaza la propiedad `abstract val id: K`, replegarse a `AbstractEntity` sin parámetro genérico según el riesgo anotado en el design, y dejarlo escrito
+- [x] 3.7 Simplificar `PlantService.create` de `saveAndFlush` a `save`, que con el callback del listener ya no necesita bajar a la base de datos para leer la fecha (decisión 2); verificar que `PlantCreationApiTest` sigue asertando que `createdAt` no llega vacío en el `201`
+- [x] 3.8 Comprobar por revisión que ninguna entidad declara ya sus propias marcas de tiempo y que el único reloj del sistema es el bean `Clock`; verificar buscando `Clock.systemUTC()` fuera del `@Configuration` y `Instant.now()` sin reloj en todo `src/main`
+
+## 4. Cierre
+
+- [x] 4.1 Ejecutar la suite completa (`./gradlew test`) y verificar que los 87 tests previos más los nuevos están en verde, y que ninguno de los 87 se ha modificado salvo los que construían fechas con `OffsetDateTime`
+- [x] 4.2 Levantar el entorno local (`docker compose up --build` en `iac/local`) y verificar que el backend arranca aplicando `V3__`, que `GET /plants` devuelve `createdAt` en tiempo universal y que crear una planta y reasignarle tags deja las filas de `plant_tag` con sus marcas informadas
+- [x] 4.3 Redactar **ADR-010 — Fechas como `Instant` y marcas de auditoría en toda entidad** en `docs/adr/` siguiendo la plantilla de `docs/adr/template.md`: `Instant` sobre `TIMESTAMPTZ` con la sesión JDBC en UTC y el porqué comprobado; `AbstractEntity` con las marcas y su `AuditingListener`; el reloj único inyectado y el montaje que lo permite sin meter Spring en `domain` (listener en el dominio, `@Bean` en infraestructura); la excepción de `plant_tag`; y la limitación de que una actualización masiva no dispara el ciclo de vida. Verificar que queda referenciado desde el índice de ADRs
+- [x] 4.4 Actualizar `README.md` §3.2: añadir `createdAt` y `updatedAt` a las entidades documentadas y corregir que `recordedAt` es "Timestamp (automático)", que desde T-03 podrá aportarlo el cliente; actualizar también el recuento de tests de §2.6
+- [x] 4.5 Añadir la línea de ADR-010 al resumen de `openspec/config.yaml`, como exige ADR-000; verificar que `openspec instructions proposal --change <cualquiera> --json` lo devuelve dentro del `context`
+- [x] 4.6 Ejecutar `openspec validate fechas-y-auditoria --strict` y verificar que el change está listo para archivar
+- [x] 4.7 Dejar anotado que, una vez archivado este change, `api-lecturas-cultivo` debe actualizarse con `/opsx:update` para heredar `Instant` y `AbstractEntity` y pasar su migración a `V4__` (T-04 se corre a `V5__`); **no** editarlo dentro de este change
