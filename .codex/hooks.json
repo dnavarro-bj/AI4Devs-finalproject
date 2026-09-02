@@ -1,0 +1,29 @@
+{
+  "description": "Guarda los mensajes de usuario y las respuestas finales de Codex en chats/.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/log-chat.js\"",
+            "timeout": 15,
+            "statusMessage": "Guardando mensaje del usuario..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/log-chat.js\"",
+            "timeout": 15,
+            "statusMessage": "Guardando respuesta de Codex..."
+          }
+        ]
+      }
+    ]
+  }
+}
