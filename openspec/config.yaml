@@ -30,6 +30,21 @@ context: |
   - ADR-003: claves primarias TSID (bigint ordenado por tiempo, generado en aplicación con hypersistence-tsid)
   - ADR-004: tests de integración contra PostgreSQL real con Testcontainers (nunca H2)
   - ADR-005: TDD — los escenarios WHEN/THEN de las specs se escriben como tests antes que el código
+  - ADR-006: aislamiento del dominio, web → application → domain, con infrastructure implementando
+    los puertos; enmendado en T-02: `domain` admite `Specification`, `Page` y `Pageable` de Spring
+    Data y ningún otro tipo de Spring; el puerto vive en `domain/repos` y lo implementa una sola
+    interfaz `JpaXRepository : XRepository, JpaRepository<…>` en `infrastructure/persistence`, sin
+    clase adaptadora (la búsqueda por id es `findOneById`, no `findById`); los servicios de
+    `application` devuelven DTOs, nunca entidades, con `spring.jpa.open-in-view: false`
+  - ADR-007: los enums de dominio llevan `value` explícito, `invoke()` que normaliza y falla ante un
+    valor desconocido, `toString()` y un `AttributeConverter` con `@Converter(autoApply = true)`;
+    nunca `@Enumerated`
+  - ADR-008: un tipo de identificador por entidad sobre TSID, mapeado con `@Embeddable`/`@EmbeddedId`
+    (JPA ignora `@Convert` sobre un `@Id`); en el API los ids viajan como cadena decimal, tipados en
+    el borde, tanto en las respuestas como en los cuerpos de petición
+  - ADR-009: ningún endpoint de índice devuelve una colección sin límite; todo listado se sirve con
+    el envelope `PageResponse` y orden estable por `@SortDefault`, con tamaño por defecto y máximo
+    configurables; los puertos tampoco exponen `findAll()` sin paginar
 
 rules:
   proposal:
@@ -38,8 +53,12 @@ rules:
   design:
     - Consultar docs/adr/ antes de decidir; referenciar el ADR aplicable en lugar de re-decidir
     - Si surge una decisión transversal nueva (aplicable a futuros changes), proponer promocionarla a un ADR nuevo en docs/adr/
+    - Situar cada pieza en su capa según ADR-006 enmendado; los controllers solo inyectan servicios de application, y el mapeo a DTO ocurre dentro de la transacción
+    - Cualquier restricción nueva de datos va en una migración Flyway nueva (ADR-001 y ADR-002); V1__schema.sql está aplicada y no se edita
   specs:
     - Escenarios en formato WHEN/THEN, en español
+    - Consultar openspec/specs/ antes de escribir el delta y no redeclarar lo ya construido; el contrato transversal del API (ids como cadena, envelope de paginación y cuerpo de error uniforme) vive en la capability plant-inventory
+    - Todo listado nuevo se especifica paginado (ADR-009); una referencia inexistente o un cuerpo inválido nunca es un 5xx
   tasks:
     - Tareas pequeñas y verificables
     - Orden test-first (ADR-005), cada bloque funcional empieza por las tareas de test de sus escenarios (rojo) seguidas de la implementación que las pone en verde
