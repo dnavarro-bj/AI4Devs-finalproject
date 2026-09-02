@@ -193,12 +193,13 @@ Pendiente: autenticación y autorización. El MVP es monousuario por decisión d
 
 Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
 
-Suite actual del backend (`./gradlew test`), **97 tests en verde**:
+Suite actual del backend (`./gradlew test`), **134 tests en verde**:
 
 * **Esquema y datos**: que las migraciones apliquen sobre base limpia y sean idempotentes, que las restricciones de dominio rechacen lo que deben y que las semillas no se dupliquen al reiniciar.
 * **Mapeo**: que cada entidad viaje de ida y vuelta por su identificador tipado, y que la asociación `Plant` ↔ `Tag` asigne, reemplace y vacíe correctamente.
 * **API**: el ciclo HTTP completo con MockMvc —serialización, validación, manejador de errores y SQL— para el alta y el detalle de plantas, la asignación de tags, los filtros combinables del inventario, los catálogos y la paginación.
 * **Consultas**: cada `Specification` por separado, que la consulta de recuento de la paginación no se rompa con el `fetch`, y que el listado no dispare un N+1 al mapear el DTO.
+* **Lecturas de cultivo**: alta con y sin fecha del cliente, rechazo de fechas futuras y de valores fuera de rango, orden descendente con desempate estable, y que pintar el historial no dispare una consulta por lectura ni genere ninguna recomendación.
 * **Fechas y auditoría**: que un instante sobreviva a la ida y vuelta con la precisión que guarda la columna, que la salida del API no dependa de la zona horaria de la máquina, y que las marcas de creación y modificación se sellen con el reloj inyectado —congelable en los tests— y avancen solo cuando deben.
 
 Pendiente: el test E2E del flujo completo (crear planta → registrar lectura → generar recomendación de IA), que llega con T-03 y T-04.
@@ -319,6 +320,8 @@ Tres reglas aplican a **todos** los endpoints:
 | `PUT /plants/{id}/tags` | Reemplaza el conjunto completo de tags (`{"tagIds": [...]}`). Idempotente; una lista vacía deja la planta sin tags. |
 | `POST /locations` · `GET /locations` | Crea y lista el catálogo de localizaciones. |
 | `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
+| `POST /plants/{id}/care-records` | Registra una lectura de cultivo (humedad, temperatura, horas de luz, riego y acidez). La fecha la aporta el cliente o, si falta, la sella el servidor; una fecha futura se rechaza. |
+| `GET /plants/{id}/care-records` | Historial paginado de una planta, de la lectura más reciente a la más antigua, con la recomendación de IA de cada una cuando exista. |
 
 Ejemplo de filtrado combinado:
 
@@ -330,7 +333,6 @@ GET /plants?tag=400001&tag=400002&location=300002&page=0&size=25
 
 | Método y ruta | Ticket |
 |---|---|
-| `POST /plants/{id}/care-records` — registra una lectura manual (humedad, temperatura, horas de luz, acidez, riego) | T-03 |
 | `GET /plants/{id}/care-records/{careRecordId}/recommendation` — obtiene/genera la recomendación de IA de una lectura | T-04 |
 | `POST /soil-mixes` · `GET /soil-mixes` — catálogo de mezclas de tierra | Sin ticket; el MVP las consume de las semillas |
 | `POST /species` · `PUT /species/{id}` — alta y edición de especies | Sin ticket; ídem |
