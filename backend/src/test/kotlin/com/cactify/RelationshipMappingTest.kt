@@ -4,12 +4,13 @@ import com.cactify.domain.AIRecommendation
 import com.cactify.domain.CareRecord
 import com.cactify.domain.Location
 import com.cactify.domain.Plant
+import com.cactify.domain.Priority
+import com.cactify.domain.RiskLevel
 import com.cactify.domain.SoilMix
 import com.cactify.domain.Species
 import com.cactify.domain.Tag
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Duration
@@ -17,6 +18,7 @@ import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Test
 
 class RelationshipMappingTest : AbstractIntegrationTest() {
 
@@ -127,7 +129,13 @@ class RelationshipMappingTest : AbstractIntegrationTest() {
   fun `a care record and its AI recommendation round-trip back to their plant`() {
     val plant = persistPlant("Juanito", "care")
     val careRecord = CareRecord.record(plant = plant, humidity = 40, temperature = 22, lightHours = 8, waterAmountMl = 150, soilPh = BigDecimal("6.2"), recordedAt = null, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
-    val recommendation = AIRecommendation(careRecord = careRecord, riskLevel = "bajo", recommendationText = "Todo correcto")
+    val recommendation = AIRecommendation(
+      careRecord = careRecord,
+      riskLevel = RiskLevel.Low,
+      recommendationText = "Todo correcto",
+      recommendedAction = "No hagas nada",
+      priority = Priority.Routine,
+    )
 
     entityManager.persist(careRecord)
     entityManager.persist(recommendation)
@@ -138,6 +146,7 @@ class RelationshipMappingTest : AbstractIntegrationTest() {
 
     assertNotNull(reloaded, "expected the AI recommendation to round-trip")
     assertEquals("Juanito", reloaded.careRecord.plant.nickname)
-    assertEquals("bajo", reloaded.riskLevel)
+    assertEquals(RiskLevel.Low, reloaded.riskLevel)
+    assertEquals(Priority.Routine, reloaded.priority)
   }
 }

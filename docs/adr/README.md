@@ -24,3 +24,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-009](ADR-009-paginacion-obligatoria.md) | Paginación obligatoria en los endpoints de índice | Aceptado |
 | [ADR-010](ADR-010-fechas-y-auditoria.md) | Fechas como `Instant` y marcas de auditoría en toda entidad | Aceptado |
 | [ADR-011](ADR-011-invariantes-de-negocio-en-el-dominio.md) | Invariantes de negocio en el dominio | Aceptado |
+| [ADR-012](ADR-012-integraciones-externas.md) | Integraciones con servicios externos | Aceptado |

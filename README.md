@@ -193,17 +193,18 @@ Pendiente: autenticación y autorización. El MVP es monousuario por decisión d
 
 Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
 
-Suite actual del backend (`./gradlew test`), **164 tests en verde**:
+Suite actual del backend (`./gradlew test`), **194 tests en verde**:
 
 * **Esquema y datos**: que las migraciones apliquen sobre base limpia y sean idempotentes, que las restricciones de dominio rechacen lo que deben y que las semillas no se dupliquen al reiniciar.
 * **Mapeo**: que cada entidad viaje de ida y vuelta por su identificador tipado, y que la asociación `Plant` ↔ `Tag` asigne, reemplace y vacíe correctamente.
 * **API**: el ciclo HTTP completo con MockMvc —serialización, validación, manejador de errores y SQL— para el alta y el detalle de plantas, la asignación de tags, los filtros combinables del inventario, los catálogos y la paginación.
 * **Consultas**: cada `Specification` por separado, que la consulta de recuento de la paginación no se rompa con el `fetch`, y que el listado no dispare un N+1 al mapear el DTO.
+* **Recomendaciones de IA**: generación con el proveedor sustituido por un doble —la suite no toca la red—, idempotencia del alta, la carrera de dos peticiones simultáneas resuelta con hilos de verdad, y que un fallo del proveedor sale como `502` y no como un `400` que culpe al cliente.
 * **Invariantes de dominio**: que cada entidad rechace crearse o modificarse en un estado inválido. Son los únicos tests del backend que **no arrancan un contenedor**: una regla del modelo no necesita base de datos para probarse, porque el rechazo ocurre antes de intentar persistir.
 * **Lecturas de cultivo**: alta con y sin fecha del cliente, rechazo de fechas futuras y de valores fuera de rango, orden descendente con desempate estable, y que pintar el historial no dispare una consulta por lectura ni genere ninguna recomendación.
 * **Fechas y auditoría**: que un instante sobreviva a la ida y vuelta con la precisión que guarda la columna, que la salida del API no dependa de la zona horaria de la máquina, y que las marcas de creación y modificación se sellen con el reloj inyectado —congelable en los tests— y avancen solo cuando deben.
 
-Pendiente: el test E2E del flujo completo (crear planta → registrar lectura → generar recomendación de IA), que llega con T-03 y T-04.
+Pendiente: el test E2E del flujo completo (crear planta → registrar lectura → generar recomendación de IA), que llega con T-07. Las tres piezas ya existen y se prueban por separado; lo que falta es recorrerlas de punta a punta.
 
 ---
 
@@ -289,8 +290,12 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `careRecordId`: TSID. Clave foránea → `CareRecord.id`.
-* `riskLevel`: String/Enum. Nivel de riesgo (bajo, moderado, alto).
-* `recommendationText`: String. Explicación y acción recomendada.
+* `riskLevel`: Enum. Nivel de riesgo: `low`, `medium`, `high` ([ADR-007](docs/adr/ADR-007-enums-de-dominio.md)). El valor persistido va en inglés como el resto de identificadores; la etiqueta que ve el usuario la pone el frontend.
+* `recommendationText`: String. Explicación de por qué la planta está como está.
+* `recommendedAction`: String. Qué debe hacer el usuario. Para una planta sana es "no hacer nada", que también es una acción.
+* `priority`: Enum. Prioridad de actuación: `immediate`, `soon`, `routine` ([ADR-007](docs/adr/ADR-007-enums-de-dominio.md)). Deliberadamente no comparte escala con `riskLevel`: el riesgo dice **qué de grave**, la prioridad **cuándo actuar**.
+* `createdAt` / `updatedAt`: Marcas de auditoría ([ADR-010](docs/adr/ADR-010-fechas-y-auditoria.md)).
+* **Invariantes** ([ADR-011](docs/adr/ADR-011-invariantes-de-negocio-en-el-dominio.md)): explicación y acción no en blanco; **como mucho una recomendación por lectura**.
 
 ---
 
@@ -327,6 +332,8 @@ Tres reglas aplican a **todos** los endpoints:
 | `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
 | `POST /plants/{id}/care-records` | Registra una lectura de cultivo (humedad, temperatura, horas de luz, riego y acidez). La fecha la aporta el cliente o, si falta, la sella el servidor; una fecha futura se rechaza. |
 | `GET /plants/{id}/care-records` | Historial paginado de una planta, de la lectura más reciente a la más antigua, con la recomendación de IA de cada una cuando exista. |
+| `POST /plants/{id}/care-records/{crId}/recommendation` | Genera la recomendación de IA de una lectura y la persiste. Idempotente: si ya existe, la devuelve con `200` sin volver a consultar al proveedor. |
+| `GET /plants/{id}/care-records/{crId}/recommendation` | Devuelve la recomendación de una lectura, o `404` si aún no tiene. Nunca genera. |
 
 Ejemplo de filtrado combinado:
 
@@ -338,7 +345,6 @@ GET /plants?tag=400001&tag=400002&location=300002&page=0&size=25
 
 | Método y ruta | Ticket |
 |---|---|
-| `GET /plants/{id}/care-records/{careRecordId}/recommendation` — obtiene/genera la recomendación de IA de una lectura | T-04 |
 | `POST /soil-mixes` · `GET /soil-mixes` — catálogo de mezclas de tierra | Sin ticket; el MVP las consume de las semillas |
 | `POST /species` · `PUT /species/{id}` — alta y edición de especies | Sin ticket; ídem |
 

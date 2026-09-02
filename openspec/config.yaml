@@ -56,6 +56,13 @@ context: |
     colaborador (un reloj), se expresa en una factoría del `companion object` que lo recibe como
     parámetro, y el constructor primario se cierra; `web` solo admite comprobaciones de tipo y de
     rango, y las reglas que consultan otras filas siguen en `application`
+  - ADR-012: una integración con un servicio externo se contrata con un puerto en `application`
+    —no en `domain`, que es donde van los de repositorio— y su adaptador vive en
+    `infrastructure`; por el puerto viajan hechos ya resueltos, nunca formato del proveedor; el
+    adaptador captura todo fallo y lo envuelve en una excepción propia de la integración, que el
+    manejador global traduce a `502`; la llamada se hace fuera de la transacción de base de datos,
+    la sustitución en test es un doble del puerto con `@TestConfiguration` y `@Primary`, el cliente
+    es el `RestClient` de Spring y la configuración va por `${VAR:default}`
 
 rules:
   proposal:

@@ -14,8 +14,10 @@ class AIRecommendation(
   @EmbeddedId
   override val id: AIRecommendationId = AIRecommendationId.create(),
   careRecord: CareRecord,
-  riskLevel: String,
+  riskLevel: RiskLevel,
   recommendationText: String,
+  recommendedAction: String,
+  priority: Priority,
 ) : AbstractEntity<AIRecommendationId>() {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -23,16 +25,27 @@ class AIRecommendation(
   var careRecord: CareRecord = careRecord
     private set
 
+  /** El tipo ya garantiza que el valor pertenece al conjunto: no hace falta invariante. */
   @Column(name = "risk_level", nullable = false)
-  var riskLevel: String = riskLevel
+  var riskLevel: RiskLevel = riskLevel
     private set
 
   @Column(name = "recommendation_text", nullable = false)
   var recommendationText: String = recommendationText
     private set
 
+  @Column(name = "recommended_action", nullable = false)
+  var recommendedAction: String = recommendedAction
+    private set
+
+  @Column(name = "priority", nullable = false)
+  var priority: Priority = priority
+    private set
+
   init {
-    require(riskLevel.isNotBlank()) { "El nivel de riesgo es obligatorio" }
     require(recommendationText.isNotBlank()) { "El texto de la recomendación es obligatorio" }
+    // Para una planta sana la acción es "no hacer nada", que también es una acción: admitir el
+    // vacío obligaría a todos los consumidores a distinguir "sin acción" de "no me dio ninguna".
+    require(recommendedAction.isNotBlank()) { "La acción recomendada es obligatoria" }
   }
 }

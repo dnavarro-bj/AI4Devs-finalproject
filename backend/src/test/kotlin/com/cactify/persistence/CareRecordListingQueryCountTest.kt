@@ -7,20 +7,22 @@ import com.cactify.domain.CareRecord
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.Priority
+import com.cactify.domain.RiskLevel
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import org.hibernate.SessionFactory
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.hibernate.SessionFactory
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 
 /**
  * El listado resuelve la recomendación de cada lectura **por página**, no por fila. Si alguien
@@ -53,7 +55,13 @@ class CareRecordListingQueryCountTest : AbstractIntegrationTest() {
       // La mitad con recomendación, para que el mapa no se resuelva trivialmente vacío.
       if (i % 2 == 0) {
         entityManager.persist(
-          AIRecommendation(careRecord = record, riskLevel = "bajo", recommendationText = "Todo correcto"),
+          AIRecommendation(
+            careRecord = record,
+            riskLevel = RiskLevel.Low,
+            recommendationText = "Todo correcto",
+            recommendedAction = "No hagas nada",
+            priority = Priority.Routine,
+          ),
         )
       }
     }

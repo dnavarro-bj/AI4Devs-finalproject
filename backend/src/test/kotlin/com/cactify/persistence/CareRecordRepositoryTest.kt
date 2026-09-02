@@ -6,20 +6,22 @@ import com.cactify.domain.CareRecord
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.Priority
+import com.cactify.domain.RiskLevel
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.repos.AIRecommendationRepository
 import com.cactify.domain.repos.CareRecordRepository
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 
 /** Los dos puertos nuevos, al nivel del repositorio. */
 class CareRecordRepositoryTest : AbstractIntegrationTest() {
@@ -64,7 +66,13 @@ class CareRecordRepositoryTest : AbstractIntegrationTest() {
       CareRecord.record(plant = p, humidity = 40, recordedAt = Instant.parse("2026-08-02T10:00:00Z"), clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5)),
     )
     entityManager.persist(
-      AIRecommendation(careRecord = withRecommendation, riskLevel = "alto", recommendationText = "Riega"),
+      AIRecommendation(
+        careRecord = withRecommendation,
+        riskLevel = RiskLevel.High,
+        recommendationText = "Riega",
+        recommendedAction = "Riega hasta drenaje",
+        priority = Priority.Immediate,
+      ),
     )
     entityManager.flush()
 

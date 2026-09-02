@@ -90,7 +90,7 @@ class CareRecordService(
     recommendation = recommendation?.let {
       CareRecordRecommendationResponse(
         id = it.id.toString(),
-        riskLevel = it.riskLevel,
+        riskLevel = it.riskLevel.toString(),
         recommendationText = it.recommendationText,
       )
     },

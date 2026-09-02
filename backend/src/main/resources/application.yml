@@ -32,3 +32,12 @@ cactify:
     # Margen que se admite por delante del reloj del servidor al aceptar la fecha de una lectura:
     # absorbe un movil ligeramente desincronizado sin dar por buena una fecha equivocada.
     max-future-skew: ${CARE_RECORD_MAX_FUTURE_SKEW:PT5M}
+  ai:
+    # Vacía por defecto: sin clave el adaptador responde 502 en vez de arrancar roto, y los tests
+    # de integración sustituyen el puerto por un doble sin tocar la red (ADR-012).
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+    # Una recomendación se pide desde la pantalla de detalle y el usuario está esperando: más allá
+    # de este margen conviene devolver el error antes que seguir bloqueando la petición.
+    timeout: ${OPENAI_TIMEOUT:PT20S}

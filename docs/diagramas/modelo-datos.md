@@ -72,9 +72,11 @@ erDiagram
 
     AI_RECOMMENDATION {
         TSID id PK
-        TSID careRecordId FK
-        string riskLevel
+        TSID careRecordId FK UK
+        enum riskLevel
         string recommendationText
+        string recommendedAction
+        enum priority
         timestamp createdAt
     }
 ```

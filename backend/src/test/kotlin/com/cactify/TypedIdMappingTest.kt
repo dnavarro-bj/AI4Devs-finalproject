@@ -4,18 +4,20 @@ import com.cactify.domain.AIRecommendation
 import com.cactify.domain.CareRecord
 import com.cactify.domain.Location
 import com.cactify.domain.Plant
+import com.cactify.domain.Priority
+import com.cactify.domain.RiskLevel
 import com.cactify.domain.SoilMix
 import com.cactify.domain.Species
 import com.cactify.domain.Tag
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import org.junit.jupiter.api.Test
 
 /**
  * Cada entidad se persiste y se recupera por su identificador tipado sobre PostgreSQL real.
@@ -124,7 +126,13 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
     val location = Location(name = "Typed care location")
     val plant = Plant(nickname = "Juanito tipado", location = location, species = species)
     val careRecord = CareRecord.record(plant = plant, humidity = 40, temperature = 22, lightHours = 8, recordedAt = null, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
-    val recommendation = AIRecommendation(careRecord = careRecord, riskLevel = "bajo", recommendationText = "Todo correcto")
+    val recommendation = AIRecommendation(
+      careRecord = careRecord,
+      riskLevel = RiskLevel.Low,
+      recommendationText = "Todo correcto",
+      recommendedAction = "No hagas nada",
+      priority = Priority.Routine,
+    )
 
     entityManager.persist(soilMix)
     entityManager.persist(species)

@@ -4,13 +4,15 @@ import com.cactify.AbstractApiIntegrationTest
 import com.cactify.domain.AIRecommendation
 import com.cactify.domain.CareRecord
 import com.cactify.domain.CareRecordId
+import com.cactify.domain.Priority
+import com.cactify.domain.RiskLevel
+import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import kotlin.test.assertEquals
 
 /**
  * Escenarios de "Recomendación de IA asociada a cada lectura" y el recorte de precisión de la
@@ -37,13 +39,19 @@ class CareRecordRecommendationApiTest : AbstractApiIntegrationTest() {
     val recordId = createReading(plantId, "2026-08-01T10:00:00Z")
     val record = entityManager.find(CareRecord::class.java, CareRecordId.from(recordId))
     entityManager.persist(
-      AIRecommendation(careRecord = record, riskLevel = "alto", recommendationText = "Riega ya"),
+      AIRecommendation(
+        careRecord = record,
+        riskLevel = RiskLevel.High,
+        recommendationText = "Riega ya",
+        recommendedAction = "Riega hasta drenaje",
+        priority = Priority.Immediate,
+      ),
     )
     flushPersistenceContext()
 
     mockMvc.perform(get("/plants/$plantId/care-records"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.content[0].recommendation.riskLevel").value("alto"))
+      .andExpect(jsonPath("$.content[0].recommendation.riskLevel").value("high"))
       .andExpect(jsonPath("$.content[0].recommendation.recommendationText").value("Riega ya"))
       .andExpect(jsonPath("$.content[0].recommendation.id").isNotEmpty)
   }

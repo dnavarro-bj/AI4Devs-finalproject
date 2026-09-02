@@ -41,15 +41,28 @@ class CatalogInvariantsTest {
   }
 
   @Test
-  fun `an AI recommendation without a risk level or a text cannot be created`() {
+  fun `an AI recommendation without a text or without an action cannot be created`() {
     val plant = Plant(nickname = "Bola", location = location, species = species)
     val record = CareRecord.record(plant = plant, humidity = 35, recordedAt = null, clock = clock, maxFutureSkew = java.time.Duration.ofMinutes(5))
 
     assertFailsWith<IllegalArgumentException> {
-      AIRecommendation(careRecord = record, riskLevel = " ", recommendationText = "Riega")
+      AIRecommendation(
+        careRecord = record,
+        riskLevel = RiskLevel.High,
+        recommendationText = "",
+        recommendedAction = "Riega hasta drenaje",
+        priority = Priority.Immediate,
+      )
     }
+    // Una planta sana lleva "no hagas nada", que también es una acción: el vacío nunca es válido.
     assertFailsWith<IllegalArgumentException> {
-      AIRecommendation(careRecord = record, riskLevel = "alto", recommendationText = "")
+      AIRecommendation(
+        careRecord = record,
+        riskLevel = RiskLevel.Low,
+        recommendationText = "Todo correcto",
+        recommendedAction = " ",
+        priority = Priority.Routine,
+      )
     }
   }
 

@@ -1,8 +1,11 @@
 package com.cactify.web.errors
 
+import com.cactify.application.AIProviderException
+import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
 import com.cactify.application.PlantNotFoundException
+import com.cactify.application.RecommendationNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -71,6 +74,24 @@ class ApiExceptionHandler {
   @ExceptionHandler(PlantNotFoundException::class)
   fun onPlantNotFound(ex: PlantNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  @ExceptionHandler(CareRecordNotFoundException::class)
+  fun onCareRecordNotFound(ex: CareRecordNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  @ExceptionHandler(RecommendationNotFoundException::class)
+  fun onRecommendationNotFound(ex: RecommendationNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  /**
+   * El proveedor de IA falló. Es `502` y no `500`: el sistema aguas arriba no dio una respuesta
+   * utilizable, y no es culpa nuestra ni del cliente.
+   */
+  @ExceptionHandler(AIProviderException::class)
+  fun onAIProviderFailure(ex: AIProviderException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+    log.warn("El proveedor de IA falló en {}: {}", request.requestURI, ex.message)
+    return body(HttpStatus.BAD_GATEWAY, ex.message ?: "El proveedor de análisis no está disponible", request)
+  }
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun onNoResource(ex: NoResourceFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
