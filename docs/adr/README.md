@@ -17,7 +17,7 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-002](ADR-002-restricciones-en-base-de-datos.md) | Restricciones de dominio en la base de datos | Aceptado |
 | [ADR-003](ADR-003-tsid-como-clave-primaria.md) | TSID como clave primaria | Aceptado |
 | [ADR-004](ADR-004-testcontainers-para-tests-de-integracion.md) | Testcontainers para tests de integración | Aceptado |
-| [ADR-005](ADR-005-tdd.md) | Desarrollo dirigido por tests (TDD) | Aceptado |
+| [ADR-005](ADR-005-tdd.md) | Desarrollo dirigido por tests (TDD) | Aceptado (enmendado en T-05) |
 | [ADR-006](ADR-006-aislamiento-del-dominio.md) | Aislamiento del dominio (DDD) | Aceptado (enmendado en T-02) |
 | [ADR-007](ADR-007-enums-de-dominio.md) | Enums de dominio y sus converters | Aceptado |
 | [ADR-008](ADR-008-identificadores-tipados.md) | Identificadores tipados y su representación en el API | Aceptado |
@@ -25,3 +25,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-010](ADR-010-fechas-y-auditoria.md) | Fechas como `Instant` y marcas de auditoría en toda entidad | Aceptado |
 | [ADR-011](ADR-011-invariantes-de-negocio-en-el-dominio.md) | Invariantes de negocio en el dominio | Aceptado |
 | [ADR-012](ADR-012-integraciones-externas.md) | Integraciones con servicios externos | Aceptado |
+| [ADR-013](ADR-013-acceso-del-navegador-al-api.md) | Acceso del navegador al API | Aceptado |

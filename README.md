@@ -105,7 +105,7 @@ cp .env.example .env   # ajusta las variables si hace falta
 docker compose up --build
 ```
 
-Levanta PostgreSQL, el backend en `:8080` y el frontend en `:3000`. Al arrancar, el backend aplica las migraciones de Flyway y carga los datos semilla (mezclas de tierra, especies, localizaciones y tags), así que la API queda usable sin ningún paso manual. Detalle y variables disponibles en [iac/local/README.md](iac/local/README.md).
+Levanta PostgreSQL, el backend en `:8080` y el frontend en `:3000`, ya con el dashboard: inventario, alta de planta con los rangos de su especie a la vista, ficha, registro de lecturas y análisis de IA. Al arrancar, el backend aplica las migraciones de Flyway y carga los datos semilla (mezclas de tierra, especies, localizaciones y tags), así que la API queda usable sin ningún paso manual. Detalle y variables disponibles en [iac/local/README.md](iac/local/README.md).
 
 Para ejecutar la suite de tests del backend hace falta Docker en marcha (los tests de integración levantan un PostgreSQL real con Testcontainers):
 

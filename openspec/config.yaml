@@ -17,7 +17,7 @@ context: |
   Fuente de requisitos de producto:
   - README.md: descripción de producto, arquitectura, modelo de datos, API
   - docs/user-stories/: historias de usuario (0.x = en alcance del MVP, F.x = roadmap futuro)
-  - docs/tickets/: tickets T-01..T-07 que trocean el MVP
+  - docs/tickets/: tickets T-01..T-08 que trocean el MVP
 
   Convenciones:
   - Documentación y specs en español; código e identificadores en inglés
@@ -29,7 +29,10 @@ context: |
   - ADR-002: invariantes de dominio también como CHECK/UNIQUE/FK en la base de datos
   - ADR-003: claves primarias TSID (bigint ordenado por tiempo, generado en aplicación con hypersistence-tsid)
   - ADR-004: tests de integración contra PostgreSQL real con Testcontainers (nunca H2)
-  - ADR-005: TDD — los escenarios WHEN/THEN de las specs se escriben como tests antes que el código
+  - ADR-005: TDD — los escenarios WHEN/THEN de las specs se escriben como tests antes que el código;
+    enmendado en T-05: en el frontend el ciclo rojo-verde corre sobre Vitest con `@nuxt/test-utils`,
+    `@vue/test-utils` y `happy-dom`, montando componentes con el cliente HTTP doblado y sin levantar
+    el backend
   - ADR-006: aislamiento del dominio, web → application → domain, con infrastructure implementando
     los puertos; enmendado en T-02: `domain` admite `Specification`, `Page` y `Pageable` de Spring
     Data y ningún otro tipo de Spring; el puerto vive en `domain/repos` y lo implementa una sola
@@ -63,6 +66,10 @@ context: |
     manejador global traduce a `502`; la llamada se hace fuera de la transacción de base de datos,
     la sustitución en test es un doble del puerto con `@TestConfiguration` y `@Primary`, el cliente
     es el `RestClient` de Spring y la configuración va por `${VAR:default}`
+  - ADR-013: el navegador llega al API con CORS abierto a cualquier origen, configurado con un
+    `WebMvcConfigurer` en `infrastructure` sobre todas las rutas y sin credenciales; en
+    consecuencia el frontend pide los datos desde el cliente y no en renderizado de servidor. La
+    lista de orígenes pasará a variable de entorno en cuanto haya autenticación o despliegue no local
 
 rules:
   proposal:

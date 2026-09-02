@@ -14,7 +14,7 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 | Diagramas (modelo de datos y flujo E2E, en Mermaid) | [docs/diagramas/](docs/diagramas/) |
 | ADRs — decisiones técnicas transversales (`ADR-NNN`) | [docs/adr/](docs/adr/README.md) |
 | Backend | [backend/](backend/) |
-| Frontend | [frontend/](frontend/) |
+| Frontend (Nuxt: `app/pages`, `app/components`, `app/composables`, `app/stores`; tests en `test/`) | [frontend/](frontend/) |
 | Infraestructura local (Docker Compose) | [iac/local/](iac/local/) |
 
 ## Stack
@@ -78,6 +78,7 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 * **T-04 (`recomendaciones-ia`)**: generación y consulta de la recomendación de una lectura. Archivado.
 * **T-08 (`api-especies`)**: catálogo de especies completo — `POST/GET /species`, `GET/PUT/DELETE /species/{id}`, con unicidad del nombre científico y `409` al retirar una especie con ejemplares. Ticket abierto por el propio change, porque ninguno cubría el API que T-05 y T-07 dan por hecho. Implementado y en verde.
 * Transversales sin ticket, ya archivados: `fechas-y-auditoria` (ADR-010) e `invariantes-de-dominio` (ADR-011).
-* **Pendiente**: T-05/T-06 (frontend) y T-07 (test E2E).
+* **T-05 (`dashboard-frontend`)**: dashboard Nuxt — listado del inventario paginado, alta de planta con selector de especie y sus rangos a la vista, ficha con los cuidados heredados, registro de lecturas y generación del análisis de IA, con estados de carga y error. Añade CORS al backend ([ADR-013](docs/adr/ADR-013-acceso-del-navegador-al-api.md)) y el runner de tests del frontend (enmienda de ADR-005). Implementado y en verde.
+* **Pendiente**: T-06 (historial y alertas) y T-07 (test E2E).
 
-El frontend sigue siendo el esqueleto de Nuxt: aún no tiene código de aplicación. `dashboard-frontend` (T-05) está propuesto y en espera.
+El frontend ya es una aplicación: `frontend/app/` tiene páginas, componentes, composables y un store de Pinia, con tests en Vitest (`yarn test`). Los datos se piden **desde el cliente**, no en renderizado de servidor: la URL del API solo es válida en el navegador (ADR-013).
