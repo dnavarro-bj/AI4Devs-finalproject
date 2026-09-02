@@ -11,5 +11,6 @@
 | [T-05](T-05-dashboard-frontend.md) | Dashboard frontend | Frontend | [0.3](../user-stories/0.3-consultar-recomendaciones-por-especie.md), [0.4](../user-stories/0.4-obtener-analisis-de-ia.md) |
 | [T-06](T-06-historial-y-alertas.md) | Historial y alertas | Frontend | [0.5](../user-stories/0.5-consultar-historial-de-cuidados.md) |
 | [T-07](T-07-test-e2e-del-flujo-principal.md) | Test E2E del flujo principal | Testing | Todas las anteriores |
+| [T-08](T-08-api-del-catalogo-de-especies.md) | API del catálogo de especies | Backend | [0.3](../user-stories/0.3-consultar-recomendaciones-por-especie.md), [0.6](../user-stories/0.6-registrar-especie-y-cuidados-recomendados.md) |
 
 > Los tickets de las historias fuera de alcance ([docs/user-stories](../user-stories/README.md), serie `F.x`) no se documentan todavía; se crearán con numeración `F.x` cuando esas historias se planifiquen.

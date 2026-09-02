@@ -2,12 +2,16 @@ package com.cactify.web.errors
 
 import com.cactify.application.AIProviderException
 import com.cactify.application.CareRecordNotFoundException
+import com.cactify.application.DuplicateScientificNameException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
 import com.cactify.application.PlantNotFoundException
 import com.cactify.application.RecommendationNotFoundException
+import com.cactify.application.SpeciesInUseException
+import com.cactify.application.SpeciesNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -75,6 +79,10 @@ class ApiExceptionHandler {
   fun onPlantNotFound(ex: PlantNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
 
+  @ExceptionHandler(SpeciesNotFoundException::class)
+  fun onSpeciesNotFound(ex: SpeciesNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
   @ExceptionHandler(CareRecordNotFoundException::class)
   fun onCareRecordNotFound(ex: CareRecordNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
@@ -101,6 +109,30 @@ class ApiExceptionHandler {
   fun onDuplicateTagName(ex: DuplicateTagNameException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso ya existe", request)
 
+  @ExceptionHandler(SpeciesInUseException::class)
+  fun onSpeciesInUse(ex: SpeciesInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
+
+  @ExceptionHandler(DuplicateScientificNameException::class)
+  fun onDuplicateScientificName(ex: DuplicateScientificNameException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El recurso ya existe", request)
+
+  /**
+   * Cierra la carrera entre la comprobación de duplicado y el `INSERT`: dos altas simultáneas con
+   * el mismo nombre científico pasan las dos por `findByScientificName`, y a la segunda la rechaza
+   * el `UNIQUE` de `V6__` al vaciar la sesión, ya fuera del servicio. Es el mismo `409` por el
+   * mismo motivo, llegue por la comprobación o por la restricción.
+   *
+   * Solo esa restricción: cualquier otra violación de integridad sigue siendo un fallo nuestro y
+   * se propaga, en vez de disfrazarse de conflicto del cliente.
+   */
+  @ExceptionHandler(DataIntegrityViolationException::class)
+  fun onIntegrityViolation(ex: DataIntegrityViolationException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+    if (SPECIES_NAME_CONSTRAINT !in (rootMessage(ex) ?: "")) throw ex
+    log.warn("Nombre científico duplicado detectado por la restricción en {}", request.requestURI)
+    return body(HttpStatus.CONFLICT, "Ya existe una especie con ese nombre científico", request)
+  }
+
   private fun badRequest(message: String, request: HttpServletRequest) =
     body(HttpStatus.BAD_REQUEST, message, request)
 
@@ -116,6 +148,7 @@ class ApiExceptionHandler {
 
   private companion object {
     val log = LoggerFactory.getLogger(ApiExceptionHandler::class.java)
+    const val SPECIES_NAME_CONSTRAINT = "species_scientific_name_unique"
   }
 
   private fun rootMessage(ex: Throwable): String? {

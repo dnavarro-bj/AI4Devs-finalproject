@@ -35,7 +35,7 @@ class PaginationEnvelopeTest : AbstractApiIntegrationTest() {
 
   @Test
   fun `the envelope has the same shape on every listing`() {
-    for (path in listOf("/tags", "/locations", "/plants")) {
+    for (path in listOf("/tags", "/locations", "/species", "/plants")) {
       mockMvc.perform(get(path))
         .andExpect(status().isOk)
         .andExpect(jsonPath("$.content").isArray)

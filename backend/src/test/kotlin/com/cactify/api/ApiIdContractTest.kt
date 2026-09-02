@@ -20,9 +20,15 @@ class ApiIdContractTest : AbstractApiIntegrationTest() {
 
   @Test
   fun `identifiers are serialised as JSON strings, not numbers`() {
-    mockMvc.perform(get("/locations"))
+    for (path in listOf("/locations", "/species")) {
+      mockMvc.perform(get(path))
+        .andExpect(status().isOk)
+        .andExpect(jsonPath("$.content[0].id").value(instanceOf<Any>(String::class.java)))
+    }
+
+    mockMvc.perform(get("/species/$seededSpeciesId"))
       .andExpect(status().isOk)
-      .andExpect(jsonPath("$.content[0].id").value(instanceOf<Any>(String::class.java)))
+      .andExpect(jsonPath("$.id").value(instanceOf<Any>(String::class.java)))
 
     val plantId = createPlant("Bola contrato")
 
@@ -55,9 +61,11 @@ class ApiIdContractTest : AbstractApiIntegrationTest() {
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))
 
-    mockMvc.perform(get("/plants/no-soy-un-id"))
-      .andExpect(status().isBadRequest)
-      .andExpect(jsonPath("$.status").value(400))
+    for (path in listOf("/plants/no-soy-un-id", "/species/no-soy-un-id")) {
+      mockMvc.perform(get(path))
+        .andExpect(status().isBadRequest)
+        .andExpect(jsonPath("$.status").value(400))
+    }
   }
 
   private fun createPlant(nickname: String): String {

@@ -7,6 +7,10 @@ package com.cactify.application
 class InvalidReferenceException(reference: String, value: String) :
   RuntimeException("$reference '$value' no existe")
 
+/** La especie pedida por la ruta no existe: 404. */
+class SpeciesNotFoundException(id: String) :
+  RuntimeException("La especie '$id' no existe")
+
 /** La planta pedida por la ruta no existe: 404. */
 class PlantNotFoundException(id: String) :
   RuntimeException("La planta '$id' no existe")
@@ -14,6 +18,25 @@ class PlantNotFoundException(id: String) :
 /** Ya hay un tag con ese nombre normalizado en el catálogo: 409. */
 class DuplicateTagNameException(name: String) :
   RuntimeException("Ya existe un tag con el nombre '$name'")
+
+/**
+ * Ya hay otra especie con ese nombre científico: 409.
+ *
+ * La comparación es sensible a mayúsculas, a diferencia de la de los tags: un nombre científico
+ * es un binomio latino con capitalización canónica, no texto libre, y el `UNIQUE` de `V6__` es
+ * igualmente sensible. Las dos capas deben coincidir para que el conflicto no se cuele como 500.
+ */
+class DuplicateScientificNameException(scientificName: String) :
+  RuntimeException("Ya existe una especie con el nombre científico '$scientificName'")
+
+/**
+ * La especie tiene ejemplares y no puede retirarse del catálogo: 409.
+ *
+ * `plant.species_id` es `NOT NULL` y no tiene `ON DELETE`: sin esta comprobación el borrado
+ * reventaría contra la FK y el cliente recibiría un 500 por un caso perfectamente previsible.
+ */
+class SpeciesInUseException(id: String) :
+  RuntimeException("La especie '$id' tiene ejemplares registrados y no se puede eliminar")
 
 /** La lectura pedida por la ruta no existe, o no cuelga de la planta indicada: 404. */
 class CareRecordNotFoundException(id: String) :

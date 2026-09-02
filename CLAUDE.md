@@ -10,7 +10,7 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 |---|---|
 | Descripción de producto, arquitectura, modelo de datos, API | [README.md](README.md) |
 | Historias de usuario (una por archivo; `0.x` = en alcance del MVP, `F.x` = fuera de alcance/roadmap) | [docs/user-stories/](docs/user-stories/README.md) |
-| Tickets de trabajo (uno por archivo, `T-01`…`T-07`) | [docs/tickets/](docs/tickets/README.md) |
+| Tickets de trabajo (uno por archivo, `T-01`…`T-08`) | [docs/tickets/](docs/tickets/README.md) |
 | Diagramas (modelo de datos y flujo E2E, en Mermaid) | [docs/diagramas/](docs/diagramas/) |
 | ADRs — decisiones técnicas transversales (`ADR-NNN`) | [docs/adr/](docs/adr/README.md) |
 | Backend | [backend/](backend/) |
@@ -73,7 +73,11 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 ## Estado del proyecto
 
 * **T-01 (`modelo-datos`)**: esquema Flyway, datos semilla y entidades JPA. Archivado.
-* **T-02 (`api-crud-plantas`)**: API REST del inventario y de los catálogos — `POST/GET /plants`, `GET /plants/{id}`, `PUT /plants/{id}/tags`, `POST/GET /locations`, `POST/GET /tags`, con filtros combinables por `tag` (repetible, semántica AND) y `location`. Implementado y en verde.
-* **Pendiente**: T-03 (lecturas de cultivo), T-04 (recomendaciones de IA), T-05/T-06 (frontend), T-07.
+* **T-02 (`api-crud-plantas`)**: API REST del inventario y de los catálogos — `POST/GET /plants`, `GET /plants/{id}`, `PUT /plants/{id}/tags`, `POST/GET /locations`, `POST/GET /tags`, con filtros combinables por `tag` (repetible, semántica AND) y `location`. Archivado.
+* **T-03 (`api-lecturas-cultivo`)**: `POST/GET /plants/{id}/care-records`. Archivado.
+* **T-04 (`recomendaciones-ia`)**: generación y consulta de la recomendación de una lectura. Archivado.
+* **T-08 (`api-especies`)**: catálogo de especies completo — `POST/GET /species`, `GET/PUT/DELETE /species/{id}`, con unicidad del nombre científico y `409` al retirar una especie con ejemplares. Ticket abierto por el propio change, porque ninguno cubría el API que T-05 y T-07 dan por hecho. Implementado y en verde.
+* Transversales sin ticket, ya archivados: `fechas-y-auditoria` (ADR-010) e `invariantes-de-dominio` (ADR-011).
+* **Pendiente**: T-05/T-06 (frontend) y T-07 (test E2E).
 
-El frontend sigue siendo el esqueleto de Nuxt: aún no tiene código de aplicación.
+El frontend sigue siendo el esqueleto de Nuxt: aún no tiene código de aplicación. `dashboard-frontend` (T-05) está propuesto y en espera.

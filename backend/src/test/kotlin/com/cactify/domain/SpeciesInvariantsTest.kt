@@ -76,4 +76,77 @@ class SpeciesInvariantsTest {
   fun `a species without a watering guideline cannot be created`() {
     assertFailsWith<IllegalArgumentException> { species(wateringGuideline = "   ") }
   }
+
+  @Test
+  fun `updating with an inverted range is rejected and the species keeps its values`() {
+    val s = species(minHumidity = 10, maxHumidity = 30)
+
+    assertFailsWith<IllegalArgumentException> {
+      s.update(
+        scientificName = "Echinocactus grusonii",
+        commonName = "Asiento de suegra",
+        minHumidity = 40,
+        maxHumidity = 20,
+        minTemperature = 10,
+        maxTemperature = 35,
+        minLightHours = 6,
+        maxLightHours = 10,
+        wateringGuideline = "cada 10-20 dias",
+        soilMix = soilMix,
+      )
+    }
+
+    assertEquals(10, s.minHumidity, "la especie no debía quedar a medio actualizar")
+    assertEquals(30, s.maxHumidity, "la especie no debía quedar a medio actualizar")
+  }
+
+  @Test
+  fun `updating with a blank watering guideline is rejected`() {
+    val s = species()
+
+    assertFailsWith<IllegalArgumentException> {
+      s.update(
+        scientificName = "Echinocactus grusonii",
+        commonName = "Asiento de suegra",
+        minHumidity = 10,
+        maxHumidity = 30,
+        minTemperature = 10,
+        maxTemperature = 35,
+        minLightHours = 6,
+        maxLightHours = 10,
+        wateringGuideline = "   ",
+        soilMix = soilMix,
+      )
+    }
+
+    assertEquals("cada 10-20 dias", s.wateringGuideline)
+  }
+
+  @Test
+  fun `a valid update replaces every field`() {
+    val s = species()
+
+    s.update(
+      scientificName = "Ferocactus glaucescens",
+      commonName = "Biznaga azul",
+      minHumidity = 15,
+      maxHumidity = 35,
+      minTemperature = 8,
+      maxTemperature = 30,
+      minLightHours = 5,
+      maxLightHours = 9,
+      wateringGuideline = "cada 20 dias en crecimiento",
+      soilMix = soilMix,
+    )
+
+    assertEquals("Ferocactus glaucescens", s.scientificName)
+    assertEquals("Biznaga azul", s.commonName)
+    assertEquals(15, s.minHumidity)
+    assertEquals(35, s.maxHumidity)
+    assertEquals(8, s.minTemperature)
+    assertEquals(30, s.maxTemperature)
+    assertEquals(5, s.minLightHours)
+    assertEquals(9, s.maxLightHours)
+    assertEquals("cada 20 dias en crecimiento", s.wateringGuideline)
+  }
 }

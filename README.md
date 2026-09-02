@@ -320,10 +320,15 @@ Tres reglas aplican a **todos** los endpoints:
 
   `400` para lo inválido en el cuerpo o los parámetros, `404` para lo que falta en la ruta, `409` para un nombre de tag ya existente.
 
-### Endpoints implementados (T-02)
+### Endpoints implementados
 
 | Método y ruta | Qué hace |
 |---|---|
+| `POST /species` | Crea una especie (`scientificName`, `commonName`, los tres pares de rangos, `wateringGuideline` y `soilMixId`). La mezcla debe existir; el nombre científico es único. |
+| `GET /species` | Lista el catálogo paginado, ordenado por nombre científico. Devuelve el resumen: identificador y ambos nombres. |
+| `GET /species/{id}` | Ficha de una especie: sus rangos de humedad, temperatura y horas de luz, y la pauta de riego. |
+| `PUT /species/{id}` | Reemplaza la ficha completa. Idempotente; el cambio lo reciben todos los ejemplares de la especie. |
+| `DELETE /species/{id}` | Retira la especie del catálogo. `409` si tiene ejemplares; no hay borrado en cascada. |
 | `POST /plants` | Crea una planta (`nickname`, `locationId`, `speciesId`). Especie y localización deben existir. |
 | `GET /plants` | Lista el inventario paginado. Filtros opcionales y combinables: `location` y `tag` (repetible, semántica **AND**: la planta debe tener todos los indicados). |
 | `GET /plants/{id}` | Detalle de una planta, con sus tags y los datos de cuidado heredados de su especie. |
@@ -346,7 +351,6 @@ GET /plants?tag=400001&tag=400002&location=300002&page=0&size=25
 | Método y ruta | Ticket |
 |---|---|
 | `POST /soil-mixes` · `GET /soil-mixes` — catálogo de mezclas de tierra | Sin ticket; el MVP las consume de las semillas |
-| `POST /species` · `PUT /species/{id}` — alta y edición de especies | Sin ticket; ídem |
 
 ---
 

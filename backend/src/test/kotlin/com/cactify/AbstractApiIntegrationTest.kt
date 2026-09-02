@@ -48,6 +48,16 @@ abstract class AbstractApiIntegrationTest : AbstractIntegrationTest() {
     jdbcTemplate.update("DELETE FROM location")
   }
 
+  /**
+   * Deja el catálogo de especies vacío; exige que no queden plantas, porque `plant.species_id` es
+   * `NOT NULL` y no tiene `ON DELETE`. No toca `soil_mix`: el alta de una especie necesita una
+   * mezcla existente, y las semillas son la fuente.
+   */
+  protected fun clearSpecies() {
+    clearPlants()
+    jdbcTemplate.update("DELETE FROM species")
+  }
+
   /** Deja el catálogo de tags vacío. */
   protected fun clearTags() {
     jdbcTemplate.update("DELETE FROM plant_tag")

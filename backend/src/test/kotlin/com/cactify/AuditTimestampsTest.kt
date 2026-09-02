@@ -3,6 +3,8 @@ package com.cactify
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.SoilMix
+import com.cactify.domain.SoilMixId
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.Tag
@@ -59,6 +61,50 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
     assertEquals(createdAt, location.createdAt, "createdAt no debe cambiar al modificar")
     assertEquals(createdAt.plus(Duration.ofMinutes(30)), location.updatedAt)
     assertTrue(location.updatedAt.isAfter(location.createdAt))
+  }
+
+  /**
+   * El método de dominio que reemplaza la ficha de una especie sella `updatedAt` igual que el
+   * resto. La especie se crea aquí y no se toma de las semillas: las filas sembradas llevan el
+   * `createdAt` del `DEFAULT now()` de la migración, no el del reloj de test.
+   */
+  @Test
+  fun `updating a species sheet advances only its update timestamp`() {
+    val soilMix = entityManager.find(SoilMix::class.java, SoilMixId.from("100001"))
+    val species = Species(
+      scientificName = "Auditada al modificar",
+      commonName = "Especie auditada",
+      minHumidity = 10,
+      maxHumidity = 30,
+      minTemperature = 10,
+      maxTemperature = 35,
+      minLightHours = 6,
+      maxLightHours = 10,
+      wateringGuideline = "cada 10 dias",
+      soilMix = soilMix,
+    )
+    entityManager.persist(species)
+    entityManager.flush()
+    val createdAt = species.createdAt
+
+    clock.advanceBy(Duration.ofMinutes(45))
+    species.update(
+      scientificName = species.scientificName,
+      commonName = species.commonName,
+      minHumidity = 20,
+      maxHumidity = 40,
+      minTemperature = species.minTemperature,
+      maxTemperature = species.maxTemperature,
+      minLightHours = species.minLightHours,
+      maxLightHours = species.maxLightHours,
+      wateringGuideline = "pauta revisada",
+      soilMix = species.soilMix,
+    )
+    entityManager.flush()
+
+    assertEquals(createdAt, species.createdAt, "createdAt no debe cambiar al modificar")
+    assertEquals(createdAt.plus(Duration.ofMinutes(45)), species.updatedAt)
+    assertTrue(species.updatedAt.isAfter(species.createdAt))
   }
 
   @Test
