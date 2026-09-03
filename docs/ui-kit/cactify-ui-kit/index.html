@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cactify UI Kit: fundamentos, componentes y patrones de la aplicación de administración.">
+  <title>Cactify UI Kit</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="kit-shell">
+    <aside class="kit-sidebar" id="kit-sidebar" aria-label="Navegación del UI kit">
+      <div class="kit-brand">
+        <span class="brand-mark" aria-hidden="true">C</span>
+        <span><strong>Cactify</strong><small>UI Kit · 0.1</small></span>
+        <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="Cerrar navegación">×</button>
+      </div>
+      <nav class="kit-nav">
+        <p>Comenzar</p>
+        <a class="is-active" href="#overview"><span>⌂</span>Visión general</a>
+        <a href="#principles"><span>◎</span>Principios</a>
+        <p>Fundamentos</p>
+        <a href="#color"><span>◐</span>Color</a>
+        <a href="#type"><span>Aa</span>Tipografía</a>
+        <a href="#spacing"><span>↔</span>Espaciado y forma</a>
+        <p>Componentes</p>
+        <a href="#actions"><span>＋</span>Acciones</a>
+        <a href="#fields"><span>⌑</span>Campos</a>
+        <a href="#status"><span>●</span>Estados</a>
+        <a href="#navigation"><span>≡</span>Navegación</a>
+        <a href="#data"><span>▤</span>Datos</a>
+        <p>Patrones</p>
+        <a href="#plant-label"><span>♧</span>Ejemplar</a>
+        <a href="#care"><span>∿</span>Lectura e IA</a>
+        <a href="#feedback"><span>!</span>Feedback</a>
+      </nav>
+      <footer><span class="avatar">DN</span><span><strong>Referencia de producto</strong><small>Administración del vivero</small></span></footer>
+    </aside>
+    <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="Cerrar navegación"></button>
+
+    <main class="kit-main">
+      <header class="kit-topbar">
+        <button class="icon-button menu-button" id="menu-button" type="button" aria-label="Abrir navegación">☰</button>
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li>Cactify</li><li aria-current="page">UI Kit</li></ol></nav>
+        <span class="topbar-note">Referencia visual para frontend</span>
+      </header>
+
+      <div class="kit-content">
+        <section class="hero" id="overview" data-section>
+          <div class="hero-copy">
+            <span class="version-badge">Versión 0.1 · septiembre 2026</span>
+            <h1>Un sistema para cuidar una colección viva.</h1>
+            <p>Fundamentos y componentes extraídos de los wireframes de Cactify. Precisión de inventario, lectura rápida y acciones inequívocas para trabajar con cientos de ejemplares.</p>
+            <div class="hero-actions"><a class="button button--primary" href="#actions">Explorar componentes</a><a class="button button--secondary" href="../../wireframes/cactify-admin/">Abrir wireframes</a></div>
+          </div>
+          <article class="specimen-label specimen-label--hero" aria-label="Ejemplo de etiqueta de ejemplar">
+            <div class="label-top"><span class="label-mark">♧</span><span class="status status--warning">Revisar</span></div>
+            <code>CAT-GRUSS-01</code>
+            <h2>Asiento de suegra</h2>
+            <p><em>Echinocactus grusonii</em></p>
+            <dl><div><dt>Ubicación</dt><dd>Invernadero 1 / A3</dd></div><div><dt>Última lectura</dt><dd>24 °C · 31%</dd></div></dl>
+            <div class="label-foot"><span>Germinada 04/2021</span><span aria-hidden="true">|||| || | |||</span></div>
+          </article>
+        </section>
+
+        <section class="doc-section" id="principles" data-section>
+          <header class="section-title"><span>01</span><div><h2>Principios</h2><p>Las reglas que mantienen reconocible y usable el producto.</p></div></header>
+          <div class="principle-grid">
+            <article><strong>Trabajo antes que ornamento</strong><p>Lo vencido, anómalo o próximo ocupa la parte más fácil de escanear.</p></article>
+            <article><strong>Identidad persistente</strong><p>Código, especie y ubicación acompañan las decisiones que afectan a una planta.</p></article>
+            <article><strong>Evidencia antes que inferencia</strong><p>La lectura se presenta primero; la IA explica después y siempre cita el origen.</p></article>
+            <article><strong>Densidad respirable</strong><p>Tablas y cronologías compactas con blancos suficientes para evitar errores.</p></article>
+          </div>
+        </section>
+
+        <section class="doc-section" id="color" data-section>
+          <header class="section-title"><span>02</span><div><h2>Color</h2><p>Una paleta botánica sobria con semántica explícita.</p></div></header>
+          <div class="swatch-grid">
+            <button class="swatch swatch--ink" type="button" data-copy="#17211d"><span></span><strong>Tinta</strong><code>#17211D</code></button>
+            <button class="swatch swatch--brand" type="button" data-copy="#315c49"><span></span><strong>Vivero</strong><code>#315C49</code></button>
+            <button class="swatch swatch--canvas" type="button" data-copy="#f3f5f1"><span></span><strong>Lienzo</strong><code>#F3F5F1</code></button>
+            <button class="swatch swatch--line" type="button" data-copy="#d9e0db"><span></span><strong>Línea</strong><code>#D9E0DB</code></button>
+            <button class="swatch swatch--warning" type="button" data-copy="#9a6412"><span></span><strong>Atención</strong><code>#9A6412</code></button>
+            <button class="swatch swatch--danger" type="button" data-copy="#a34135"><span></span><strong>Crítico</strong><code>#A34135</code></button>
+          </div>
+          <p class="section-footnote">Pulsa una muestra para copiar su valor. El color semántico nunca aparece sin texto o icono.</p>
+        </section>
+
+        <section class="doc-section" id="type" data-section>
+          <header class="section-title"><span>03</span><div><h2>Tipografía</h2><p>Avenir Next para leer y decidir; monoespaciada para identificar.</p></div></header>
+          <div class="type-specimen panel">
+            <div><span>Título de pantalla · 38/41</span><h1>Trabajo de hoy</h1></div>
+            <div><span>Título de sección · 17/21</span><h2>Historial completo</h2></div>
+            <div><span>Texto base · 15/22</span><p>Primero lo vencido; después, lo que puede esperar.</p></div>
+            <div><span>Código · 12/14</span><code>CAT-GRUSS-01</code></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="spacing" data-section>
+          <header class="section-title"><span>04</span><div><h2>Espaciado y forma</h2><p>Una retícula de cuatro píxeles y radios ligados a la función.</p></div></header>
+          <div class="foundations-row">
+            <article class="panel spacing-demo"><h3>Escala</h3><div><i style="width:4px"></i><code>4</code></div><div><i style="width:8px"></i><code>8</code></div><div><i style="width:16px"></i><code>16</code></div><div><i style="width:24px"></i><code>24</code></div><div><i style="width:32px"></i><code>32</code></div><div><i style="width:48px"></i><code>48</code></div></article>
+            <article class="panel radius-demo"><h3>Radios</h3><div><span class="radius-sm"></span><small>6 · control</small></div><div><span class="radius-md"></span><small>10 · panel</small></div><div><span class="radius-lg"></span><small>16 · diálogo</small></div><div><span class="radius-pill"></span><small>píldora · estado</small></div></article>
+          </div>
+        </section>
+
+        <section class="doc-section" id="actions" data-section>
+          <header class="section-title"><span>05</span><div><h2>Acciones</h2><p>Jerarquía estable y verbos que anticipan el resultado.</p></div></header>
+          <div class="component-stage panel">
+            <div class="stage-row"><button class="button button--primary" type="button">Guardar lectura</button><button class="button button--secondary" type="button">Crear tarea</button><button class="button button--text" type="button">Ver historial</button><button class="icon-button" type="button" aria-label="Más acciones">•••</button></div>
+            <div class="stage-row"><button class="button button--primary" type="button" disabled>Guardar cambios</button><button class="button button--danger" type="button">Eliminar etiqueta</button><button class="icon-button is-selected" type="button" aria-label="Vista de tabla">▤</button></div>
+          </div>
+          <div class="usage-grid"><p><strong>Haz</strong>Una acción primaria por región y una etiqueta específica.</p><p><strong>Evita</strong>“Aceptar”, primarios consecutivos o iconos sin nombre accesible.</p></div>
+        </section>
+
+        <section class="doc-section" id="fields" data-section>
+          <header class="section-title"><span>06</span><div><h2>Campos</h2><p>Etiqueta visible, ayuda útil y unidades fuera del valor.</p></div></header>
+          <div class="component-stage panel field-grid">
+            <label class="field"><span>Nombre de la planta</span><input type="text" value="Asiento de suegra"><small>Nombre interno; la especie no cambia.</small></label>
+            <label class="field"><span>Localización</span><select><option>Invernadero 1 / Bancada norte / A3</option></select><small>Ubicación exacta del ejemplar.</small></label>
+            <label class="field"><span>Humedad</span><span class="input-suffix"><input type="number" value="31" min="0" max="100"><b>%</b></span><small>Rango efectivo: 20–40%.</small></label>
+            <label class="field field--error"><span>pH del sustrato</span><span class="input-suffix"><input type="number" value="15" aria-invalid="true"><b>pH</b></span><small>Introduce un valor entre 0 y 14.</small></label>
+            <label class="field field--wide"><span>Observación</span><textarea rows="3">Coloración uniforme después del último riego.</textarea><small>Describe solo lo observado; la recomendación se genera aparte.</small></label>
+            <label class="check-row field--wide"><input type="checkbox" checked><span><strong>Generar recomendación con IA</strong><small>Usará esta lectura y el historial reciente.</small></span></label>
+          </div>
+        </section>
+
+        <section class="doc-section" id="status" data-section>
+          <header class="section-title"><span>07</span><div><h2>Estados y prioridad</h2><p>“Cómo está” y “cuándo actuar” son dimensiones distintas.</p></div></header>
+          <div class="component-stage panel state-stage">
+            <div><h3>Estado</h3><p><span class="status status--ok">Al día</span><span class="status status--warning">Revisar</span><span class="status status--danger">Crítica</span><span class="status status--neutral">Inactiva</span></p></div>
+            <div><h3>Prioridad</h3><p><span class="priority priority--routine">Rutina</span><span class="priority priority--soon">Atender pronto</span><span class="priority priority--immediate">Inmediata</span></p></div>
+            <div><h3>Filtro aplicado</h3><p><button class="filter-chip" type="button">Pleno sol <span aria-hidden="true">×</span><span class="sr-only">Quitar filtro</span></button><button class="filter-chip" type="button">Revisar <span aria-hidden="true">×</span><span class="sr-only">Quitar filtro</span></button></p></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="navigation" data-section>
+          <header class="section-title"><span>08</span><div><h2>Navegación</h2><p>Orientación global, jerarquía local y contexto persistente.</p></div></header>
+          <div class="component-stage panel">
+            <nav class="breadcrumbs demo-breadcrumbs" aria-label="Breadcrumb de ejemplo"><ol><li><button type="button">Inicio</button></li><li><button type="button">Plantas</button></li><li aria-current="page">CAT-GRUSS-01</li></ol></nav>
+            <nav class="tabs" aria-label="Secciones del ejemplo"><button class="is-active" type="button">Resumen e historial</button><button type="button">Fotografías <span>8</span></button><button type="button">Floración <span>3</span></button><button type="button">Datos</button></nav>
+          </div>
+        </section>
+
+        <section class="doc-section" id="data" data-section>
+          <header class="section-title"><span>09</span><div><h2>Datos</h2><p>La comparación domina; las acciones masivas aparecen cuando hacen falta.</p></div></header>
+          <div class="selection-bar" id="selection-bar"><strong><span id="selected-count">0</span> plantas seleccionadas</strong><button type="button">Mover</button><button type="button">Crear tarea</button><button type="button">Etiquetar</button></div>
+          <div class="table-frame"><table><thead><tr><th><input id="select-all" type="checkbox" aria-label="Seleccionar todas"></th><th>Planta</th><th>Localización</th><th>Última lectura</th><th>Estado</th></tr></thead><tbody>
+            <tr><td><input class="row-check" type="checkbox" aria-label="Seleccionar CAT-GRUSS-01"></td><td><span class="plant-cell"><span class="plant-thumb">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span></span></td><td>Invernadero 1 / A3</td><td>24 °C · 31%</td><td><span class="status status--warning">Revisar</span></td></tr>
+            <tr><td><input class="row-check" type="checkbox" aria-label="Seleccionar CAT-ASTRO-12"></td><td><span class="plant-cell"><span class="plant-thumb plant-thumb--olive">✣</span><span><code>CAT-ASTRO-12</code><strong>Superkabuto 12</strong></span></span></td><td>Invernadero 1 / A3</td><td>29 °C · 16%</td><td><span class="status status--danger">Alerta</span></td></tr>
+            <tr><td><input class="row-check" type="checkbox" aria-label="Seleccionar CAT-MAMMI-04"></td><td><span class="plant-cell"><span class="plant-thumb plant-thumb--mist">♧</span><span><code>CAT-MAMMI-04</code><strong>Bola blanca</strong></span></span></td><td>Invernadero 1 / A4</td><td>22 °C · 34%</td><td><span class="status status--ok">Al día</span></td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="doc-section" id="plant-label" data-section>
+          <header class="section-title"><span>10</span><div><h2>Etiqueta de ejemplar</h2><p>La unidad de reconocimiento visual de toda la colección.</p></div></header>
+          <div class="label-showcase">
+            <article class="specimen-label"><div class="label-top"><span class="label-mark">♧</span><span class="status status--ok">Activa</span></div><code>CAT-GRUSS-01</code><h2>Asiento de suegra</h2><p><em>Echinocactus grusonii</em></p><dl><div><dt>Ubicación</dt><dd>Invernadero 1 / A3</dd></div><div><dt>Germinación</dt><dd>04/2021</dd></div></dl><div class="label-foot"><span>Pleno sol · Exterior</span><span aria-hidden="true">|||| || | |||</span></div></article>
+            <div class="anatomy"><ol><li><span>1</span><p><strong>Código permanente</strong>No cambia al editar nombre, especie o ubicación.</p></li><li><span>2</span><p><strong>Nombre humano</strong>Facilita reconocer el ejemplar durante el trabajo.</p></li><li><span>3</span><p><strong>Contexto botánico</strong>Especie, ubicación y condiciones sin abrir la ficha.</p></li></ol></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="care" data-section>
+          <header class="section-title"><span>11</span><div><h2>Lectura e IA</h2><p>La interpretación permanece unida a la evidencia que la originó.</p></div></header>
+          <article class="care-record panel">
+            <header><div><span class="event-mark">∿</span><div><span class="event-type">Lectura de cultivo</span><h3>Sustrato más seco después de varios días cálidos</h3></div></div><time>3 sep 2026 · 09:40</time></header>
+            <div class="reading-values"><div><span>Humedad</span><strong>18%</strong></div><div><span>Temperatura</span><strong>34 °C</strong></div><div><span>Luz</span><strong>10 h</strong></div><div><span>pH</span><strong>6,2</strong></div><div><span>Riego</span><strong>—</strong></div></div>
+            <button class="ai-inline" id="open-ai" type="button"><span class="ai-spark">✦</span><span><small>Recomendación de IA · riesgo medio</small><strong>Posible estrés hídrico leve; conviene comprobar el sustrato.</strong></span><b>Ver análisis</b></button>
+          </article>
+        </section>
+
+        <section class="doc-section" id="feedback" data-section>
+          <header class="section-title"><span>12</span><div><h2>Feedback y estados límite</h2><p>Cada situación explica lo ocurrido y la siguiente acción disponible.</p></div></header>
+          <div class="feedback-grid">
+            <article class="notice notice--warning"><span>!</span><div><strong>Revisión pendiente</strong><p>No se registra una observación desde hace 43 días.</p></div><button class="button button--secondary" type="button">Crear tarea</button></article>
+            <article class="empty-state panel"><span>♧</span><h3>Todavía no hay plantas aquí</h3><p>Añade un ejemplar o mueve plantas desde otra ubicación.</p><button class="button button--primary" type="button">Añadir planta</button></article>
+            <article class="inline-error panel"><span>×</span><div><strong>No se pudo importar la fila 18</strong><p>El código CAT-GRUSS-01 ya existe. Usa otro código o excluye la fila.</p></div><button class="button button--text" type="button">Revisar fila</button></article>
+          </div>
+        </section>
+
+        <footer class="kit-footer"><span>Cactify UI Kit · referencia inicial</span><a href="../README.md">Leer documentación</a></footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="dialog-backdrop" id="ai-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-title" hidden>
+    <article class="dialog">
+      <header><div><p>Recomendación vinculada a una lectura</p><h2 id="ai-title">Análisis de CAT-GRUSS-01</h2></div><button class="icon-button" id="close-ai" type="button" aria-label="Cerrar">×</button></header>
+      <div class="dialog-body">
+        <div class="reading-values reading-values--dialog"><div><strong>18%</strong><span>Humedad</span></div><div><strong>34 °C</strong><span>Temperatura</span></div><div><strong>10 h</strong><span>Luz</span></div><div><strong>6,2</strong><span>pH</span></div><div><strong>—</strong><span>Riego</span></div></div>
+        <div class="ai-verdict"><span class="ai-spark">✦</span><div><p><span class="status status--warning">Riesgo medio</span><span class="priority priority--soon">Atender pronto</span></p><h3>Posible estrés hídrico leve</h3><p>La humedad está por debajo del rango efectivo y la temperatura se acerca al máximo recomendado.</p></div></div>
+        <section class="recommended-action"><span>Acción recomendada</span><strong>Comprueba el sustrato a 3–4 cm y, si está completamente seco, riega 350–450 ml a primera hora.</strong><button class="button button--secondary" type="button">Crear tarea con esta acción</button></section>
+        <div class="ai-basis"><strong>Qué se ha tenido en cuenta</strong><ul><li>Lectura del 3 sep 2026, 09:40</li><li>Rangos efectivos de la especie</li><li>Último riego hace 18 días</li><li>Historial reciente</li></ul></div>
+        <p class="disclaimer">La recomendación orienta una revisión; no modifica cuidados, tareas ni alertas automáticamente.</p>
+      </div>
+      <footer><span>Guardada junto a su lectura.</span><button class="button button--primary" id="accept-ai" type="button">Cerrar y volver</button></footer>
+    </article>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="prototype.js"></script>
+</body>
+</html>

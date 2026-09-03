@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Wireframe navegable de la administración de Cactify">
+  <title>Cactify — wireframe de administración</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="prototype" id="prototype">
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+      <div class="brand-row">
+        <button class="brand" type="button" data-page="dashboard" aria-label="Ir al Dashboard">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <span><strong>Cactify</strong><small>Vivero privado</small></span>
+        </button>
+        <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="Cerrar menú">×</button>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-item is-active" type="button" data-page="dashboard"><span aria-hidden="true">⌂</span>Dashboard</button>
+
+        <p class="nav-heading">Colección</p>
+        <button class="nav-item" type="button" data-page="plants"><span aria-hidden="true">♧</span>Plantas <small>1.284</small></button>
+        <button class="nav-item" type="button" data-page="locations"><span aria-hidden="true">⌖</span>Localizaciones <small>18</small></button>
+
+        <p class="nav-heading">Trabajo diario</p>
+        <button class="nav-item" type="button" data-page="tasks"><span aria-hidden="true">✓</span>Tareas <small class="nav-count">13</small></button>
+        <button class="nav-item" type="button" data-page="alerts"><span aria-hidden="true">!</span>Alertas <small class="nav-count nav-count--danger">4</small></button>
+
+        <p class="nav-heading">Catálogos</p>
+        <button class="nav-item" type="button" data-page="species"><span aria-hidden="true">⌘</span>Especies <small>74</small></button>
+        <button class="nav-item" type="button" data-page="soil-mixes"><span aria-hidden="true">◒</span>Mezclas de sustrato <small>6</small></button>
+        <button class="nav-item" type="button" data-page="tags"><span aria-hidden="true">◇</span>Etiquetas <small>14</small></button>
+
+        <p class="nav-heading">Administración</p>
+        <button class="nav-item" type="button" data-page="transfer"><span aria-hidden="true">⇅</span>Importar / exportar</button>
+        <button class="nav-item" type="button" data-page="settings"><span aria-hidden="true">⚙</span>Configuración</button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <span class="avatar" aria-hidden="true">DN</span>
+        <span><strong>David Navarro</strong><small>Administrador</small></span>
+        <button class="icon-button" type="button" aria-label="Abrir menú de usuario">•••</button>
+      </div>
+    </aside>
+
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menu-button" type="button" aria-label="Abrir menú">☰</button>
+        <button class="global-search" id="global-search" type="button" aria-haspopup="dialog" aria-label="Abrir búsqueda global">
+          <span aria-hidden="true">⌕</span>
+          <span>Buscar plantas, especies o localizaciones…</span>
+          <kbd>⌘ K</kbd>
+        </button>
+        <div class="topbar-actions">
+          <button class="secondary-button topbar-label" type="button" data-open-task aria-label="Nueva tarea">＋ <span>Nueva tarea</span></button>
+          <button class="icon-button notification-button" type="button" data-page="alerts" aria-label="4 alertas abiertas">♢<span>4</span></button>
+        </div>
+      </header>
+
+      <main class="main-content" id="main-content">
+        <section class="screen is-visible" data-screen="dashboard" aria-labelledby="dashboard-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li aria-current="page">Inicio</li></ol></nav>
+          <div class="page-heading">
+            <div><p class="eyebrow">Jueves, 3 de septiembre</p><h1 id="dashboard-title">Trabajo de hoy</h1><p class="page-intro">Primero lo vencido; después, lo que puede esperar.</p></div>
+            <button class="primary-button" type="button" data-open-task>＋ Crear tarea</button>
+          </div>
+
+          <div class="work-summary" aria-label="Resumen de trabajo">
+            <button type="button" data-page="tasks"><span class="summary-number summary-number--danger">5</span><span><strong>Vencidas</strong><small>2 desde hace más de una semana</small></span><span aria-hidden="true">→</span></button>
+            <button type="button" data-page="tasks"><span class="summary-number">8</span><span><strong>Para hoy</strong><small>43 plantas afectadas</small></span><span aria-hidden="true">→</span></button>
+            <button type="button" data-page="alerts"><span class="summary-number summary-number--warning">4</span><span><strong>Alertas abiertas</strong><small>Una requiere atención inmediata</small></span><span aria-hidden="true">→</span></button>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel agenda-panel">
+              <header class="panel-heading"><div><p class="eyebrow">Agenda</p><h2>Siguiente trabajo</h2></div><button class="text-button" type="button" data-page="tasks">Ver agenda →</button></header>
+              <div class="task-cluster">
+                <div class="date-rail"><strong>HOY</strong><span>03</span><small>SEP</small></div>
+                <div class="task-stack">
+                  <article class="task-row is-urgent">
+                    <button class="task-check" type="button" aria-label="Completar tarea" data-complete-task>○</button>
+                    <div><div class="task-meta"><span>Riego</span><span class="priority priority--high">Alta</span></div><h3>Regar bandejas A3 y A4</h3><p>Invernadero 1 · 31 plantas</p></div><time>09:00</time>
+                  </article>
+                  <article class="task-row">
+                    <button class="task-check" type="button" aria-label="Completar tarea" data-complete-task>○</button>
+                    <div><div class="task-meta"><span>Cambio de maceta</span></div><h3>Revisar ejemplares marcados</h3><p>6 plantas · selección guardada</p></div><time>Flexible</time>
+                  </article>
+                </div>
+              </div>
+              <div class="task-cluster task-cluster--later">
+                <div class="date-rail"><strong>VIE</strong><span>04</span><small>SEP</small></div>
+                <div class="task-stack">
+                  <article class="task-row">
+                    <button class="task-check" type="button" aria-label="Completar tarea" data-complete-task>○</button>
+                    <div><div class="task-meta"><span>Protección solar</span></div><h3>Instalar sombreo temporal</h3><p>Invernadero 2 · bancada sur</p></div><time>08:30</time>
+                  </article>
+                </div>
+              </div>
+            </article>
+
+            <aside class="dashboard-side">
+              <article class="panel alerts-panel">
+                <header class="panel-heading"><div><p class="eyebrow eyebrow--danger">Atención</p><h2>Alertas</h2></div><button class="text-button" type="button" data-page="alerts">Ver todas →</button></header>
+                <button class="alert-row" type="button" data-page="plant-detail"><span class="alert-dot alert-dot--danger"></span><span><strong>Temperatura crítica</strong><small>CAT-FEROC-08 · Invernadero 2</small></span><time>Hace 32 min</time></button>
+                <button class="alert-row" type="button" data-page="plant-detail"><span class="alert-dot alert-dot--warning"></span><span><strong>Sin revisar durante 43 días</strong><small>CAT-GRUSS-01 · Bandeja A3</small></span><time>Ayer</time></button>
+                <button class="alert-row" type="button" data-page="plant-detail"><span class="alert-dot alert-dot--warning"></span><span><strong>Humedad fuera de rango</strong><small>CAT-ASTRO-12 · Bancada norte</small></span><time>Ayer</time></button>
+              </article>
+
+              <article class="panel location-panel">
+                <header class="panel-heading"><div><p class="eyebrow">Carga por zona</p><h2>Localizaciones</h2></div></header>
+                <button class="location-load" type="button" data-page="location-detail"><span><strong>Invernadero 1</strong><small>486 plantas · 21 tareas</small></span><span class="load-track"><i style="width:78%"></i></span></button>
+                <button class="location-load" type="button" data-page="location-detail"><span><strong>Invernadero 2</strong><small>391 plantas · 14 tareas</small></span><span class="load-track"><i style="width:62%"></i></span></button>
+                <button class="location-load" type="button" data-page="locations"><span><strong>Zona exterior</strong><small>407 plantas · 8 tareas</small></span><span class="load-track"><i style="width:51%"></i></span></button>
+              </article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="plants" aria-labelledby="plants-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Plantas</li></ol></nav>
+          <div class="page-heading page-heading--compact">
+            <div><p class="eyebrow">Colección</p><h1 id="plants-title">Plantas <span class="heading-count">1.284</span></h1></div>
+            <button class="primary-button" type="button" data-open-plant-editor="new">＋ Añadir planta</button>
+          </div>
+
+          <div class="inventory-toolbar">
+            <label class="inline-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Código, apodo o especie"></label>
+            <button class="filter-button" type="button">Localización <span>⌄</span></button>
+            <button class="filter-button" type="button">Especie <span>⌄</span></button>
+            <button class="filter-button" type="button">Estado <span>⌄</span></button>
+            <button class="filter-button" type="button">Más filtros <span>＋</span></button>
+            <button class="icon-button" type="button" aria-label="Configurar columnas">☷</button>
+          </div>
+          <div class="active-filters"><span>Localización: Invernadero 1 <button type="button" aria-label="Quitar filtro">×</button></span><button class="text-button" type="button">Limpiar filtros</button></div>
+
+          <div class="selection-bar" id="selection-bar" aria-live="polite"><strong><span id="selected-count">0</span> seleccionadas</strong><button type="button">Crear tarea</button><button type="button">Mover</button><button type="button">Etiquetar</button><button type="button">Más acciones</button></div>
+
+          <div class="table-frame">
+            <table class="inventory-table">
+              <thead><tr><th><input class="row-selector" type="checkbox" aria-label="Seleccionar todas las plantas"></th><th>Planta</th><th>Especie</th><th>Localización</th><th>Último riego</th><th>Atención</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+              <tbody>
+                <tr><td><input class="row-selector" type="checkbox" aria-label="Seleccionar CAT-GRUSS-01"></td><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--one">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span></button></td><td><em>Echinocactus grusonii</em></td><td>Invernadero 1 / A3</td><td>Hace 18 días</td><td><span class="status status--warning">Revisar</span></td><td><button class="icon-button" type="button" aria-label="Acciones de CAT-GRUSS-01">•••</button></td></tr>
+                <tr><td><input class="row-selector" type="checkbox" aria-label="Seleccionar CAT-ASTRO-12"></td><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--two">✣</span><span><code>CAT-ASTRO-12</code><strong>Superkabuto 12</strong></span></button></td><td><em>Astrophytum asterias</em></td><td>Invernadero 1 / A3</td><td>Hace 11 días</td><td><span class="status status--danger">Alerta</span></td><td><button class="icon-button" type="button" aria-label="Acciones de CAT-ASTRO-12">•••</button></td></tr>
+                <tr><td><input class="row-selector" type="checkbox" aria-label="Seleccionar CAT-MAMMI-04"></td><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--three">♧</span><span><code>CAT-MAMMI-04</code><strong>Bola blanca</strong></span></button></td><td><em>Mammillaria bocasana</em></td><td>Invernadero 1 / A4</td><td>Hace 7 días</td><td><span class="status status--ok">Al día</span></td><td><button class="icon-button" type="button" aria-label="Acciones de CAT-MAMMI-04">•••</button></td></tr>
+                <tr><td><input class="row-selector" type="checkbox" aria-label="Seleccionar CAT-FEROC-08"></td><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--four">✦</span><span><code>CAT-FEROC-08</code><strong>Ferocactus rojo</strong></span></button></td><td><em>Ferocactus gracilis</em></td><td>Invernadero 2 / B1</td><td>Hace 24 días</td><td><span class="status status--danger">Crítica</span></td><td><button class="icon-button" type="button" aria-label="Acciones de CAT-FEROC-08">•••</button></td></tr>
+                <tr><td><input class="row-selector" type="checkbox" aria-label="Seleccionar CAT-LOPHO-02"></td><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--five">●</span><span><code>CAT-LOPHO-02</code><strong>Lophophora 02</strong></span></button></td><td><em>Lophophora williamsii</em></td><td>Invernadero 1 / A5</td><td>Hace 14 días</td><td><span class="status status--ok">Al día</span></td><td><button class="icon-button" type="button" aria-label="Acciones de CAT-LOPHO-02">•••</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <footer class="table-footer"><span>1–25 de 486 resultados</span><div><button class="icon-button" type="button" disabled aria-label="Página anterior">←</button><button class="page-number is-current" type="button">1</button><button class="page-number" type="button">2</button><button class="page-number" type="button">3</button><button class="icon-button" type="button" aria-label="Página siguiente">→</button></div></footer>
+        </section>
+
+        <section class="screen" data-screen="plant-create" aria-labelledby="plant-create-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="plants">Plantas</button></li><li aria-current="page" id="plant-editor-crumb">Añadir planta</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><h1 id="plant-create-title">Añadir planta</h1><p class="page-intro" id="plant-editor-intro">Registra un ejemplar y deja preparado su seguimiento desde el primer día.</p></div></div>
+
+          <form class="plant-editor" id="plant-form">
+            <aside class="editor-nav plant-editor-nav" aria-label="Secciones del formulario">
+              <button class="is-active" type="button" data-plant-editor-section="plant-species">Especie y código <span>✓</span></button>
+              <button type="button" data-plant-editor-section="plant-identity">Identificación</button>
+              <button type="button" data-plant-editor-section="plant-location">Localización</button>
+              <button type="button" data-plant-editor-section="plant-origin">Origen y edad</button>
+              <button type="button" data-plant-editor-section="plant-photos">Fotografías</button>
+              <button type="button" data-plant-editor-section="plant-care">Cuidados efectivos</button>
+            </aside>
+
+            <div class="editor-content plant-editor-content">
+              <fieldset id="plant-editor-plant-species">
+                <legend>Especie y código</legend><p>La especie define el código y la pauta de cuidados inicial.</p>
+                <label class="plant-species-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Buscar por nombre científico, común o código" value="grusonii"></label>
+                <div class="plant-species-results" role="radiogroup" aria-label="Seleccionar especie">
+                  <button class="plant-species-option is-selected" type="button" role="radio" aria-checked="true" data-plant-species data-code="CAT-GRUSS-24" data-scientific="Echinocactus grusonii" data-common="Asiento de suegra"><span class="species-thumb">✺</span><span><code>CAT-GRUSS</code><strong><em>Echinocactus grusonii</em></strong><small>Asiento de suegra · 23 ejemplares</small></span><span class="selected-check">✓</span></button>
+                  <button class="plant-species-option" type="button" role="radio" aria-checked="false" data-plant-species data-code="CAT-ASTRO-18" data-scientific="Astrophytum asterias" data-common="Cactus erizo de mar"><span class="species-thumb species-thumb--astro">✣</span><span><code>CAT-ASTRO</code><strong><em>Astrophytum asterias</em></strong><small>Cactus erizo de mar · 17 ejemplares</small></span><span class="selected-check">✓</span></button>
+                </div>
+                <button class="text-button species-missing" type="button" data-open-species-editor="new">¿No encuentras la especie? Añádela al catálogo</button>
+                <div class="generated-code-block">
+                  <div><span class="inventory-tag-preview"><small>CACTIFY · EJEMPLAR</small><strong id="plant-code-preview">CAT-GRUSS-24</strong><em id="plant-species-preview">Echinocactus grusonii</em></span></div>
+                  <div><span class="field-label">Código de inventario</span><p>Se asignará al guardar usando el siguiente número disponible. No volverá a utilizarse, aunque la planta se archive.</p><span class="locked-code"><span aria-hidden="true">⌑</span><code id="plant-code-field">CAT-GRUSS-24</code><small>Generado automáticamente</small></span></div>
+                </div>
+              </fieldset>
+
+              <fieldset id="plant-editor-plant-identity">
+                <legend>Identificación</legend><p>Datos propios de este ejemplar, no de toda la especie.</p>
+                <div class="form-grid species-form-grid"><label>Apodo o nombre interno<input id="plant-nickname" type="text" value="Grusonii nuevo" placeholder="Opcional"></label><label><span id="plant-state-label">Estado inicial</span><select><option>Activa</option><option>Cuarentena</option><option>Enferma</option></select></label><label class="form-span">Descripción<textarea rows="4" placeholder="Rasgos que ayudan a reconocer este ejemplar">Ejemplar globular joven, espinación dorada uniforme.</textarea></label><label class="form-span">Etiquetas<span class="tag-input"><span>Semillero 2021 <button type="button" aria-label="Quitar etiqueta">×</button></span><input type="text" placeholder="Añadir etiqueta…"></span></label></div>
+              </fieldset>
+
+              <fieldset id="plant-editor-plant-location">
+                <legend>Localización</legend><p>Selecciona su posición física exacta. Podrás moverla más adelante conservando el historial.</p>
+                <button class="plant-location-picker" type="button"><span class="location-symbol location-symbol--tray">▦</span><span><small>Ubicación seleccionada</small><strong>Invernadero 1 / Bancada norte / Bandeja A3</strong><em>31 plantas actualmente · 1 tarea pendiente</em></span><span>Cambiar</span></button>
+                <div class="location-compatibility"><span>✓</span><p><strong>Ubicación compatible</strong><small>La exposición y el entorno coinciden con la pauta de <em>Echinocactus grusonii</em>.</small></p></div>
+              </fieldset>
+
+              <fieldset id="plant-editor-plant-origin">
+                <legend>Origen y edad</legend><p>Registra lo que conozcas. El mes de germinación puede quedar sin especificar.</p>
+                <div class="form-grid species-form-grid"><label>Procedencia<select id="plant-origin"><option>Germinación propia</option><option>Vivero o tienda</option><option>Intercambio</option><option>Regalo o cesión</option><option>Otra</option><option>Desconocida</option></select></label><label>Fecha de entrada en la colección<input type="date" value="2026-09-03"></label><label>Año de germinación<input type="number" value="2021" min="1900" max="2026"></label><label>Mes de germinación<select id="plant-germination-month"><option>Enero</option><option>Febrero</option><option>Marzo</option><option selected>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></label><label class="form-span inline-checkbox"><input id="year-only" type="checkbox"><span>Solo conozco el año de germinación</span></label><label class="form-span">Detalles de procedencia<input type="text" value="Lote propio sembrado en primavera de 2021" placeholder="Vivero, lote, persona de origen…"></label></div>
+              </fieldset>
+
+              <fieldset id="plant-editor-plant-photos">
+                <legend id="plant-photos-legend">Fotografías iniciales</legend><p id="plant-photos-copy">Son opcionales. Si las añades ahora, la principal identificará la planta en el inventario.</p>
+                <div class="plant-photo-drop" id="plant-photo-drop"><span>▧</span><div><strong>Arrastra fotografías o selecciónalas</strong><small>JPG, PNG o WebP · hasta 10 MB cada una</small></div><button class="secondary-button" type="button" data-add-plant-photos>Seleccionar archivos</button></div>
+                <div class="photo-purpose"><span>Una foto general</span><span>Un detalle reconocible</span><span>La etiqueta física, si existe</span></div>
+              </fieldset>
+
+              <fieldset id="plant-editor-plant-care">
+                <legend>Cuidados efectivos</legend><p>La planta heredará la pauta de la especie. Personaliza solo aquello que sea diferente para este ejemplar.</p>
+                <div class="inherited-care-summary"><div><span class="species-thumb">✺</span><span><small>Hereda de</small><strong id="care-species-name"><em>Echinocactus grusonii</em></strong></span></div><dl><div><dt>Exposición</dt><dd>Pleno sol</dd></div><div><dt>Temperatura</dt><dd>8–35 °C</dd></div><div><dt>Riego</dt><dd>Cada 15–25 días</dd></div><div><dt>Sustrato</dt><dd>Mineral drenante</dd></div></dl></div>
+                <button class="care-override-toggle" id="care-override-toggle" type="button" role="switch" aria-checked="false"><span><strong>Personalizar cuidados para esta planta</strong><small>Los cambios futuros de la especie seguirán aplicándose a los campos no personalizados.</small></span><i aria-hidden="true"></i></button>
+                <div class="plant-overrides" id="plant-overrides" hidden><div class="override-warning"><span>↳</span><p><strong>Solo se guardarán las diferencias</strong><small>Activa cada campo que necesite un valor propio.</small></p></div><div class="override-row"><label><input type="checkbox"><span>Exposición</span></label><select disabled><option>Semisombra</option><option>Pleno sol</option></select><small>Especie: Pleno sol</small></div><div class="override-row"><label><input type="checkbox"><span>Temperatura mínima</span></label><span class="unit-input"><input type="number" value="10" disabled><small>°C</small></span><small>Especie: 8 °C</small></div><div class="override-row"><label><input type="checkbox"><span>Pauta de riego</span></label><input type="text" value="Cada 20–30 días" disabled><small>Especie: cada 15–25 días</small></div></div>
+              </fieldset>
+            </div>
+
+            <footer class="editor-actions plant-editor-actions"><span id="plant-editor-impact"><strong>CAT-GRUSS-24</strong> se asignará definitivamente al guardar.</span><div><button class="secondary-button" id="plant-editor-cancel" type="button" data-page="plants">Cancelar</button><button class="secondary-button" id="plant-save-another" type="submit" name="after-save" value="another">Guardar y añadir otra</button><button class="primary-button" id="plant-save-primary" type="submit" name="after-save" value="detail">Guardar y abrir ficha</button></div></footer>
+          </form>
+        </section>
+
+        <section class="screen" data-screen="plant-detail" aria-labelledby="plant-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="plants">Plantas</button></li><li aria-current="page">CAT-GRUSS-01</li></ol></nav>
+          <article class="specimen-header">
+            <div class="specimen-photo" role="img" aria-label="Fotografía de un Echinocactus grusonii"><span>✺</span><button type="button">8 fotos</button></div>
+            <div class="specimen-identity"><div class="identity-line"><code>CAT-GRUSS-01</code><span class="status status--ok">Activa</span></div><h1 id="plant-title">Asiento de suegra</h1><p><em>Echinocactus grusonii</em> · Invernadero 1 / Bancada norte / A3</p><div class="identity-tags"><span>Pleno sol</span><span>Exterior</span><span>Germinada 04/2021</span></div></div>
+            <div class="specimen-actions"><button class="primary-button" type="button" data-open-care-record>＋ Registrar lectura</button><button class="secondary-button" type="button" data-open-task>Crear tarea</button><button class="secondary-button" type="button" data-open-plant-editor="edit">Editar planta</button></div>
+          </article>
+
+          <div class="notice notice--warning"><span class="notice-icon">!</span><div><strong>Revisión pendiente</strong><p>No se registra una observación desde hace 43 días.</p></div><button class="secondary-button" type="button">Crear tarea</button><button class="icon-button" type="button" aria-label="Cerrar aviso">×</button></div>
+
+          <nav class="local-tabs" aria-label="Secciones de la planta"><button class="is-active" type="button">Resumen e historial</button><button type="button">Fotografías <span>8</span></button><button type="button">Floración <span>3</span></button><button type="button">Datos</button></nav>
+
+          <div class="plant-layout">
+            <div>
+              <section class="current-state" aria-labelledby="state-title"><header class="section-heading"><div><p class="eyebrow">Estado actual</p><h2 id="state-title">De un vistazo</h2></div><button class="text-button" type="button" data-open-plant-editor="edit">Editar datos</button></header><div class="state-grid"><div><span>Último riego</span><strong>16 ago · 450 ml</strong><small>Hace 18 días</small></div><div><span>Próxima tarea</span><strong>Revisión general</strong><small>Vencida hace 2 días</small></div><div><span>Última medición</span><strong>24 °C · 31%</strong><small>21 ago</small></div><div><span>Última floración</span><strong>Mayo de 2026</strong><small>Duró 4 días</small></div></div></section>
+
+              <section class="timeline-section" aria-labelledby="history-title">
+                <header class="section-heading"><div><p class="eyebrow">Cronología</p><h2 id="history-title">Historial completo</h2></div><button class="filter-button" type="button">Todos los registros ⌄</button></header>
+                <div class="timeline">
+                  <article class="timeline-event timeline-event--reading"><div class="timeline-mark timeline-mark--reading">∿</div><div class="event-card"><header><div><span class="event-type">Lectura de cultivo</span><h3>Condiciones después de una semana cálida</h3></div><time>21 ago 2026 · 18:06</time></header><div class="reading-values"><span><small>Humedad</small><strong>31%</strong></span><span><small>Temperatura</small><strong>24 °C</strong></span><span><small>Luz</small><strong>10 h</strong></span><span><small>pH</small><strong>6,2</strong></span><span><small>Riego</small><strong>—</strong></span></div><button class="ai-inline-result" type="button" data-open-ai><span>✦</span><span><small>Recomendación de IA · riesgo bajo</small><strong>Mantener la pauta actual y revisar antes del próximo riego.</strong></span><b>Ver análisis</b></button></div></article>
+                  <article class="timeline-event"><div class="timeline-mark timeline-mark--water">◇</div><div class="event-card"><header><div><span class="event-type">Riego</span><h3>Riego de mantenimiento</h3></div><time>16 ago 2026 · 08:42</time></header><p>450 ml · Registrado desde la tarea “Regar bandejas A3 y A4”.</p><div class="event-link">Tarea completada · 31 plantas</div></div></article>
+                  <article class="timeline-event"><div class="timeline-mark timeline-mark--photo">▧</div><div class="event-card"><header><div><span class="event-type">Fotografía y comentario</span><h3>Nueva espinación en el ápice</h3></div><time>2 ago 2026 · 18:14</time></header><div class="event-media"><span class="event-image">✺</span><p>La coloración se mantiene uniforme. Volver a revisar después del siguiente riego.</p></div></div></article>
+                  <article class="timeline-event"><div class="timeline-mark timeline-mark--flower">✣</div><div class="event-card"><header><div><span class="event-type">Floración</span><h3>Floración finalizada</h3></div><time>22 may 2026</time></header><p>Una flor amarilla · 4 días de duración.</p></div></article>
+                  <article class="timeline-event"><div class="timeline-mark">⌖</div><div class="event-card"><header><div><span class="event-type">Movimiento</span><h3>Traslado a Bandeja A3</h3></div><time>11 mar 2026</time></header><p>Desde Zona exterior / Mesa 2.</p></div></article>
+                </div>
+                <button class="secondary-button load-more" type="button">Cargar registros anteriores</button>
+              </section>
+            </div>
+
+            <aside class="plant-side">
+              <article class="panel ai-summary-card"><header><span class="ai-mark">✦</span><div><p class="eyebrow">Última recomendación</p><h2>Condiciones estables</h2></div><span class="risk-badge risk-badge--low">Riesgo bajo</span></header><p>Las últimas medidas están dentro de la pauta efectiva de la planta. El tiempo desde el último riego todavía es adecuado.</p><div class="ai-action-summary"><small>Acción recomendada</small><strong>Mantener la pauta y revisar en 5–7 días.</strong></div><footer><span>Basada en la lectura del 21 ago</span><button class="text-button" type="button" data-open-ai>Ver análisis</button></footer></article>
+              <article class="panel"><header class="panel-heading"><div><p class="eyebrow">Cuidados efectivos</p><h2>Perfil actual</h2></div><button class="text-button" type="button" data-open-plant-editor="care">Editar</button></header><dl class="care-list"><div><dt>Exposición</dt><dd>Pleno sol</dd></div><div><dt>Temperatura</dt><dd>8–35 °C</dd></div><div><dt>Humedad</dt><dd>20–40%</dd></div><div><dt>Luz</dt><dd>8–12 h</dd></div><div><dt>Riego</dt><dd>Cada 15–25 días</dd></div><div><dt>Sustrato</dt><dd>Mineral drenante</dd></div></dl><p class="inheritance-note">Hereda todos los valores de <em>E. grusonii</em>.</p></article>
+              <article class="panel"><header class="panel-heading"><div><p class="eyebrow">Próximo trabajo</p><h2>2 tareas</h2></div><button class="text-button" type="button" data-page="tasks">Ver →</button></header><div class="mini-task"><span class="alert-dot alert-dot--danger"></span><div><strong>Revisión general</strong><small>Vencida · 1 sep</small></div></div><div class="mini-task"><span class="alert-dot"></span><div><strong>Comprobar tamaño de maceta</strong><small>15 oct</small></div></div></article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="tasks" aria-labelledby="tasks-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Tareas</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><p class="eyebrow">Trabajo diario</p><h1 id="tasks-title">Tareas</h1></div><button class="primary-button" type="button" data-open-task>＋ Crear tarea</button></div>
+
+          <nav class="view-tabs" aria-label="Vista de tareas"><button class="is-active" type="button" data-task-view="agenda">Agenda <span>13</span></button><button type="button" data-task-view="calendar">Calendario</button><button type="button" data-task-view="completed">Completadas</button></nav>
+
+          <div class="task-view is-visible" data-task-panel="agenda">
+            <div class="tasks-toolbar"><button class="filter-button" type="button">Todas las localizaciones ⌄</button><button class="filter-button" type="button">Todos los tipos ⌄</button><button class="filter-button" type="button">Prioridad ⌄</button><span class="toolbar-spacer"></span><button class="icon-button is-selected" type="button" aria-label="Vista de lista">☷</button><button class="icon-button" type="button" aria-label="Vista compacta">≡</button></div>
+            <section class="agenda-group agenda-group--overdue"><header><h2>Vencidas <span>5</span></h2><button class="text-button" type="button">Completar varias</button></header>
+              <article class="agenda-item"><button class="task-check" type="button" aria-label="Completar" data-complete-task>○</button><span class="task-symbol task-symbol--roots">⌇</span><div><div class="task-meta"><span>Poda de raíces</span><span class="priority priority--high">Alta</span></div><h3>Revisar raíces antes del trasplante</h3><p>4 plantas · Invernadero 1</p></div><time><strong>28 ago</strong><small>Hace 6 días</small></time><button class="icon-button" type="button" data-open-task-edit aria-label="Editar tarea">•••</button></article>
+              <article class="agenda-item"><button class="task-check" type="button" aria-label="Completar" data-complete-task>○</button><span class="task-symbol task-symbol--inspect">◉</span><div><div class="task-meta"><span>Otra · Revisión</span></div><h3>Revisar CAT-GRUSS-01</h3><p>Asiento de suegra · Bandeja A3</p></div><time><strong>1 sep</strong><small>Hace 2 días</small></time><button class="icon-button" type="button" data-open-task-edit aria-label="Editar tarea">•••</button></article>
+            </section>
+            <section class="agenda-group"><header><h2>Hoy <span>8</span></h2></header>
+              <article class="agenda-item"><button class="task-check" type="button" aria-label="Completar" data-complete-task>○</button><span class="task-symbol task-symbol--water">◇</span><div><div class="task-meta"><span>Riego</span><span class="priority priority--high">Alta</span></div><h3>Regar bandejas A3 y A4</h3><p>Invernadero 1 · 31 plantas</p></div><time><strong>09:00</strong><small>Hoy</small></time><button class="icon-button" type="button" data-open-task-edit aria-label="Editar tarea">•••</button></article>
+              <article class="agenda-item"><button class="task-check" type="button" aria-label="Completar" data-complete-task>○</button><span class="task-symbol task-symbol--pot">▱</span><div><div class="task-meta"><span>Cambio de maceta</span></div><h3>Revisar ejemplares marcados</h3><p>6 plantas · selección guardada</p></div><time><strong>Flexible</strong><small>Hoy</small></time><button class="icon-button" type="button" data-open-task-edit aria-label="Editar tarea">•••</button></article>
+            </section>
+            <section class="agenda-group"><header><h2>Próximos 7 días <span>6</span></h2></header>
+              <article class="agenda-item"><button class="task-check" type="button" aria-label="Completar" data-complete-task>○</button><span class="task-symbol task-symbol--sun">☼</span><div><div class="task-meta"><span>Protección solar</span></div><h3>Instalar sombreo temporal</h3><p>Invernadero 2 · Bancada sur</p></div><time><strong>4 sep</strong><small>08:30</small></time><button class="icon-button" type="button" data-open-task-edit aria-label="Editar tarea">•••</button></article>
+            </section>
+          </div>
+
+          <div class="task-view" data-task-panel="calendar">
+            <div class="calendar-toolbar"><div><button class="icon-button" type="button" aria-label="Mes anterior">←</button><button class="secondary-button" type="button">Hoy</button><button class="icon-button" type="button" aria-label="Mes siguiente">→</button></div><h2>Septiembre 2026</h2><div><button class="filter-button" type="button">Mes ⌄</button></div></div>
+            <div class="calendar-grid" aria-label="Calendario de septiembre de 2026">
+              <div class="calendar-weekday">Lun</div><div class="calendar-weekday">Mar</div><div class="calendar-weekday">Mié</div><div class="calendar-weekday">Jue</div><div class="calendar-weekday">Vie</div><div class="calendar-weekday">Sáb</div><div class="calendar-weekday">Dom</div>
+              <div class="calendar-day is-muted"><span>31</span></div><div class="calendar-day"><span>1</span><button class="calendar-task is-overdue" type="button" data-open-task-edit>Revisión · CAT-GRUSS-01</button></div><div class="calendar-day"><span>2</span><button class="calendar-task is-overdue" type="button" data-open-task-edit>Poda de raíces · 4</button></div><div class="calendar-day is-today"><span>3 <small>Hoy</small></span><button class="calendar-task calendar-task--water" type="button" data-open-task-edit>09:00 · Riego · 31</button><button class="calendar-task" type="button" data-open-task-edit>Macetas · 6</button></div><div class="calendar-day"><span>4</span><button class="calendar-task calendar-task--sun" type="button" data-open-task-edit>08:30 · Sombreo</button></div><div class="calendar-day"><span>5</span></div><div class="calendar-day"><span>6</span></div>
+              <div class="calendar-day"><span>7</span></div><div class="calendar-day"><span>8</span><button class="calendar-task calendar-task--water" type="button" data-open-task-edit>Riego · Exterior</button></div><div class="calendar-day"><span>9</span></div><div class="calendar-day"><span>10</span><button class="calendar-task" type="button" data-open-task-edit>Revisión · 8</button></div><div class="calendar-day"><span>11</span></div><div class="calendar-day"><span>12</span></div><div class="calendar-day"><span>13</span></div>
+              <div class="calendar-day"><span>14</span></div><div class="calendar-day"><span>15</span><button class="calendar-task" type="button" data-open-task-edit>Cambio de maceta</button></div><div class="calendar-day"><span>16</span></div><div class="calendar-day"><span>17</span></div><div class="calendar-day"><span>18</span></div><div class="calendar-day"><span>19</span></div><div class="calendar-day"><span>20</span></div>
+              <div class="calendar-day"><span>21</span></div><div class="calendar-day"><span>22</span></div><div class="calendar-day"><span>23</span><button class="calendar-task calendar-task--water" type="button" data-open-task-edit>Riego · A3</button></div><div class="calendar-day"><span>24</span></div><div class="calendar-day"><span>25</span></div><div class="calendar-day"><span>26</span></div><div class="calendar-day"><span>27</span></div>
+              <div class="calendar-day"><span>28</span></div><div class="calendar-day"><span>29</span></div><div class="calendar-day"><span>30</span></div><div class="calendar-day is-muted"><span>1</span></div><div class="calendar-day is-muted"><span>2</span></div><div class="calendar-day is-muted"><span>3</span></div><div class="calendar-day is-muted"><span>4</span></div>
+            </div>
+          </div>
+
+          <div class="task-view" data-task-panel="completed"><div class="empty-state"><span class="empty-symbol">✓</span><h2>Trabajo completado</h2><p>Aquí se consultarán las tareas finalizadas y el cuidado registrado en cada planta.</p><button class="secondary-button" type="button">Ver esta semana</button></div></div>
+        </section>
+
+        <section class="screen" data-screen="alerts" aria-labelledby="alerts-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Alertas</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><p class="eyebrow eyebrow--danger">Trabajo diario</p><h1 id="alerts-title">Alertas <span class="heading-count">4 abiertas</span></h1></div></div>
+          <div class="inventory-toolbar"><button class="filter-button" type="button">Estado: abiertas ⌄</button><button class="filter-button" type="button">Severidad ⌄</button><button class="filter-button" type="button">Localización ⌄</button><button class="filter-button" type="button">Origen ⌄</button></div>
+          <div class="alerts-list">
+            <article class="alert-card alert-card--critical"><div class="alert-card-mark">!</div><div><div class="task-meta"><span>Temperatura</span><span class="priority priority--high">Crítica</span></div><h2>Temperatura por debajo del mínimo</h2><p><button type="button" data-page="plant-detail">CAT-FEROC-08 · <em>Ferocactus gracilis</em></button></p><small>Invernadero 2 / B1 · Detectada hace 32 min</small></div><div class="alert-actions"><button class="primary-button" type="button" data-open-task>Crear tarea</button><button class="secondary-button" type="button">Revisar</button></div></article>
+            <article class="alert-card"><div class="alert-card-mark">!</div><div><div class="task-meta"><span>Seguimiento</span><span class="priority">Media</span></div><h2>Sin observaciones durante 43 días</h2><p><button type="button" data-page="plant-detail">CAT-GRUSS-01 · <em>Echinocactus grusonii</em></button></p><small>Invernadero 1 / A3 · Detectada ayer</small></div><div class="alert-actions"><button class="primary-button" type="button" data-open-task>Crear tarea</button><button class="secondary-button" type="button">Descartar</button></div></article>
+            <article class="alert-card"><div class="alert-card-mark">!</div><div><div class="task-meta"><span>Humedad</span><span class="priority">Media</span></div><h2>Humedad fuera del rango efectivo</h2><p><button type="button" data-page="plant-detail">CAT-ASTRO-12 · <em>Astrophytum asterias</em></button></p><small>Invernadero 1 / A3 · Detectada ayer</small></div><div class="alert-actions"><button class="primary-button" type="button" data-open-task>Crear tarea</button><button class="secondary-button" type="button">Revisar</button></div></article>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="species" aria-labelledby="species-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Especies</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><h1 id="species-title">Especies <span class="heading-count">74</span></h1><p class="page-intro">La base de conocimiento que heredan los ejemplares.</p></div><button class="primary-button" type="button" data-open-species-editor="new">＋ Añadir especie</button></div>
+
+          <nav class="species-groups" aria-label="Grupos de cultivo guardados">
+            <button class="species-group is-selected" type="button" data-species-group="all"><span class="group-symbol">⌘</span><span><strong>Todas</strong><small>74 especies</small></span></button>
+            <button class="species-group" type="button" data-species-group="full-sun"><span class="group-symbol group-symbol--sun">☼</span><span><strong>Pleno sol</strong><small>38 especies</small></span></button>
+            <button class="species-group" type="button" data-species-group="shade"><span class="group-symbol group-symbol--shade">◐</span><span><strong>Semisombra</strong><small>19 especies</small></span></button>
+            <button class="species-group" type="button" data-species-group="cold"><span class="group-symbol group-symbol--cold">❄</span><span><strong>Sensibles al frío</strong><small>Mínima superior a 8 °C · 12</small></span></button>
+            <button class="species-group" type="button" data-species-group="winter"><span class="group-symbol group-symbol--winter">◒</span><span><strong>Crecimiento invernal</strong><small>8 especies</small></span></button>
+          </nav>
+
+          <div class="inventory-toolbar species-toolbar">
+            <label class="inline-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Nombre científico, común o código"></label>
+            <button class="filter-button" type="button">Exposición <span>⌄</span></button>
+            <button class="filter-button" type="button">Temperatura <span>⌄</span></button>
+            <button class="filter-button" type="button">Riego <span>⌄</span></button>
+            <button class="filter-button" type="button">Crecimiento <span>⌄</span></button>
+            <span class="toolbar-spacer"></span>
+            <button class="icon-button is-selected" type="button" aria-label="Vista de tabla">☷</button><button class="icon-button" type="button" aria-label="Vista de fotografías">▦</button>
+          </div>
+          <div class="species-filter-note" id="species-filter-note" aria-live="polite">Mostrando las 74 especies</div>
+
+          <div class="table-frame">
+            <table class="inventory-table species-table">
+              <thead><tr><th>Especie</th><th>Exposición</th><th>Temperatura</th><th>Riego orientativo</th><th>Sustrato</th><th>Ejemplares</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+              <tbody>
+                <tr data-groups="all full-sun"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--grus">✺</span><span><code>CAT-GRUSS</code><strong><em>Echinocactus grusonii</em></strong><small>Asiento de suegra</small></span></button></td><td><span class="trait"><i class="trait-sun">☼</i> Pleno sol</span></td><td>8–35 °C</td><td>Cada 15–25 días</td><td>Mineral drenante</td><td><button class="count-link" type="button" data-page="plants">23 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Echinocactus grusonii">•••</button></td></tr>
+                <tr data-groups="all shade cold"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--astro">✣</span><span><code>CAT-ASTRO</code><strong><em>Astrophytum asterias</em></strong><small>Cactus erizo de mar</small></span></button></td><td><span class="trait"><i class="trait-shade">◐</i> Semisombra</span></td><td>10–32 °C</td><td>Cada 12–20 días</td><td>Mineral fino</td><td><button class="count-link" type="button" data-page="plants">17 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Astrophytum asterias">•••</button></td></tr>
+                <tr data-groups="all full-sun"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--mammi">♧</span><span><code>CAT-MAMMI</code><strong><em>Mammillaria bocasana</em></strong><small>Biznaga de lana</small></span></button></td><td><span class="trait"><i class="trait-sun">☼</i> Soleado</span></td><td>5–34 °C</td><td>Cada 10–18 días</td><td>Mineral drenante</td><td><button class="count-link" type="button" data-page="plants">31 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Mammillaria bocasana">•••</button></td></tr>
+                <tr data-groups="all full-sun"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--feroc">✦</span><span><code>CAT-FEROC</code><strong><em>Ferocactus gracilis</em></strong><small>Ferocactus de espina roja</small></span></button></td><td><span class="trait"><i class="trait-sun">☼</i> Pleno sol</span></td><td>6–38 °C</td><td>Cada 18–28 días</td><td>Muy mineral</td><td><button class="count-link" type="button" data-page="plants">12 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Ferocactus gracilis">•••</button></td></tr>
+                <tr data-groups="all shade cold"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--schlum">❉</span><span><code>CAT-SCHLUM</code><strong><em>Schlumbergera truncata</em></strong><small>Cactus de Navidad</small></span></button></td><td><span class="trait"><i class="trait-shade">◐</i> Semisombra</span></td><td>12–28 °C</td><td>Cada 7–12 días</td><td>Orgánico aireado</td><td><button class="count-link" type="button" data-page="plants">9 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Schlumbergera truncata">•••</button></td></tr>
+                <tr data-groups="all shade winter"><td><button class="species-cell" type="button" data-page="species-detail"><span class="species-thumb species-thumb--ario">◆</span><span><code>CAT-ARIO</code><strong><em>Ariocarpus fissuratus</em></strong><small>Roca viviente</small></span></button></td><td><span class="trait"><i class="trait-shade">◐</i> Semisombra</span></td><td>5–32 °C</td><td>Muy escaso</td><td>Calizo mineral</td><td><button class="count-link" type="button" data-page="plants">6 plantas</button></td><td><button class="icon-button" type="button" aria-label="Acciones de Ariocarpus fissuratus">•••</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <footer class="table-footer"><span>1–25 de 74 especies</span><div><button class="icon-button" type="button" disabled aria-label="Página anterior">←</button><button class="page-number is-current" type="button">1</button><button class="page-number" type="button">2</button><button class="page-number" type="button">3</button><button class="icon-button" type="button" aria-label="Página siguiente">→</button></div></footer>
+        </section>
+
+        <section class="screen" data-screen="species-detail" aria-labelledby="species-detail-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="species">Especies</button></li><li aria-current="page">Echinocactus grusonii</li></ol></nav>
+          <article class="species-hero">
+            <div class="species-hero-copy"><div class="identity-line"><code>CAT-GRUSS</code><span class="status status--ok">Ficha completa</span></div><h1 id="species-detail-title"><em>Echinocactus grusonii</em></h1><p class="species-common-name">Asiento de suegra</p><p class="species-description">Cactus globular de crecimiento lento, reconocible por sus costillas marcadas y espinas doradas. Tolera bien el calor, pero necesita un sustrato muy drenante.</p><div class="species-hero-actions"><button class="primary-button" type="button" data-open-species-editor="edit">Editar especie</button><button class="secondary-button" type="button" data-page="plants">Ver 23 plantas</button><button class="icon-button" type="button" aria-label="Más acciones">•••</button></div></div>
+            <div class="species-gallery"><div class="species-main-photo" role="img" aria-label="Fotografía de Echinocactus grusonii"><span>✺</span><button type="button">Imagen principal</button></div><button class="species-photo-small species-photo-small--one" type="button" aria-label="Ver segunda fotografía">✺</button><button class="species-photo-small species-photo-small--two" type="button" aria-label="Ver tercera fotografía">✺</button><button class="species-photo-add" type="button">＋<small>Añadir</small></button></div>
+          </article>
+
+          <nav class="local-tabs" aria-label="Secciones de la especie"><button class="is-active" type="button">Resumen</button><button type="button">Cultivo</button><button type="button">Fotografías <span>6</span></button><button type="button">Ejemplares <span>23</span></button></nav>
+
+          <div class="species-detail-layout">
+            <div class="species-detail-main">
+              <section class="cultivation-year" aria-labelledby="cultivation-year-title">
+                <header class="section-heading"><div><h2 id="cultivation-year-title">Año de cultivo</h2><p>Referencia para clima mediterráneo y cultivo exterior.</p></div><button class="text-button" type="button">Editar periodos</button></header>
+                <div class="year-table" role="table" aria-label="Calendario anual de cultivo">
+                  <div class="year-head" role="row"><span></span><b>Ene</b><b>Feb</b><b>Mar</b><b>Abr</b><b>May</b><b>Jun</b><b>Jul</b><b>Ago</b><b>Sep</b><b>Oct</b><b>Nov</b><b>Dic</b></div>
+                  <div class="year-row" role="row"><strong>Crecimiento</strong><i></i><i></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i class="is-growth"></i><i></i><i></i></div>
+                  <div class="year-row" role="row"><strong>Floración</strong><i></i><i></i><i></i><i></i><i class="is-flower"></i><i class="is-flower"></i><i class="is-flower"></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="year-row" role="row"><strong>Riego</strong><i class="water-1"></i><i class="water-1"></i><i class="water-2"></i><i class="water-2"></i><i class="water-3"></i><i class="water-3"></i><i class="water-3"></i><i class="water-3"></i><i class="water-2"></i><i class="water-2"></i><i class="water-1"></i><i class="water-1"></i></div>
+                </div>
+                <div class="year-legend"><span><i class="legend-growth"></i>Crecimiento</span><span><i class="legend-flower"></i>Floración habitual</span><span><i class="legend-water"></i>Intensidad orientativa de riego</span></div>
+              </section>
+
+              <section class="care-specification" aria-labelledby="care-spec-title"><header class="section-heading"><div><h2 id="care-spec-title">Condiciones recomendadas</h2><p>Estos valores se heredan en 23 ejemplares sin overrides.</p></div><button class="text-button" type="button" data-open-species-editor="edit">Editar cuidados</button></header>
+                <dl class="care-spec-grid"><div><dt><span class="care-icon">☼</span>Exposición</dt><dd>Pleno sol</dd><small>8–12 horas de luz</small></div><div><dt><span class="care-icon">⌂</span>Entorno</dt><dd>Exterior</dd><small>Interior solo con mucha luz</small></div><div><dt><span class="care-icon">↕</span>Temperatura</dt><dd>8–35 °C</dd><small>Proteger por debajo de 5 °C</small></div><div><dt><span class="care-icon">◌</span>Humedad</dt><dd>20–40%</dd><small>Evitar humedad persistente</small></div><div><dt><span class="care-icon">◇</span>Riego</dt><dd>Cada 15–25 días</dd><small>Reducir durante el reposo</small></div><div><dt><span class="care-icon">◒</span>Sustrato</dt><dd>Mineral drenante</dd><small>20% orgánico · pH 5,8–6,8</small></div></dl>
+              </section>
+
+              <section class="flowering-profile" aria-labelledby="flowering-title"><header class="section-heading"><div><h2 id="flowering-title">Floración</h2><p>Comportamiento habitual de la especie.</p></div><button class="text-button" type="button" data-open-species-editor="edit">Editar</button></header><div class="flowering-content"><div class="flower-swatch" role="img" aria-label="Flor amarilla">✣</div><dl><div><dt>Periodo</dt><dd>Mayo–julio</dd></div><div><dt>Color</dt><dd>Amarillo intenso</dd></div><div><dt>Madurez</dt><dd>A partir de 15–20 años</dd></div><div><dt>Duración</dt><dd>3–5 días por flor</dd></div></dl><p>La floración mejora después de un reposo invernal seco y luminoso.</p></div></section>
+
+              <section class="related-plants" aria-labelledby="related-plants-title"><header class="section-heading"><div><h2 id="related-plants-title">Ejemplares de esta especie</h2><p>23 plantas distribuidas en 4 localizaciones.</p></div><button class="text-button" type="button" data-page="plants">Ver inventario filtrado</button></header><div class="related-plant-row"><span class="plant-thumb plant-thumb--one">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span><span>Invernadero 1 / A3</span><span class="status status--warning">Revisar</span></div><div class="related-plant-row"><span class="plant-thumb plant-thumb--three">♧</span><span><code>CAT-GRUSS-02</code><strong>Grusonii grande</strong></span><span>Zona exterior / Mesa 2</span><span class="status status--ok">Al día</span></div><div class="related-plant-row"><span class="plant-thumb plant-thumb--two">♧</span><span><code>CAT-GRUSS-03</code><strong>Semillero 2021 A</strong></span><span>Invernadero 1 / A4</span><span class="status status--ok">Al día</span></div></section>
+            </div>
+
+            <aside class="species-detail-side">
+              <article class="panel species-facts"><h2>Ficha de catálogo</h2><dl><div><dt>Código</dt><dd><code>CAT-GRUSS</code></dd></div><div><dt>Género</dt><dd>Echinocactus</dd></div><div><dt>Nombre común</dt><dd>Asiento de suegra</dd></div><div><dt>Ejemplares</dt><dd>23</dd></div><div><dt>Actualizada</dt><dd>18 ago 2026</dd></div></dl></article>
+              <article class="panel matched-groups"><h2>Grupos de cultivo</h2><p>La especie entra automáticamente en estos grupos.</p><button type="button"><span class="group-symbol group-symbol--sun">☼</span><span><strong>Pleno sol</strong><small>38 especies</small></span></button><button type="button"><span class="group-symbol">◇</span><span><strong>Riego espaciado</strong><small>24 especies</small></span></button><button type="button"><span class="group-symbol">◒</span><span><strong>Sustrato mineral</strong><small>42 especies</small></span></button></article>
+              <article class="impact-note"><strong>Herencia activa</strong><p>Si modificas un valor, se actualizará en las plantas que no lo hayan personalizado.</p><button class="text-button" type="button">Ver 2 plantas con overrides</button></article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="species-editor" aria-labelledby="species-editor-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="species">Especies</button></li><li aria-current="page" id="species-editor-crumb">Nueva especie</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><h1 id="species-editor-title">Nueva especie</h1><p class="page-intro">Define la información que heredarán sus ejemplares.</p></div></div>
+          <form class="species-editor" id="species-form">
+            <aside class="editor-nav" aria-label="Secciones del formulario"><button class="is-active" type="button" data-editor-section="identity">Identificación <span>✓</span></button><button type="button" data-editor-section="photos">Fotografías</button><button type="button" data-editor-section="care">Condiciones de cultivo</button><button type="button" data-editor-section="seasons">Crecimiento y floración</button></aside>
+            <div class="editor-content">
+              <fieldset id="editor-identity"><legend>Identificación</legend><p>Nombre, código y descripción de la especie.</p><div class="form-grid species-form-grid"><label>Nombre científico<input id="species-scientific-name" type="text" value="Echinocactus grusonii" required></label><label>Nombre común<input id="species-common-name" type="text" value="Asiento de suegra"></label><label>Código de especie<span class="code-field"><input id="species-code" type="text" value="CAT-GRUSS" required><small>Se usará para generar CAT-GRUSS-01, CAT-GRUSS-02…</small></span></label><label class="form-span">Descripción<textarea id="species-description" rows="4">Cactus globular de crecimiento lento, reconocible por sus costillas marcadas y espinas doradas.</textarea></label></div></fieldset>
+
+              <fieldset id="editor-photos"><legend>Fotografías</legend><p>Añade imágenes generales de referencia. Podrás elegir la portada.</p><div class="photo-uploader"><button type="button"><span>＋</span><strong>Subir fotografías</strong><small>JPG, PNG o WebP · hasta 10 MB</small></button><div class="uploaded-photo uploaded-photo--main"><span>✺</span><small>Principal</small><button type="button" aria-label="Opciones de imagen">•••</button></div><div class="uploaded-photo"><span>✺</span><button type="button" aria-label="Opciones de imagen">•••</button></div></div></fieldset>
+
+              <fieldset id="editor-care"><legend>Condiciones de cultivo</legend><p>La pauta base que heredarán las plantas de esta especie.</p><div class="field-block"><span class="field-label">Exposición solar</span><div class="option-grid option-grid--four"><label><input type="radio" name="exposure"><span>◑<strong>Sombra</strong><small>Sin sol directo</small></span></label><label><input type="radio" name="exposure"><span>◐<strong>Semisombra</strong><small>Sol limitado</small></span></label><label><input type="radio" name="exposure"><span>◒<strong>Soleado</strong><small>Varias horas</small></span></label><label><input type="radio" name="exposure" checked><span>☼<strong>Pleno sol</strong><small>Exposición prolongada</small></span></label></div></div><div class="field-block"><span class="field-label">Entorno recomendado</span><div class="segmented"><label><input type="radio" name="environment"><span>Interior</span></label><label><input type="radio" name="environment" checked><span>Exterior</span></label><label><input type="radio" name="environment"><span>Ambos</span></label><label><input type="radio" name="environment"><span>Estacional</span></label></div></div><div class="range-grid"><div><span class="field-label">Temperatura recomendada</span><div><label>Mínima<input type="number" value="8"><small>°C</small></label><span>—</span><label>Máxima<input type="number" value="35"><small>°C</small></label></div></div><div><span class="field-label">Humedad recomendada</span><div><label>Mínima<input type="number" value="20"><small>%</small></label><span>—</span><label>Máxima<input type="number" value="40"><small>%</small></label></div></div><div><span class="field-label">Horas de luz</span><div><label>Mínimas<input type="number" value="8"><small>h</small></label><span>—</span><label>Máximas<input type="number" value="12"><small>h</small></label></div></div></div><div class="form-grid species-form-grid"><label>Mezcla de sustrato<select><option>Mineral drenante · 20/80</option><option>Mineral fino · 15/85</option></select></label><label>Pauta de riego<input type="text" value="Cada 15–25 días en crecimiento"></label><label class="form-span">Notas de cultivo<textarea rows="3">Reducir el riego durante el reposo y evitar humedad persistente.</textarea></label></div></fieldset>
+
+              <fieldset id="editor-seasons"><legend>Crecimiento y floración</legend><p>Selecciona meses orientativos para clima mediterráneo.</p><div class="month-selector"><span class="field-label">Época de crecimiento</span><div data-month-group="growth"><button type="button">Ene</button><button type="button">Feb</button><button class="is-selected" type="button">Mar</button><button class="is-selected" type="button">Abr</button><button class="is-selected" type="button">May</button><button class="is-selected" type="button">Jun</button><button class="is-selected" type="button">Jul</button><button class="is-selected" type="button">Ago</button><button class="is-selected" type="button">Sep</button><button class="is-selected" type="button">Oct</button><button type="button">Nov</button><button type="button">Dic</button></div></div><div class="month-selector"><span class="field-label">Floración habitual</span><div data-month-group="flowering"><button type="button">Ene</button><button type="button">Feb</button><button type="button">Mar</button><button type="button">Abr</button><button class="is-selected is-flower" type="button">May</button><button class="is-selected is-flower" type="button">Jun</button><button class="is-selected is-flower" type="button">Jul</button><button type="button">Ago</button><button type="button">Sep</button><button type="button">Oct</button><button type="button">Nov</button><button type="button">Dic</button></div></div><div class="form-grid species-form-grid"><label>Color de la flor<input type="text" value="Amarillo intenso"></label><label>Madurez aproximada<input type="text" value="15–20 años"></label><label>Duración habitual<input type="text" value="3–5 días por flor"></label><label class="form-span">Condiciones y notas<textarea rows="3">La floración mejora después de un reposo invernal seco y luminoso.</textarea></label></div></fieldset>
+            </div>
+            <footer class="editor-actions"><span id="species-editor-impact">Los cambios afectarán a 21 plantas que heredan esta pauta.</span><div><button class="secondary-button" id="species-editor-cancel" type="button" data-page="species-detail">Cancelar</button><button class="primary-button" type="submit">Guardar especie</button></div></footer>
+          </form>
+        </section>
+
+        <section class="screen" data-screen="locations" aria-labelledby="locations-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Localizaciones</li></ol></nav>
+          <div class="page-heading page-heading--compact">
+            <div><p class="eyebrow">Colección</p><h1 id="locations-title">Localizaciones <span class="heading-count">18</span></h1><p class="page-intro">Organiza el vivero tal como lo recorres: de la zona a la bancada y de la bancada a la bandeja.</p></div>
+            <button class="primary-button" type="button" data-open-location-editor="new">＋ Añadir localización</button>
+          </div>
+
+          <div class="location-overview">
+            <section class="location-tree-panel" aria-labelledby="location-tree-title">
+              <header><div><h2 id="location-tree-title">Mapa del vivero</h2><p>1.284 plantas en 18 localizaciones</p></div><button class="icon-button" type="button" aria-label="Opciones del mapa">•••</button></header>
+              <label class="tree-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Buscar localización"></label>
+              <div class="location-tree" role="tree" aria-label="Jerarquía de localizaciones">
+                <button class="tree-row tree-row--root is-selected" type="button" role="treeitem" aria-expanded="true" data-location-summary="all"><span class="tree-toggle">⌄</span><span class="location-symbol">⌖</span><span><strong>Toda la colección</strong><small>18 localizaciones</small></span><b>1.284</b></button>
+                <div class="tree-branch" role="group">
+                  <button class="tree-row" type="button" role="treeitem" aria-expanded="true" data-location-summary="greenhouse-1"><span class="tree-toggle">⌄</span><span class="location-symbol location-symbol--covered">⌂</span><span><strong>Invernadero 1</strong><small>6 sublocalizaciones</small></span><b>486</b></button>
+                  <div class="tree-branch" role="group">
+                    <button class="tree-row" type="button" role="treeitem" aria-expanded="true" data-page="location-detail"><span class="tree-toggle">⌄</span><span class="location-symbol location-symbol--bench">═</span><span><strong>Bancada norte</strong><small>2 bandejas · 2 tareas</small></span><b>183</b></button>
+                    <div class="tree-branch" role="group">
+                      <button class="tree-row tree-row--leaf" type="button" role="treeitem" data-page="location-detail"><span class="tree-toggle"></span><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja A3</strong><small>1 alerta abierta</small></span><b>31</b></button>
+                      <button class="tree-row tree-row--leaf" type="button" role="treeitem" data-page="location-detail"><span class="tree-toggle"></span><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja A4</strong><small>Al día</small></span><b>27</b></button>
+                    </div>
+                    <button class="tree-row tree-row--leaf" type="button" role="treeitem" data-page="location-detail"><span class="tree-toggle"></span><span class="location-symbol location-symbol--bench">═</span><span><strong>Bancada sur</strong><small>4 bandejas · 7 tareas</small></span><b>303</b></button>
+                  </div>
+                  <button class="tree-row" type="button" role="treeitem" aria-expanded="false" data-page="location-detail"><span class="tree-toggle">›</span><span class="location-symbol location-symbol--covered">⌂</span><span><strong>Invernadero 2</strong><small>5 sublocalizaciones · 1 alerta</small></span><b>391</b></button>
+                  <button class="tree-row" type="button" role="treeitem" aria-expanded="false" data-location-summary="outside"><span class="tree-toggle">›</span><span class="location-symbol location-symbol--outside">☼</span><span><strong>Zona exterior</strong><small>4 sublocalizaciones</small></span><b>407</b></button>
+                  <button class="tree-row tree-row--leaf" type="button" role="treeitem" data-page="location-detail"><span class="tree-toggle"></span><span class="location-symbol location-symbol--quarantine">!</span><span><strong>Cuarentena</strong><small>3 plantas · acceso restringido</small></span><b>3</b></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="location-overview-main" aria-labelledby="location-overview-title">
+              <header class="location-overview-header"><div><span class="location-kicker">Vista general</span><h2 id="location-overview-title">Toda la colección</h2><p id="location-overview-copy">El trabajo se concentra en los dos invernaderos. La zona exterior está al día.</p></div><button class="secondary-button" type="button" data-page="plants">Ver todas las plantas</button></header>
+              <div class="location-work-strip">
+                <button type="button" data-page="tasks"><strong>43</strong><span>Tareas pendientes<small>5 vencidas</small></span></button>
+                <button type="button" data-page="alerts"><strong class="text-danger">4</strong><span>Alertas abiertas<small>1 crítica</small></span></button>
+                <div><strong>18</strong><span>Localizaciones<small>3 niveles de profundidad</small></span></div>
+              </div>
+              <div class="zone-grid">
+                <button class="zone-card" type="button" data-page="location-detail"><span class="zone-card-top"><i class="location-symbol location-symbol--covered">⌂</i><em class="status status--warning">21 tareas</em></span><strong>Invernadero 1</strong><small>486 plantas · 6 sublocalizaciones</small><span class="capacity"><i style="width:78%"></i></span><span class="capacity-label">78% de la capacidad orientativa</span></button>
+                <button class="zone-card" type="button" data-page="location-detail"><span class="zone-card-top"><i class="location-symbol location-symbol--covered">⌂</i><em class="status status--danger">1 alerta</em></span><strong>Invernadero 2</strong><small>391 plantas · 5 sublocalizaciones</small><span class="capacity"><i style="width:62%"></i></span><span class="capacity-label">62% de la capacidad orientativa</span></button>
+                <button class="zone-card" type="button" data-location-summary="outside"><span class="zone-card-top"><i class="location-symbol location-symbol--outside">☼</i><em class="status status--ok">Al día</em></span><strong>Zona exterior</strong><small>407 plantas · 4 sublocalizaciones</small><span class="capacity"><i style="width:51%"></i></span><span class="capacity-label">51% de la capacidad orientativa</span></button>
+                <button class="zone-card zone-card--restricted" type="button" data-page="location-detail"><span class="zone-card-top"><i class="location-symbol location-symbol--quarantine">!</i><em class="status status--warning">Revisar</em></span><strong>Cuarentena</strong><small>3 plantas sin ubicación definitiva</small><span class="zone-note">Zona temporal · no admite tareas masivas de riego</span></button>
+              </div>
+              <section class="location-attention"><header class="section-heading"><div><h2>Requieren atención</h2><p>Ordenadas por urgencia y carga de trabajo.</p></div></header><button type="button" data-page="location-detail"><span class="alert-dot alert-dot--danger"></span><span><strong>Invernadero 2 / Bancada sur</strong><small>Temperatura crítica · 83 plantas afectadas</small></span><time>Hace 32 min</time></button><button type="button" data-page="location-detail"><span class="alert-dot alert-dot--warning"></span><span><strong>Invernadero 1 / Bandeja A3</strong><small>Riego vencido · 31 plantas afectadas</small></span><time>Hace 2 días</time></button></section>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="location-detail" aria-labelledby="location-detail-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="locations">Localizaciones</button></li><li><button type="button" data-page="location-detail">Invernadero 1</button></li><li aria-current="page">Bancada norte</li></ol></nav>
+          <header class="location-detail-hero">
+            <div class="location-hero-mark" aria-hidden="true"><span>═</span><small>I1 · BN</small></div>
+            <div><div class="identity-line"><code>LOC-I1-BN</code><span class="status status--warning">2 tareas pendientes</span></div><h1 id="location-detail-title">Bancada norte</h1><p>Zona de semisombra para ejemplares jóvenes y especies sensibles al sol intenso.</p><div class="location-path"><span>⌂ Invernadero 1</span><b>›</b><span>═ Bancada norte</span></div></div>
+            <div class="location-detail-actions"><button class="primary-button" type="button" data-open-task>＋ Crear tarea aquí</button><button class="secondary-button" type="button" data-open-location-editor="edit">Editar localización</button><button class="icon-button" type="button" data-open-move aria-label="Mover plantas">⇄</button></div>
+          </header>
+          <div class="location-metrics" aria-label="Resumen de Bancada norte"><div><strong>183</strong><span>Plantas<small>31 directamente aquí</small></span></div><div><strong>2</strong><span>Sublocalizaciones<small>Bandejas A3 y A4</small></span></div><div><strong>2</strong><span>Tareas<small>1 vencida</small></span></div><div><strong class="text-danger">1</strong><span>Alerta<small>Humedad fuera de rango</small></span></div></div>
+          <div class="location-detail-layout">
+            <div class="location-detail-main">
+              <section class="child-locations"><header class="section-heading"><div><h2>Dentro de Bancada norte</h2><p>Las plantas de las bandejas también forman parte de esta ubicación.</p></div><button class="text-button" type="button" data-open-location-editor="child">＋ Añadir dentro</button></header><div class="child-location-grid"><button type="button" data-page="location-detail"><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja A3</strong><small>31 plantas · riego vencido</small></span><span class="status status--warning">Revisar</span></button><button type="button" data-page="location-detail"><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja A4</strong><small>27 plantas · sin trabajo pendiente</small></span><span class="status status--ok">Al día</span></button></div></section>
+              <section class="location-plants"><header class="section-heading"><div><h2>Plantas en esta ubicación</h2><p>31 directamente aquí · 183 contando sublocalizaciones.</p></div><button class="text-button" type="button" data-page="plants">Ver inventario filtrado</button></header><div class="table-frame"><table class="inventory-table location-plant-table"><thead><tr><th>Planta</th><th>Especie</th><th>Ubicación exacta</th><th>Estado</th><th></th></tr></thead><tbody><tr><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--one">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span></button></td><td><em>E. grusonii</em></td><td>Bandeja A3</td><td><span class="status status--warning">Revisar</span></td><td><button class="icon-button" type="button" aria-label="Acciones">•••</button></td></tr><tr><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--two">✣</span><span><code>CAT-ASTRO-12</code><strong>Superkabuto 12</strong></span></button></td><td><em>A. asterias</em></td><td>Bandeja A3</td><td><span class="status status--danger">Alerta</span></td><td><button class="icon-button" type="button" aria-label="Acciones">•••</button></td></tr><tr><td><button class="plant-cell" type="button" data-page="plant-detail"><span class="plant-thumb plant-thumb--three">♧</span><span><code>CAT-MAMMI-04</code><strong>Bola blanca</strong></span></button></td><td><em>M. bocasana</em></td><td>Bandeja A4</td><td><span class="status status--ok">Al día</span></td><td><button class="icon-button" type="button" aria-label="Acciones">•••</button></td></tr></tbody></table></div></section>
+            </div>
+            <aside class="location-detail-side">
+              <article class="panel location-facts"><h2>Características del espacio</h2><dl><div><dt>Tipo</dt><dd>Bancada</dd></div><div><dt>Entorno</dt><dd>Interior cubierto</dd></div><div><dt>Exposición</dt><dd>Semisombra</dd></div><div><dt>Capacidad</dt><dd>250 plantas</dd></div><div><dt>Ocupación</dt><dd>73%</dd></div></dl><span class="capacity"><i style="width:73%"></i></span><p>Malla de sombreo fija. Evitar colocar aquí plantas que requieran pleno sol.</p><button class="text-button" type="button" data-open-location-editor="edit">Editar características</button></article>
+              <article class="panel location-next-work"><h2>Próximo trabajo</h2><button type="button" data-page="tasks"><span class="task-mini-mark">◇</span><span><strong>Regar bandeja A3</strong><small>Vencida hace 2 días · 31 plantas</small></span></button><button type="button" data-page="tasks"><span class="task-mini-mark task-mini-mark--sun">☼</span><span><strong>Revisar sombreo</strong><small>Viernes 4 sep · 183 plantas</small></span></button></article>
+              <article class="panel location-history"><h2>Últimos movimientos</h2><ol><li><span>⇢</span><p><strong>8 plantas recibidas</strong><small>Desde Semilleros · ayer</small></p></li><li><span>⇠</span><p><strong>3 plantas trasladadas</strong><small>A Cuarentena · 28 ago</small></p></li></ol><button class="text-button" type="button">Ver historial completo</button></article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="location-editor" aria-labelledby="location-editor-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="locations">Localizaciones</button></li><li aria-current="page" id="location-editor-crumb">Nueva localización</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><h1 id="location-editor-title">Nueva localización</h1><p class="page-intro" id="location-editor-subtitle">Sitúala dentro del vivero para que plantas, tareas y alertas hereden una ruta clara.</p></div></div>
+          <form class="location-editor-form" id="location-form">
+            <div class="editor-content">
+              <fieldset><legend>Posición en el vivero</legend><p>Selecciona dónde quedará contenida esta localización.</p><div class="location-parent-preview"><span class="location-symbol location-symbol--covered">⌂</span><span><strong id="location-parent-name">Invernadero 1</strong><small>Ruta resultante: Invernadero 1 / <b id="location-path-preview">Nueva localización</b></small></span><button class="secondary-button" type="button">Cambiar padre</button></div></fieldset>
+              <fieldset><legend>Identificación</legend><p>Un nombre breve facilita encontrarla al mover plantas o crear tareas.</p><div class="form-grid species-form-grid"><label>Nombre<input id="location-name" type="text" value="Bancada este" required></label><label>Código corto<span class="code-field"><input id="location-code" type="text" value="BE" required><small id="location-code-preview">Ruta técnica prevista: LOC-I1-BE</small></span></label><label>Tipo<select><option>Bancada</option><option>Bandeja</option><option>Invernadero</option><option>Zona exterior</option><option>Estantería</option><option>Otro</option></select></label><label>Capacidad orientativa<input id="location-capacity" type="number" value="180"><small>Ayuda a detectar zonas demasiado cargadas.</small></label><label class="form-span">Descripción y referencias físicas<textarea id="location-description" rows="4">Bancada junto a la entrada este, segunda desde el pasillo central.</textarea></label></div></fieldset>
+              <fieldset><legend>Características del espacio</legend><p>Sirven como contexto para agrupar trabajo y detectar incompatibilidades.</p><div class="field-block"><span class="field-label">Entorno</span><div class="segmented segmented--three"><label><input type="radio" name="location-environment"><span>Interior</span></label><label><input type="radio" name="location-environment" checked><span>Cubierto</span></label><label><input type="radio" name="location-environment"><span>Exterior</span></label></div></div><div class="field-block"><span class="field-label">Exposición predominante</span><div class="option-grid option-grid--four"><label><input type="radio" name="location-exposure"><span>◑<strong>Sombra</strong></span></label><label><input type="radio" name="location-exposure" checked><span>◐<strong>Semisombra</strong></span></label><label><input type="radio" name="location-exposure"><span>◒<strong>Soleado</strong></span></label><label><input type="radio" name="location-exposure"><span>☼<strong>Pleno sol</strong></span></label></div></div><div class="form-grid species-form-grid"><label class="form-span">Notas operativas<textarea rows="3">Malla fija de sombreo. Acceso por el pasillo central.</textarea></label></div></fieldset>
+            </div>
+            <aside class="location-editor-aside"><article class="impact-note"><strong id="location-editor-impact-title">Se creará dentro de Invernadero 1</strong><p id="location-editor-impact">Podrás mover plantas aquí después de guardar la localización.</p></article><article class="panel"><h2>Jerarquía recomendada</h2><p class="helper-copy">Usa pocos niveles y nombres que existan físicamente. Una ruta como “Invernadero 1 / Bancada norte / Bandeja A3” se reconoce de un vistazo.</p></article></aside>
+            <footer class="editor-actions"><span id="location-editor-footer">La nueva localización estará vacía.</span><div><button class="secondary-button" id="location-editor-cancel" type="button" data-page="locations">Cancelar</button><button class="primary-button" type="submit">Guardar localización</button></div></footer>
+          </form>
+        </section>
+
+        <section class="screen" data-screen="soil-mixes" aria-labelledby="soil-mixes-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Mezclas de sustrato</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><p class="eyebrow">Catálogos</p><h1 id="soil-mixes-title">Mezclas de sustrato <span class="heading-count">6</span></h1><p class="page-intro">Recetas reutilizables para mantener criterios de cultivo consistentes.</p></div><button class="primary-button" type="button" data-open-soil-editor="new">＋ Añadir mezcla</button></div>
+          <div class="soil-coverage"><span class="soil-coverage-mark">◒</span><div><strong>Todo el catálogo está cubierto</strong><p>Las 74 especies tienen una mezcla recomendada. Los cambios en una receta pueden afectar a muchas plantas.</p></div><button class="secondary-button" type="button" data-page="species">Revisar por especies</button></div>
+          <div class="inventory-toolbar soil-toolbar"><label class="inline-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Buscar mezcla o componente"></label><button class="filter-button" type="button">Composición <span>⌄</span></button><button class="filter-button" type="button">Rango de pH <span>⌄</span></button><button class="filter-button" type="button">Ordenar: más utilizada <span>⌄</span></button></div>
+          <div class="table-frame"><table class="soil-table"><thead><tr><th>Mezcla</th><th>Composición</th><th>pH recomendado</th><th>Uso recomendado</th><th>Plantas</th><th></th></tr></thead><tbody>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--80">◒</span><span><strong>Mineral drenante</strong><small>Pómice, akadama y turba rubia</small></span></button></td><td><span class="soil-ratio"><span><i style="width:20%"></i><b style="width:80%"></b></span><small><em>20% orgánico</em><em>80% mineral</em></small></span></td><td><strong class="ph-value">5,8–6,8</strong><small>Ligeramente ácido</small></td><td><button class="count-link" type="button" data-page="species">42 especies</button></td><td>612</td><td><button class="icon-button" type="button" aria-label="Acciones de Mineral drenante">•••</button></td></tr>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--85">◒</span><span><strong>Mineral fino</strong><small>Akadama fina, arena de sílice y humus</small></span></button></td><td><span class="soil-ratio"><span><i style="width:15%"></i><b style="width:85%"></b></span><small><em>15% orgánico</em><em>85% mineral</em></small></span></td><td><strong class="ph-value">6,0–7,0</strong><small>Neutro</small></td><td><button class="count-link" type="button" data-page="species">12 especies</button></td><td>218</td><td><button class="icon-button" type="button" aria-label="Acciones de Mineral fino">•••</button></td></tr>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--60">◒</span><span><strong>Mixta de vivero</strong><small>Turba, perlita y grava volcánica</small></span></button></td><td><span class="soil-ratio"><span><i style="width:40%"></i><b style="width:60%"></b></span><small><em>40% orgánico</em><em>60% mineral</em></small></span></td><td><strong class="ph-value">6,0–6,8</strong><small>Ligeramente ácido</small></td><td><button class="count-link" type="button" data-page="species">9 especies</button></td><td>176</td><td><button class="icon-button" type="button" aria-label="Acciones de Mixta de vivero">•••</button></td></tr>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--90">◒</span><span><strong>Calizo mineral</strong><small>Grava caliza, pómice y tierra vegetal</small></span></button></td><td><span class="soil-ratio"><span><i style="width:10%"></i><b style="width:90%"></b></span><small><em>10% orgánico</em><em>90% mineral</em></small></span></td><td><strong class="ph-value">7,0–8,0</strong><small>Alcalino</small></td><td><button class="count-link" type="button" data-page="species">5 especies</button></td><td>93</td><td><button class="icon-button" type="button" aria-label="Acciones de Calizo mineral">•••</button></td></tr>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--35">◒</span><span><strong>Orgánico aireado</strong><small>Corteza, turba, perlita y fibra de coco</small></span></button></td><td><span class="soil-ratio"><span><i style="width:65%"></i><b style="width:35%"></b></span><small><em>65% orgánico</em><em>35% mineral</em></small></span></td><td><strong class="ph-value">5,5–6,5</strong><small>Ácido moderado</small></td><td><button class="count-link" type="button" data-page="species">4 especies</button></td><td>116</td><td><button class="icon-button" type="button" aria-label="Acciones de Orgánico aireado">•••</button></td></tr>
+            <tr><td><button class="soil-name-cell" type="button" data-page="soil-mix-detail"><span class="soil-swatch soil-swatch--65">◒</span><span><strong>Semilleros</strong><small>Fibra de coco, arena y vermiculita</small></span></button></td><td><span class="soil-ratio"><span><i style="width:35%"></i><b style="width:65%"></b></span><small><em>35% orgánico</em><em>65% mineral</em></small></span></td><td><strong class="ph-value">6,0–6,8</strong><small>Ligeramente ácido</small></td><td><button class="count-link" type="button" data-page="species">2 especies</button></td><td>69</td><td><button class="icon-button" type="button" aria-label="Acciones de Semilleros">•••</button></td></tr>
+          </tbody></table></div>
+          <footer class="table-footer"><span>6 mezclas · 74 especies · 1.284 plantas</span><span class="soil-legend"><i></i>Orgánico <b></b>Mineral</span></footer>
+        </section>
+
+        <section class="screen" data-screen="soil-mix-detail" aria-labelledby="soil-mix-detail-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="soil-mixes">Mezclas de sustrato</button></li><li aria-current="page">Mineral drenante</li></ol></nav>
+          <article class="soil-hero"><div class="soil-wheel" role="img" aria-label="20 por ciento orgánico y 80 por ciento mineral"><span>20<small>/80</small></span></div><div><div class="identity-line"><span class="status status--ok">En uso</span><span class="soil-revision">Actualizada el 12 ago 2026</span></div><h1 id="soil-mix-detail-title">Mineral drenante</h1><p>Pauta base para cactus de clima seco que necesitan evacuación rápida del agua y baja retención.</p><div class="soil-use-line"><span><strong>42</strong> especies la recomiendan</span><span><strong>612</strong> plantas la utilizan</span></div></div><div class="soil-hero-actions"><button class="primary-button" type="button" data-open-soil-editor="edit">Editar mezcla</button><button class="secondary-button" type="button" data-page="plants">Ver plantas</button><button class="icon-button" type="button" aria-label="Más acciones">•••</button></div></article>
+          <div class="soil-detail-layout"><div class="soil-detail-main">
+            <section class="soil-recipe" aria-labelledby="soil-recipe-title"><header class="section-heading"><div><h2 id="soil-recipe-title">Receta de referencia</h2><p>Las proporciones se expresan sobre el volumen total preparado.</p></div></header><div class="soil-recipe-card"><div class="recipe-bar" aria-label="Composición"><span style="width:20%"><strong>20%</strong><small>Orgánico</small></span><b style="width:80%"><strong>80%</strong><small>Mineral</small></b></div><div class="recipe-components"><div><span class="component-dot component-dot--organic"></span><p><strong>Parte orgánica</strong><small>Turba rubia tamizada. Aporta una retención moderada sin compactar.</small></p></div><div><span class="component-dot component-dot--mineral"></span><p><strong>Parte mineral</strong><small>50% pómice, 20% akadama y 10% grava volcánica.</small></p></div></div></div></section>
+            <section class="soil-properties" aria-labelledby="soil-properties-title"><header class="section-heading"><div><h2 id="soil-properties-title">Propiedades de cultivo</h2><p>Referencia para elegir y revisar la mezcla.</p></div></header><div class="soil-property-grid"><div><span>Rango de pH</span><strong>5,8–6,8</strong><small>Ligeramente ácido</small></div><div><span>Drenaje esperado</span><strong>Muy alto</strong><small>Evacuación rápida</small></div><div><span>Retención</span><strong>Baja</strong><small>Secado homogéneo</small></div></div><div class="ph-scale"><span>Ácido</span><div><i style="left:41.4%;width:7.2%"></i><b style="left:41.4%">5,8</b><b style="left:48.6%">6,8</b></div><span>Alcalino</span></div></section>
+            <section class="related-plants soil-species-usage" aria-labelledby="soil-species-title"><header class="section-heading"><div><h2 id="soil-species-title">Especies que la recomiendan</h2><p>42 especies · 612 plantas con esta pauta efectiva.</p></div><button class="text-button" type="button" data-page="species">Ver catálogo filtrado</button></header><div class="related-plant-row"><span class="species-thumb">✺</span><span><code>CAT-GRUSS</code><strong><em>Echinocactus grusonii</em></strong></span><span>23 plantas</span><span class="status status--ok">Sin overrides</span></div><div class="related-plant-row"><span class="species-thumb species-thumb--mammi">♧</span><span><code>CAT-MAMMI</code><strong><em>Mammillaria bocasana</em></strong></span><span>31 plantas</span><span class="status status--warning">2 overrides</span></div><div class="related-plant-row"><span class="species-thumb species-thumb--feroc">✦</span><span><code>CAT-FEROC</code><strong><em>Ferocactus gracilis</em></strong></span><span>12 plantas</span><span class="status status--ok">Sin overrides</span></div><div class="soil-empty-usage" hidden><span>◒</span><strong>Todavía no está asignada</strong><small>Selecciona esta mezcla al editar una especie.</small><button class="secondary-button" type="button" data-page="species">Ir a especies</button></div></section>
+          </div><aside class="soil-detail-side"><article class="panel soil-facts"><h2>Ficha de la mezcla</h2><dl><div><dt>Orgánico</dt><dd>20%</dd></div><div><dt>Mineral</dt><dd>80%</dd></div><div><dt>pH mínimo</dt><dd>5,8</dd></div><div><dt>pH máximo</dt><dd>6,8</dd></div><div><dt>Creada</dt><dd>14 feb 2025</dd></div></dl></article><article class="impact-note soil-impact"><strong>Impacto de los cambios</strong><p>Modificar esta receta actualizará la recomendación de 42 especies. Las mediciones y trasplantes históricos no cambian.</p><button class="text-button" type="button">Ver 7 plantas con mezcla propia</button></article><article class="panel soil-notes"><h2>Preparación</h2><p>Tamizar los componentes finos. Lavar el pómice antes de mezclar y comprobar el pH del agua utilizada.</p><button class="text-button" type="button" data-open-soil-editor="edit">Editar notas</button></article></aside></div>
+        </section>
+
+        <section class="screen" data-screen="soil-mix-editor" aria-labelledby="soil-mix-editor-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="soil-mixes">Mezclas de sustrato</button></li><li aria-current="page" id="soil-mix-editor-crumb">Nueva mezcla</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><h1 id="soil-mix-editor-title">Nueva mezcla</h1><p class="page-intro">Define una receta reutilizable y su rango de pH recomendado.</p></div></div>
+          <form class="soil-editor" id="soil-form">
+            <aside class="editor-nav" aria-label="Secciones del formulario"><button class="is-active" type="button" data-soil-editor-section="identity">Identificación <span>✓</span></button><button type="button" data-soil-editor-section="composition">Composición</button><button type="button" data-soil-editor-section="properties">pH y propiedades</button><button type="button" data-soil-editor-section="notes">Componentes y notas</button></aside>
+            <div class="editor-content soil-editor-content">
+              <fieldset id="soil-editor-identity"><legend>Identificación</legend><p>Usa un nombre que permita reconocer la receta al asignarla a una especie.</p><div class="form-grid species-form-grid"><label class="form-span">Nombre de la mezcla<input id="soil-name" type="text" value="Mineral drenante" required></label><label class="form-span">Descripción<textarea id="soil-description" rows="4">Pauta base para cactus de clima seco que necesitan evacuación rápida del agua y baja retención.</textarea></label></div></fieldset>
+              <fieldset id="soil-editor-composition"><legend>Composición</legend><p>Los porcentajes orgánico y mineral deben sumar exactamente 100%.</p><div class="soil-composition-editor"><div class="soil-mix-preview"><div class="soil-wheel soil-wheel--editor" id="soil-wheel-preview"><span><b id="soil-wheel-organic">20</b><small>/<b id="soil-wheel-mineral">80</b></small></span></div><p id="soil-composition-state" class="is-valid"><strong>Composición válida</strong><small>20% orgánico + 80% mineral = 100%</small></p></div><div class="soil-percentage-fields"><label><span><i class="component-dot component-dot--organic"></i>Componente orgánico</span><span class="percentage-input"><input id="soil-organic" type="number" value="20" min="0" max="100" required><small>%</small></span></label><label><span><i class="component-dot component-dot--mineral"></i>Componente mineral</span><span class="percentage-input"><input id="soil-mineral" type="number" value="80" min="0" max="100" required><small>%</small></span></label><div class="composition-total"><span>Total de la receta</span><strong id="soil-total">100%</strong></div></div></div></fieldset>
+              <fieldset id="soil-editor-properties"><legend>pH y propiedades</legend><p>El mínimo no puede superar al máximo; ambos valores deben estar entre 0 y 14.</p><div class="soil-ph-editor"><div><label>pH mínimo<input id="soil-ph-min" type="number" value="5.8" min="0" max="14" step="0.1" required></label><span>—</span><label>pH máximo<input id="soil-ph-max" type="number" value="6.8" min="0" max="14" step="0.1" required></label></div><p id="soil-ph-state" class="is-valid">Rango válido · ligeramente ácido</p></div><div class="form-grid species-form-grid"><label>Drenaje esperado<select><option>Muy alto</option><option>Alto</option><option>Medio</option><option>Bajo</option></select></label><label>Retención de humedad<select><option>Baja</option><option>Media</option><option>Alta</option></select></label></div></fieldset>
+              <fieldset id="soil-editor-notes"><legend>Componentes y preparación</legend><p>Describe la receta con suficiente precisión para repetirla.</p><div class="form-grid species-form-grid"><label class="form-span">Componentes orientativos<textarea rows="4">50% pómice, 20% akadama, 10% grava volcánica y 20% turba rubia tamizada.</textarea></label><label class="form-span">Notas de preparación<textarea rows="4">Tamizar los componentes finos. Lavar el pómice antes de mezclar y comprobar el pH del agua utilizada.</textarea></label></div></fieldset>
+            </div>
+            <footer class="editor-actions"><span id="soil-editor-impact">La nueva mezcla estará disponible en el catálogo.</span><div><button class="secondary-button" id="soil-editor-cancel" type="button" data-page="soil-mixes">Cancelar</button><button class="primary-button" id="soil-save" type="submit">Guardar mezcla</button></div></footer>
+          </form>
+        </section>
+
+        <section class="screen" data-screen="tags" aria-labelledby="tags-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Etiquetas</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><p class="eyebrow">Catálogos</p><h1 id="tags-title">Etiquetas <span class="heading-count">14</span></h1><p class="page-intro">Clasifica ejemplares con criterios flexibles que después puedas buscar y combinar.</p></div><button class="primary-button" type="button" data-open-tag-dialog="new">＋ Añadir etiqueta</button></div>
+          <div class="tag-health"><div><span class="tag-health-mark">◇</span><span><strong>1.158 plantas etiquetadas</strong><small>126 ejemplares todavía no tienen ninguna etiqueta.</small></span></div><button class="secondary-button" type="button" data-page="plants">Ver plantas sin etiquetas</button><button class="tag-duplicate-callout" type="button" data-open-tag-merge><span>2</span><span><strong>Posibles duplicados</strong><small>Revisar y combinar</small></span><b>›</b></button></div>
+          <div class="inventory-toolbar tag-toolbar"><label class="inline-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Buscar etiqueta"></label><button class="filter-button" type="button">Uso <span>⌄</span></button><button class="filter-button" type="button">Ordenar: más utilizada <span>⌄</span></button></div>
+          <div class="selection-bar" id="tag-selection-bar" aria-live="polite"><strong><span id="tag-selected-count">0</span> seleccionadas</strong><button type="button" data-open-tag-merge>Combinar etiquetas</button><button type="button">Eliminar sin uso</button></div>
+          <div class="table-frame"><table class="tag-table"><thead><tr><th><input class="tag-selector" type="checkbox" aria-label="Seleccionar todas las etiquetas"></th><th>Etiqueta</th><th>Uso en la colección</th><th>Plantas</th><th>Ejemplos</th><th>Actualizada</th><th></th></tr></thead><tbody>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Semillero propio"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Semillero propio</strong></button></td><td><span class="tag-usage"><i style="width:100%"></i></span></td><td><strong>286</strong><small>22% del inventario</small></td><td><span class="tag-examples">CAT-ASTRO-12, CAT-GRUSS-03…</span></td><td>Hoy</td><td><button class="icon-button" type="button" aria-label="Acciones de Semillero propio">•••</button></td></tr>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Pequeño"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Pequeño</strong></button></td><td><span class="tag-usage"><i style="width:85%"></i></span></td><td><strong>242</strong><small>19% del inventario</small></td><td><span class="tag-examples">CAT-MAMMI-04, CAT-ARIO-06…</span></td><td>28 ago</td><td><button class="icon-button" type="button" aria-label="Acciones de Pequeño">•••</button></td></tr>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Globular"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Globular</strong></button></td><td><span class="tag-usage"><i style="width:76%"></i></span></td><td><strong>218</strong><small>17% del inventario</small></td><td><span class="tag-examples">CAT-GRUSS-01, CAT-ASTRO-12…</span></td><td>17 ago</td><td><button class="icon-button" type="button" aria-label="Acciones de Globular">•••</button></td></tr>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Sin espinas"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Sin espinas</strong></button></td><td><span class="tag-usage"><i style="width:33%"></i></span></td><td><strong>94</strong><small>7% del inventario</small></td><td><span class="tag-examples">CAT-LOPHO-02, CAT-ASTRO-09…</span></td><td>2 ago</td><td><button class="icon-button" type="button" aria-label="Acciones de Sin espinas">•••</button></td></tr>
+            <tr class="tag-row--duplicate"><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Semilleros 2021"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><span><strong>Semilleros 2021</strong><small>Posible duplicado de “Semillero propio”</small></span></button></td><td><span class="tag-usage"><i style="width:27%"></i></span></td><td><strong>76</strong><small>6% del inventario</small></td><td><span class="tag-examples">CAT-GRUSS-01, CAT-MAMMI-18…</span></td><td>12 jul</td><td><button class="icon-button" type="button" data-open-tag-merge aria-label="Revisar posible duplicado">!</button></td></tr>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Híbrido"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Híbrido</strong></button></td><td><span class="tag-usage"><i style="width:24%"></i></span></td><td><strong>68</strong><small>5% del inventario</small></td><td><span class="tag-examples">CAT-ASTRO-21, CAT-ECHIN-07…</span></td><td>4 jul</td><td><button class="icon-button" type="button" aria-label="Acciones de Híbrido">•••</button></td></tr>
+            <tr><td><input class="tag-selector" type="checkbox" aria-label="Seleccionar Colección histórica"></td><td><button class="tag-name-cell" type="button" data-page="tag-detail"><span>◇</span><strong>Colección histórica</strong></button></td><td><span class="tag-usage"><i style="width:12%"></i></span></td><td><strong>34</strong><small>3% del inventario</small></td><td><span class="tag-examples">CAT-GRUSS-02, CAT-FEROC-01…</span></td><td>21 jun</td><td><button class="icon-button" type="button" aria-label="Acciones de Colección histórica">•••</button></td></tr>
+          </tbody></table></div>
+          <footer class="table-footer"><span>1–7 de 14 etiquetas</span><div><button class="icon-button" type="button" disabled aria-label="Página anterior">←</button><button class="page-number is-current" type="button">1</button><button class="page-number" type="button">2</button><button class="icon-button" type="button" aria-label="Página siguiente">→</button></div></footer>
+        </section>
+
+        <section class="screen" data-screen="tag-detail" aria-labelledby="tag-detail-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li><button type="button" data-page="tags">Etiquetas</button></li><li aria-current="page">Globular</li></ol></nav>
+          <header class="tag-detail-hero"><div class="tag-detail-mark">◇</div><div><div class="identity-line"><span class="status status--ok">En uso</span><span class="tag-normalized">Nombre normalizado: globular</span></div><h1 id="tag-detail-title">Globular</h1><p>Etiqueta aplicada a ejemplares de porte esférico o globoso.</p></div><div class="tag-detail-actions"><button class="primary-button" type="button" data-page="plants">Ver 218 plantas</button><button class="secondary-button" type="button" data-open-tag-dialog="rename">Renombrar</button><button class="icon-button" type="button" data-open-tag-merge aria-label="Combinar con otra etiqueta">⇄</button></div></header>
+          <div class="tag-detail-layout"><div class="tag-detail-main"><section class="tag-distribution"><header class="section-heading"><div><h2>Distribución en la colección</h2><p>Ayuda a comprobar si la etiqueta sigue siendo útil y consistente.</p></div></header><div class="tag-distribution-grid"><div><span>Plantas</span><strong>218</strong><small>17% del inventario</small></div><div><span>Especies</span><strong>31</strong><small>De 74 catalogadas</small></div><div><span>Localizaciones</span><strong>12</strong><small>De 18 activas</small></div></div><div class="tag-location-bars"><div><span><strong>Invernadero 1</strong><small>104 plantas</small></span><i><b style="width:48%"></b></i></div><div><span><strong>Invernadero 2</strong><small>71 plantas</small></span><i><b style="width:33%"></b></i></div><div><span><strong>Zona exterior</strong><small>43 plantas</small></span><i><b style="width:20%"></b></i></div></div></section><section class="related-plants tag-plants"><header class="section-heading"><div><h2>Plantas con esta etiqueta</h2><p>Últimos ejemplares modificados.</p></div><button class="text-button" type="button" data-page="plants">Ver inventario filtrado</button></header><div class="related-plant-row"><span class="plant-thumb plant-thumb--one">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span><span>Invernadero 1 / A3</span><span class="status status--warning">Revisar</span></div><div class="related-plant-row"><span class="plant-thumb plant-thumb--two">✣</span><span><code>CAT-ASTRO-12</code><strong>Superkabuto 12</strong></span><span>Invernadero 1 / A3</span><span class="status status--danger">Alerta</span></div><div class="related-plant-row"><span class="plant-thumb plant-thumb--four">✦</span><span><code>CAT-FEROC-08</code><strong>Ferocactus rojo</strong></span><span>Invernadero 2 / B1</span><span class="status status--ok">Al día</span></div></section></div><aside class="tag-detail-side"><article class="panel tag-facts"><h2>Ficha de la etiqueta</h2><dl><div><dt>Nombre</dt><dd>Globular</dd></div><div><dt>Nombre normalizado</dt><dd><code>globular</code></dd></div><div><dt>Plantas</dt><dd>218</dd></div><div><dt>Creada</dt><dd>12 ene 2025</dd></div><div><dt>Actualizada</dt><dd>17 ago 2026</dd></div></dl></article><article class="impact-note"><strong>Etiqueta reutilizable</strong><p>Renombrarla actualizará su nombre en las 218 plantas sin modificar su historial.</p></article><article class="panel tag-actions-panel"><h2>Administrar</h2><button type="button" data-open-tag-merge><span>⇄</span><span><strong>Combinar etiqueta</strong><small>Unifica duplicados conservando plantas</small></span></button><button type="button"><span>⌫</span><span><strong>Eliminar etiqueta</strong><small>Solo si no tiene plantas asociadas</small></span></button></article></aside></div>
+        </section>
+
+        <section class="screen" data-screen="transfer" aria-labelledby="transfer-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Importar / exportar</li></ol></nav>
+          <div class="page-heading page-heading--compact"><div><p class="eyebrow">Administración</p><h1 id="transfer-title">Importar / exportar</h1><p class="page-intro">Mueve datos de forma controlada y conserva una copia utilizable fuera de Cactify.</p></div><div class="backup-freshness"><span>✓</span><span><strong>Última copia: hoy, 08:14</strong><small>Inventario completo · CSV · 1.284 plantas</small></span><button class="text-button" type="button" data-download-last>Descargar</button></div></div>
+
+          <div class="transfer-layout">
+            <section class="transfer-import panel" aria-labelledby="import-title">
+              <header class="transfer-section-heading"><span class="transfer-mark">⇧</span><div><h2 id="import-title">Importar datos</h2><p>Añade plantas o catálogos desde un CSV sin modificar nada hasta revisar los errores.</p></div></header>
+              <ol class="transfer-steps" aria-label="Progreso de importación"><li class="is-current" data-import-step-indicator="1"><span>1</span>Archivo</li><li data-import-step-indicator="2"><span>2</span>Validación</li><li data-import-step-indicator="3"><span>3</span>Aplicar</li></ol>
+
+              <div class="import-stage is-visible" data-import-stage="upload">
+                <label class="import-kind">Qué quieres importar<select id="import-kind"><option>Plantas</option><option>Especies</option><option>Localizaciones</option><option>Mezclas de sustrato</option><option>Etiquetas</option></select></label>
+                <div class="csv-dropzone"><span>CSV</span><div><strong>Arrastra aquí el archivo</strong><small>UTF-8 · hasta 10 MB · una fila por registro</small></div><button class="secondary-button" type="button" data-demo-import>Usar archivo de ejemplo</button></div>
+                <div class="template-download"><span>¿Primera importación?</span><button class="text-button" type="button" data-download-template>Descargar plantilla de plantas.csv</button></div>
+              </div>
+
+              <div class="import-stage" data-import-stage="review">
+                <div class="file-summary"><span class="file-icon">CSV</span><span><strong>inventario_septiembre.csv</strong><small>248 filas · 84 KB · columnas reconocidas automáticamente</small></span><button class="text-button" type="button" data-reset-import>Cambiar archivo</button></div>
+                <div class="validation-summary"><div class="is-valid"><strong>231</strong><span>Listas para importar</span></div><div class="is-warning"><strong>12</strong><span>Con avisos</span></div><div class="is-invalid"><strong>5</strong><span>Con errores</span></div></div>
+                <div class="import-blocker"><span>!</span><span><strong>Corrige 5 filas antes de continuar</strong><small>Puedes descargar solo los errores y volver a cargar el archivo corregido.</small></span><button class="secondary-button" type="button" data-fix-import>Simular corrección</button></div>
+                <div class="table-wrap import-preview"><table><thead><tr><th>FILA</th><th>CÓDIGO</th><th>ESPECIE</th><th>LOCALIZACIÓN</th><th>RESULTADO</th></tr></thead><tbody><tr><td>18</td><td><code>CAT-GRUSS-24</code></td><td>E. grusonii</td><td>Invernadero 1 / A3</td><td><span class="status status--ok">Válida</span></td></tr><tr><td>43</td><td><code>CAT-ASTRO-12</code></td><td>A. myriostigma</td><td>Invernadero 1 / A3</td><td><span class="status status--danger">Código duplicado</span></td></tr><tr><td>91</td><td><code>CAT-MAMMI-31</code></td><td>M. bocasana</td><td>Bandeja Z8</td><td><span class="status status--warning">Ubicación no encontrada</span></td></tr></tbody></table></div>
+                <footer class="import-actions"><button class="text-button" type="button" data-download-errors>Descargar errores.csv</button><span id="import-ready-copy">5 errores bloquean la importación.</span><button class="primary-button" id="apply-import" type="button" disabled>Importar 248 filas</button></footer>
+              </div>
+
+              <div class="import-stage import-complete" data-import-stage="complete"><span>✓</span><h2>Importación completada</h2><p>Se han creado 248 plantas. Ningún registro existente se ha sobrescrito.</p><div><button class="secondary-button" type="button" data-reset-import>Importar otro archivo</button><button class="primary-button" type="button" data-page="plants">Ver plantas importadas</button></div></div>
+            </section>
+
+            <section class="transfer-export panel" aria-labelledby="export-title">
+              <header class="transfer-section-heading"><span class="transfer-mark">⇩</span><div><h2 id="export-title">Preparar exportación</h2><p>Genera una copia del inventario, una selección o etiquetas listas para imprimir.</p></div></header>
+              <form id="export-form">
+                <fieldset class="export-options"><legend>Contenido</legend><label><input type="radio" name="export-content" value="Inventario completo" checked><span><strong>Inventario completo</strong><small>1.284 plantas y sus relaciones</small></span></label><label><input type="radio" name="export-content" value="Plantas filtradas"><span><strong>Plantas filtradas</strong><small>Usa el último filtro guardado · 86 plantas</small></span></label><label><input type="radio" name="export-content" value="Etiquetas físicas"><span><strong>Etiquetas físicas</strong><small>Código y QR para colocar en las macetas</small></span></label></fieldset>
+                <div class="export-format"><label>Formato<select id="export-format"><option>CSV · datos tabulares</option><option>XLSX · hoja de cálculo</option><option>PDF · etiquetas para imprimir</option></select></label><label>Codificación<select><option>UTF-8</option><option>UTF-8 con BOM</option></select></label></div>
+                <label class="inline-checkbox export-checkbox"><input type="checkbox" checked><span>Incluir historial de cuidados y movimientos</span></label>
+                <label class="inline-checkbox export-checkbox"><input type="checkbox"><span>Incluir enlaces a las fotografías</span></label>
+                <div class="export-estimate"><span>Archivo estimado</span><strong id="export-estimate">4,8 MB · 1.284 plantas</strong></div>
+                <button class="primary-button export-submit" type="submit">Generar exportación</button>
+                <div class="export-result" id="export-result" hidden><span>✓</span><span><strong id="export-file-name">cactify-inventario-2026-09-03.csv</strong><small>Preparado ahora · disponible durante 24 horas</small></span><button class="secondary-button" type="button" data-download-export>Descargar</button></div>
+              </form>
+            </section>
+          </div>
+
+          <section class="transfer-history panel" aria-labelledby="transfer-history-title"><header class="section-heading"><div><h2 id="transfer-history-title">Actividad reciente</h2><p>Quién movió datos, cuándo y con qué resultado.</p></div><button class="text-button" type="button">Ver historial completo</button></header><div class="transfer-history-row"><span class="transfer-history-icon">⇩</span><span><strong>Inventario completo</strong><small>CSV · 1.284 plantas · David Navarro</small></span><time>Hoy, 08:14</time><span class="status status--ok">Completada</span><button class="icon-button" type="button" aria-label="Descargar exportación">⇩</button></div><div class="transfer-history-row"><span class="transfer-history-icon">⇧</span><span><strong>Alta de semilleros 2026</strong><small>CSV · 248 plantas · David Navarro</small></span><time>31 ago, 18:42</time><span class="status status--warning">5 errores</span><button class="icon-button" type="button" aria-label="Ver detalles">›</button></div><div class="transfer-history-row"><span class="transfer-history-icon">▦</span><span><strong>Etiquetas Invernadero 1</strong><small>PDF · 486 códigos QR</small></span><time>26 ago, 11:07</time><span class="status status--ok">Completada</span><button class="icon-button" type="button" aria-label="Descargar etiquetas">⇩</button></div></section>
+        </section>
+
+        <section class="screen" data-screen="settings" aria-labelledby="settings-title">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button" data-page="dashboard">Inicio</button></li><li aria-current="page">Configuración</li></ol></nav>
+          <form id="settings-form">
+            <div class="page-heading page-heading--compact settings-heading"><div><p class="eyebrow">Administración</p><h1 id="settings-title">Configuración</h1><p class="page-intro">Ajusta las reglas comunes del vivero. Las pautas de cada especie siguen teniendo prioridad.</p></div><div class="settings-save"><span id="settings-state">Todos los cambios guardados</span><button class="primary-button" type="submit">Guardar cambios</button></div></div>
+            <div class="settings-layout">
+              <nav class="settings-nav" aria-label="Secciones de configuración"><button class="is-active" type="button" data-settings-panel="collection"><span>⌂</span><span><strong>Colección</strong><small>Nombre, unidades y revisiones</small></span></button><button type="button" data-settings-panel="codes"><span>#</span><span><strong>Códigos</strong><small>Prefijos y numeración</small></span></button><button type="button" data-settings-panel="alerts"><span>!</span><span><strong>Alertas y avisos</strong><small>Umbrales y notificaciones</small></span></button><button type="button" data-settings-panel="ai"><span>✦</span><span><strong>Inteligencia artificial</strong><small>Proveedor y privacidad</small></span></button><button type="button" data-settings-panel="access"><span>♙</span><span><strong>Usuarios y acceso</strong><small>Preparado para multiusuario</small></span></button></nav>
+              <div class="settings-content">
+                <section class="settings-panel is-visible" data-settings-content="collection"><header><h2>Datos de la colección</h2><p>Estos valores se utilizan como opción inicial en formularios e informes.</p></header><div class="settings-fields"><label class="field-wide">Nombre de la colección<input type="text" value="Vivero privado"></label><label>Zona horaria<select><option>Europe/Madrid</option><option>Atlantic/Canary</option><option>UTC</option></select></label><label>Idioma<select><option>Español</option><option>English</option></select></label></div><hr><header><h2>Unidades de cultivo</h2><p>Solo cambia cómo se muestran y registran las mediciones.</p></header><div class="segmented-setting"><span><strong>Temperatura</strong><small>Se aplicará a rangos, lecturas y alertas.</small></span><div><label><input type="radio" name="temperature-unit" checked><span>°C</span></label><label><input type="radio" name="temperature-unit"><span>°F</span></label></div></div><div class="segmented-setting"><span><strong>Volumen de riego</strong><small>Unidad sugerida al registrar un cuidado.</small></span><div><label><input type="radio" name="volume-unit" checked><span>ml</span></label><label><input type="radio" name="volume-unit"><span>L</span></label></div></div><hr><header><h2>Revisión por defecto</h2><p>Sirve como respaldo cuando una especie no tiene una frecuencia definida.</p></header><div class="settings-fields"><label>Revisar cada<div class="input-with-suffix"><input type="number" value="14" min="1"><span>días</span></div></label><label>Inicio de semana<select><option>Lunes</option><option>Domingo</option></select></label></div></section>
+
+                <section class="settings-panel" data-settings-content="codes"><header><h2>Códigos de inventario</h2><p>Define cómo se generan los códigos nuevos. Los códigos existentes no cambiarán.</p></header><div class="code-builder"><div class="settings-fields"><label>Prefijo general<input id="settings-prefix" type="text" value="CAT" maxlength="8"></label><label>Dígitos por planta<select id="settings-digits"><option value="2">2 · 01</option><option value="3">3 · 001</option><option value="4">4 · 0001</option></select></label><label>Separador<select id="settings-separator"><option value="-">Guion · -</option><option value="/">Barra · /</option><option value="">Sin separador</option></select></label></div><div class="code-preview"><span>Vista previa</span><code id="settings-code-preview">CAT-GRUSS-01</code><small>Prefijo + código de especie + número correlativo</small></div></div><div class="settings-note"><span>i</span><p>Si el siguiente número ya existe, Cactify buscará automáticamente el primer código libre de la especie.</p></div><hr><header><h2>Etiquetas físicas</h2><p>Formato inicial para las hojas PDF generadas desde Importar / exportar.</p></header><div class="settings-fields"><label>Tamaño<select><option>50 × 20 mm</option><option>60 × 25 mm</option><option>70 × 30 mm</option></select></label><label>Contenido<select><option>Código, nombre y QR</option><option>Solo código y QR</option><option>Código y nombre</option></select></label></div></section>
+
+                <section class="settings-panel" data-settings-content="alerts"><header><h2>Reglas generales de alerta</h2><p>Se aplican cuando la especie o la planta no define un valor más específico.</p></header><div class="rule-row"><span class="rule-icon">◷</span><span><strong>Planta sin revisar</strong><small>Crear alerta después del periodo indicado.</small></span><label><input type="number" value="30" min="1"><span>días</span></label><label class="switch"><input type="checkbox" checked><span></span><b>Activa</b></label></div><div class="rule-row"><span class="rule-icon">▽</span><span><strong>Tarea vencida</strong><small>Avisar si una tarea sigue abierta.</small></span><label><input type="number" value="2" min="0"><span>días</span></label><label class="switch"><input type="checkbox" checked><span></span><b>Activa</b></label></div><div class="rule-row"><span class="rule-icon">♨</span><span><strong>Temperatura crítica</strong><small>Usar los rangos efectivos de cada planta.</small></span><label><input type="number" value="2" min="0"><span>horas</span></label><label class="switch"><input type="checkbox" checked><span></span><b>Activa</b></label></div><hr><header><h2>Notificaciones</h2><p>Elige qué merece interrumpirte fuera del dashboard.</p></header><div class="notification-row"><span><strong>Resumen diario</strong><small>Tareas y alertas pendientes a las 07:30.</small></span><label class="switch"><input type="checkbox" checked><span></span><b>Correo</b></label></div><div class="notification-row"><span><strong>Alertas críticas</strong><small>Aviso inmediato al detectarse.</small></span><label class="switch"><input type="checkbox" checked><span></span><b>Correo</b></label></div><div class="notification-row"><span><strong>Tareas vencidas</strong><small>Incluidas en el resumen; sin aviso adicional.</small></span><label class="switch"><input type="checkbox"><span></span><b>Correo</b></label></div></section>
+
+                <section class="settings-panel" data-settings-content="ai"><header><h2>Recomendaciones con IA</h2><p>La IA interpreta el historial; no sustituye las reglas de cultivo ni crea alertas por sí sola.</p></header><div class="provider-status"><span>✦</span><span><strong>Proveedor conectado</strong><small>OpenAI · última comprobación hoy, 08:02</small></span><span class="status status--ok">Operativo</span></div><div class="settings-fields"><label>Modelo<select><option>Modelo recomendado</option><option>Modelo rápido</option></select></label><label>Uso<select><option>Solo bajo petición</option><option>Al registrar mediciones</option></select></label><label class="field-wide">Clave de acceso<div class="secret-field"><input type="password" value="sk-cactify-example-key" readonly><button class="secondary-button" type="button" data-test-ai>Comprobar conexión</button></div></label></div><div class="privacy-note"><span>◎</span><span><strong>Datos enviados al generar una recomendación</strong><small>Especie, rangos efectivos, lecturas e historial relevante. Las fotografías quedan fuera salvo autorización explícita.</small></span></div></section>
+
+                <section class="settings-panel" data-settings-content="access"><header><h2>Usuarios y acceso</h2><p>La colección funciona actualmente con un único administrador.</p></header><div class="user-access-row"><span class="avatar">DN</span><span><strong>David Navarro</strong><small>Administrador · acceso completo</small></span><span class="status status--ok">Activo</span><button class="icon-button" type="button" aria-label="Acciones del usuario">•••</button></div><div class="future-feature"><span>♙</span><h3>Multiusuario, más adelante</h3><p>Cuando se active la autenticación podrás invitar personas y limitar quién administra catálogos, configuración o tareas.</p><button class="secondary-button" type="button" disabled>Invitar usuario</button></div></section>
+              </div>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <div class="dialog-backdrop" id="search-dialog" role="dialog" aria-modal="true" aria-labelledby="search-title" hidden>
+      <div class="search-dialog-panel">
+        <label class="search-dialog-input"><span aria-hidden="true">⌕</span><span id="search-title" class="sr-only">Búsqueda global</span><input id="search-input" type="search" value="gruss" placeholder="Buscar en Cactify"><kbd>Esc</kbd></label>
+        <div class="search-results">
+          <p class="result-heading">Plantas</p>
+          <button type="button" data-page="plant-detail" data-close-search><span class="plant-thumb plant-thumb--one">♧</span><span><strong>CAT-GRUSS-01 · Asiento de suegra</strong><small><em>Echinocactus grusonii</em> · Invernadero 1 / A3</small></span><kbd>↵</kbd></button>
+          <p class="result-heading">Especies</p>
+          <button type="button" data-page="species-detail" data-close-search><span class="result-icon">⌘</span><span><strong>Echinocactus grusonii</strong><small>23 plantas en la colección</small></span></button>
+          <p class="result-heading">Localizaciones</p>
+          <button type="button" data-page="location-detail" data-close-search><span class="result-icon">⌖</span><span><strong>Invernadero 1 / Bancada norte</strong><small>183 plantas · 2 tareas pendientes</small></span></button>
+          <p class="result-heading">Sustratos</p>
+          <button type="button" data-page="soil-mix-detail" data-close-search><span class="result-icon">◒</span><span><strong>Mineral drenante</strong><small>20% orgánico · 80% mineral · pH 5,8–6,8</small></span></button>
+          <p class="result-heading">Etiquetas</p>
+          <button type="button" data-page="tag-detail" data-close-search><span class="result-icon">◇</span><span><strong>Globular</strong><small>218 plantas etiquetadas</small></span></button>
+          <p class="result-heading">Acciones</p>
+          <button type="button" data-open-task data-close-search><span class="result-icon">＋</span><span><strong>Crear una tarea para CAT-GRUSS-01</strong><small>Abrir formulario de planificación</small></span></button>
+        </div>
+        <footer><span>↑↓ Navegar</span><span>↵ Abrir</span><span>Esc Cerrar</span></footer>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" id="care-record-dialog" role="dialog" aria-modal="true" aria-labelledby="care-record-title" hidden>
+      <form class="task-dialog-panel care-record-panel" id="care-record-form">
+        <header><div><p class="eyebrow">CAT-GRUSS-01 · Asiento de suegra</p><h2 id="care-record-title">Registrar lectura o riego</h2></div><button class="icon-button" id="close-care-record" type="button" aria-label="Cerrar">×</button></header>
+        <div class="care-record-body">
+          <div class="recorded-at"><label>Fecha y hora de la lectura<input id="care-recorded-at" type="datetime-local" value="2026-09-03T09:40" max="2026-09-03T23:59" required></label><span>La fecha no puede estar en el futuro.</span></div>
+          <fieldset class="measurement-grid"><legend>Mediciones y riego</legend><p>Introduce al menos un valor. Los rangos mostrados son los efectivos para esta planta.</p>
+            <label><span class="measurement-icon">◫</span><span><strong>Humedad</strong><small>Recomendada 20–40%</small></span><span class="measurement-input"><input id="care-humidity" type="number" value="18" min="0" max="100" aria-label="Humedad"><b>%</b></span></label>
+            <label><span class="measurement-icon">♨</span><span><strong>Temperatura</strong><small>Recomendada 8–35 °C</small></span><span class="measurement-input"><input id="care-temperature" type="number" value="34" min="-50" max="80" aria-label="Temperatura"><b>°C</b></span></label>
+            <label><span class="measurement-icon">☼</span><span><strong>Horas de luz</strong><small>Recomendadas 8–12 h</small></span><span class="measurement-input"><input id="care-light" type="number" value="10" min="0" max="24" step="0.5" aria-label="Horas de luz"><b>h</b></span></label>
+            <label><span class="measurement-icon">pH</span><span><strong>pH del sustrato</strong><small>Mezcla recomendada 5,8–6,8</small></span><span class="measurement-input"><input id="care-ph" type="number" value="6.2" min="0" max="14" step="0.1" aria-label="pH del sustrato"><b>pH</b></span></label>
+            <label class="measurement-water"><span class="measurement-icon">◇</span><span><strong>Cantidad de riego</strong><small>Déjalo vacío si hoy no has regado.</small></span><span class="measurement-input"><input id="care-water" type="number" min="0" placeholder="—" aria-label="Cantidad de riego"><b>ml</b></span></label>
+          </fieldset>
+          <label class="care-note">Observación<textarea id="care-note" rows="3" placeholder="Aspecto de la planta, contexto de la medición…">Sustrato más seco de lo habitual después de varios días cálidos.</textarea></label>
+          <label class="inline-checkbox ai-after-save"><input id="care-generate-ai" type="checkbox" checked><span><strong>Generar una recomendación con IA al guardar</strong><small>Usará esta lectura, los rangos efectivos y el historial reciente.</small></span></label>
+        </div>
+        <footer><span id="care-record-state">4 valores preparados · ninguno se guarda hasta confirmar.</span><div><button class="secondary-button" id="cancel-care-record" type="button">Cancelar</button><button class="primary-button" id="save-care-record" type="submit">Guardar lectura</button></div></footer>
+      </form>
+    </div>
+
+    <div class="dialog-backdrop" id="ai-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-dialog-title" hidden>
+      <article class="task-dialog-panel ai-dialog-panel">
+        <header><div><p class="eyebrow">Recomendación vinculada a una lectura</p><h2 id="ai-dialog-title">Análisis de CAT-GRUSS-01</h2></div><button class="icon-button" id="close-ai-dialog" type="button" aria-label="Cerrar">×</button></header>
+        <div class="ai-dialog-body">
+          <div class="ai-source-reading"><div><span>18%</span><small>Humedad</small></div><div><span>34 °C</span><small>Temperatura</small></div><div><span>10 h</span><small>Luz</small></div><div><span>6,2</span><small>pH</small></div><div><span>—</span><small>Riego</small></div></div>
+          <div class="ai-verdict"><span class="ai-verdict-mark">✦</span><div><span class="risk-badge risk-badge--medium">Riesgo medio</span><span class="priority">Atender pronto</span><h3>Posible estrés hídrico leve</h3><p>La humedad está por debajo del rango efectivo y la temperatura se acerca al máximo recomendado. El pH y las horas de luz son adecuados.</p></div></div>
+          <section class="recommended-action"><span>Acción recomendada</span><strong>Comprueba el sustrato a 3–4 cm y, si está completamente seco, riega 350–450 ml a primera hora. Mantén la exposición actual.</strong><button class="secondary-button" type="button" data-open-task-from-ai>Crear tarea con esta acción</button></section>
+          <div class="ai-basis"><strong>Qué se ha tenido en cuenta</strong><ul><li>Lectura del 3 sep 2026, 09:40</li><li>Rangos efectivos de <em>Echinocactus grusonii</em></li><li>Último riego: 450 ml hace 18 días</li><li>Historial reciente de la planta</li></ul></div>
+          <p class="ai-disclaimer">La recomendación orienta una revisión; no modifica cuidados, tareas ni alertas automáticamente.</p>
+        </div>
+        <footer><span>La recomendación ya está guardada junto a su lectura.</span><div><button class="primary-button" id="accept-ai-dialog" type="button">Cerrar y volver a la planta</button></div></footer>
+      </article>
+    </div>
+
+    <div class="dialog-backdrop" id="task-dialog" role="dialog" aria-modal="true" aria-labelledby="task-dialog-title" hidden>
+      <form class="task-dialog-panel" id="task-form">
+        <header><div><p class="eyebrow">Planificar trabajo</p><h2 id="task-dialog-title">Nueva tarea</h2></div><button class="icon-button" id="close-task-dialog" type="button" aria-label="Cerrar">×</button></header>
+        <div class="form-grid">
+          <label>Tipo<select required><option>Riego</option><option>Protección frente al frío</option><option>Protección frente al sol intenso</option><option>Poda de raíces</option><option>Cambio de maceta</option><option>Otra</option></select></label>
+          <label>Prioridad<select><option>Normal</option><option>Alta</option><option>Baja</option></select></label>
+          <label class="form-span">Título<input id="task-title-input" type="text" value="Regar bandejas A3 y A4" required></label>
+          <label class="form-span">Destino<button class="field-button" type="button"><span>⌖</span><span><strong>Invernadero 1 / Bandejas A3 y A4</strong><small>31 plantas afectadas</small></span><span>Editar</span></button></label>
+          <label>Fecha<input type="date" value="2026-09-03" required></label>
+          <label>Hora opcional<input type="time" value="09:00"></label>
+          <label class="form-span">Notas<textarea rows="3" placeholder="Instrucciones o contexto adicional"></textarea></label>
+        </div>
+        <footer><span id="task-dialog-impact">La tarea no registra un cuidado hasta que se complete.</span><div><button class="secondary-button" id="cancel-task" type="button">Cancelar</button><button class="primary-button" id="task-submit" type="submit">Crear tarea</button></div></footer>
+      </form>
+    </div>
+
+    <div class="dialog-backdrop" id="move-dialog" role="dialog" aria-modal="true" aria-labelledby="move-dialog-title" hidden>
+      <form class="task-dialog-panel move-dialog-panel" id="move-form">
+        <header><div><p class="eyebrow">Cambiar ubicación</p><h2 id="move-dialog-title">Mover 31 plantas</h2></div><button class="icon-button" id="close-move-dialog" type="button" aria-label="Cerrar">×</button></header>
+        <div class="move-summary"><span class="location-symbol location-symbol--bench">═</span><span><small>Origen</small><strong>Invernadero 1 / Bancada norte</strong></span><span aria-hidden="true">→</span><span><small>Destino</small><strong id="move-destination-label">Bancada sur / Bandeja B1</strong></span></div>
+        <fieldset class="destination-picker"><legend>Elige el destino</legend><label class="tree-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Buscar localización"></label><div class="destination-list"><label><input type="radio" name="destination" data-destination="Bancada norte / Bandeja A4"><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja A4</strong><small>Invernadero 1 / Bancada norte · 27 plantas</small></span></label><label><input type="radio" name="destination" checked data-destination="Bancada sur / Bandeja B1"><span class="location-symbol location-symbol--tray">▦</span><span><strong>Bandeja B1</strong><small>Invernadero 1 / Bancada sur · 42 plantas</small></span></label><label><input type="radio" name="destination" data-destination="Zona exterior / Mesa 2"><span class="location-symbol location-symbol--outside">☼</span><span><strong>Mesa 2</strong><small>Zona exterior · 89 plantas</small></span></label><label><input type="radio" name="destination" data-destination="Cuarentena"><span class="location-symbol location-symbol--quarantine">!</span><span><strong>Cuarentena</strong><small>3 plantas · acceso restringido</small></span></label></div></fieldset>
+        <label class="move-reason">Motivo del movimiento<textarea rows="3" placeholder="Opcional: reorganización, cambio estacional…"></textarea></label>
+        <footer><span>El movimiento quedará registrado en el historial de cada planta.</span><div><button class="secondary-button" id="cancel-move" type="button">Cancelar</button><button class="primary-button" type="submit">Mover 31 plantas</button></div></footer>
+      </form>
+    </div>
+
+    <div class="dialog-backdrop" id="tag-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-dialog-title" hidden>
+      <form class="task-dialog-panel tag-dialog-panel" id="tag-form">
+        <header><div><p class="eyebrow">Catálogo de etiquetas</p><h2 id="tag-dialog-title">Nueva etiqueta</h2></div><button class="icon-button" id="close-tag-dialog" type="button" aria-label="Cerrar">×</button></header>
+        <div class="tag-dialog-body"><label>Nombre<input id="tag-name" type="text" placeholder="Ej. Crecimiento lento" required></label><div class="tag-name-preview"><span>Vista previa</span><strong id="tag-preview">Nueva etiqueta</strong><small id="tag-normalized-preview">Se guardará como “nueva etiqueta” para evitar duplicados.</small></div><p>Los nombres se comparan sin distinguir mayúsculas, acentos ni espacios sobrantes.</p></div>
+        <footer><span id="tag-dialog-impact">La nueva etiqueta estará disponible al editar cualquier planta.</span><div><button class="secondary-button" id="cancel-tag" type="button">Cancelar</button><button class="primary-button" type="submit">Guardar etiqueta</button></div></footer>
+      </form>
+    </div>
+
+    <div class="dialog-backdrop" id="tag-merge-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-merge-title" hidden>
+      <form class="task-dialog-panel tag-merge-panel" id="tag-merge-form">
+        <header><div><p class="eyebrow">Resolver duplicados</p><h2 id="tag-merge-title">Combinar etiquetas</h2></div><button class="icon-button" id="close-tag-merge" type="button" aria-label="Cerrar">×</button></header>
+        <div class="tag-merge-body"><div class="merge-equation"><div><span class="tag-pill">◇ Semillero</span><small>61 plantas</small></div><span>＋</span><div><span class="tag-pill">◇ Semilleros 2021</span><small>76 plantas</small></div><span>→</span><div class="merge-target"><span class="tag-pill">◇ Semillero propio</span><small>Etiqueta que se conservará</small></div></div><label>Etiqueta de destino<select><option>Semillero propio · 286 plantas</option><option>Semillero · 61 plantas</option><option>Semilleros 2021 · 76 plantas</option></select></label><div class="merge-impact"><span>✓</span><div><strong>137 asociaciones se trasladarán</strong><p>13 plantas ya tienen la etiqueta de destino; esas asociaciones duplicadas se eliminarán. El resultado será una única etiqueta en 410 plantas.</p></div></div><label class="inline-checkbox"><input type="checkbox" required><span>He revisado el destino y quiero combinar estas etiquetas.</span></label></div>
+        <footer><span>Las etiquetas de origen dejarán de existir. Las plantas no se eliminarán.</span><div><button class="secondary-button" id="cancel-tag-merge" type="button">Cancelar</button><button class="primary-button" type="submit">Combinar etiquetas</button></div></footer>
+      </form>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script src="prototype.js"></script>
+</body>
+</html>
