@@ -5,15 +5,22 @@ import { ApiError } from '../../types/api'
 const route = useRoute()
 const plantId = String(route.params.id)
 const { detail } = usePlants()
+const { set: setBreadcrumbs } = useBreadcrumbs()
 
 const plant = ref<PlantDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-// Ya montada, no en `setup`: ver ADR-013.
+/*
+ * Mientras la planta carga, el último nivel es neutro: no se inventa un nombre ni se deja el
+ * hueco saltando de sitio cuando llega el dato (ADR-013, los datos llegan ya montada la página).
+ */
+setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: 'Planta' }])
+
 onMounted(async () => {
   try {
     plant.value = await detail(plantId)
+    setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: plant.value.nickname }])
   } catch (cause) {
     error.value = cause instanceof ApiError ? cause.message : 'No se ha podido cargar la planta.'
   } finally {
@@ -48,9 +55,15 @@ const readingValues = computed(() => {
   <section>
     <p v-if="loading" data-test="loading" role="status">Cargando la planta…</p>
 
-    <div v-else-if="error">
-      <p class="error" data-test="error" role="alert">{{ error }}</p>
-      <NuxtLink to="/plants" data-test="back-to-inventory">Volver al inventario</NuxtLink>
+    <div v-else-if="error" class="not-found">
+      <UiInlineError title="No se ha podido abrir la planta" data-test="error">
+        {{ error }}
+        <template #action>
+          <UiButton variant="secondary" to="/plants" data-test="back-to-inventory">
+            Volver al inventario
+          </UiButton>
+        </template>
+      </UiInlineError>
     </div>
 
     <template v-else-if="plant">
@@ -58,86 +71,90 @@ const readingValues = computed(() => {
         <h1>{{ plant.nickname }}</h1>
         <p class="plant__location">{{ plant.location.name }}</p>
         <ul class="tags" data-test="tags">
-          <li v-for="tag in plant.tags" :key="tag.id">{{ tag.name }}</li>
+          <li v-for="tag in plant.tags" :key="tag.id">
+            <UiStatus tone="neutral">{{ tag.name }}</UiStatus>
+          </li>
           <li v-if="!plant.tags.length" class="tags__empty">Sin tags</li>
         </ul>
       </header>
 
-      <SpeciesRanges :species="plant.species" />
+      <div class="plant__stack">
+        <SpeciesRanges :species="plant.species" />
 
-      <CareRecordForm :plant-id="plant.id" @registered="onRegistered" />
+        <CareRecordForm :plant-id="plant.id" @registered="onRegistered" />
 
-      <section v-if="lastReading" class="last-reading" data-test="last-reading">
-        <h2>Lectura registrada</h2>
-        <ul>
-          <li v-for="entry in readingValues" :key="entry.label">
-            {{ entry.label }}: {{ entry.value }} {{ entry.unit }}
-          </li>
-        </ul>
+        <UiPanel v-if="lastReading" title="Lectura registrada" data-test="last-reading">
+          <ul class="reading-values">
+            <li v-for="entry in readingValues" :key="entry.label">
+              {{ entry.label }}: {{ entry.value }} {{ entry.unit }}
+            </li>
+          </ul>
 
-        <RecommendationPanel :plant-id="plant.id" :care-record="lastReading" />
-      </section>
+          <RecommendationPanel
+            :plant-id="plant.id"
+            :care-record="lastReading"
+            class="plant__analysis"
+          />
+        </UiPanel>
+      </div>
     </template>
   </section>
 </template>
 
 <style scoped>
-.last-reading {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  margin-top: var(--space);
-  padding: var(--space);
-}
-
-.last-reading h2 {
-  font-size: 1.05rem;
-  margin: 0 0 0.5rem;
-}
-
-.last-reading ul {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
 .plant__head {
-  margin-bottom: var(--space);
+  margin-bottom: var(--space-6);
 }
 
-h1 {
+.plant__head h1 {
   margin: 0;
 }
 
 .plant__location {
-  color: var(--color-muted);
-  margin: 0.2rem 0;
+  color: var(--color-ink-muted);
+  margin: var(--space-1) 0 0;
+}
+
+.plant__stack {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.plant__analysis {
+  margin-top: var(--space-5);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-2);
   list-style: none;
-  margin: 0.5rem 0 0;
+  margin: var(--space-3) 0 0;
   padding: 0;
 }
 
-.tags li {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  font-size: 0.85rem;
-  padding: 0.15rem 0.6rem;
-}
-
 .tags__empty {
-  background: none;
-  border: none;
-  color: var(--color-muted);
-  padding-left: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
 }
 
-.error {
-  color: var(--color-danger);
+.reading-values {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reading-values li {
+  border-left: 3px solid var(--color-brand-soft);
+  font-size: var(--font-size-13);
+  padding-left: var(--space-3);
+}
+
+.not-found {
+  display: grid;
+  gap: var(--space-4);
 }
 </style>

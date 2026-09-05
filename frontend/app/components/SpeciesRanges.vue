@@ -9,8 +9,7 @@ defineProps<{ species: SpeciesCare }>()
 </script>
 
 <template>
-  <div class="ranges" data-test="species-ranges">
-    <h3>Cuidados recomendados de {{ species.scientificName }}</h3>
+  <UiPanel :title="`Cuidados recomendados de ${species.scientificName}`" data-test="species-ranges">
     <dl>
       <div>
         <dt>Humedad</dt>
@@ -29,35 +28,24 @@ defineProps<{ species: SpeciesCare }>()
         <dd>{{ species.wateringGuideline }}</dd>
       </div>
     </dl>
-  </div>
+  </UiPanel>
 </template>
 
 <style scoped>
-.ranges {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space);
-}
-
-h3 {
-  font-size: 1rem;
-  margin: 0 0 0.5rem;
-}
-
 dl {
   display: grid;
-  gap: 0.4rem 1rem;
+  gap: var(--space-3) var(--space-5);
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   margin: 0;
 }
 
 dt {
-  color: var(--color-muted);
-  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
 }
 
 dd {
+  font-weight: 700;
   margin: 0;
 }
 </style>

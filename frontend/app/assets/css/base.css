@@ -1,0 +1,112 @@
+/*
+ * Reinicio y fundamentos comunes (ADR-014). Aquí solo vive lo que toda la aplicación hereda:
+ * tipografía base, foco, utilidad para lectores de pantalla y movimiento reducido. La
+ * presentación de cada componente va en su propio `<style scoped>`.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-15);
+  line-height: 1.5;
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: var(--color-brand);
+}
+
+/*
+ * Foco visible y separado del borde del control: es una garantía del sistema, no de cada
+ * componente, así que se declara una sola vez y nadie la reimplementa.
+ */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: 0;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 4.5vw, var(--font-size-38));
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+h2 {
+  font-size: var(--font-size-17);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+h3 {
+  font-size: var(--font-size-15);
+  line-height: 1.3;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+/* Texto disponible para las tecnologías de asistencia y no para la vista. */
+.sr-only {
+  border: 0;
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  position: fixed;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/*
+ * El movimiento comunica una acción; quien ha pedido no verlo no lo ve. Se anula aquí para toda
+ * la aplicación en lugar de dejarlo al criterio de cada componente.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

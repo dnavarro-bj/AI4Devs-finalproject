@@ -3,6 +3,9 @@ import type { PageResponse, PlantSummary } from '../../types/api'
 import { ApiError } from '../../types/api'
 
 const { list } = usePlants()
+const { set: setBreadcrumbs } = useBreadcrumbs()
+
+setBreadcrumbs([{ label: 'Inventario' }])
 
 const page = ref<PageResponse<PlantSummary> | null>(null)
 const loading = ref(true)
@@ -28,60 +31,76 @@ const isEmpty = computed(() => !loading.value && !error.value && page.value?.con
 const hasPages = computed(() => (page.value?.totalPages ?? 0) > 1)
 const isFirst = computed(() => (page.value?.pageNumber ?? 0) === 0)
 const isLast = computed(() => (page.value?.pageNumber ?? 0) >= (page.value?.totalPages ?? 1) - 1)
+
+const COLUMNS = [
+  { key: 'nickname', label: 'Planta' },
+  { key: 'species', label: 'Especie' },
+  { key: 'location', label: 'Localización' },
+]
 </script>
 
 <template>
   <section>
-    <div class="inventory__head">
+    <header class="inventory__head">
       <h1>Inventario</h1>
-      <NuxtLink to="/plants/nueva" data-test="new-plant">Añadir planta</NuxtLink>
-    </div>
+      <UiButton to="/plants/nueva" data-test="new-plant">Añadir planta</UiButton>
+    </header>
 
     <p v-if="loading" data-test="loading" role="status">Cargando el inventario…</p>
-    <p v-else-if="error" data-test="error" class="error" role="alert">{{ error }}</p>
-    <p v-else-if="isEmpty" data-test="empty">
-      Todavía no hay ninguna planta registrada. Añade la primera para empezar.
-    </p>
 
-    <table v-else-if="page?.content.length" data-test="plants-table">
-      <thead>
-        <tr>
-          <th>Planta</th>
-          <th>Especie</th>
-          <th>Localización</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="plant in page.content" :key="plant.id">
-          <td>
-            <NuxtLink :to="`/plants/${plant.id}`" data-test="plant-link">{{ plant.nickname }}</NuxtLink>
-          </td>
-          <td>{{ plant.species.scientificName }}</td>
-          <td>{{ plant.location.name }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <UiInlineError v-else-if="error" data-test="error">{{ error }}</UiInlineError>
 
-    <nav v-if="hasPages" class="pager">
-      <button
-        type="button"
+    <UiEmptyState
+      v-else-if="isEmpty"
+      title="Todavía no hay ninguna planta registrada"
+      data-test="empty"
+    >
+      Añade la primera para empezar a registrar sus cuidados.
+      <template #action>
+        <UiButton to="/plants/nueva">Añadir la primera planta</UiButton>
+      </template>
+    </UiEmptyState>
+
+    <UiTable
+      v-else-if="page?.content.length"
+      data-test="plants-table"
+      :columns="COLUMNS"
+      :rows="page.content"
+      row-key="id"
+    >
+      <template #cell-nickname="{ row }">
+        <NuxtLink :to="`/plants/${(row as unknown as PlantSummary).id}`" data-test="plant-link">
+          {{ (row as unknown as PlantSummary).nickname }}
+        </NuxtLink>
+      </template>
+      <template #cell-species="{ row }">
+        {{ (row as unknown as PlantSummary).species.scientificName }}
+      </template>
+      <template #cell-location="{ row }">
+        {{ (row as unknown as PlantSummary).location.name }}
+      </template>
+    </UiTable>
+
+    <nav v-if="hasPages" class="pager" aria-label="Paginación del inventario">
+      <UiButton
+        variant="secondary"
         data-test="previous-page"
         :disabled="isFirst || loading"
         @click="load((page?.pageNumber ?? 0) - 1)"
       >
         Anterior
-      </button>
+      </UiButton>
       <span data-test="page-indicator">
         Página {{ (page?.pageNumber ?? 0) + 1 }} de {{ page?.totalPages }}
       </span>
-      <button
-        type="button"
+      <UiButton
+        variant="secondary"
         data-test="next-page"
         :disabled="isLast || loading"
         @click="load((page?.pageNumber ?? 0) + 1)"
       >
         Siguiente
-      </button>
+      </UiButton>
     </nav>
   </section>
 </template>
@@ -90,31 +109,21 @@ const isLast = computed(() => (page.value?.pageNumber ?? 0) >= (page.value?.tota
 .inventory__head {
   align-items: baseline;
   display: flex;
-  gap: var(--space);
+  gap: var(--space-4);
   justify-content: space-between;
+  margin-bottom: var(--space-6);
 }
 
-table {
-  background: var(--color-surface);
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th,
-td {
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.6rem;
-  text-align: left;
+.inventory__head h1 {
+  margin: 0;
 }
 
 .pager {
   align-items: center;
+  color: var(--color-ink-muted);
   display: flex;
-  gap: var(--space);
-  margin-top: var(--space);
-}
-
-.error {
-  color: var(--color-danger);
+  font-size: var(--font-size-13);
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 </style>

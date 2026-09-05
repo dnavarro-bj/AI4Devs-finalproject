@@ -2,6 +2,8 @@
 
 Referencia visual y de comportamiento derivada de los wireframes de administración de Cactify. Su objetivo es mantener consistencia al implementar las pantallas del frontend, no sustituir los componentes Vue definitivos.
 
+> **La implementación viva es la del frontend.** Desde T-09 ([ADR-014](../adr/ADR-014-sistema-de-diseno-del-frontend.md)) el kit existe como componentes Vue en `frontend/app/components/ui/`, con los tokens en `frontend/app/assets/css/tokens.css` —copia sin editar de [`cactify-ui-kit/tokens.css`](cactify-ui-kit/tokens.css)—. La galería que hay que mirar para saber cómo se ve algo es la de la aplicación, en `/ui-kit` con el frontend levantado; la de este directorio es el prototipo del que salió todo y se conserva como referencia de diseño. Ante una discrepancia manda el código.
+
 ## Cómo consultar el kit
 
 La galería interactiva está en [`cactify-ui-kit/index.html`](cactify-ui-kit/index.html). Desde la raíz del proyecto puede servirse junto al resto de documentación:
@@ -20,7 +22,8 @@ Abrir después `/docs/ui-kit/cactify-ui-kit/`.
 | [Componentes](components.md) | Anatomía, variantes, estados y reglas de uso |
 | [Patrones](patterns.md) | Composición de formularios, inventarios, historial, lecturas, IA y tareas |
 | [Tokens CSS](cactify-ui-kit/tokens.css) | Variables portables que deben originar los futuros design tokens del frontend |
-| [Galería](cactify-ui-kit/index.html) | Muestras visuales e interacciones de referencia |
+| [Galería del prototipo](cactify-ui-kit/index.html) | Muestras visuales e interacciones de referencia |
+| Galería viva | `/ui-kit` con el frontend levantado: los componentes reales, con la misma implementación que usan las pantallas |
 
 ## Principios de producto
 
@@ -37,3 +40,5 @@ Los wireframes continúan siendo la referencia de composición de cada pantalla.
 ## Estado
 
 Versión inicial extraída del prototipo de administración. Incluye escritorio y adaptación móvil, estados de interacción, ejemplos de accesibilidad y los patrones de dominio más importantes.
+
+Llevado al frontend en T-09: tokens, catálogo completo de componentes, armazón de aplicación y galería viva. Lo que el prototipo muestra y el modelo todavía no soporta —código permanente de ejemplar, miniatura, estado de la planta y última lectura— existe en los componentes como entrada opcional, pero ninguna pantalla de producto lo pinta.

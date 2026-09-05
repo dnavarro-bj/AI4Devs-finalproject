@@ -1,0 +1,60 @@
+:root {
+  color-scheme: light;
+
+  --color-ink: #17211d;
+  --color-ink-muted: #52615a;
+  --color-ink-faint: #7a8881;
+  --color-canvas: #f3f5f1;
+  --color-surface: #ffffff;
+  --color-surface-muted: #e9eeea;
+  --color-line: #d9e0db;
+  --color-line-strong: #bdc8c0;
+  --color-brand: #315c49;
+  --color-brand-strong: #244536;
+  --color-brand-soft: #dce9e1;
+  --color-warning: #9a6412;
+  --color-warning-soft: #fff0cf;
+  --color-danger: #a34135;
+  --color-danger-soft: #f9e2df;
+  --color-info: #365c6a;
+  --color-info-soft: #e1ebef;
+  --color-sidebar: #1d2b25;
+  --color-sidebar-text: #eef3ef;
+
+  --font-sans: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --font-size-11: 0.6875rem;
+  --font-size-12: 0.75rem;
+  --font-size-13: 0.8125rem;
+  --font-size-15: 0.9375rem;
+  --font-size-17: 1.0625rem;
+  --font-size-24: 1.5rem;
+  --font-size-38: 2.375rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --shadow-overlay: 0 14px 40px rgba(31, 52, 43, 0.16);
+  --focus-ring: 0 0 0 3px rgba(49, 92, 73, 0.28);
+
+  --duration-fast: 120ms;
+  --duration-page: 180ms;
+  --ease-standard: ease-out;
+
+  --sidebar-width: 248px;
+  --topbar-height: 76px;
+  --content-max: 1530px;
+}

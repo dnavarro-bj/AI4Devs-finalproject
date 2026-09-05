@@ -70,6 +70,15 @@ context: |
     `WebMvcConfigurer` en `infrastructure` sobre todas las rutas y sin credenciales; en
     consecuencia el frontend pide los datos desde el cliente y no en renderizado de servidor. La
     lista de orígenes pasará a variable de entorno en cuanto haya autenticación o despliegue no local
+  - ADR-014: el sistema de diseño del frontend se implementa en CSS propio gobernado por tokens, sin
+    dependencia de estilos; `tokens.css` (copia sin editar de `docs/ui-kit/`) y `base.css` son las
+    únicas hojas globales y el resto del CSS vive en el `<style scoped>` de su componente; los
+    componentes del kit están en `app/components/ui/` con prefijo `Ui` y **un solo elemento raíz**,
+    para que `data-test` y `aria-*` del punto de uso caigan donde deben; el armazón es
+    `layouts/default.vue` y no `app.vue`; la galería del kit es la ruta `/ui-kit` de la propia
+    aplicación, fuera de la navegación de producto; la accesibilidad es parte del contrato del
+    componente y se verifica con tests en lo que `happy-dom` observa —marcado, ARIA y foco— y a ojo
+    en la galería en lo puramente visual
 
 rules:
   proposal:
