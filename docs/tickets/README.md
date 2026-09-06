@@ -39,6 +39,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | ID | Ticket | Área |
 |----|--------|------|
 | [T-10](T-10-armazon-y-navegacion-de-la-aplicacion.md) | Armazón y navegación de la aplicación | Frontend |
+| [T-25](T-25-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Frontend |
 | [T-11](T-11-kit-de-datos-a-escala.md) | Kit: datos a escala | Frontend (kit) |
 | [T-12](T-12-kit-de-cronologia-calendario-y-multimedia.md) | Kit: cronología, calendario y multimedia | Frontend (kit) |
 | [T-13](T-13-esqueleto-de-las-pantallas-de-gestion.md) | Esqueleto de las pantallas de gestión | Frontend |

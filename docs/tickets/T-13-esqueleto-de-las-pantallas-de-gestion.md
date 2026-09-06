@@ -17,6 +17,19 @@ Se construyen **contra datos de ejemplo**, no contra el API. El objetivo es fija
 * Las pantallas de T-05 que ya existen (`/plants`, `/plants/nueva`, `/plants/{id}`) se absorben en las nuevas sin perder su comportamiento actual ni sus tests.
 * Todo patrón que aparezca en dos pantallas sale al kit con su test y su muestra, no se copia.
 
+## Notas sobre la ficha de planta
+
+La ficha es la pantalla más usada del producto y la que más se aparta de lo que dejó T-05, que es una sola columna con nombre, tags, cuidados y formulario. La referencia es la pantalla `plant-detail` del [wireframe](../wireframes/cactify-admin/index.html): cabecera de ejemplar con fotografía, identidad y sus tres acciones; aviso; pestañas (Resumen e historial, Fotografías, Floración, Datos); «De un vistazo» con cuatro métricas; cronología; y columna derecha con recomendación de IA, cuidados efectivos y próximo trabajo.
+
+Decisiones ya tomadas al revisarla:
+
+* **El formulario de lectura va en un diálogo**, no ocupando la columna de forma permanente.
+* Las pestañas salen de `UiTabs` y el diálogo de `UiDialog`, que ya están en el kit. «De un vistazo» necesita `UiStatTile` (T-11) y la cronología `UiTimeline` (T-12): la ficha va después de esos dos.
+* La cabecera es un componente de la feature, no del kit: es de esta pantalla.
+* **Híbrida**: lo que el API ya sirve es real; lo que no —fotografía, código, estado, contexto de exposición y germinación, avisos, tareas, floraciones y los eventos de la cronología que no son lecturas— sale de datos de ejemplo **marcados con el ticket que los sustituye**.
+
+**Hallazgo:** `GET /plants/{id}/care-records` existe desde [T-03](T-03-api-de-lecturas-ambientales.md) y **el frontend nunca lo ha consumido** — `useCareRecords` solo tiene `create`. Hoy la ficha muestra la lectura que acabas de registrar y ninguna anterior, así que la historia [0.5](../user-stories/0.5-consultar-historial-de-cuidados.md) está sin cumplir aunque su API lleve meses en verde. La cronología de lecturas se puede montar ya, sin tocar backend.
+
 ## Criterios de aceptación
 
 * Las diez pantallas navegan entre sí y respetan los breadcrumbs de la jerarquía de información, no del recorrido del usuario.
