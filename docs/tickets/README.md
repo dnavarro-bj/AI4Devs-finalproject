@@ -51,6 +51,8 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 |----|--------|------|
 | [T-15](T-15-codigos-de-inventario.md) | Códigos de inventario de especie y ejemplar | Backend + Frontend |
 | [T-26](T-26-api-de-edicion-de-planta.md) | API de edición de planta | Backend |
+| [T-27](T-27-api-del-catalogo-de-mezclas-de-sustrato.md) | API del catálogo de mezclas de sustrato | Backend |
+| [T-28](T-28-administracion-de-etiquetas.md) | Administración de etiquetas: renombrar y combinar | Backend + Frontend |
 | [T-16](T-16-ficha-del-ejemplar-ampliada.md) | Ficha del ejemplar ampliada y herencia de cuidados | Backend + Frontend |
 | [T-17](T-17-especie-ampliada.md) | Especie ampliada: exposición, entorno, crecimiento y floración | Backend + Frontend |
 | [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend |

@@ -38,6 +38,20 @@ class DuplicateScientificNameException(scientificName: String) :
 class SpeciesInUseException(id: String) :
   RuntimeException("La especie '$id' tiene ejemplares registrados y no se puede eliminar")
 
+/** La mezcla de tierra pedida por la ruta no existe: 404. */
+class SoilMixNotFoundException(id: String) :
+  RuntimeException("La mezcla de tierra '$id' no existe")
+
+/**
+ * La mezcla la recomienda alguna especie y no puede retirarse del catálogo: 409.
+ *
+ * `species.soil_mix_id` es `NOT NULL` y no tiene `ON DELETE`, igual que `plant.species_id`: sin
+ * esta comprobación el borrado reventaría contra la FK y el cliente recibiría un 500 por un caso
+ * perfectamente previsible.
+ */
+class SoilMixInUseException(id: String) :
+  RuntimeException("La mezcla de tierra '$id' la recomienda alguna especie y no se puede eliminar")
+
 /** La lectura pedida por la ruta no existe, o no cuelga de la planta indicada: 404. */
 class CareRecordNotFoundException(id: String) :
   RuntimeException("La lectura '$id' no existe")

@@ -1,0 +1,59 @@
+## ADDED Requirements
+
+### Requirement: Consulta de una localización con su uso
+
+El sistema SHALL exponer la consulta de una localización por su identificador, incluyendo **cuántos ejemplares alberga**. Una localización inexistente SHALL responder `404`.
+
+#### Scenario: Consulta de una localización
+
+- **WHEN** se consulta una localización existente por su identificador
+- **THEN** la respuesta incluye su nombre y el número de ejemplares que alberga
+
+#### Scenario: Localización vacía
+
+- **WHEN** se consulta una localización sin ningún ejemplar
+- **THEN** la respuesta indica cero ejemplares, no la omite
+
+#### Scenario: Localización inexistente
+
+- **WHEN** se consulta un identificador que no corresponde a ninguna localización
+- **THEN** la respuesta es `404 Not Found` con el cuerpo de error uniforme
+
+### Requirement: Corrección del nombre de una localización
+
+El sistema SHALL permitir cambiar el nombre de una localización existente **sin afectar a los ejemplares que alberga**: siguen siendo los mismos y conservan su identificador. Un nombre en blanco SHALL responder `400`.
+
+#### Scenario: Localización renombrada
+
+- **WHEN** se corrige el nombre de una localización
+- **THEN** la respuesta refleja el nombre nuevo y los ejemplares que alberga no cambian
+
+#### Scenario: Nombre en blanco
+
+- **WHEN** se intenta dejar el nombre de una localización vacío o solo con espacios
+- **THEN** la respuesta es `400 Bad Request` con el cuerpo de error uniforme, no un `500`
+
+#### Scenario: Localización inexistente
+
+- **WHEN** se intenta corregir una localización que no existe
+- **THEN** la respuesta es `404 Not Found`
+
+### Requirement: Retirada de una localización
+
+El sistema SHALL permitir retirar una localización **que no albergue ningún ejemplar**. Una localización con ejemplares SHALL responder `409` y seguir existiendo: la planta no puede quedarse sin sitio.
+
+#### Scenario: Retirada de una localización vacía
+
+- **WHEN** se retira una localización que no alberga ningún ejemplar
+- **THEN** la operación se acepta y la localización deja de aparecer en el catálogo
+
+#### Scenario: Retirada de una localización con ejemplares
+
+- **WHEN** se intenta retirar una localización que alberga al menos un ejemplar
+- **THEN** la respuesta es `409 Conflict` con el cuerpo de error uniforme
+- **AND** la localización sigue existiendo y sus ejemplares conservan su localización
+
+#### Scenario: Retirada de una localización inexistente
+
+- **WHEN** se intenta retirar un identificador que no corresponde a ninguna localización
+- **THEN** la respuesta es `404 Not Found`

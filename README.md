@@ -326,13 +326,17 @@ Tres reglas aplican a **todos** los endpoints:
 |---|---|
 | `POST /species` | Crea una especie (`scientificName`, `commonName`, los tres pares de rangos, `wateringGuideline` y `soilMixId`). La mezcla debe existir; el nombre científico es único. |
 | `GET /species` | Lista el catálogo paginado, ordenado por nombre científico. Devuelve el resumen: identificador y ambos nombres. |
-| `GET /species/{id}` | Ficha de una especie: sus rangos de humedad, temperatura y horas de luz, y la pauta de riego. |
+| `GET /species/{id}` | Ficha de una especie: sus rangos de humedad, temperatura y horas de luz, la pauta de riego y la mezcla de sustrato que recomienda (identificador y nombre). |
 | `PUT /species/{id}` | Reemplaza la ficha completa. Idempotente; el cambio lo reciben todos los ejemplares de la especie. |
 | `DELETE /species/{id}` | Retira la especie del catálogo. `409` si tiene ejemplares; no hay borrado en cascada. |
 | `POST /plants` | Crea una planta (`nickname`, `locationId`, `speciesId`). Especie y localización deben existir. |
 | `GET /plants` | Lista el inventario paginado. Filtros opcionales y combinables: `location` y `tag` (repetible, semántica **AND**: la planta debe tener todos los indicados). |
 | `GET /plants/{id}` | Detalle de una planta, con sus tags y los datos de cuidado heredados de su especie. |
 | `PUT /plants/{id}/tags` | Reemplaza el conjunto completo de tags (`{"tagIds": [...]}`). Idempotente; una lista vacía deja la planta sin tags. |
+| `POST /soil-mixes` · `GET /soil-mixes` | Crea y lista el catálogo de mezclas de sustrato. Los porcentajes deben sumar 100 y el pH estar en escala; una composición incoherente es `400`. |
+| `GET /soil-mixes/{id}` | Ficha de una mezcla, con cuántas especies la recomiendan. |
+| `PUT /soil-mixes/{id}` | Reemplaza la receta completa. El cambio lo reciben todas las especies que la recomiendan. |
+| `DELETE /soil-mixes/{id}` | Retira la mezcla del catálogo. `409` si alguna especie la recomienda. |
 | `POST /locations` · `GET /locations` | Crea y lista el catálogo de localizaciones. |
 | `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
 | `POST /plants/{id}/care-records` | Registra una lectura de cultivo (humedad, temperatura, horas de luz, riego y acidez). La fecha la aporta el cliente o, si falta, la sella el servidor; una fecha futura se rechaza. |
@@ -345,12 +349,6 @@ Ejemplo de filtrado combinado:
 ```
 GET /plants?tag=400001&tag=400002&location=300002&page=0&size=25
 ```
-
-### Endpoints previstos
-
-| Método y ruta | Ticket |
-|---|---|
-| `POST /soil-mixes` · `GET /soil-mixes` — catálogo de mezclas de tierra | Sin ticket; el MVP las consume de las semillas |
 
 ---
 

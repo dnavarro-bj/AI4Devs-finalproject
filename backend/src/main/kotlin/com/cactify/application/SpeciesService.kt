@@ -1,6 +1,7 @@
 package com.cactify.application
 
 import com.cactify.application.dto.PageResponse
+import com.cactify.application.dto.SoilMixSummaryResponse
 import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import com.cactify.domain.SoilMix
@@ -135,8 +136,12 @@ class SpeciesService(
     SpeciesSummaryResponse(id.toString(), scientificName, commonName)
 
   /**
-   * Reutiliza el DTO que ya sirve `GET /plants/{id}`, sin duplicarlo ni añadirle campos: la
-   * mezcla de tierra queda fuera de la respuesta a propósito (decisión 3 del design).
+   * Reutiliza el DTO que ya sirve `GET /plants/{id}`, sin duplicarlo.
+   *
+   * La mezcla **sí** viaja ahora: la decisión 3 del design de T-08 la dejó fuera mientras nadie la
+   * consumiera, y dejó escrito que se añadiría al existir el catálogo de mezclas. Ese momento es
+   * este. El `N+1` que temía no aplica: este DTO solo aparece en fichas de una entidad —`/species/{id}`
+   * y anidado en `/plants/{id}`—; los listados usan `SpeciesSummaryResponse`, que no la lleva.
    */
   private fun Species.toCare() = SpeciesCareResponse(
     id = id.toString(),
@@ -149,5 +154,6 @@ class SpeciesService(
     minLightHours = minLightHours,
     maxLightHours = maxLightHours,
     wateringGuideline = wateringGuideline,
+    soilMix = SoilMixSummaryResponse(soilMix.id.toString(), soilMix.name),
   )
 }

@@ -14,6 +14,11 @@ data class SpeciesCareResponse(
   val minLightHours: Int,
   val maxLightHours: Int,
   val wateringGuideline: String,
+  /**
+   * La mezcla que recomienda la especie. T-08 la dejó fuera porque nadie la consumía; el editor
+   * de especie la necesita, porque `PUT /species/{id}` es reemplazo completo y la exige.
+   */
+  val soilMix: SoilMixSummaryResponse,
 )
 
 /** Especie en el listado: sin los rangos de cuidado, que solo interesan en el detalle. */

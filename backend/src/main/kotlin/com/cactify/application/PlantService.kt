@@ -4,6 +4,7 @@ import com.cactify.application.dto.LocationResponse
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.PlantDetailResponse
 import com.cactify.application.dto.PlantSummaryResponse
+import com.cactify.application.dto.SoilMixSummaryResponse
 import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import com.cactify.application.dto.TagResponse
@@ -113,6 +114,7 @@ class PlantService(
       minLightHours = species.minLightHours,
       maxLightHours = species.maxLightHours,
       wateringGuideline = species.wateringGuideline,
+      soilMix = SoilMixSummaryResponse(species.soilMix.id.toString(), species.soilMix.name),
     ),
     tags = tags.map { TagResponse(it.id.toString(), it.name) }.sortedBy { it.name },
   )

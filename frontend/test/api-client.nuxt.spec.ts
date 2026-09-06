@@ -28,6 +28,24 @@ describe('cliente del API', () => {
     expect(seen[1]).not.toContain('882687672222443500')
   })
 
+  /**
+   * `DELETE` no lleva cuerpo y responde `204` sin contenido: lo que importa es que llegue el
+   * método, no lo que devuelva.
+   */
+  it('retira un recurso con DELETE, sin cuerpo', async () => {
+    const seen: { url: string, options?: Record<string, unknown> }[] = []
+    const fetcher = vi.fn(async (url: string, options?: Record<string, unknown>) => {
+      seen.push({ url, options })
+      return undefined
+    })
+
+    const api = createApiClient(baseUrl, fetcher as never)
+    await api.delete('/soil-mixes/100001')
+
+    expect(seen[0]!.url).toBe(`${baseUrl}/soil-mixes/100001`)
+    expect(seen[0]!.options).toEqual({ method: 'DELETE' })
+  })
+
   it('usa el mensaje del cuerpo de error uniforme cuando el API lo devuelve', async () => {
     const fetcher = vi.fn(async () => {
       throw {
