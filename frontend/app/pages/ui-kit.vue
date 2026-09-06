@@ -49,6 +49,46 @@ const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar
 const NAVIGATION = APP_NAVIGATION
 
 const galleryPage = ref(3)
+const calendarMonth = ref('2026-09')
+
+const TIMELINE_TYPES = [
+  { value: 'reading', label: 'Lecturas', mark: '∿' },
+  { value: 'water', label: 'Riegos', mark: '◇' },
+  { value: 'photo', label: 'Fotografías', mark: '▧' },
+  { value: 'bloom', label: 'Floración', mark: '✣' },
+]
+
+const TIMELINE_EVENTS = [
+  { id: '1', type: 'reading', title: 'Condiciones tras una semana cálida', at: '2026-08-21T18:06:00Z' },
+  { id: '2', type: 'water', title: 'Riego de mantenimiento', at: '2026-08-16T08:42:00Z' },
+  { id: '3', type: 'photo', title: 'Nueva espinación en el ápice', at: '2026-08-02T18:14:00Z' },
+  { id: '4', type: 'bloom', title: 'Floración finalizada', at: '2026-05-22T10:00:00Z' },
+  // Un tipo que el kit no conoce: se muestra igual, con representación de reserva.
+  { id: '5', type: 'movimiento', title: 'Traslado a Bandeja A3', at: '2026-03-11T09:00:00Z' },
+]
+
+const AGENDA = [
+  { id: '1', due: '2026-09-01', title: 'Revisión general', detail: 'CAT-GRUSS-01' },
+  { id: '2', due: '2026-09-06', title: 'Regar bandeja A3', detail: '31 plantas' },
+  { id: '3', due: '2026-09-09', title: 'Comprobar tamaño de maceta' },
+  { id: '4', due: '2026-10-20', title: 'Poda de raíces' },
+]
+
+const CALENDAR = [
+  { id: '1', date: '2026-09-08', label: 'Regar A3' },
+  { id: '2', date: '2026-09-08', label: 'Regar A4' },
+  { id: '3', date: '2026-09-08', label: 'Revisar maceta', tone: 'warning' },
+  { id: '4', date: '2026-09-15', label: 'Trasplante', tone: 'danger' },
+]
+
+// Rectángulos de color: la galería del kit no depende de ningún fichero externo.
+const swatch = (color: string) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='120' height='120' fill='${color}'/%3E%3C/svg%3E`
+
+const GALLERY_IMAGES = [
+  { id: '1', src: swatch('%236b8f71'), alt: 'Ápice del ejemplar', primary: true },
+  { id: '2', src: swatch('%23a8bfa0'), alt: 'Vista lateral', caption: 'Tras el trasplante' },
+  { id: '3', src: swatch('%23c9d6bf'), alt: 'Raíces' },
+]
 
 const appliedFilters = ref([
   { id: 'location', label: 'Localización: Invernadero 1' },
@@ -273,6 +313,45 @@ const SEARCH_GROUPS = [
     </section>
 
     <section class="gallery__section">
+      <h2>Cronología y trabajo</h2>
+      <UiTimeline :events="TIMELINE_EVENTS" :types="TIMELINE_TYPES">
+        <template #event-water><p class="note">450 ml · desde la tarea «Regar bandejas A3 y A4».</p></template>
+        <template #event-photo><p class="note">La coloración se mantiene uniforme.</p></template>
+      </UiTimeline>
+
+      <div class="two-columns">
+        <UiAgendaList :entries="AGENDA" today="2026-09-06" @select="show(`Tarea ${$event}`)" />
+        <UiCalendarMonth
+          v-model:month="calendarMonth"
+          today="2026-09-06"
+          :entries="CALENDAR"
+          :max-per-day="2"
+          @select-day="show(`Día ${$event}`)"
+        />
+      </div>
+    </section>
+
+    <section class="gallery__section">
+      <h2>Multimedia y formularios largos</h2>
+      <UiMediaGallery :images="GALLERY_IMAGES" />
+      <UiMediaGallery :images="[]" />
+      <!-- La subida real —formatos, tamaño, miniaturas y almacenamiento— llega en T-19. -->
+      <UiUploadArea label="Añadir fotografías" accept="image/*" hint="JPG o PNG" @files="show(`${$event.length} fichero(s)`)" />
+
+      <UiFormSection title="Identidad" description="Cómo reconocer este ejemplar">
+        <UiField v-model="humidity" label="Apodo" />
+      </UiFormSection>
+      <UiFormSection title="Pauta anual">
+        <UiMonthRange :from="3" :to="10" label="Crecimiento" />
+        <UiMonthRange :from="11" :to="2" label="Reposo" />
+      </UiFormSection>
+      <UiFormSection title="Composición del sustrato">
+        <UiProportionBar :parts="[{ label: 'Mineral', value: 70 }, { label: 'Orgánico', value: 30 }]" />
+        <UiProportionBar :parts="[{ label: 'Mineral', value: 70 }, { label: 'Orgánico', value: 20 }]" />
+      </UiFormSection>
+    </section>
+
+    <section class="gallery__section">
       <h2>Superficies y feedback</h2>
       <div class="grid-2">
         <UiPanel title="Cuidados recomendados">
@@ -362,6 +441,18 @@ const SEARCH_GROUPS = [
 
 <style scoped>
 /* La navegación solo tiene sentido sobre su superficie: el kit no la muestra flotando en claro. */
+.two-columns {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: minmax(240px, 1fr) 2fr;
+}
+
+@media (max-width: 900px) {
+  .two-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 .tree-sample {
   max-width: 360px;
 }
