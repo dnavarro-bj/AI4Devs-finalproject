@@ -1,5 +1,7 @@
 # T-06 - Historial y alertas
 
+> **Retirado.** Se queda corto frente al [documento de producto](../producto/definicion-funcional-y-ux.md): el historial pasa a ser una cronología unificada de eventos ([T-20](T-20-cronologia-unificada.md)) y la alerta, una entidad con ciclo de vida propio ([T-23](T-23-alertas.md)). Se conserva como registro de por dónde iba el MVP; no se implementa tal cual.
+
 **Área:** Frontend
 **Historia relacionada:** [0.5](../user-stories/0.5-consultar-historial-de-cuidados.md)
 

@@ -5,7 +5,7 @@
 
 ## Descripción
 
-Diseñar e implementar las tablas necesarias para soportar el catálogo de especies, el inventario de plantas y las lecturas de cuidado, según el modelo descrito en el [README](../../README.md#3-modelo-de-datos) y el [diagrama de modelo de datos](../diagramas/modelo-datos.md).
+Diseñar e implementar las tablas necesarias para soportar el catálogo de especies, el inventario de plantas y las lecturas de cuidado, según el modelo descrito en el [README](../../README.md#3-modelo-de-datos) y el [diagrama de modelo de datos](../diagramas/modelo-datos-actual.md).
 
 ## Alcance
 

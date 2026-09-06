@@ -1,17 +1,21 @@
 # Cactify
 
-Plataforma web para gestionar colecciones de cactus y pequeños viveros: registro de plantas por especie, lecturas de cultivo (manuales en el MVP) y recomendaciones de cuidado generadas por IA a partir de los rangos de la especie y el historial de cada planta.
+Aplicación de administración para coleccionistas de cactus y pequeños viveros que manejan **entre 500 y 2000 ejemplares**: inventario por especie, cuidados y mediciones, planificación del trabajo, alertas y recomendaciones de IA a partir de los rangos de la especie y el historial de cada planta.
 
-Contexto y decisiones de producto completas en [README.md](README.md). Historial de las conversaciones que originaron el proyecto en [chats/](chats/).
+Lo construido hasta hoy es el MVP —inventario, lecturas manuales y análisis de IA—. El **alcance final del producto es bastante mayor** y está descrito en [docs/producto/definicion-funcional-y-ux.md](docs/producto/definicion-funcional-y-ux.md): ese documento manda sobre el alcance, y [README.md](README.md) sigue describiendo lo ya construido. Ver [Alcance](#alcance-mvp-construido-y-producto-completo) más abajo antes de dar por cerrado cualquier módulo.
+
+Historial de las conversaciones que originaron el proyecto en [chats/](chats/).
 
 ## Dónde está cada cosa
 
 | Qué | Dónde |
 |---|---|
-| Descripción de producto, arquitectura, modelo de datos, API | [README.md](README.md) |
-| Historias de usuario (una por archivo; `0.x` = en alcance del MVP, `F.x` = fuera de alcance/roadmap) | [docs/user-stories/](docs/user-stories/README.md) |
-| Tickets de trabajo (uno por archivo, `T-01`…`T-09`) | [docs/tickets/](docs/tickets/README.md) |
-| Diagramas (modelo de datos y flujo E2E, en Mermaid) | [docs/diagramas/](docs/diagramas/) |
+| Arquitectura, modelo de datos y API **de lo ya construido** | [README.md](README.md) |
+| **Definición funcional y de UX del producto completo** — visión, navegación, módulos, preguntas abiertas y priorización; documento vivo de descubrimiento y fuente del alcance final | [docs/producto/definicion-funcional-y-ux.md](docs/producto/definicion-funcional-y-ux.md) |
+| Wireframes navegables de administración (fidelidad media: arquitectura de información, jerarquía y flujos; abre `index.html` en el navegador) | [docs/wireframes/](docs/wireframes/README.md) |
+| Historias de usuario (una por archivo; `0.x` = en alcance del MVP, `F.x` = roadmap —ojo: varias `F.x` han pasado a núcleo, ver [Alcance](#alcance-mvp-construido-y-producto-completo)) | [docs/user-stories/](docs/user-stories/README.md) |
+| Tickets de trabajo (uno por archivo, `T-01`…`T-24`), organizados en tres bloques: esqueleto de la web, gestión de plantas y organización del trabajo | [docs/tickets/](docs/tickets/README.md) |
+| Diagramas: modelo de datos **actual** más dos borradores de su evolución (gestión y tareas), y flujo E2E, en Mermaid | [docs/diagramas/](docs/diagramas/README.md) |
 | ADRs — decisiones técnicas transversales (`ADR-NNN`) | [docs/adr/](docs/adr/README.md) |
 | Backend | [backend/](backend/) |
 | Frontend (Nuxt: `app/pages`, `app/layouts`, `app/components` —con el UI kit en `app/components/ui/`—, `app/composables`, `app/stores`, `app/assets/css`; tests en `test/`) | [frontend/](frontend/) |
@@ -22,7 +26,7 @@ Contexto y decisiones de producto completas en [README.md](README.md). Historial
 
 * **Backend**: Kotlin + Spring Boot 3 (Spring Web, Spring Data JPA) + PostgreSQL + OpenAI API.
 * **Frontend**: Nuxt 4 + Vue 3 + Pinia, con un sistema de diseño propio en CSS gobernado por tokens, sin dependencias de estilo ([ADR-014](docs/adr/ADR-014-sistema-de-diseno-del-frontend.md)).
-* **Entidades principales**: `Species`, `Plant`, `CareRecord`, `AIRecommendation` (ver [docs/diagramas/modelo-datos.md](docs/diagramas/modelo-datos.md)).
+* **Entidades principales**: `Species`, `Plant`, `CareRecord`, `AIRecommendation`, más los catálogos `Location`, `Tag` y `SoilMix` (ver [docs/diagramas/modelo-datos-actual.md](docs/diagramas/modelo-datos-actual.md); la evolución prevista, en los dos borradores de [docs/diagramas/](docs/diagramas/README.md)). El producto completo añade tareas, fotografías, comentarios, floraciones, movimientos y alertas con ciclo de vida propio, y parte `CareRecord` en mediciones y acciones de cuidado.
 
 ### Estructura del backend
 
@@ -59,7 +63,7 @@ cp .env.example .env   # y ajusta las variables si hace falta
 docker compose up --build
 ```
 
-Levanta PostgreSQL, el backend (`:8080`) y el frontend (`:3000`). Ver [iac/local/README.md](iac/local/README.md).
+Levanta PostgreSQL, el backend (`:8080`) y el frontend (`:3005`; dentro del contenedor sigue siendo el 3000). Ver [iac/local/README.md](iac/local/README.md).
 
 ## Workflow: spec-driven development con OpenSpec
 
@@ -71,6 +75,19 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 * Una rama y una PR por change; el change se archiva en la misma PR que lo implementa.
 * Desarrollo con **TDD** ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de las specs se escriben como tests antes que el código, también fuera del flujo de OpenSpec.
 
+## Alcance: MVP construido y producto completo
+
+`docs/producto/definicion-funcional-y-ux.md` amplió el alcance previsto muy por encima del MVP. Lo que hay que tener presente al planificar:
+
+* **El objetivo es administrar 500–2000 ejemplares.** Eso descarta soluciones que solo funcionan a pequeña escala: el inventario necesita búsqueda, filtros combinables, ordenación, columnas configurables, selección múltiple, acciones por lote y exportación, no solo paginación.
+* **Módulos que todavía no existen y son núcleo**, no roadmap: códigos de inventario estables (`CAT-GRUSS-01`, secuencia por especie, nunca reutilizados), fotografías de especie y de planta, historial unificado de la planta como cronología de eventos, comentarios cronológicos, floraciones reales, estado y ciclo de vida del ejemplar, localizaciones **jerárquicas** con historial de movimientos, **tareas** (agenda, calendario, completar enlazando con el cuidado real), **alertas** con ciclo de vida propio (`Nueva → Revisada → Resuelta | Descartada`), Dashboard operativo, buscador global, grupos dinámicos de especies, importación/exportación CSV y etiquetas QR.
+* **Tarea ≠ cuidado, y alerta ≠ tarea.** Una tarea es trabajo pendiente; un cuidado es un hecho ocurrido; una alerta es una incidencia que requiere atención. Completar una tarea crea o enlaza el cuidado; una automatización podrá crear tareas pero **nunca** marcar trabajo como realizado.
+* **`CareRecord` no se parte.** El documento de producto (§13) propone separar mediciones de acciones de cuidado; se decidió **no hacerlo**. `CareRecord` es el registro de las condiciones de cultivo —insumos incluidos— y el **riego se queda dentro**: cuando el riego se automatice será un dato observado como cualquier otro, y correlacionar agua entregada contra estrés es una de las razones de ser del producto. Separarlo metería un join en la consulta más caliente del sistema. Lo que sí es una entidad nueva son las **intervenciones** (trasplante, cambio de sustrato, tratamiento, poda): irregulares, humanas y sin unidad común, no son una cantidad en una serie temporal.
+* **La numeración `F.x` ya no significa «nunca».** F.1 (localización jerárquica), F.2 (cuidados por lote) y F.3 (cuidados pendientes) están promovidas a núcleo por el documento de producto; varias historias `0.x` se quedan cortas y hay que ampliarlas (§22 del documento).
+* **Hay 18 preguntas abiertas** (§24) que deben resolverse antes de convertir cada módulo en un change. No inventes la respuesta: si una tarea depende de una de ellas, pregúntala.
+
+Regla práctica: antes de proponer un change, leer la sección correspondiente del documento de producto y el wireframe de esa pantalla. El MVP no es el destino.
+
 ## Estado del proyecto
 
 * **T-01 (`modelo-datos`)**: esquema Flyway, datos semilla y entidades JPA. Archivado.
@@ -81,7 +98,8 @@ Todo cambio funcional pasa por un change de [OpenSpec](https://github.com/Fissio
 * Transversales sin ticket, ya archivados: `fechas-y-auditoria` (ADR-010) e `invariantes-de-dominio` (ADR-011).
 * **T-05 (`dashboard-frontend`)**: dashboard Nuxt — listado del inventario paginado, alta de planta con selector de especie y sus rangos a la vista, ficha con los cuidados heredados, registro de lecturas y generación del análisis de IA, con estados de carga y error. Añade CORS al backend ([ADR-013](docs/adr/ADR-013-acceso-del-navegador-al-api.md)) y el runner de tests del frontend (enmienda de ADR-005). Implementado y en verde.
 * **T-09 (`ui-kit-frontend`)**: sistema de diseño del frontend — `tokens.css` y `base.css` como únicas hojas globales, catálogo completo de componentes en `app/components/ui/` con prefijo `Ui` (acciones, campos, estado, prioridad, filtro, panel, tabla con selección y acciones masivas, aviso, diálogo, toast, breadcrumbs, pestañas, estado vacío, error en línea y etiqueta de ejemplar), armazón en `layouts/default.vue`, galería viva en `/ui-kit` y las pantallas de T-05 reescritas sobre el kit sin cambiar su comportamiento. Añade [ADR-014](docs/adr/ADR-014-sistema-de-diseno-del-frontend.md). Implementado y en verde.
-* **Pendiente**: T-06 (historial y alertas) y T-07 (test E2E).
+* **Siguiente**: el [backlog reorganizado](docs/tickets/README.md) en tres bloques, en este orden — **bloque 0** (T-10…T-14) el esqueleto completo de la web sobre el UI kit, con las quince pantallas del wireframe y datos de ejemplo; **bloque 1** (T-15…T-21) la gestión de plantas; **bloque 2** (T-22…T-24) tareas, alertas y Dashboard. T-07 (E2E) va al final y **T-06 queda retirado**, repartido entre T-20 y T-23.
+* **El UI kit tiene prioridad sobre todo el backend.** Todo patrón que se pueda sacar a componente genérico y reutilizable se saca en el bloque 0, con su test y su muestra en `/ui-kit`. Construir las pantallas es lo que revela lo que al kit le falta.
 
 El frontend ya es una aplicación: `frontend/app/` tiene páginas, layouts, componentes, composables y un store de Pinia, con tests en Vitest (`yarn test`). Los datos se piden **desde el cliente**, no en renderizado de servidor: la URL del API solo es válida en el navegador (ADR-013).
 

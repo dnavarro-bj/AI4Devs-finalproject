@@ -1,6 +1,10 @@
 # F.2 - Registrar cuidados por lote
 
-**Estado:** Fuera de alcance del MVP / Roadmap
+**Tipo:** Must-Have
+**Estado:** **Promovida al núcleo** — bloque 2 (era roadmap)
+**Ticket:** [T-24](../tickets/T-24-dashboard-operativo-y-trabajo-por-lote.md)
+
+> Con 500–2000 ejemplares, registrar planta a planta deja de ser viable: el trabajo por lote es lo que hace manejable la colección.
 
 ## Historia
 

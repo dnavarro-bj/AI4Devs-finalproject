@@ -212,7 +212,7 @@ Pendiente: el test E2E del flujo completo (crear planta → registrar lectura �
 
 ### **3.1. Diagrama del modelo de datos:**
 
-> Ver diagrama Mermaid en [docs/diagramas/modelo-datos.md](docs/diagramas/modelo-datos.md). Entidades previstas para el MVP:
+> Ver diagrama Mermaid en [docs/diagramas/modelo-datos-actual.md](docs/diagramas/modelo-datos-actual.md), y la evolución prevista en los borradores de [docs/diagramas/](docs/diagramas/README.md). Entidades previstas para el MVP:
 
 ```text
 SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ────< (N) CareRecord (1) ──── (1) AIRecommendation

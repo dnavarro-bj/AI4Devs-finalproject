@@ -1,6 +1,8 @@
 # F.11 - Aprendizaje automático sobre el comportamiento de la colección
 
-**Estado:** Fuera de alcance del MVP / Roadmap
+**Estado:** Fuera de alcance / Roadmap
+
+> **Los cimientos se ponen ya.** La materia prima de esta historia es la serie temporal de lecturas, y poder correlacionar agua entregada contra señales de estrés es una de las razones por las que la cantidad de riego vive dentro de la misma lectura que el resto de medidas ([0.2](0.2-registrar-condiciones-de-cultivo.md)). El aprendizaje llega tarde; los datos que necesita, no.
 
 ## Historia
 

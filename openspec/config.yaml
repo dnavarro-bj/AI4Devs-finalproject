@@ -12,7 +12,8 @@ context: |
   - Infra local: Docker Compose en iac/local/
 
   Entidades principales: Species, Plant, CareRecord, AIRecommendation
-  (ver docs/diagramas/modelo-datos.md).
+  (ver docs/diagramas/modelo-datos-actual.md; la evolución prevista, en los borradores
+  de docs/diagramas/ — gestión de plantas primero, tareas y alertas después).
 
   Fuente de requisitos de producto:
   - README.md: descripción de producto, arquitectura, modelo de datos, API

@@ -1,6 +1,10 @@
 # F.3 - Consultar cuidados pendientes
 
-**Estado:** Fuera de alcance del MVP / Roadmap
+**Tipo:** Must-Have
+**Estado:** **Promovida al núcleo** — bloque 2 (era roadmap)
+**Ticket:** [T-24](../tickets/T-24-dashboard-operativo-y-trabajo-por-lote.md)
+
+> Es la base del Dashboard operativo: la portada responde «¿qué requiere mi atención?», no muestra métricas decorativas.
 
 ## Historia
 
