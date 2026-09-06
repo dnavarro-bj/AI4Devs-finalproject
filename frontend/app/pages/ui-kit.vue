@@ -7,6 +7,9 @@
  * Los datos de ejemplar —código permanente, estado, última lectura— son **de muestra**: el API no
  * los expone todavía, y ninguna pantalla de producto los pinta.
  */
+import { useToast } from '@shared/composables/useToast'
+import { NAVIGATION as APP_NAVIGATION } from '@features/layout/navigation'
+
 definePageMeta({ layout: 'blank' })
 
 useHead({ title: 'Cactify · UI kit' })
@@ -34,6 +37,29 @@ const COLUMNS = [
 ]
 
 const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar', danger: 'Alerta' }
+
+// El mapa real de la aplicación: la galería muestra los componentes con los datos que usan.
+const NAVIGATION = APP_NAVIGATION
+
+const searchEmpty = ref('')
+const searchHit = ref('gruss')
+const searchMiss = ref('zzz')
+
+const SEARCH_GROUPS = [
+  {
+    kind: 'plant',
+    label: 'Plantas',
+    results: [
+      { label: 'CAT-GRUSS-01', detail: 'Bola verde · Bandeja A3', to: '/plants' },
+      { label: 'CAT-GRUSS-02', detail: 'Erizo · Bandeja A3', to: '/plants' },
+    ],
+  },
+  {
+    kind: 'species',
+    label: 'Especies',
+    results: [{ label: 'Echinocactus grusonii', detail: 'Asiento de suegra', to: '/species' }],
+  },
+]
 </script>
 
 <template>
@@ -110,6 +136,26 @@ const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar
     <section class="gallery__section">
       <h2>Navegación</h2>
       <UiBreadcrumbs :items="[{ label: 'Inventario', to: '/plants' }, { label: 'CAT-GRUSS-01' }]" />
+      <!-- Sobre el fondo de la barra lateral, que es donde vive: en claro no se leería. -->
+      <div class="on-sidebar">
+        <UiNavGroup label="Colección" :entries="NAVIGATION[0]!.entries" active-path="/plants/1" />
+        <UiNavGroup label="Catálogos" :entries="NAVIGATION[2]!.entries" />
+      </div>
+
+      <UiPageHeader title="Plantas" context="312 ejemplares · 4 requieren atención">
+        <template #actions>
+          <UiButton variant="secondary">Exportar</UiButton>
+          <UiButton>Añadir planta</UiButton>
+        </template>
+      </UiPageHeader>
+      <UiPageHeader title="Configuración" />
+
+      <!-- Los tres estados del buscador: sin buscar, con resultados agrupados y sin resultados. -->
+      <div class="search-samples">
+        <UiGlobalSearch v-model="searchEmpty" :groups="[]" />
+        <UiGlobalSearch v-model="searchHit" :groups="SEARCH_GROUPS" />
+        <UiGlobalSearch v-model="searchMiss" :groups="[]" />
+      </div>
       <UiTabs
         v-model="tab"
         :tabs="[
@@ -232,6 +278,18 @@ const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar
 </template>
 
 <style scoped>
+/* La navegación solo tiene sentido sobre su superficie: el kit no la muestra flotando en claro. */
+.search-samples {
+  display: grid;
+  gap: var(--space-12);
+}
+
+.on-sidebar {
+  background: var(--color-sidebar);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+
 .gallery__head {
   border-bottom: 1px solid var(--color-line);
   margin-bottom: var(--space-10);

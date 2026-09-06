@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createApiClient } from '../app/utils/apiClient'
+import { createApiClient } from '@shared/services/httpClient'
 
 /**
  * Escenarios "Identificador conservado íntegro", "Error del API con cuerpo uniforme" y

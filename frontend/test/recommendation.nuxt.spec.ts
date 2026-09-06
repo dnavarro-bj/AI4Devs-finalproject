@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble } from './helpers/apiDouble'
 import { careRecord, recommendation } from './helpers/fixtures'
-import RecommendationPanel from '../app/components/RecommendationPanel.vue'
-import { ApiError } from '../app/types/api'
+import RecommendationPanel from '@features/recommendations/components/RecommendationPanel.vue'
+import { ApiError } from '@shared/services/httpClient'
 
 const api = createApiDouble()
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 
 const plantId = '882687672222443468'
 

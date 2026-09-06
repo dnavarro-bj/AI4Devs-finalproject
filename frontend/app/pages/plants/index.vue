@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import type { PageResponse, PlantSummary } from '../../types/api'
-import { ApiError } from '../../types/api'
+import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import type { PageResponse } from '@shared/types/api.types'
+import { usePlants } from '@features/plants/composables/usePlants'
+import type { PlantSummary } from '@features/plants/types/plant.types'
 
 const { list } = usePlants()
 const { set: setBreadcrumbs } = useBreadcrumbs()
@@ -14,13 +16,15 @@ const error = ref<string | null>(null)
 async function load(pageNumber: number) {
   loading.value = true
   error.value = null
-  try {
-    page.value = await list(pageNumber)
-  } catch (cause) {
-    error.value = cause instanceof ApiError ? cause.message : 'No se ha podido cargar el inventario.'
-  } finally {
-    loading.value = false
+
+  const result = await list(pageNumber)
+  loading.value = false
+
+  if (!result.success) {
+    error.value = result.error!.message
+    return
   }
+  page.value = result.data!
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013), así que
@@ -43,7 +47,7 @@ const COLUMNS = [
   <section>
     <header class="inventory__head">
       <h1>Inventario</h1>
-      <UiButton to="/plants/nueva" data-test="new-plant">Añadir planta</UiButton>
+      <UiButton to="/plants/new" data-test="new-plant">Añadir planta</UiButton>
     </header>
 
     <p v-if="loading" data-test="loading" role="status">Cargando el inventario…</p>
@@ -57,7 +61,7 @@ const COLUMNS = [
     >
       Añade la primera para empezar a registrar sus cuidados.
       <template #action>
-        <UiButton to="/plants/nueva">Añadir la primera planta</UiButton>
+        <UiButton to="/plants/new">Añadir la primera planta</UiButton>
       </template>
     </UiEmptyState>
 

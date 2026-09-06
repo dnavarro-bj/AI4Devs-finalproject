@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { plantDetail, speciesCare } from './helpers/fixtures'
-import NewPlantPage from '../app/pages/plants/nueva.vue'
-import { ApiError } from '../app/types/api'
+import NewPlantPage from '../app/pages/plants/new.vue'
+import { ApiError } from '@shared/services/httpClient'
 
 const api = createApiDouble()
 // `mockNuxtImport` se iza: la fábrica evalúa `navigate` antes de que el `const` exista, así que
 // tiene que venir de `vi.hoisted`.
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 mockNuxtImport('navigateTo', () => navigate)
 
 const locationsPage = {

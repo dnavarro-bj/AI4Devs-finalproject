@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { careRecord, plantDetail, recommendation, speciesCare } from './helpers/fixtures'
-import NewPlantPage from '../app/pages/plants/nueva.vue'
+import NewPlantPage from '../app/pages/plants/new.vue'
 import PlantDetailPage from '../app/pages/plants/[id].vue'
 
 const api = createApiDouble()
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 mockNuxtImport('navigateTo', () => navigate)
 mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }))
 

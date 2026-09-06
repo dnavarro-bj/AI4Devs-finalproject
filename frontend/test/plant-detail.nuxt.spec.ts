@@ -3,10 +3,10 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { careRecord, plantDetail } from './helpers/fixtures'
 import PlantDetailPage from '../app/pages/plants/[id].vue'
-import { ApiError } from '../app/types/api'
+import { ApiError } from '@shared/services/httpClient'
 
 const api = createApiDouble()
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }))
 
 /**

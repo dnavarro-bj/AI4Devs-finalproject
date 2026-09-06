@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import PlantsIndex from '../app/pages/plants/index.vue'
-import type { PageResponse, PlantSummary } from '../app/types/api'
+import type { PlantSummary } from '@features/plants/types/plant.types'
+import type { PageResponse } from '@shared/types/api.types'
 
 const api = createApiDouble()
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 
 /**
  * Escenarios "Inventario con plantas", "Inventario vacío", "Inventario con más plantas de las que

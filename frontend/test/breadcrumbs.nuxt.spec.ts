@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useBreadcrumbs } from '../app/composables/useBreadcrumbs'
+import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 
 /**
  * La ficha necesita el nombre de la planta en sus breadcrumbs, y ese nombre solo se conoce cuando

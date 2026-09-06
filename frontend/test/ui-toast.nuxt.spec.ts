@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UiToastHost from '../app/components/ui/UiToastHost.vue'
-import { useToast } from '../app/composables/useToast'
+import { useToast } from '@shared/composables/useToast'
 
 /** Escenarios "Confirmación anunciada" y "Confirmación efímera". */
 describe('toast', () => {

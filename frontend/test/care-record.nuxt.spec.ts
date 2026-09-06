@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble } from './helpers/apiDouble'
 import { careRecord } from './helpers/fixtures'
-import CareRecordForm from '../app/components/CareRecordForm.vue'
-import { ApiError } from '../app/types/api'
+import CareRecordForm from '@features/care-records/components/CareRecordForm.vue'
+import { ApiError } from '@shared/services/httpClient'
 
 const api = createApiDouble()
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 
 const plantId = '882687672222443468'
 

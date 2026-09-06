@@ -3,6 +3,7 @@
  * El contenedor de las confirmaciones, montado una sola vez en el armazón. Se anuncia como estado
  * cortés: informa sin robar el foco ni interrumpir lo que el usuario esté haciendo.
  */
+import { useToast } from '@shared/composables/useToast'
 const { toasts } = useToast()
 </script>
 

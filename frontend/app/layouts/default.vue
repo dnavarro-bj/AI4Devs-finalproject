@@ -4,19 +4,25 @@
  * la pantalla y contenido con ancho máximo. Vive en un layout y no en `app.vue` para que la
  * galería del kit pueda no llevarlo, sin condicionales aquí dentro.
  */
+import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import { NAVIGATION } from '@features/layout/navigation'
+import { useGlobalSearch } from '@features/search/composables/useGlobalSearch'
+import type { SearchResult } from '@features/search/types/search.types'
+
 const { breadcrumbs, clear } = useBreadcrumbs()
 
 const route = useRoute()
 const router = useRouter()
 
-const SECTIONS = [
-  { label: 'Inventario', to: '/plants', mark: '▤' },
-]
-
-/** Activa la sección que contiene la ruta actual, no solo la que coincide exactamente. */
-const isActive = (to: string) => route.path === to || route.path.startsWith(`${to}/`)
-
 const navigationOpen = ref(false)
+
+// La búsqueda la orquesta su feature; el armazón solo la aloja y navega al resultado elegido.
+const { query, groups: searchGroups, clear: clearSearch } = useGlobalSearch()
+
+function openResult(result: Pick<SearchResult, 'to'>) {
+  clearSearch()
+  router.push(result.to)
+}
 
 // Ninguna pantalla hereda los breadcrumbs de la anterior: se limpian antes de que la nueva monte
 // y los fije.
@@ -48,16 +54,13 @@ router.afterEach(() => {
       </div>
 
       <nav aria-label="Navegación principal">
-        <NuxtLink
-          v-for="section in SECTIONS"
-          :key="section.to"
-          :to="section.to"
-          :class="{ 'is-active': isActive(section.to) }"
-          :aria-current="isActive(section.to) ? 'page' : undefined"
-        >
-          <span aria-hidden="true">{{ section.mark }}</span>
-          {{ section.label }}
-        </NuxtLink>
+        <UiNavGroup
+          v-for="group in NAVIGATION"
+          :key="group.label"
+          :label="group.label"
+          :entries="group.entries"
+          :active-path="route.path"
+        />
       </nav>
     </aside>
 
@@ -72,6 +75,7 @@ router.afterEach(() => {
           ☰
         </UiButton>
         <UiBreadcrumbs v-if="breadcrumbs.length" :items="[...breadcrumbs]" />
+        <UiGlobalSearch v-model="query" :groups="searchGroups" @select="openResult" />
       </header>
 
       <main class="content">
@@ -138,32 +142,6 @@ router.afterEach(() => {
   padding: var(--space-3);
 }
 
-.sidebar nav a {
-  align-items: center;
-  border-radius: var(--radius-sm);
-  color: color-mix(in srgb, var(--color-sidebar-text) 82%, transparent);
-  display: grid;
-  font-size: var(--font-size-13);
-  gap: var(--space-2);
-  grid-template-columns: 24px 1fr;
-  margin: 2px 0;
-  min-height: 38px;
-  padding: var(--space-1) var(--space-2);
-  text-decoration: none;
-}
-
-.sidebar nav a:hover {
-  background: color-mix(in srgb, var(--color-sidebar-text) 8%, transparent);
-  color: var(--color-sidebar-text);
-}
-
-/* La sección activa no se distingue solo por color: cambia también el peso y el fondo. */
-.sidebar nav a.is-active {
-  background: var(--color-brand);
-  color: var(--color-sidebar-text);
-  font-weight: 700;
-}
-
 .main {
   margin-left: var(--sidebar-width);
   min-height: 100vh;
@@ -180,6 +158,11 @@ router.afterEach(() => {
   position: sticky;
   top: 0;
   z-index: 30;
+}
+
+/* El buscador ocupa el hueco sobrante y queda a la derecha de los breadcrumbs. */
+.topbar :deep(.global-search) {
+  margin-left: auto;
 }
 
 .content {

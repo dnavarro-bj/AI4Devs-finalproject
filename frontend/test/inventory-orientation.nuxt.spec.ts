@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import PlantsIndex from '../app/pages/plants/index.vue'
-import { useBreadcrumbs } from '../app/composables/useBreadcrumbs'
-import type { PageResponse, PlantSummary } from '../app/types/api'
+import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import type { PlantSummary } from '@features/plants/types/plant.types'
+import type { PageResponse } from '@shared/types/api.types'
 
 const api = createApiDouble()
-mockNuxtImport('useApi', () => () => api)
+mockNuxtImport('getApiClient', () => () => api)
 
 /**
  * Escenarios nuevos de `plant-dashboard`: "Salida desde el inventario vacío" y los breadcrumbs de
@@ -37,7 +38,7 @@ describe('orientación del inventario', () => {
 
     const actions = empty.findAll('a, button')
     expect(actions).toHaveLength(1)
-    expect(actions[0]!.attributes('href')).toBe('/plants/nueva')
+    expect(actions[0]!.attributes('href')).toBe('/plants/new')
   })
 
   it('declara sus breadcrumbs y se marca como la pantalla actual', async () => {

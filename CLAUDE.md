@@ -14,7 +14,7 @@ Historial de las conversaciones que originaron el proyecto en [chats/](chats/).
 | **Definición funcional y de UX del producto completo** — visión, navegación, módulos, preguntas abiertas y priorización; documento vivo de descubrimiento y fuente del alcance final | [docs/producto/definicion-funcional-y-ux.md](docs/producto/definicion-funcional-y-ux.md) |
 | Wireframes navegables de administración (fidelidad media: arquitectura de información, jerarquía y flujos; abre `index.html` en el navegador) | [docs/wireframes/](docs/wireframes/README.md) |
 | Historias de usuario (una por archivo; `0.x` = en alcance del MVP, `F.x` = roadmap —ojo: varias `F.x` han pasado a núcleo, ver [Alcance](#alcance-mvp-construido-y-producto-completo)) | [docs/user-stories/](docs/user-stories/README.md) |
-| Tickets de trabajo (uno por archivo, `T-01`…`T-24`), organizados en tres bloques: esqueleto de la web, gestión de plantas y organización del trabajo | [docs/tickets/](docs/tickets/README.md) |
+| Tickets de trabajo (uno por archivo, `T-01`…`T-25`), organizados en tres bloques: esqueleto de la web, gestión de plantas y organización del trabajo | [docs/tickets/](docs/tickets/README.md) |
 | Diagramas: modelo de datos **actual** más dos borradores de su evolución (gestión y tareas), y flujo E2E, en Mermaid | [docs/diagramas/](docs/diagramas/README.md) |
 | ADRs — decisiones técnicas transversales (`ADR-NNN`) | [docs/adr/](docs/adr/README.md) |
 | Backend | [backend/](backend/) |
@@ -48,6 +48,40 @@ Reglas que ya están en verde y conviene no romper:
 * Los servicios devuelven **DTOs**, nunca entidades: `open-in-view` está apagado y el mapeo tiene que ocurrir dentro de la transacción.
 * `domain` no importa tipos de Spring salvo `Specification`, `Page` y `Pageable`.
 * Los puertos viven en `domain/repos` y se implementan con una sola interfaz `JpaXRepository : XRepository, JpaRepository<…>` en `infrastructure/persistence`, sin clase adaptadora. La búsqueda por id se llama `findOneById` (`findById` lo ocupa Spring Data devolviendo `Optional`).
+
+### Estructura del frontend
+
+Organización **por features** con capas de orden estricto ([ADR-015](docs/adr/ADR-015-arquitectura-del-frontend.md)), el equivalente de ADR-006 al otro lado:
+
+```
+Component → Composable → Service → HTTP
+                ↘ Store (solo si es cross-feature)
+```
+
+```
+frontend/
+├── app/            Lo que Nuxt resuelve por convención: pages/, layouts/,
+│                   components/ui/ (el kit, ADR-014), assets/css/
+└── src/
+    ├── features/<dominio>/   components/ composables/ services/ dto/ types/
+    │                         mappers/ store/
+    └── shared/              services/ (httpClient, errorNormalizer) composables/
+                             types/ mocks/ utils/
+```
+
+Aliases: `@features`, `@shared`, `@ui`.
+
+Reglas que conviene no romper:
+
+* Un **service** habla con el API y nada más: sin `loading`, sin estado de UI, sin tocar el store.
+* Un **composable** es el caso de uso de la pantalla: estado, `loading`, `error` y orquestación. **Nunca** hace HTTP directo.
+* Un **componente** no llama al API ni lee el store.
+* Un **store** solo existe si el estado es global entre features. Es caché, no lógica.
+* Los **errores viajan como valor**: todo service devuelve `ServiceResponse<T>` (`{success, data, error}`) y ninguno lanza. El fallo está en la firma y el composable no puede olvidarlo. `ApiError` sigue existiendo dentro del cliente HTTP; el service lo convierte en `DomainError`.
+* Un **DTO nunca llega a un componente**. Los mappers se escriben donde la forma cambia de verdad, no por ritual: si el DTO y el modelo coinciden, se reexporta el tipo.
+* Los **datos de ejemplo** viven en `shared/mocks/` tras una bandera y los consume el **service**, nunca un componente. Conectar una pantalla al API es cambiar la bandera, no reescribirla.
+
+Dónde poner algo: ¿lo usa una feature? composable. ¿Varias? store en `shared/`. ¿Habla con el backend? service.
 
 ### Convenciones del API
 
@@ -97,6 +131,7 @@ Regla práctica: antes de proponer un change, leer la sección correspondiente d
 * **T-08 (`api-especies`)**: catálogo de especies completo — `POST/GET /species`, `GET/PUT/DELETE /species/{id}`, con unicidad del nombre científico y `409` al retirar una especie con ejemplares. Ticket abierto por el propio change, porque ninguno cubría el API que T-05 y T-07 dan por hecho. Implementado y en verde.
 * Transversales sin ticket, ya archivados: `fechas-y-auditoria` (ADR-010) e `invariantes-de-dominio` (ADR-011).
 * **T-05 (`dashboard-frontend`)**: dashboard Nuxt — listado del inventario paginado, alta de planta con selector de especie y sus rangos a la vista, ficha con los cuidados heredados, registro de lecturas y generación del análisis de IA, con estados de carga y error. Añade CORS al backend ([ADR-013](docs/adr/ADR-013-acceso-del-navegador-al-api.md)) y el runner de tests del frontend (enmienda de ADR-005). Implementado y en verde.
+* **T-10 (`armazon-navegacion`)**: armazón completo del frontend — navegación lateral en cuatro grupos desde `app/navigation.ts`, buscador global en la barra superior (contra `app/fixtures/search.ts` hasta T-21), cabecera de página, las quince rutas del wireframe declaradas con estado vacío en las doce por construir, y pantalla de dirección desconocida. Tres componentes nuevos del kit: `UiNavGroup`, `UiGlobalSearch` y `UiPageHeader`. Unifica las rutas en inglés (`/plants/nueva` → `/plants/new`). Implementado y en verde.
 * **T-09 (`ui-kit-frontend`)**: sistema de diseño del frontend — `tokens.css` y `base.css` como únicas hojas globales, catálogo completo de componentes en `app/components/ui/` con prefijo `Ui` (acciones, campos, estado, prioridad, filtro, panel, tabla con selección y acciones masivas, aviso, diálogo, toast, breadcrumbs, pestañas, estado vacío, error en línea y etiqueta de ejemplar), armazón en `layouts/default.vue`, galería viva en `/ui-kit` y las pantallas de T-05 reescritas sobre el kit sin cambiar su comportamiento. Añade [ADR-014](docs/adr/ADR-014-sistema-de-diseno-del-frontend.md). Implementado y en verde.
 * **Siguiente**: el [backlog reorganizado](docs/tickets/README.md) en tres bloques, en este orden — **bloque 0** (T-10…T-14) el esqueleto completo de la web sobre el UI kit, con las quince pantallas del wireframe y datos de ejemplo; **bloque 1** (T-15…T-21) la gestión de plantas; **bloque 2** (T-22…T-24) tareas, alertas y Dashboard. T-07 (E2E) va al final y **T-06 queda retirado**, repartido entre T-20 y T-23.
 * **El UI kit tiene prioridad sobre todo el backend.** Todo patrón que se pueda sacar a componente genérico y reutilizable se saca en el bloque 0, con su test y su muestra en `/ui-kit`. Construir las pantallas es lo que revela lo que al kit le falta.
@@ -109,3 +144,6 @@ Reglas del frontend que ya están en verde y conviene no romper (detalle en [ADR
 * Solo hay dos hojas globales, `tokens.css` y `base.css`; el resto del CSS vive en el `<style scoped>` de su componente.
 * Los componentes del kit tienen **un solo elemento raíz** —ni siquiera un comentario suelto en el `<template>`, que convierte el componente en fragmento y se traga los atributos del punto de uso—. `UiField` es la excepción deliberada: `inheritAttrs: false` y los atributos van al control.
 * La presentación se compone: si hace falta un patrón nuevo, es un componente del kit con su test y su muestra en la galería, no CSS en la pantalla.
+* **Las rutas van en inglés** y las declara `app/navigation.ts`, que es el mapa de secciones: añadir una sección es una línea ahí más su página. Los encabezados de grupo agrupan y no navegan.
+* Una sección declarada y todavía sin construir monta `PendingSection`, que dice qué ticket la levanta. No simula datos: una tabla de mentira es indistinguible de una pantalla rota.
+* `UiGlobalSearch` **recibe** los resultados ya agrupados; quien busca es el layout. Ningún componente del kit accede a datos.

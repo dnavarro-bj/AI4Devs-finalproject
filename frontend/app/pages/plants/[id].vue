@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import type { CareRecord, PlantDetail } from '../../types/api'
-import { ApiError } from '../../types/api'
+import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import { usePlants } from '@features/plants/composables/usePlants'
+import type { PlantDetail } from '@features/plants/types/plant.types'
+import type { CareRecord } from '@features/care-records/types/careRecord.types'
 
 const route = useRoute()
 const plantId = String(route.params.id)
@@ -18,14 +20,16 @@ const error = ref<string | null>(null)
 setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: 'Planta' }])
 
 onMounted(async () => {
-  try {
-    plant.value = await detail(plantId)
-    setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: plant.value.nickname }])
-  } catch (cause) {
-    error.value = cause instanceof ApiError ? cause.message : 'No se ha podido cargar la planta.'
-  } finally {
-    loading.value = false
+  const result = await detail(plantId)
+  loading.value = false
+
+  if (!result.success) {
+    error.value = result.error!.message
+    return
   }
+
+  plant.value = result.data!
+  setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: plant.value.nickname }])
 })
 
 /**
