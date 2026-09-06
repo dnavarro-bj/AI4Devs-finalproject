@@ -10,15 +10,23 @@ describe('UiFormSection', () => {
       slots: { default: '<input aria-label="Apodo">' },
     })
 
-    expect(wrapper.find('h2, h3').text()).toBe('Identidad')
+    // `fieldset` + `legend`: el elemento que agrupa controles, nombrado nativamente. No hace
+    // falta `aria-labelledby` porque la leyenda ya nombra el grupo.
+    expect(wrapper.element.tagName).toBe('FIELDSET')
+    expect(wrapper.find('legend').text()).toBe('Identidad')
     expect(wrapper.text()).toContain('Cómo reconocer este ejemplar')
     expect(wrapper.find('input').exists()).toBe(true)
-    expect(wrapper.attributes('aria-labelledby')).toBe(wrapper.find('h2, h3').attributes('id'))
   })
 
   it('sin descripción no deja ningún hueco en el marcado', () => {
     const wrapper = mount(UiFormSection, { props: { title: 'Identidad' } })
 
     expect(wrapper.find('[data-test="section-description"]').exists()).toBe(false)
+  })
+
+  it('con superficie propia se distingue en el marcado, para que la pantalla no lo imite con CSS', () => {
+    expect(mount(UiFormSection, { props: { title: 'x', standalone: true } }).classes())
+      .toContain('is-standalone')
+    expect(mount(UiFormSection, { props: { title: 'x' } }).classes()).not.toContain('is-standalone')
   })
 })

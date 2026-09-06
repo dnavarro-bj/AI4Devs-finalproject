@@ -1,4 +1,7 @@
-import type { CareRecord, PlantDetail, Recommendation, SpeciesCare } from '../../app/types/api'
+import type { PlantDetail } from '@features/plants/types/plant.types'
+import type { SpeciesCare } from '@features/species/types/species.types'
+import type { CareRecord } from '@features/care-records/types/careRecord.types'
+import type { Recommendation } from '@features/recommendations/types/recommendation.types'
 
 export const speciesCare = (overrides: Partial<SpeciesCare> = {}): SpeciesCare => ({
   id: '200001',

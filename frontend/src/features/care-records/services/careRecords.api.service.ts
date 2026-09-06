@@ -20,7 +20,7 @@ export const careRecordsApiService = {
   },
 
   async create(plantId: string, input: CareRecordInput): Promise<ServiceResponse<CareRecord>> {
-    const body: Record<string, number> = {}
+    const body: Record<string, unknown> = {}
     for (const [field, value] of Object.entries(input)) {
       if (value !== undefined) body[field] = value
     }

@@ -1,0 +1,234 @@
+## MODIFIED Requirements
+
+### Requirement: Ficha de una planta
+
+La aplicación SHALL mostrar la ficha de una planta como el **centro operativo del ejemplar**, con:
+
+* una **cabecera** que lo identifique de un vistazo —nombre, especie, localización y las acciones frecuentes—;
+* **navegación local** entre las secciones de la ficha, donde las todavía no construidas SHALL explicar que lo están y no simular contenido;
+* un **resumen del estado actual** con las magnitudes que responden «cómo está esta planta ahora»;
+* la **cronología** de lo que le ha ocurrido;
+* y un **perfil de cuidados efectivo**, indicando qué hereda de su especie.
+
+La ficha SHALL ser el punto desde el que se registra una lectura y se consulta o se pide su recomendación.
+
+Los datos que el API todavía no sirve SHALL presentarse como **datos de ejemplo reconocibles**, nunca como si fueran reales.
+
+#### Scenario: Ficha de una planta existente
+
+- **WHEN** el usuario abre la ficha de una planta existente
+- **THEN** se muestran su nombre, su especie, su localización, sus tags y los datos de cuidado de su especie
+
+#### Scenario: Ficha de una planta sin tags
+
+- **WHEN** el usuario abre la ficha de una planta que no tiene ningún tag asignado
+- **THEN** la ficha se muestra correctamente y la zona de tags no presenta ningún error
+
+#### Scenario: Ficha de una planta inexistente
+
+- **WHEN** el usuario abre la ficha de un identificador de planta que el API no reconoce
+- **THEN** se muestra un mensaje de que la planta no existe, con salida hacia el inventario, y no una pantalla en blanco ni un error sin explicar
+
+#### Scenario: Secciones de la ficha
+
+- **WHEN** el usuario recorre las secciones de la ficha
+- **THEN** puede cambiar entre ellas sin salir de la planta, y las que todavía no están construidas lo explican en lugar de aparecer vacías
+
+#### Scenario: Resumen del estado actual
+
+- **WHEN** la planta tiene lecturas registradas
+- **THEN** el resumen muestra la última medición y el último riego a partir de ellas
+
+#### Scenario: Perfil de cuidados heredado
+
+- **WHEN** la planta no sobrescribe ningún valor de cuidado
+- **THEN** el perfil efectivo muestra los valores de su especie e indica que los hereda
+
+#### Scenario: Lo que todavía no existe se reconoce como ejemplo
+
+- **WHEN** la ficha presenta datos que el API no sirve todavía
+- **THEN** quedan identificados como datos de ejemplo, y no se confunden con los reales
+
+### Requirement: Registro de una lectura de cultivo
+
+La aplicación SHALL ofrecer, desde la ficha de la planta, un formulario para registrar manualmente una lectura con humedad, temperatura, horas de luz, cantidad de riego y acidez del sustrato. El formulario SHALL presentarse en un **diálogo** que se abre desde la acción correspondiente, de modo que no ocupe la ficha de forma permanente. Los valores SHALL poder informarse por separado y la lectura SHALL quedar asociada a esa planta.
+
+El formulario SHALL ofrecer **la fecha y hora de la lectura**, propuesta como el momento actual y corregible: una lectura se anota a menudo después de haberla tomado. NO SHALL admitirse una fecha futura. Si el usuario no la toca, la lectura queda con el momento propuesto.
+
+Junto a cada medida SHALL mostrarse **el rango efectivo de esa planta**, para reducir errores de interpretación al introducir el valor (§13.4).
+
+#### Scenario: Lectura registrada
+
+- **WHEN** el usuario rellena uno o varios de los cinco valores y confirma
+- **THEN** la lectura se registra en el API asociada a esa planta, y la ficha refleja la lectura registrada sin recarga manual
+
+#### Scenario: Lectura sin ningún valor
+
+- **WHEN** el usuario confirma el formulario sin haber informado ninguno de los cinco valores
+- **THEN** la interfaz indica que hace falta al menos un valor y la lectura no se registra
+
+#### Scenario: Valor fuera del rango admitido
+
+- **WHEN** el usuario introduce un valor que el API rechaza por estar fuera de rango
+- **THEN** la interfaz muestra el mensaje de error devuelto por el API y permite corregir el valor sin perder el resto de lo introducido
+
+#### Scenario: El formulario no ocupa la ficha
+
+- **WHEN** el usuario abre la ficha de una planta
+- **THEN** el formulario de lectura no está desplegado, y aparece al activar la acción de registrarla
+
+#### Scenario: Salir del formulario sin registrar
+
+- **WHEN** el usuario cierra el diálogo sin confirmar
+- **THEN** no se registra ninguna lectura y la ficha queda como estaba
+
+#### Scenario: Fecha propuesta
+
+- **WHEN** el usuario abre el formulario de lectura
+- **THEN** la fecha y hora vienen propuestas como el momento actual, y puede corregirlas
+
+#### Scenario: Fecha futura
+
+- **WHEN** el usuario intenta fijar una fecha posterior al momento actual
+- **THEN** la interfaz no lo admite y la lectura no se registra con esa fecha
+
+#### Scenario: Rango efectivo junto a cada medida
+
+- **WHEN** el usuario introduce un valor
+- **THEN** ve junto al campo el rango recomendado para esa planta, sin tener que salir del formulario
+
+### Requirement: Listado del inventario
+
+La aplicación SHALL mostrar el inventario de plantas registradas, con el nickname, la especie y la localización de cada una, obtenidos del API. El listado SHALL recorrerse por páginas, respetando el envelope de paginación del API, y SHALL ofrecer navegación al detalle de cada planta. Cuando el inventario esté vacío, la pantalla SHALL explicar que no hay ninguna planta registrada y ofrecer una única acción: dar de alta la primera.
+
+El listado SHALL poder **ordenarse** por las columnas que lo admitan y SHALL mostrar los **criterios de filtrado aplicados**, permitiendo retirarlos. La ordenación SHALL pedirse al API y no reordenar solo la página que se está viendo.
+
+El listado SHALL admitir **selección de filas** con sus acciones masivas, y SHALL permitir **elegir qué columnas se ven**, salvo la identificativa.
+
+Las columnas y los filtros que el API todavía no sirve SHALL **estar presentes y marcados como maqueta**, no ausentes: la pantalla enseña la forma completa del inventario y deja claro qué parte es dato. Un filtro que no puede filtrar SHALL mostrarse deshabilitado, nunca como si funcionara.
+
+#### Scenario: Inventario con plantas
+
+- **WHEN** el usuario abre el listado del inventario y el API devuelve plantas registradas
+- **THEN** se muestra una fila por planta con su nickname, su especie y su localización
+
+#### Scenario: Inventario vacío
+
+- **WHEN** el usuario abre el listado del inventario y no hay ninguna planta registrada
+- **THEN** se muestra un mensaje que indica que el inventario está vacío junto a la acción de añadir la primera planta, y no una tabla en blanco ni un error
+
+#### Scenario: Salida desde el inventario vacío
+
+- **WHEN** el usuario activa la acción ofrecida en el inventario vacío
+- **THEN** la aplicación lleva al formulario de alta de planta
+
+#### Scenario: Inventario con más plantas de las que caben en una página
+
+- **WHEN** el API informa de que hay más de una página de resultados
+- **THEN** la interfaz ofrece avanzar y retroceder de página, y al hacerlo muestra el contenido de la página solicitada
+
+#### Scenario: Navegación al detalle
+
+- **WHEN** el usuario selecciona una planta del listado
+- **THEN** la aplicación navega a la ficha de esa planta sin recargar la página
+
+#### Scenario: Ordenar el inventario
+
+- **WHEN** el usuario ordena por una columna
+- **THEN** el listado se vuelve a pedir al API con ese criterio, y no se reordena solo la página visible
+
+#### Scenario: Criterios de filtrado aplicados
+
+- **WHEN** hay filtros aplicados sobre el inventario
+- **THEN** se muestran y se pueden retirar uno a uno
+
+#### Scenario: Filtro por localización
+
+- **WHEN** el usuario filtra por una localización
+- **THEN** el listado se vuelve a pedir al API con ese criterio, y el criterio aplicado queda a la vista
+
+#### Scenario: Filtro que el API no admite
+
+- **WHEN** la pantalla ofrece un filtro que el API todavía no puede resolver
+- **THEN** se muestra deshabilitado y explicando cuándo llegará, en lugar de aparentar que filtra
+
+#### Scenario: Selección de filas del inventario
+
+- **WHEN** el usuario selecciona una o varias plantas
+- **THEN** aparecen las acciones masivas indicando a cuántos elementos afectan
+
+#### Scenario: Columna de maqueta
+
+- **WHEN** el listado muestra una columna cuyo dato el API no sirve todavía
+- **THEN** la columna existe y queda marcada como maqueta, de modo que no se confunda con un dato real
+
+## ADDED Requirements
+
+### Requirement: Historial de lecturas de una planta
+
+La aplicación SHALL mostrar, en la ficha de una planta, **las lecturas ya registradas** además de las que se registren en la sesión, obtenidas del API y ordenadas de la más reciente a la más antigua. Cada lectura SHALL mostrar **las cinco magnitudes**, marcando como ausentes las que no se informaron —nunca como cero—, de modo que dos lecturas se puedan comparar columna a columna. SHALL permitir además consultar o pedir su análisis de IA desde la propia entrada.
+
+#### Scenario: Lecturas anteriores a la sesión
+
+- **WHEN** el usuario abre la ficha de una planta con lecturas registradas previamente
+- **THEN** se muestran todas ellas, de la más reciente a la más antigua, sin que el usuario tenga que registrar ninguna
+
+#### Scenario: Lectura recién registrada
+
+- **WHEN** el usuario registra una lectura
+- **THEN** aparece en el historial en su lugar, sin recargar la página
+
+#### Scenario: Valores no informados
+
+- **WHEN** una lectura no informó alguno de los cinco valores
+- **THEN** ese valor aparece **marcado como ausente**, nunca como cero, y la lectura sigue mostrando las cinco magnitudes
+
+#### Scenario: Planta sin lecturas
+
+- **WHEN** la planta no tiene ninguna lectura registrada
+- **THEN** se indica que todavía no hay nada registrado, y no una lista vacía sin explicación
+
+#### Scenario: Análisis desde una entrada del historial
+
+- **WHEN** el usuario pide el análisis de una lectura del historial
+- **THEN** se genera o se recupera el de esa lectura, sin afectar al de las demás
+
+### Requirement: Alta y edición de una planta con el mismo formulario
+
+La aplicación SHALL usar **el mismo formulario** para dar de alta y para editar una planta, dividido en secciones con significado para el usuario —especie, identificación, localización, origen, fotografías y cuidados— con una **navegación que indique en qué sección se está y cuáles están completas**. En edición los campos SHALL llegar prellenados con los valores actuales.
+
+La especie SHALL elegirse de una lista buscable donde cada opción muestre su nombre científico y común, y la elegida SHALL distinguirse por algo más que una marca de comprobación.
+
+Cuando la validación falle, la aplicación SHALL **llevar a la sección del campo que falta**: en un formulario de seis secciones, decir que falta un campo sin decir dónde no basta.
+
+Cuando el API no admita persistir alguno de los campos editados, la aplicación SHALL **advertirlo explícitamente** en lugar de simular que el cambio se ha guardado.
+
+#### Scenario: Alta desde el formulario
+
+- **WHEN** el usuario rellena el formulario de alta y confirma
+- **THEN** la planta se crea y la aplicación lleva a su ficha
+
+#### Scenario: Edición prellenada
+
+- **WHEN** el usuario abre la edición de una planta existente
+- **THEN** el formulario muestra los valores actuales de esa planta
+
+#### Scenario: Campo que el API no admite guardar
+
+- **WHEN** el usuario edita un campo que el API todavía no permite modificar y confirma
+- **THEN** se le indica que ese cambio no se ha guardado, y no se le hace creer que sí
+
+#### Scenario: Campo sin sitio donde guardarse
+
+- **WHEN** el formulario presenta un campo que el API no acepta todavía
+- **THEN** se muestra deshabilitado y explicando cuándo llegará, en lugar de admitir un texto que se perdería
+
+#### Scenario: Sección del campo que falta
+
+- **WHEN** el usuario confirma con un campo obligatorio vacío en otra sección
+- **THEN** la aplicación lleva a la sección de ese campo y señala cuál falta
+
+#### Scenario: Elegir la especie
+
+- **WHEN** el usuario busca y elige una especie
+- **THEN** la elegida queda distinguida y la pauta que heredará la planta pasa a estar a la vista

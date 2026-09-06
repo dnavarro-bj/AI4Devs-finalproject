@@ -24,11 +24,18 @@ const props = withDefaults(defineProps<{
   readonly?: boolean
   rows?: number
   /**
+   * `row` pone la etiqueta y su ayuda a la izquierda y el control a la derecha. Lo pide la rejilla
+   * de mediciones, donde el nombre de la magnitud y su rango recomendado se leen antes que el
+   * valor que se va a escribir.
+   */
+  layout?: 'stacked' | 'row'
+  /**
    * Identificador de test del mensaje de error. Hace falta porque los atributos del punto de uso
    * caen en el **control**, y el error es otro elemento.
    */
   errorTest?: string
 }>(), {
+  layout: 'stacked',
   modelValue: '',
   help: undefined,
   error: undefined,
@@ -68,7 +75,7 @@ const control = computed(() => ({
 </script>
 
 <template>
-  <div :class="['field', { 'field--error': error }]">
+  <div :class="['field', `field--${layout}`, { 'field--error': error }]">
     <label :for="controlId">{{ label }}</label>
 
     <select
@@ -115,6 +122,36 @@ const control = computed(() => ({
 <style scoped>
 .field {
   display: block;
+}
+
+/*
+ * En línea: la etiqueta y su ayuda a la izquierda, el control a la derecha. La ayuda pasa a la
+ * primera columna para que se lea con el nombre de la magnitud, que es lo que orienta antes de
+ * escribir.
+ */
+.field--row {
+  align-items: center;
+  column-gap: var(--space-3);
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+.field--row > label {
+  margin-bottom: 0;
+}
+
+.field--row > small {
+  grid-column: 1;
+  grid-row: 2;
+  margin-top: 0;
+}
+
+.field--row .input-suffix,
+.field--row > input,
+.field--row > select {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 128px;
 }
 
 .field > label {

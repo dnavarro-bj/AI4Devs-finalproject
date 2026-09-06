@@ -56,6 +56,35 @@ describe('UiFilterBar', () => {
   })
 
   it('la barra tiene nombre accesible', () => {
-    expect(bar().attributes('aria-label')).toBeTruthy()
+    // Lo da la leyenda del `fieldset`, no un `aria-label`: el grupo se nombra nativamente.
+    expect(bar({ label: 'Filtros' }).find('legend').text()).toBe('Filtros')
+  })
+})
+
+/**
+ * La barra agrupa controles de formulario, así que es un `fieldset` con su `legend`: el grupo
+ * queda nombrado nativamente y no depende de un `aria-label`.
+ */
+describe('UiFilterBar: semántica y alineación', () => {
+  it('es un fieldset nombrado por su leyenda', () => {
+    const wrapper = bar({ label: 'Filtros del inventario' })
+
+    expect(wrapper.element.tagName).toBe('FIELDSET')
+    expect(wrapper.find('legend').text()).toBe('Filtros del inventario')
+  })
+
+  it('la leyenda no ocupa sitio: nombra sin dibujarse', () => {
+    expect(bar().find('legend').classes()).toContain('sr-only')
+  })
+
+  it('alinea los controles por arriba, no por el centro', () => {
+    // Es lo que hace que los campos con ayuda no desplacen su control respecto a los que no la
+    // tienen: los rótulos coinciden, y con ellos los controles.
+    const wrapper = mount(UiFilterBar, {
+      props: { applied: [] },
+      slots: { default: '<div class="field">x</div>' },
+    })
+
+    expect(wrapper.find('[data-test="filter-controls"]').classes()).toContain('filter-bar__controls')
   })
 })

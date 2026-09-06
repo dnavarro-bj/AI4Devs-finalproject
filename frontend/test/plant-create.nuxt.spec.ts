@@ -50,7 +50,8 @@ async function fill(wrapper: Awaited<ReturnType<typeof mountSuspended>>, opts: {
 }) {
   if (opts.nickname !== undefined) await wrapper.find('[data-test="nickname"]').setValue(opts.nickname)
   if (opts.locationId !== undefined) await wrapper.find('[data-test="location"]').setValue(opts.locationId)
-  if (opts.speciesId !== undefined) await wrapper.find('[data-test="species"]').setValue(opts.speciesId)
+  // La especie se elige pulsando su tarjeta, como en el wireframe.
+  if (opts.speciesId !== undefined) await wrapper.find(`[data-test="species-${opts.speciesId}"]`).trigger('click')
   await settle()
 }
 

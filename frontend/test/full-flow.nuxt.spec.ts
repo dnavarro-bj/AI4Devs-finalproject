@@ -3,7 +3,7 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { careRecord, plantDetail, recommendation, speciesCare } from './helpers/fixtures'
 import NewPlantPage from '../app/pages/plants/new.vue'
-import PlantDetailPage from '../app/pages/plants/[id].vue'
+import PlantDetailPage from '../app/pages/plants/[id]/index.vue'
 
 const api = createApiDouble()
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
@@ -34,6 +34,10 @@ describe('flujo completo', () => {
       }
       if (path === '/species/200001') return speciesCare()
       if (path === '/plants/882687672222443468') return plantDetail()
+      // La ficha estrena el historial de lecturas, que hasta ahora nadie consumía.
+      if (path === '/plants/882687672222443468/care-records') {
+        return { content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 }
+      }
       throw new Error(`ruta inesperada: ${path}`)
     })
 
@@ -43,7 +47,7 @@ describe('flujo completo', () => {
     await settle()
     await create.find('[data-test="nickname"]').setValue('Bola verde')
     await create.find('[data-test="location"]').setValue('300001')
-    await create.find('[data-test="species"]').setValue('200001')
+    await create.find('[data-test=\"species-200001\"]').trigger('click')
     await settle()
     expect(create.find('[data-test="species-ranges"]').exists()).toBe(true)
 
@@ -56,12 +60,14 @@ describe('flujo completo', () => {
     await settle()
     expect(detail.find('[data-test="species-ranges"]').exists()).toBe(true)
 
-    // 3. La lectura, que la ficha refleja sin recarga.
+    // 3. La lectura, que la ficha refleja en su cronología sin recarga. El formulario vive ahora
+    //    en un diálogo, así que hay que abrirlo.
     api.post.mockResolvedValueOnce(careRecord())
+    await detail.find('[data-test="register-reading"]').trigger('click')
     await detail.find('[data-test="humidity"]').setValue('8')
     await detail.find('[data-test="care-record-form"]').trigger('submit')
     await settle()
-    expect(detail.find('[data-test="last-reading"]').exists()).toBe(true)
+    expect(detail.find('[data-test="reading-500001"]').exists()).toBe(true)
 
     // 4. El análisis de esa lectura, en la misma pantalla.
     api.post.mockResolvedValueOnce(recommendation())

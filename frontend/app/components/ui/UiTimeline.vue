@@ -25,6 +25,8 @@ export interface TimelineType {
   value: string
   label: string
   mark?: string
+  /** Da color a la marca del evento: es lo que hace la cronología legible de un vistazo. */
+  tone?: 'neutral' | 'brand' | 'info' | 'warning' | 'danger'
 }
 
 const props = withDefaults(defineProps<{
@@ -79,7 +81,11 @@ function formatDate(at: string): string {
 
     <ol v-else class="timeline__list">
       <li v-for="event in shown" :key="event.id" class="timeline__event" data-role="event">
-        <span class="timeline__mark" aria-hidden="true">{{ typeOf(event).mark ?? '•' }}</span>
+        <span
+          class="timeline__mark"
+          :class="`is-${typeOf(event).tone ?? 'neutral'}`"
+          aria-hidden="true"
+        >{{ typeOf(event).mark ?? '•' }}</span>
         <article class="timeline__card">
           <header>
             <div>
@@ -109,10 +115,22 @@ function formatDate(at: string): string {
   margin: 0;
 }
 
+/* Una sola línea continua detrás de las marcas: es lo que hace que se lea como una cronología. */
 .timeline__list {
   list-style: none;
   margin: 0;
   padding: 0;
+  position: relative;
+}
+
+.timeline__list::before {
+  background: var(--color-line);
+  bottom: 0;
+  content: '';
+  left: 16px;
+  position: absolute;
+  top: 0;
+  width: 1px;
 }
 
 .timeline__event {
@@ -123,28 +141,43 @@ function formatDate(at: string): string {
   position: relative;
 }
 
-/* La línea une los eventos; el último no la prolonga hacia la nada. */
-.timeline__event:not(:last-child)::before {
-  background: var(--color-line);
-  bottom: 0;
-  content: '';
-  left: 15px;
-  position: absolute;
-  top: 32px;
-  width: 1px;
-}
 
+/*
+ * El borde grueso es del color del fondo, no un borde: así la marca «perfora» la línea continua
+ * en lugar de superponerse a ella.
+ */
 .timeline__mark {
   align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
+  background: var(--color-surface-muted);
+  border: 4px solid var(--color-canvas);
   border-radius: 50%;
   color: var(--color-ink-muted);
   display: flex;
-  height: 32px;
+  height: 34px;
   justify-content: center;
-  width: 32px;
+  position: relative;
+  width: 34px;
   z-index: 1;
+}
+
+.timeline__mark.is-brand {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+}
+
+.timeline__mark.is-info {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+
+.timeline__mark.is-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.timeline__mark.is-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .timeline__card {

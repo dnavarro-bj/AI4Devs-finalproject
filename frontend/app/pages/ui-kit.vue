@@ -49,13 +49,15 @@ const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar
 const NAVIGATION = APP_NAVIGATION
 
 const galleryPage = ref(3)
+const filterLocation = ref('')
+const filterTag = ref('globular')
 const calendarMonth = ref('2026-09')
 
 const TIMELINE_TYPES = [
-  { value: 'reading', label: 'Lecturas', mark: '∿' },
-  { value: 'water', label: 'Riegos', mark: '◇' },
-  { value: 'photo', label: 'Fotografías', mark: '▧' },
-  { value: 'bloom', label: 'Floración', mark: '✣' },
+  { value: 'reading', label: 'Lectura de cultivo', mark: '∿', tone: 'brand' as const },
+  { value: 'water', label: 'Riego', mark: '◇', tone: 'info' as const },
+  { value: 'photo', label: 'Fotografía y comentario', mark: '▧', tone: 'brand' as const },
+  { value: 'bloom', label: 'Floración', mark: '✣', tone: 'warning' as const },
 ]
 
 const TIMELINE_EVENTS = [
@@ -251,11 +253,34 @@ const SEARCH_GROUPS = [
       <UiPagination v-model:page="galleryPage" :total-pages="7" />
       <UiPagination :page="6" :total-pages="7" />
       <p class="note">Página seleccionada: {{ galleryPage + 1 }}</p>
-      <UiFilterBar :applied="appliedFilters" @remove="removeFilter" @clear="appliedFilters = []">
-        <UiButton variant="secondary">Localización ⌄</UiButton>
-        <UiButton variant="secondary">Especie ⌄</UiButton>
+      <!--
+        Con y sin ayuda en la misma fila: los controles quedan alineados porque la fila alinea por
+        arriba, y el botón reserva el hueco de su rótulo con `UiFieldAction`.
+      -->
+      <UiFilterBar label="Filtros del inventario" :applied="appliedFilters" @remove="removeFilter" @clear="appliedFilters = []">
+        <UiField v-model="filterLocation" label="Localización" as="select" placeholder="Todas" :options="[]" />
+        <UiField v-model="filterTag" label="Etiqueta" help="Filtra por una etiqueta del catálogo." />
+        <UiField label="Estado" as="select" :options="[]" disabled help="Llega en T-16." />
+        <UiFieldAction>
+          <UiButton variant="secondary">Columnas</UiButton>
+        </UiFieldAction>
       </UiFilterBar>
 
+      <!-- Resumen de estado: valor compacto y una sola superficie dividida. No es la métrica. -->
+      <UiSummaryGrid
+        eyebrow="Estado actual"
+        title="De un vistazo"
+        :items="[
+          { label: 'Último riego', value: '16 ago · 450 ml', note: 'Hace 18 días' },
+          { label: 'Próxima tarea', value: 'Revisión general', note: 'Vencida hace 2 días', mock: true },
+          { label: 'Última medición', value: '24 °C · 31 %', note: '21 ago' },
+          { label: 'Última floración', value: 'Mayo de 2026', note: 'Duró 4 días', mock: true },
+        ]"
+      >
+        <template #action><UiButton variant="text">Editar datos</UiButton></template>
+      </UiSummaryGrid>
+
+      <!-- Métrica navegable: una cifra grande que lleva a su conjunto. Otra cosa. -->
       <div class="stat-tiles">
         <UiStatTile :value="12" label="Alertas importantes" to="/alerts" tone="danger" />
         <UiStatTile :value="7" label="Tareas vencidas" to="/tasks" tone="warning" />
@@ -315,6 +340,17 @@ const SEARCH_GROUPS = [
     <section class="gallery__section">
       <h2>Cronología y trabajo</h2>
       <UiTimeline :events="TIMELINE_EVENTS" :types="TIMELINE_TYPES">
+        <template #event-reading>
+          <UiSummaryGrid
+            density="compact"
+            :items="[
+              { label: 'Humedad', value: '31 %' },
+              { label: 'Temperatura', value: '24 °C' },
+              { label: 'Luz', value: '10 h' },
+              { label: 'pH', value: '6,2' },
+            ]"
+          />
+        </template>
         <template #event-water><p class="note">450 ml · desde la tarea «Regar bandejas A3 y A4».</p></template>
         <template #event-photo><p class="note">La coloración se mantiene uniforme.</p></template>
       </UiTimeline>

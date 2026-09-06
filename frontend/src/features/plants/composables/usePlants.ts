@@ -1,5 +1,5 @@
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
-import { plantsApiService } from '../services/plants.api.service'
+import { plantsApiService, type PlantQuery } from '../services/plants.api.service'
 import { usePlantsStore } from '../store/plants.store'
 import type { PlantDetail, PlantSummary } from '../types/plant.types'
 
@@ -13,8 +13,8 @@ import type { PlantDetail, PlantSummary } from '../types/plant.types'
 export function usePlants() {
   const store = usePlantsStore()
 
-  async function list(page = 0): Promise<ServiceResponse<PageResponse<PlantSummary>>> {
-    const result = await plantsApiService.list(page)
+  async function list(query: PlantQuery = {}): Promise<ServiceResponse<PageResponse<PlantSummary>>> {
+    const result = await plantsApiService.list(query)
     if (result.success) store.setPage(result.data!)
     return result
   }

@@ -12,10 +12,25 @@ import type { PlantDetail, PlantSummary } from '../types/plant.types'
  *
  * Ningún método lanza: el fallo sale en el `ServiceResponse` (ADR-015).
  */
+/** Los filtros combinables que el API admite (T-02): `tag` repetible con semántica AND. */
+export interface PlantQuery {
+  page?: number
+  /** `campo,asc` o `campo,desc`, tal como lo espera Spring Data. */
+  sort?: string
+  tag?: string[]
+  location?: string
+}
+
 export const plantsApiService = {
-  async list(page = 0): Promise<ServiceResponse<PageResponse<PlantSummary>>> {
+  async list(query: PlantQuery = {}): Promise<ServiceResponse<PageResponse<PlantSummary>>> {
+    // Los criterios ausentes no viajan: un `sort` vacío tapa el orden por defecto del servidor.
+    const params: Record<string, unknown> = { page: query.page ?? 0 }
+    if (query.sort) params.sort = query.sort
+    if (query.tag?.length) params.tag = query.tag
+    if (query.location) params.location = query.location
+
     try {
-      return ok(await getApiClient().get<PageResponse<PlantSummary>>('/plants', { page }))
+      return ok(await getApiClient().get<PageResponse<PlantSummary>>('/plants', params))
     } catch (cause) {
       return fail(normalizeError(cause))
     }

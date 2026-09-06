@@ -82,3 +82,31 @@ describe('UiField', () => {
     expect(wrapper.find('input').attributes('data-test')).toBe('nickname')
   })
 })
+
+/**
+ * Escenario "Campo en línea" de la requirement "Campos de formulario" (`design-system`), añadido
+ * por `esqueleto-plantas`: la rejilla de mediciones lo necesita.
+ */
+describe('UiField en línea', () => {
+  it('mantiene la etiqueta asociada al control', () => {
+    const wrapper = mount(UiField, { props: { label: 'Humedad', layout: 'row', unit: '%' } })
+
+    const input = wrapper.find('input')
+    expect(wrapper.find('label').attributes('for')).toBe(input.attributes('id'))
+  })
+
+  it('el texto de ayuda sigue anunciándose', () => {
+    const wrapper = mount(UiField, {
+      props: { label: 'Humedad', layout: 'row', help: 'Recomendada 20–40 %' },
+    })
+
+    const help = wrapper.find('[data-role="help"]')
+    expect(help.text()).toBe('Recomendada 20–40 %')
+    expect(wrapper.find('input').attributes('aria-describedby')).toBe(help.attributes('id'))
+  })
+
+  it('se distingue del apilado en el marcado, para que la pantalla no lo imite con CSS', () => {
+    expect(mount(UiField, { props: { label: 'x', layout: 'row' } }).classes()).toContain('field--row')
+    expect(mount(UiField, { props: { label: 'x' } }).classes()).not.toContain('field--row')
+  })
+})

@@ -42,7 +42,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | [T-25](T-25-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Frontend |
 | [T-11](T-11-kit-de-datos-a-escala.md) | Kit: datos a escala | Frontend (kit) |
 | [T-12](T-12-kit-de-cronologia-calendario-y-multimedia.md) | Kit: cronología, calendario y multimedia | Frontend (kit) |
-| [T-13](T-13-esqueleto-de-las-pantallas-de-gestion.md) | Esqueleto de las pantallas de gestión | Frontend |
+| [T-13](T-13-esqueleto-de-las-pantallas-de-gestion.md) | Esqueleto de las pantallas de gestión — se implementa en dos changes: `esqueleto-plantas` y el de catálogos | Frontend |
 | [T-14](T-14-esqueleto-de-las-pantallas-de-trabajo.md) | Esqueleto de las pantallas de trabajo | Frontend |
 
 ## Bloque 1 — gestión de plantas
@@ -50,6 +50,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | ID | Ticket | Área |
 |----|--------|------|
 | [T-15](T-15-codigos-de-inventario.md) | Códigos de inventario de especie y ejemplar | Backend + Frontend |
+| [T-26](T-26-api-de-edicion-de-planta.md) | API de edición de planta | Backend |
 | [T-16](T-16-ficha-del-ejemplar-ampliada.md) | Ficha del ejemplar ampliada y herencia de cuidados | Backend + Frontend |
 | [T-17](T-17-especie-ampliada.md) | Especie ampliada: exposición, entorno, crecimiento y floración | Backend + Frontend |
 | [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend |

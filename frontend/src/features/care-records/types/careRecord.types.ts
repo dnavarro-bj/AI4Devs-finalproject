@@ -28,4 +28,6 @@ export interface CareRecordInput {
   lightHours?: number
   waterAmountMl?: number
   soilPh?: number
+  /** Opcional: si no va, el servidor sella el momento actual. Nunca puede ser futura. */
+  recordedAt?: string
 }
