@@ -31,16 +31,53 @@ const SAMPLE_ROWS = [
 ] as const
 
 const COLUMNS = [
-  { key: 'nickname', label: 'Planta' },
-  { key: 'location', label: 'Localización' },
+  { key: 'nickname', label: 'Planta', sortable: true },
+  { key: 'location', label: 'Localización', sortable: true },
   { key: 'status', label: 'Estado' },
 ]
+
+// La identificativa —la primera— no se puede ocultar, así que no está aquí.
+const HIDEABLE = COLUMNS.slice(1)
+
+const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'nickname', direction: 'asc' })
+const visibleColumns = ref(HIDEABLE.map((column) => column.key))
+const density = ref<'comfortable' | 'compact'>('comfortable')
 
 const STATUS_LABELS: Record<string, string> = { ok: 'Al día', warning: 'Revisar', danger: 'Alerta' }
 
 // El mapa real de la aplicación: la galería muestra los componentes con los datos que usan.
 const NAVIGATION = APP_NAVIGATION
 
+const galleryPage = ref(3)
+
+const appliedFilters = ref([
+  { id: 'location', label: 'Localización: Invernadero 1' },
+  { id: 'status', label: 'Estado: Revisar' },
+])
+const removeFilter = (id: string) => {
+  appliedFilters.value = appliedFilters.value.filter((criterion) => criterion.id !== id)
+}
+
+// Cuatro niveles, como la jerarquía real del producto.
+const TREE = [
+  {
+    id: '1',
+    label: 'Invernadero 1',
+    count: 486,
+    children: [
+      {
+        id: '2',
+        label: 'Bancada norte',
+        count: 120,
+        children: [
+          { id: '3', label: 'Bandeja A3', count: 24 },
+          { id: '4', label: 'Bandeja A4', count: 31 },
+        ],
+      },
+    ],
+  },
+  { id: '9', label: 'Zona exterior', count: 407 },
+]
 const searchEmpty = ref('')
 const searchHit = ref('gruss')
 const searchMiss = ref('zzz')
@@ -169,7 +206,53 @@ const SEARCH_GROUPS = [
 
     <section class="gallery__section">
       <h2>Datos</h2>
-      <UiTable v-model:selected="selected" :columns="COLUMNS" :rows="[...SAMPLE_ROWS]" row-key="id" selectable>
+      <!-- Las tres posiciones del recorrido: primera, intermedia y última. -->
+      <UiPagination :page="0" :total-pages="7" />
+      <UiPagination v-model:page="galleryPage" :total-pages="7" />
+      <UiPagination :page="6" :total-pages="7" />
+      <p class="note">Página seleccionada: {{ galleryPage + 1 }}</p>
+      <UiFilterBar :applied="appliedFilters" @remove="removeFilter" @clear="appliedFilters = []">
+        <UiButton variant="secondary">Localización ⌄</UiButton>
+        <UiButton variant="secondary">Especie ⌄</UiButton>
+      </UiFilterBar>
+
+      <div class="stat-tiles">
+        <UiStatTile :value="12" label="Alertas importantes" to="/alerts" tone="danger" />
+        <UiStatTile :value="7" label="Tareas vencidas" to="/tasks" tone="warning" />
+        <UiStatTile :value="0" label="Sin revisar" context="más de 30 días" to="/plants" />
+        <UiStatTile :value="1284" label="Ejemplares" />
+      </div>
+
+      <!-- Acotado como en su sitio real: un panel lateral, no el ancho de la pantalla. -->
+      <div class="tree-sample">
+        <UiTree :nodes="TREE" aria-label="Localizaciones" @select="show(`Localización ${$event}`)" />
+      </div>
+
+      <div class="table-controls">
+        <UiButton
+          variant="secondary"
+          @click="density = density === 'compact' ? 'comfortable' : 'compact'"
+        >
+          Densidad: {{ density === 'compact' ? 'compacta' : 'cómoda' }}
+        </UiButton>
+        <label v-for="column in HIDEABLE" :key="column.key">
+          <input v-model="visibleColumns" type="checkbox" :value="column.key">
+          {{ column.label }}
+        </label>
+      </div>
+      <p class="note">Orden: {{ sort ? `${sort.key} ${sort.direction}` : 'ninguno' }}</p>
+
+      <UiTable
+        v-model:selected="selected"
+        :columns="COLUMNS"
+        :rows="[...SAMPLE_ROWS]"
+        row-key="id"
+        selectable
+        :sort="sort"
+        :visible-columns="visibleColumns"
+        :density="density"
+        @update:sort="sort = $event"
+      >
         <template #bulk-actions>
           <UiButton variant="secondary">Mover</UiButton>
           <UiButton variant="secondary">Crear tarea</UiButton>
@@ -279,6 +362,33 @@ const SEARCH_GROUPS = [
 
 <style scoped>
 /* La navegación solo tiene sentido sobre su superficie: el kit no la muestra flotando en claro. */
+.tree-sample {
+  max-width: 360px;
+}
+
+.stat-tiles {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: var(--space-5);
+}
+
+.table-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.table-controls label {
+  align-items: center;
+  color: var(--color-ink-muted);
+  display: inline-flex;
+  font-size: var(--font-size-13);
+  gap: var(--space-1);
+}
+
 .search-samples {
   display: grid;
   gap: var(--space-12);

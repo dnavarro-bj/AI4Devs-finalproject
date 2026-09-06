@@ -32,10 +32,6 @@ async function load(pageNumber: number) {
 onMounted(() => load(0))
 
 const isEmpty = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
-const hasPages = computed(() => (page.value?.totalPages ?? 0) > 1)
-const isFirst = computed(() => (page.value?.pageNumber ?? 0) === 0)
-const isLast = computed(() => (page.value?.pageNumber ?? 0) >= (page.value?.totalPages ?? 1) - 1)
-
 const COLUMNS = [
   { key: 'nickname', label: 'Planta' },
   { key: 'species', label: 'Especie' },
@@ -85,27 +81,13 @@ const COLUMNS = [
       </template>
     </UiTable>
 
-    <nav v-if="hasPages" class="pager" aria-label="Paginación del inventario">
-      <UiButton
-        variant="secondary"
-        data-test="previous-page"
-        :disabled="isFirst || loading"
-        @click="load((page?.pageNumber ?? 0) - 1)"
-      >
-        Anterior
-      </UiButton>
-      <span data-test="page-indicator">
-        Página {{ (page?.pageNumber ?? 0) + 1 }} de {{ page?.totalPages }}
-      </span>
-      <UiButton
-        variant="secondary"
-        data-test="next-page"
-        :disabled="isLast || loading"
-        @click="load((page?.pageNumber ?? 0) + 1)"
-      >
-        Siguiente
-      </UiButton>
-    </nav>
+    <UiPagination
+      :page="page?.pageNumber ?? 0"
+      :total-pages="page?.totalPages ?? 0"
+      :loading="loading"
+      label="Paginación del inventario"
+      @update:page="load"
+    />
   </section>
 </template>
 
@@ -122,12 +104,4 @@ const COLUMNS = [
   margin: 0;
 }
 
-.pager {
-  align-items: center;
-  color: var(--color-ink-muted);
-  display: flex;
-  font-size: var(--font-size-13);
-  gap: var(--space-4);
-  margin-top: var(--space-4);
-}
 </style>
