@@ -1,5 +1,21 @@
 # Componentes
 
+El [banco de componentes aislados](cactify-ui-kit/components.html) permite revisar visualmente las 53 piezas. El banco y los wireframes mandan en apariencia; `frontend/app/components/ui/` materializa el comportamiento accesible en Vue.
+
+## Catálogo completo
+
+| Grupo | Componentes Vue |
+|---|---|
+| Acciones y campos | `UiButton`, `UiField`, `UiFieldAction`, `UiStatus`, `UiPriority`, `UiFilterChip`, `UiFilterBar` |
+| Navegación | `UiBreadcrumbs`, `UiNavGroup`, `UiTabs`, `UiPageHeader`, `UiGlobalSearch`, `UiEditorNav`, `UiPagination` |
+| Datos | `UiTable`, `UiSummaryGrid`, `UiStatTile`, `UiTree`, `UiProportionBar`, `UiProportionWheel`, `UiScale`, `UiMonthRange`, `UiYearGrid` |
+| Trabajo e historial | `UiTimeline`, `UiAgendaList`, `UiCalendarMonth` |
+| Estructura y medios | `UiPanel`, `UiFormSection`, `UiMediaGallery`, `UiUploadArea`, `UiSpecimenLabel` |
+| Patrones de aplicación | `UiIdentityCode`, `UiEntityHero`, `UiEntityCell`, `UiTag`, `UiDefinitionList`, `UiDetailLayout`, `UiSectionHeader`, `UiLoadingState`, `UiOverflowMenu`, `UiStickyActionBar`, `UiSegmentedControl`, `UiSwitch`, `UiChoiceCards`, `UiStepper`, `UiProgressBar`, `UiEntityPicker`, `UiFileItem` |
+| Feedback | `UiNotice`, `UiEmptyState`, `UiInlineError`, `UiDialog`, `UiToastHost` |
+
+`UiTreeNode` es la implementación recursiva interna de `UiTree`; no es una pieza de consumo independiente y no cuenta como componente adicional del catálogo.
+
 ## Botones
 
 ### Primario
@@ -55,3 +71,13 @@ Todas las pantallas tienen breadcrumbs. Las pestañas cambian una vista local y 
 ## Etiqueta de ejemplar
 
 Es la firma del sistema. Reúne miniatura, código permanente, nombre y contexto botánico. El código nunca se trunca cuando identifica una operación y nunca cambia al editar la planta.
+
+## Identidad y fichas
+
+`UiIdentityCode` es la placa compacta que identifica una planta, especie o localización; no se confunde con `UiSpecimenLabel`, que representa la etiqueta física completa. `UiEntityHero` compone la portada de cualquier ficha mediante slots, y `UiEntityCell` conserva la misma identidad en tablas, selectores y resultados.
+
+`UiDefinitionList` resuelve las fichas clave–valor y `UiDetailLayout` mantiene la relación entre contenido principal y lateral. Son componentes de estructura: no conocen plantas, especies ni sustratos.
+
+## Elección y procesos
+
+`UiSegmentedControl` y `UiChoiceCards` representan elecciones exclusivas; las pestañas siguen reservadas para navegación local. `UiSwitch` activa una preferencia booleana. `UiStepper` explica una secuencia real y `UiProgressBar` representa capacidad o avance con el valor disponible también como texto.

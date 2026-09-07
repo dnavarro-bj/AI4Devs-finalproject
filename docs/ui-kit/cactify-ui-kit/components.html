@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Catálogo aislado de los 53 componentes del sistema de diseño de Cactify.">
+  <title>Cactify UI Kit · Componentes</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="catalog.css">
+</head>
+<body class="catalog-page">
+  <header class="catalog-topbar">
+    <a class="catalog-brand" href="index.html"><span class="brand-mark" aria-hidden="true">C</span><span><strong>Cactify</strong><small>Banco de componentes</small></span></a>
+    <nav aria-label="Navegación de la documentación"><a href="index.html">Fundamentos</a><a class="is-active" href="components.html">Componentes</a><a href="../README.md">Documentación</a></nav>
+  </header>
+
+  <main class="catalog-main">
+    <header class="catalog-hero">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><ol><li><a href="index.html">UI Kit</a></li><li aria-current="page">Componentes aislados</li></ol></nav>
+      <div class="catalog-hero-grid">
+        <div><span class="version-badge">53 componentes · wireframe maestro</span><h1>Una mesa de trabajo para cada pieza.</h1><p>Cada componente aparece fuera de una pantalla, con sus estados y su contrato principal. Esta muestra conserva el lenguaje visual del wireframe y es la referencia para su implementación en Vue.</p></div>
+        <aside class="catalog-index-card"><strong>Buscar un componente</strong><label class="catalog-search"><span aria-hidden="true">⌕</span><input id="component-search" type="search" placeholder="UiTable, calendario, estado…" autocomplete="off"></label><small id="component-count">53 componentes visibles</small></aside>
+      </div>
+    </header>
+
+    <nav class="category-nav" aria-label="Categorías"><a href="#actions-fields">Acciones y campos</a><a href="#navigation">Navegación</a><a href="#data">Datos</a><a href="#work">Trabajo</a><a href="#structure">Estructura y medios</a><a href="#application-patterns">Patrones de aplicación</a><a href="#feedback">Feedback</a></nav>
+
+    <section class="catalog-group" id="actions-fields">
+      <header><h2>Acciones y campos</h2><p>Controles atómicos y composición de filtros.</p></header>
+      <div class="component-list">
+        <article class="component-case" id="ui-button" data-component="UiButton botón acciones primario secundario texto icono peligro">
+          <header><div><code>UiButton</code><h3>Botón</h3></div><span>Acción</span></header>
+          <div class="component-preview"><div class="stage-row"><button class="button button--primary" type="button">Guardar lectura</button><button class="button button--secondary" type="button">Crear tarea</button><button class="button button--text" type="button">Ver historial</button><button class="button button--danger" type="button">Eliminar</button><button class="icon-button" type="button" aria-label="Más acciones">•••</button></div><div class="stage-row"><button class="button button--primary" type="button" disabled>Guardar cambios</button><button class="button button--primary is-busy" type="button" aria-busy="true" disabled>Guardando…</button></div></div>
+          <footer><span><b>Props</b> variant · label · disabled · busy · type · to</span><span><b>Evento</b> click</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-field" data-component="UiField campo input select textarea unidad error ayuda readonly">
+          <header><div><code>UiField</code><h3>Campo</h3></div><span>Entrada</span></header>
+          <div class="component-preview field-grid"><label class="field"><span>Nombre de la planta</span><input value="Asiento de suegra"><small>Nombre interno; la especie no cambia.</small></label><label class="field"><span>Localización</span><select><option>Invernadero 1 / A3</option></select><small>Ubicación exacta.</small></label><label class="field"><span>Humedad</span><span class="input-suffix"><input value="31" type="number"><b>%</b></span><small>Rango efectivo: 20–40%.</small></label><label class="field field--error"><span>pH</span><span class="input-suffix"><input value="15" aria-invalid="true"><b>pH</b></span><small>Introduce un valor entre 0 y 14.</small></label></div>
+          <footer><span><b>Props</b> label · modelValue · help · error · unit · as · layout</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-field-action" data-component="UiFieldAction acción alineada campos formulario">
+          <header><div><code>UiFieldAction</code><h3>Acción alineada con campos</h3></div><span>Composición</span></header>
+          <div class="component-preview"><div class="field-action-demo"><label class="field"><span>Etiqueta</span><input value="Globular"></label><div><span aria-hidden="true">&nbsp;</span><button class="button button--secondary" type="button">Columnas</button></div></div></div>
+          <footer><span><b>Prop</b> label</span><span><b>Slot</b> default</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-status" data-component="UiStatus estado ok warning danger neutral al día revisar crítica">
+          <header><div><code>UiStatus</code><h3>Estado</h3></div><span>Semántica</span></header>
+          <div class="component-preview component-preview--center"><span class="status status--ok">Al día</span><span class="status status--warning">Revisar</span><span class="status status--danger">Crítica</span><span class="status status--neutral">Inactiva</span></div>
+          <footer><span><b>Prop</b> tone: ok | warning | danger | neutral</span><span><b>Slot</b> default</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-priority" data-component="UiPriority prioridad routine soon immediate rutina pronto inmediata">
+          <header><div><code>UiPriority</code><h3>Prioridad</h3></div><span>Semántica</span></header>
+          <div class="component-preview component-preview--center"><span class="priority priority--routine">Rutina</span><span class="priority priority--soon">Atender pronto</span><span class="priority priority--immediate">Inmediata</span></div>
+          <footer><span><b>Prop</b> level: routine | soon | immediate</span><span><b>Slot</b> default</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-filter-chip" data-component="UiFilterChip filtro aplicado chip eliminar">
+          <header><div><code>UiFilterChip</code><h3>Filtro aplicado</h3></div><span>Filtro</span></header>
+          <div class="component-preview component-preview--center"><button class="filter-chip" type="button" data-removable>Pleno sol <span aria-hidden="true">×</span></button><button class="filter-chip" type="button" data-removable>Revisar <span aria-hidden="true">×</span></button></div>
+          <footer><span><b>Prop</b> label</span><span><b>Evento</b> remove</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-filter-bar" data-component="UiFilterBar barra filtros controles limpiar aplicados">
+          <header><div><code>UiFilterBar</code><h3>Barra de filtros</h3></div><span>Composición</span></header>
+          <div class="component-preview"><fieldset class="filter-bar-demo"><legend class="sr-only">Filtros del inventario</legend><div><label class="field"><span>Localización</span><select><option>Todas</option></select></label><label class="field"><span>Estado</span><select><option>Revisar</option></select></label><div class="field-action"><span>&nbsp;</span><button class="button button--secondary" type="button">Columnas</button></div></div><p><span class="filter-chip">Localización: Invernadero 1 <b>×</b></span><span class="filter-chip">Estado: Revisar <b>×</b></span><button class="button button--text" type="button">Limpiar filtros</button></p></fieldset></div>
+          <footer><span><b>Props</b> applied · label</span><span><b>Eventos</b> remove · clear</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="application-patterns">
+      <header><h2>Patrones de aplicación</h2><p>Las piezas recurrentes que daban carácter al wireframe y todavía estaban resueltas como CSS local.</p></header>
+      <div class="component-list">
+        <article class="component-case component-case--compact" id="ui-identity-code" data-component="UiIdentityCode identificador código permanente planta especie localización">
+          <header><div><code>UiIdentityCode</code><h3>Identificador permanente</h3></div><span>Identidad</span></header>
+          <div class="component-preview component-preview--center"><span class="identity-code-demo"><code>CAT-GRUSS-01</code></span><span class="identity-code-demo identity-code-demo--pending"><code>CAT · T-15</code></span></div>
+          <footer><span><b>Props</b> value · pending · copyable</span><span><b>Evento</b> copy</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-entity-hero" data-component="UiEntityHero cabecera ficha entidad identidad acciones medios">
+          <header><div><code>UiEntityHero</code><h3>Portada de entidad</h3></div><span>Ficha</span></header>
+          <div class="component-preview"><article class="entity-hero-demo"><div class="entity-hero-demo__mark">✺<small>8 fotos</small></div><div><p class="entity-hero-demo__line"><span class="identity-code-demo"><code>CAT-GRUSS</code></span><span class="status status--ok">Ficha completa</span></p><h2><em>Echinocactus grusonii</em></h2><strong>Asiento de suegra</strong><p>Cactus globular de crecimiento lento y espinación dorada.</p></div><div class="entity-hero-demo__actions"><button class="button button--primary" type="button">Editar especie</button><button class="button button--secondary" type="button">Ver ejemplares</button></div></article></div>
+          <footer><span><b>Props</b> title · subtitle · description</span><span><b>Slots</b> visual · identity · context · actions</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-entity-cell" data-component="UiEntityCell celda entidad miniatura código nombre detalle">
+          <header><div><code>UiEntityCell</code><h3>Entidad compacta</h3></div><span>Listado</span></header>
+          <div class="component-preview"><button class="entity-cell-demo" type="button"><span>♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong><small>Invernadero 1 / A3</small></span></button></div>
+          <footer><span><b>Props</b> code · title · detail · mark · to</span><span><b>Slots</b> mark · trailing</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-tag" data-component="UiTag etiqueta característica persistente tag rasgo">
+          <header><div><code>UiTag</code><h3>Etiqueta o característica</h3></div><span>Clasificación</span></header>
+          <div class="component-preview component-preview--center"><span class="tag-demo">Pleno sol</span><span class="tag-demo">Exterior</span><button class="tag-demo tag-demo--removable" type="button">Semillero <span>×</span></button></div>
+          <footer><span><b>Props</b> label · tone · removable</span><span><b>Evento</b> remove</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-definition-list" data-component="UiDefinitionList ficha datos clave valor metadatos">
+          <header><div><code>UiDefinitionList</code><h3>Ficha clave–valor</h3></div><span>Datos</span></header>
+          <div class="component-preview"><dl class="definition-list-demo"><div><dt>Código</dt><dd><code>CAT-GRUSS</code></dd></div><div><dt>Género</dt><dd><em>Echinocactus</em></dd></div><div><dt>Ejemplares</dt><dd>23</dd></div><div><dt>Actualizada</dt><dd>18 ago 2026</dd></div></dl></div>
+          <footer><span><b>Prop</b> items: { key, label, value }[]</span><span><b>Slots</b> value-&lt;key&gt;</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-detail-layout" data-component="UiDetailLayout ficha dos columnas principal lateral responsive">
+          <header><div><code>UiDetailLayout</code><h3>Ficha con lateral</h3></div><span>Layout</span></header>
+          <div class="component-preview"><div class="detail-layout-demo"><div><span>Contenido principal</span><span>Historial, condiciones o elementos relacionados</span></div><aside><span>Panel lateral</span><span>Ficha y contexto</span></aside></div></div>
+          <footer><span><b>Props</b> asideWidth · gap</span><span><b>Slots</b> default · aside</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-section-header" data-component="UiSectionHeader cabecera sección título descripción contador acción">
+          <header><div><code>UiSectionHeader</code><h3>Cabecera de sección</h3></div><span>Jerarquía</span></header>
+          <div class="component-preview"><header class="section-header-demo"><div><small>CULTIVO</small><h3>Condiciones recomendadas <span>7 valores</span></h3><p>Estos valores los heredan los ejemplares.</p></div><button class="button button--text" type="button">Editar pauta</button></header></div>
+          <footer><span><b>Props</b> title · description · eyebrow · count</span><span><b>Slot</b> actions</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-loading-state" data-component="UiLoadingState cargando progreso espera inline página">
+          <header><div><code>UiLoadingState</code><h3>Estado de carga</h3></div><span>Espera</span></header>
+          <div class="component-preview"><div class="loading-state-demo" role="status"><span aria-hidden="true"></span><strong>Cargando la especie…</strong><small>Conservamos el contexto mientras llegan los datos.</small></div></div>
+          <footer><span><b>Props</b> label · context · size</span><span><b>Rol</b> status</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-overflow-menu" data-component="UiOverflowMenu menú acciones más opciones ellipsis">
+          <header><div><code>UiOverflowMenu</code><h3>Menú de más acciones</h3></div><span>Acciones</span></header>
+          <div class="component-preview component-preview--center"><div class="overflow-menu-demo"><button class="icon-button" type="button" aria-label="Más acciones">•••</button><div><button type="button">Duplicar especie</button><button type="button">Exportar ficha</button><button class="is-danger" type="button">Retirar del catálogo</button></div></div></div>
+          <footer><span><b>Props</b> items · label · open</span><span><b>Eventos</b> select · update:open</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-sticky-action-bar" data-component="UiStickyActionBar barra acciones formulario guardar cancelar sticky">
+          <header><div><code>UiStickyActionBar</code><h3>Acciones persistentes</h3></div><span>Formulario largo</span></header>
+          <div class="component-preview"><div class="sticky-action-demo"><span>Los cambios todavía no se han guardado.</span><div><button class="button button--text" type="button">Cancelar</button><button class="button button--primary" type="button">Guardar especie</button></div></div></div>
+          <footer><span><b>Props</b> message</span><span><b>Slots</b> start · actions</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-segmented-control" data-component="UiSegmentedControl selector segmentado opción exclusiva">
+          <header><div><code>UiSegmentedControl</code><h3>Selector segmentado</h3></div><span>Elección</span></header>
+          <div class="component-preview"><fieldset class="segmented-demo"><legend>Entorno</legend><label><input type="radio" name="environment"><span>Interior</span></label><label><input type="radio" name="environment" checked><span>Exterior</span></label><label><input type="radio" name="environment"><span>Mixto</span></label></fieldset></div>
+          <footer><span><b>Props</b> label · options · modelValue</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-switch" data-component="UiSwitch interruptor configuración activar desactivar">
+          <header><div><code>UiSwitch</code><h3>Interruptor</h3></div><span>Configuración</span></header>
+          <div class="component-preview"><label class="switch-demo"><span><strong>Alertas por temperatura</strong><small>Avisa cuando una lectura sale del rango.</small></span><input type="checkbox" checked><i aria-hidden="true"></i><b>Activa</b></label></div>
+          <footer><span><b>Props</b> label · description · modelValue · disabled</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-choice-cards" data-component="UiChoiceCards tarjetas opción exposición sombra sol">
+          <header><div><code>UiChoiceCards</code><h3>Opciones visuales</h3></div><span>Elección</span></header>
+          <div class="component-preview"><fieldset class="choice-cards-demo"><legend>Exposición</legend><label><input type="radio" name="sun"><span><i>◐</i><strong>Semisombra</strong><small>Sol suave o filtrado</small></span></label><label><input type="radio" name="sun"><span><i>☼</i><strong>Soleado</strong><small>Varias horas directas</small></span></label><label><input type="radio" name="sun" checked><span><i>☀</i><strong>Pleno sol</strong><small>Exposición prolongada</small></span></label></fieldset></div>
+          <footer><span><b>Props</b> label · options · modelValue · columns</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-stepper" data-component="UiStepper pasos proceso importación progreso">
+          <header><div><code>UiStepper</code><h3>Pasos de un proceso</h3></div><span>Proceso</span></header>
+          <div class="component-preview"><ol class="stepper-demo"><li class="is-done"><span>✓</span><strong>Subir CSV</strong></li><li class="is-current"><span>2</span><strong>Revisar datos</strong></li><li><span>3</span><strong>Importar</strong></li></ol></div>
+          <footer><span><b>Props</b> steps · current · label</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-progress-bar" data-component="UiProgressBar barra progreso capacidad porcentaje distribución">
+          <header><div><code>UiProgressBar</code><h3>Progreso o capacidad</h3></div><span>Magnitud</span></header>
+          <div class="component-preview"><div class="progress-demo"><span><strong>Bancada norte</strong><small>120 de 180 posiciones</small></span><i><b style="width:66%"></b></i><em>66%</em></div></div>
+          <footer><span><b>Props</b> value · max · label · detail · tone</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-entity-picker" data-component="UiEntityPicker selector buscable especie localización resultados">
+          <header><div><code>UiEntityPicker</code><h3>Selector buscable de entidad</h3></div><span>Formulario</span></header>
+          <div class="component-preview"><div class="entity-picker-demo"><label><span>Especie</span><div>⌕ <input value="gruss" aria-label="Buscar especie"></div></label><div role="listbox"><button class="is-selected" type="button" role="option" aria-selected="true"><span>✺</span><span><code>CAT-GRUSS</code><strong><em>Echinocactus grusonii</em></strong><small>Asiento de suegra</small></span><b>✓</b></button><button type="button" role="option"><span>♧</span><span><code>CAT-MAMMI</code><strong><em>Mammillaria bocasana</em></strong><small>Biznaga de lana</small></span></button></div></div></div>
+          <footer><span><b>Props</b> label · query · options · modelValue</span><span><b>Eventos</b> update:query · update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-file-item" data-component="UiFileItem archivo seleccionado tamaño estado eliminar">
+          <header><div><code>UiFileItem</code><h3>Archivo seleccionado</h3></div><span>Ficheros</span></header>
+          <div class="component-preview"><div class="file-item-demo"><span>CSV</span><span><strong>inventario-septiembre.csv</strong><small>184 KB · 1.284 filas</small></span><span class="status status--ok">Validado</span><button class="icon-button" type="button" aria-label="Quitar archivo">×</button></div></div>
+          <footer><span><b>Props</b> name · size · detail · status · tone</span><span><b>Evento</b> remove</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="navigation">
+      <header><h2>Navegación</h2><p>Orientación global, jerarquía local y recorridos paginados.</p></header>
+      <div class="component-list">
+        <article class="component-case component-case--compact" id="ui-breadcrumbs" data-component="UiBreadcrumbs breadcrumbs migas ruta navegación">
+          <header><div><code>UiBreadcrumbs</code><h3>Breadcrumbs</h3></div><span>Orientación</span></header>
+          <div class="component-preview"><nav class="breadcrumbs demo-breadcrumbs" aria-label="Breadcrumb"><ol><li><button type="button">Inicio</button></li><li><button type="button">Plantas</button></li><li aria-current="page">CAT-GRUSS-01</li></ol></nav></div>
+          <footer><span><b>Prop</b> items: { label, to? }[]</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-nav-group" data-component="UiNavGroup grupo navegación sidebar lateral secciones">
+          <header><div><code>UiNavGroup</code><h3>Grupo de navegación</h3></div><span>Global</span></header>
+          <div class="component-preview component-preview--dark"><nav class="nav-group-demo"><p>Colección</p><a class="is-active" href="#ui-nav-group"><span>♧</span>Plantas <small>1.284</small></a><a href="#ui-nav-group"><span>⌖</span>Localizaciones <small>18</small></a></nav></div>
+          <footer><span><b>Props</b> label · entries · activePath</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-tabs" data-component="UiTabs pestañas tablist local vista">
+          <header><div><code>UiTabs</code><h3>Pestañas</h3></div><span>Local</span></header>
+          <div class="component-preview"><nav class="tabs" data-tabs aria-label="Secciones"><button class="is-active" type="button">Resumen</button><button type="button">Fotografías <span>8</span></button><button type="button">Datos</button></nav></div>
+          <footer><span><b>Props</b> tabs · modelValue</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-page-header" data-component="UiPageHeader cabecera página título contexto acciones">
+          <header><div><code>UiPageHeader</code><h3>Cabecera de página</h3></div><span>Composición</span></header>
+          <div class="component-preview"><div class="page-header-demo"><div><h2>Plantas</h2><p>1.284 ejemplares · 4 requieren atención</p></div><div><button class="button button--secondary" type="button">Exportar</button><button class="button button--primary" type="button">Añadir planta</button></div></div></div>
+          <footer><span><b>Props</b> title · context</span><span><b>Slot</b> actions</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-global-search" data-component="UiGlobalSearch buscador global resultados grupos plantas especies">
+          <header><div><code>UiGlobalSearch</code><h3>Búsqueda global</h3></div><span>Global</span></header>
+          <div class="component-preview"><div class="global-search-demo"><label><span aria-hidden="true">⌕</span><input value="gruss" aria-label="Buscar plantas, especies o localizaciones"></label><div><small>Plantas</small><button type="button"><strong>CAT-GRUSS-01</strong><span>Bola verde · Bandeja A3</span></button><small>Especies</small><button type="button"><strong>Echinocactus grusonii</strong><span>Asiento de suegra</span></button></div></div></div>
+          <footer><span><b>Props</b> modelValue · groups · label · placeholder</span><span><b>Eventos</b> update:modelValue · select</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-editor-nav" data-component="UiEditorNav navegación editor formulario secciones completas">
+          <header><div><code>UiEditorNav</code><h3>Navegación del editor</h3></div><span>Formulario largo</span></header>
+          <div class="component-preview"><nav class="editor-nav-demo" data-editor-nav aria-label="Secciones del formulario"><button class="is-active" type="button">Identificación <span>completa</span></button><button type="button">Origen y edad</button><button type="button">Cuidados efectivos</button><button type="button">Fotografías</button></nav></div>
+          <footer><span><b>Props</b> sections · modelValue · done · label</span><span><b>Evento</b> update:modelValue</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-pagination" data-component="UiPagination paginación anterior siguiente página">
+          <header><div><code>UiPagination</code><h3>Paginación</h3></div><span>Recorrido</span></header>
+          <div class="component-preview component-preview--center"><nav class="pager-demo" aria-label="Paginación"><button class="button button--secondary" type="button">Anterior</button><span>Página 4 de 7</span><button class="button button--secondary" type="button">Siguiente</button></nav></div>
+          <footer><span><b>Props</b> page · totalPages · loading · label</span><span><b>Evento</b> update:page</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="data">
+      <header><h2>Datos</h2><p>Comparación, resumen y representación de magnitudes.</p></header>
+      <div class="component-list">
+        <article class="component-case component-case--wide" id="ui-table" data-component="UiTable tabla inventario selección ordenar columnas densidad">
+          <header><div><code>UiTable</code><h3>Tabla</h3></div><span>Listado</span></header>
+          <div class="component-preview"><div class="selection-bar table-selection"><strong>Selección: <span>1</span> de 3</strong><button type="button">Mover</button><button type="button">Crear tarea</button></div><div class="table-frame"><table><thead><tr><th><input type="checkbox" aria-label="Seleccionar todas"></th><th><button type="button">Planta ↑</button></th><th>Localización</th><th>Estado</th></tr></thead><tbody><tr><td><input class="catalog-row-check" type="checkbox" checked aria-label="Seleccionar CAT-GRUSS-01"></td><td><span class="plant-cell"><span class="plant-thumb">♧</span><span><code>CAT-GRUSS-01</code><strong>Asiento de suegra</strong></span></span></td><td>Invernadero 1 / A3</td><td><span class="status status--warning">Revisar</span></td></tr><tr><td><input class="catalog-row-check" type="checkbox" aria-label="Seleccionar CAT-ASTRO-12"></td><td><span class="plant-cell"><span class="plant-thumb plant-thumb--olive">✣</span><span><code>CAT-ASTRO-12</code><strong>Superkabuto 12</strong></span></span></td><td>Invernadero 1 / A3</td><td><span class="status status--danger">Alerta</span></td></tr><tr><td><input class="catalog-row-check" type="checkbox" aria-label="Seleccionar CAT-MAMMI-04"></td><td><span class="plant-cell"><span class="plant-thumb plant-thumb--mist">♧</span><span><code>CAT-MAMMI-04</code><strong>Bola blanca</strong></span></span></td><td>Invernadero 1 / A4</td><td><span class="status status--ok">Al día</span></td></tr></tbody></table></div></div>
+          <footer><span><b>Props</b> columns · rows · rowKey · selectable · selected · sort · visibleColumns · density</span><span><b>Slots</b> bulk-actions · cell-&lt;key&gt;</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-summary-grid" data-component="UiSummaryGrid resumen estado vistazo magnitudes lecturas">
+          <header><div><code>UiSummaryGrid</code><h3>Resumen de estado</h3></div><span>Ficha</span></header>
+          <div class="component-preview"><div class="summary-demo"><header><div><small>Estado actual</small><h3>De un vistazo</h3></div><button class="button button--text" type="button">Editar</button></header><div class="reading-values"><div><span>Último riego</span><strong>16 ago · 450 ml</strong></div><div><span>Próxima tarea</span><strong>Revisión general</strong></div><div><span>Última medición</span><strong>24 °C · 31%</strong></div><div><span>Floración</span><strong>Mayo 2026</strong></div></div></div></div>
+          <footer><span><b>Props</b> items · title · eyebrow · density</span><span><b>Slot</b> action</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-stat-tile" data-component="UiStatTile métrica dashboard cifra navegable alertas tareas">
+          <header><div><code>UiStatTile</code><h3>Métrica navegable</h3></div><span>Dashboard</span></header>
+          <div class="component-preview stat-grid-demo"><a class="stat-tile-demo is-danger" href="#ui-stat-tile"><strong>12</strong><span>Alertas importantes</span><small>Crítico</small></a><a class="stat-tile-demo is-warning" href="#ui-stat-tile"><strong>7</strong><span>Tareas vencidas</span><small>Atención</small></a><div class="stat-tile-demo"><strong>0</strong><span>Sin revisar</span><small>más de 30 días</small></div></div>
+          <footer><span><b>Props</b> value · label · context · to · tone</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-tree" data-component="UiTree árbol jerarquía localizaciones nodos niveles">
+          <header><div><code>UiTree</code><h3>Árbol jerárquico</h3></div><span>Jerarquía</span></header>
+          <div class="component-preview"><ul class="tree-demo" role="tree" aria-label="Localizaciones"><li><button type="button" aria-expanded="true"><span>⌄</span><strong>Invernadero 1</strong><small>486</small></button><ul><li><button type="button" aria-expanded="true"><span>⌄</span><strong>Bancada norte</strong><small>120</small></button><ul><li><button type="button"><span>·</span><strong>Bandeja A3</strong><small>24</small></button></li><li><button type="button"><span>·</span><strong>Bandeja A4</strong><small>31</small></button></li></ul></li></ul></li><li><button type="button"><span>·</span><strong>Zona exterior</strong><small>407</small></button></li></ul></div>
+          <footer><span><b>Props</b> nodes · label</span><span><b>Evento</b> select</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-proportion-bar" data-component="UiProportionBar proporción barra composición sustrato porcentaje">
+          <header><div><code>UiProportionBar</code><h3>Barra de proporciones</h3></div><span>Magnitud</span></header>
+          <div class="component-preview"><div class="proportion-bar-demo"><div><i style="width:80%"><strong>80%</strong><small>Mineral</small></i><i class="is-warning" style="width:20%"><strong>20%</strong><small>Orgánico</small></i></div><ul><li><span></span>Mineral <b>80%</b></li><li><span class="is-warning"></span>Orgánico <b>20%</b></li></ul></div></div>
+          <footer><span><b>Props</b> parts · total · unit · labels · size</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-proportion-wheel" data-component="UiProportionWheel rueda proporción composición anillo dominante">
+          <header><div><code>UiProportionWheel</code><h3>Rueda de proporción</h3></div><span>Magnitud</span></header>
+          <div class="component-preview component-preview--center"><div class="wheel-demo"><div><span><strong>80<i>%</i></strong><small>Mineral</small></span></div><ul><li><i></i>Mineral <b>80%</b></li><li><i class="is-warning"></i>Orgánico <b>20%</b></li></ul></div></div>
+          <footer><span><b>Props</b> parts · total · unit</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-scale" data-component="UiScale escala rango pH temperatura humedad límites">
+          <header><div><code>UiScale</code><h3>Escala con rango</h3></div><span>Magnitud</span></header>
+          <div class="component-preview"><div class="scale-demo"><span>Ácido</span><div><i style="left:41.4%;width:7.1%"></i><b style="left:41.4%">5,8</b><b style="left:48.5%">6,8</b></div><span>Alcalino</span></div></div>
+          <footer><span><b>Props</b> min · max · from · to · lowLabel · highLabel · label</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-month-range" data-component="UiMonthRange rango meses crecimiento reposo floración anual">
+          <header><div><code>UiMonthRange</code><h3>Rango de meses</h3></div><span>Ciclo anual</span></header>
+          <div class="component-preview"><div class="month-range-demo"><p><strong>Crecimiento</strong> · De marzo a octubre</p><ol><li>Ene</li><li>Feb</li><li class="is-in">Mar</li><li class="is-in">Abr</li><li class="is-in">May</li><li class="is-in">Jun</li><li class="is-in">Jul</li><li class="is-in">Ago</li><li class="is-in">Sep</li><li class="is-in">Oct</li><li>Nov</li><li>Dic</li></ol></div></div>
+          <footer><span><b>Props</b> from · to · label</span></footer>
+        </article>
+
+        <article class="component-case component-case--wide" id="ui-year-grid" data-component="UiYearGrid rejilla año meses intensidad crecimiento floración riego pauta anual">
+          <header><div><code>UiYearGrid</code><h3>Año de cultivo</h3></div><span>Ciclo anual</span></header>
+          <div class="component-preview"><div class="year-grid-demo" role="table" aria-label="Pautas del año"><div class="year-head" role="row"><span></span><b>Ene</b><b>Feb</b><b>Mar</b><b>Abr</b><b>May</b><b>Jun</b><b>Jul</b><b>Ago</b><b>Sep</b><b>Oct</b><b>Nov</b><b>Dic</b></div><div class="year-row is-brand" role="row" aria-label="Crecimiento: marzo a octubre"><strong>Crecimiento</strong><span data-level="0"></span><span data-level="0"></span><span data-level="1"></span><span data-level="2"></span><span data-level="3"></span><span data-level="3"></span><span data-level="3"></span><span data-level="3"></span><span data-level="2"></span><span data-level="1"></span><span data-level="0"></span><span data-level="0"></span></div><div class="year-row is-warning" role="row" aria-label="Floración: mayo y junio"><strong>Floración</strong><span data-level="0"></span><span data-level="0"></span><span data-level="0"></span><span data-level="1"></span><span data-level="3"></span><span data-level="2"></span><span data-level="0"></span><span data-level="0"></span><span data-level="0"></span><span data-level="0"></span><span data-level="0"></span><span data-level="0"></span></div><div class="year-row is-info" role="row" aria-label="Riego: intensidad variable todo el año"><strong>Riego</strong><span data-level="1"></span><span data-level="1"></span><span data-level="2"></span><span data-level="2"></span><span data-level="3"></span><span data-level="3"></span><span data-level="3"></span><span data-level="3"></span><span data-level="2"></span><span data-level="2"></span><span data-level="1"></span><span data-level="1"></span></div><footer><i class="is-brand"></i>Crecimiento <i class="is-warning"></i>Floración <i class="is-info"></i>Riego</footer></div></div>
+          <footer><span><b>Props</b> rows · legend</span><span><b>Regla</b> 12 intensidades por pauta; no consulta el reloj</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="work">
+      <header><h2>Trabajo e historial</h2><p>Tiempo, planificación y eventos heterogéneos.</p></header>
+      <div class="component-list">
+        <article class="component-case" id="ui-timeline" data-component="UiTimeline cronología historial eventos filtros tipos">
+          <header><div><code>UiTimeline</code><h3>Cronología</h3></div><span>Historial</span></header>
+          <div class="component-preview"><div class="timeline-demo"><div class="timeline-filters"><button class="button button--secondary" type="button">Todos</button><button class="button button--text" type="button">Lecturas</button><button class="button button--text" type="button">Riegos</button></div><ol><li><span>∿</span><article><small>Lectura de cultivo</small><h3>Condiciones tras una semana cálida</h3><time>21 ago 2026</time><p>Humedad 31% · Temperatura 24 °C · Luz 10 h</p></article></li><li><span class="is-info">◇</span><article><small>Riego</small><h3>Riego de mantenimiento</h3><time>16 ago 2026</time><p>450 ml · desde la tarea «Regar bandejas A3».</p></article></li></ol></div></div>
+          <footer><span><b>Props</b> events · types · emptyMessage</span><span><b>Slots</b> event-&lt;type&gt;</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-agenda-list" data-component="UiAgendaList agenda tareas vencido hoy próximos fecha">
+          <header><div><code>UiAgendaList</code><h3>Agenda</h3></div><span>Trabajo</span></header>
+          <div class="component-preview"><div class="agenda-demo"><section><h3>Vencidas <span>1</span></h3><button type="button"><strong>Revisión general</strong><small>CAT-GRUSS-01</small><time>1 sep</time></button></section><section><h3>Hoy <span>1</span></h3><button type="button"><strong>Regar bandeja A3</strong><small>31 plantas</small><time>6 sep</time></button></section><section><h3>Próximos 7 días <span>1</span></h3><button type="button"><strong>Comprobar maceta</strong><time>9 sep</time></button></section></div></div>
+          <footer><span><b>Props</b> entries · today · emptyMessage</span><span><b>Evento</b> select</span></footer>
+        </article>
+
+        <article class="component-case component-case--wide" id="ui-calendar-month" data-component="UiCalendarMonth calendario mes tareas días carga">
+          <header><div><code>UiCalendarMonth</code><h3>Calendario mensual</h3></div><span>Planificación</span></header>
+          <div class="component-preview"><div class="calendar-demo"><header><button class="button button--secondary" type="button">Anterior</button><h3>Septiembre de 2026</h3><button class="button button--secondary" type="button">Siguiente</button></header><div class="calendar-week"><b>L</b><b>M</b><b>X</b><b>J</b><b>V</b><b>S</b><b>D</b><span>7</span><span class="is-today">8<small>Regar A3</small><small>+2 más</small></span><span>9<small>Revisar maceta</small></span><span>10</span><span>11</span><span>12</span><span>13</span></div></div></div>
+          <footer><span><b>Props</b> month · today · entries · maxPerDay</span><span><b>Eventos</b> update:month · select-day</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="structure">
+      <header><h2>Estructura y medios</h2><p>Superficies, formularios largos y fotografías.</p></header>
+      <div class="component-list">
+        <article class="component-case component-case--compact" id="ui-panel" data-component="UiPanel panel superficie título acción tarjeta">
+          <header><div><code>UiPanel</code><h3>Panel</h3></div><span>Superficie</span></header>
+          <div class="component-preview"><section class="panel panel-demo"><header><h3>Cuidados recomendados</h3><button class="button button--text" type="button">Ver especie</button></header><p>Un panel agrupa una única responsabilidad y se separa mediante borde.</p></section></div>
+          <footer><span><b>Props</b> title · as</span><span><b>Slots</b> title · action · default</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-form-section" data-component="UiFormSection sección formulario fieldset bloque standalone">
+          <header><div><code>UiFormSection</code><h3>Sección de formulario</h3></div><span>Formulario</span></header>
+          <div class="component-preview"><fieldset class="form-section-demo"><legend>Identificación</legend><p>Cómo reconocer este ejemplar.</p><div><label class="field"><span>Apodo</span><input value="Asiento de suegra"></label><label class="field"><span>Especie</span><input value="Echinocactus grusonii" readonly></label></div></fieldset></div>
+          <footer><span><b>Props</b> title · description · standalone</span><span><b>Slot</b> default</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-media-gallery" data-component="UiMediaGallery galería fotografías imagen principal ampliar">
+          <header><div><code>UiMediaGallery</code><h3>Galería multimedia</h3></div><span>Fotografía</span></header>
+          <div class="component-preview"><ul class="media-gallery-demo"><li><button type="button" aria-label="Ampliar fotografía principal"><span>♧</span></button><b>Principal</b></li><li><button type="button" aria-label="Ampliar vista lateral"><span>✣</span></button></li><li><button type="button" aria-label="Ampliar raíces"><span>⌁</span></button></li></ul></div>
+          <footer><span><b>Props</b> images · emptyMessage</span><span><b>Usa</b> UiDialog</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-upload-area" data-component="UiUploadArea subir archivos fotos drag drop selector">
+          <header><div><code>UiUploadArea</code><h3>Zona de subida</h3></div><span>Ficheros</span></header>
+          <div class="component-preview"><label class="upload-demo"><input type="file" accept="image/*" multiple><span>＋</span><strong>Añadir fotografías</strong><small>Arrastra aquí o elige ficheros · JPG o PNG</small></label></div>
+          <footer><span><b>Props</b> label · accept · multiple · hint · disabled</span><span><b>Evento</b> files</span></footer>
+        </article>
+
+        <article class="component-case" id="ui-specimen-label" data-component="UiSpecimenLabel etiqueta ejemplar cactus código nombre especie">
+          <header><div><code>UiSpecimenLabel</code><h3>Etiqueta de ejemplar</h3></div><span>Firma visual</span></header>
+          <div class="component-preview component-preview--center"><article class="specimen-label catalog-specimen"><div class="label-top"><span class="label-mark">♧</span><span class="status status--ok">Activa</span></div><code>CAT-GRUSS-01</code><h2>Asiento de suegra</h2><p><em>Echinocactus grusonii</em></p><dl><div><dt>Ubicación</dt><dd>Invernadero 1 / A3</dd></div><div><dt>Germinación</dt><dd>04/2021</dd></div></dl><div class="label-foot"><span>Pleno sol · Exterior</span><span>|||| || | |||</span></div></article></div>
+          <footer><span><b>Props</b> code · name · species · details · footnote · mark</span><span><b>Slot</b> status</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <section class="catalog-group" id="feedback">
+      <header><h2>Feedback</h2><p>Información que orienta sin ocultar el siguiente paso.</p></header>
+      <div class="component-list">
+        <article class="component-case component-case--compact" id="ui-notice" data-component="UiNotice aviso warning danger info dismiss cerrar">
+          <header><div><code>UiNotice</code><h3>Aviso</h3></div><span>Contexto</span></header>
+          <div class="component-preview"><article class="notice notice--warning"><span>!</span><div><strong>Revisión pendiente</strong><p>No se registra una observación desde hace 43 días.</p></div><button class="button button--secondary" type="button">Crear tarea</button></article></div>
+          <footer><span><b>Props</b> severity · title · dismissible</span><span><b>Evento</b> dismiss</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-empty-state" data-component="UiEmptyState estado vacío sin datos acción">
+          <header><div><code>UiEmptyState</code><h3>Estado vacío</h3></div><span>Ausencia</span></header>
+          <div class="component-preview"><article class="empty-state panel"><span>♧</span><h3>Todavía no hay plantas aquí</h3><p>Añade un ejemplar o mueve plantas desde otra ubicación.</p><button class="button button--primary" type="button">Añadir planta</button></article></div>
+          <footer><span><b>Props</b> title · mark</span><span><b>Slots</b> default · action</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-inline-error" data-component="UiInlineError error en línea fallo carga importar">
+          <header><div><code>UiInlineError</code><h3>Error en línea</h3></div><span>Error</span></header>
+          <div class="component-preview"><article class="inline-error panel"><span>×</span><div><strong>No se pudo importar la fila 18</strong><p>El código ya existe. Usa otro o excluye la fila.</p></div><button class="button button--text" type="button">Revisar</button></article></div>
+          <footer><span><b>Prop</b> title</span><span><b>Slots</b> default · action</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-dialog" data-component="UiDialog diálogo modal overlay foco escape">
+          <header><div><code>UiDialog</code><h3>Diálogo</h3></div><span>Overlay</span></header>
+          <div class="component-preview component-preview--center"><button class="button button--secondary" id="catalog-open-dialog" type="button">Abrir diálogo</button></div>
+          <footer><span><b>Props</b> open · title · subtitle · footnote · initialFocus</span><span><b>Evento</b> close</span></footer>
+        </article>
+
+        <article class="component-case component-case--compact" id="ui-toast-host" data-component="UiToastHost toast confirmación mensaje temporal">
+          <header><div><code>UiToastHost</code><h3>Confirmación temporal</h3></div><span>Feedback</span></header>
+          <div class="component-preview component-preview--center"><button class="button button--secondary" id="catalog-show-toast" type="button">Mostrar confirmación</button></div>
+          <footer><span><b>Origen</b> useToast()</span><span><b>Rol</b> status · aria-live</span></footer>
+        </article>
+      </div>
+    </section>
+
+    <footer class="catalog-footer"><span>53 componentes aislados · el wireframe manda sobre la implementación en <code>frontend/app/components/ui/</code></span><a href="index.html">Volver a fundamentos</a></footer>
+  </main>
+
+  <div class="dialog-backdrop" id="catalog-dialog" role="dialog" aria-modal="true" aria-labelledby="catalog-dialog-title" hidden><article class="dialog"><header><div><p>Ejemplo del componente</p><h2 id="catalog-dialog-title">Crear tarea</h2></div><button class="icon-button" id="catalog-close-dialog" type="button" aria-label="Cerrar">×</button></header><div class="dialog-body"><label class="field"><span>Título</span><input value="Revisar CAT-GRUSS-01"><small>La tarea no modifica el historial hasta completarse.</small></label></div><footer><span>Ningún cambio hasta confirmar.</span><button class="button button--primary" id="catalog-accept-dialog" type="button">Crear tarea</button></footer></article></div>
+  <div class="toast" id="catalog-toast" role="status" aria-live="polite"></div>
+  <script src="catalog.js"></script>
+</body>
+</html>

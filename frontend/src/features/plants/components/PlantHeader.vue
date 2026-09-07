@@ -31,7 +31,7 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
 
     <div class="specimen__identity">
       <div class="specimen__line">
-        <code data-test="plant-code" data-mock="true">{{ MOCK_CODE }}</code>
+        <UiIdentityCode data-test="plant-code" data-mock="true" :value="MOCK_CODE" pending />
         <UiStatus :tone="MOCK_STATUS.tone" data-mock="true">{{ MOCK_STATUS.label }}</UiStatus>
       </div>
 
@@ -42,11 +42,11 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
 
       <!-- Los tags son reales; el contexto botánico es maqueta. No se mezclan en una lista. -->
       <ul class="specimen__context" data-test="tags">
-        <li v-for="tag in plant.tags" :key="tag.id">{{ tag.name }}</li>
-        <li v-if="!plant.tags.length" class="specimen__none">Sin tags</li>
+        <li v-for="tag in plant.tags" :key="tag.id"><UiTag :label="tag.name" /></li>
+        <li v-if="!plant.tags.length" class="specimen__none"><UiTag label="Sin tags" /></li>
       </ul>
       <ul class="specimen__context">
-        <li v-for="item in MOCK_CONTEXT" :key="item" data-mock="true">{{ item }}</li>
+        <li v-for="item in MOCK_CONTEXT" :key="item" data-mock="true"><UiTag :label="item" /></li>
       </ul>
 
       <p class="specimen__mock-note">
@@ -111,12 +111,6 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
   margin-bottom: var(--space-1);
 }
 
-.specimen__line code {
-  color: var(--color-ink-muted);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-12);
-}
-
 .specimen__identity h1 {
   font-size: var(--font-size-24);
   letter-spacing: -0.02em;
@@ -138,6 +132,8 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
   padding: 0;
 }
 
+.specimen__context li { list-style: none; }
+
 .specimen__context + .specimen__context {
   margin-top: var(--space-1);
 }
@@ -146,17 +142,10 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
   background: transparent !important;
 }
 
-.specimen__context li {
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-pill);
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-12);
-  padding: 2px var(--space-2);
-}
-
 /* La marca de ejemplo se ve además de leerse: borde discontinuo, no solo un texto al pie. */
-.specimen__context li[data-mock="true"],
-.specimen [data-mock="true"] {
+.specimen__photo[data-mock="true"],
+.specimen__line > [data-mock="true"],
+.specimen__context li[data-mock="true"] :deep(.tag) {
   border: 1px dashed var(--color-line-strong);
 }
 

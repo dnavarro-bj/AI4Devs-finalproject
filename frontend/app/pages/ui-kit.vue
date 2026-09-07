@@ -123,6 +123,12 @@ const TREE = [
 const searchEmpty = ref('')
 const searchHit = ref('gruss')
 const searchMiss = ref('zzz')
+const environment = ref('exterior')
+const exposure = ref('full-sun')
+const alertsEnabled = ref(true)
+const pickerQuery = ref('gruss')
+const pickedSpecies = ref('gruss')
+const sampleFileVisible = ref(true)
 
 const SEARCH_GROUPS = [
   {
@@ -557,6 +563,72 @@ const SEARCH_GROUPS = [
       </p>
     </section>
 
+    <section class="gallery__section">
+      <h2>Patrones extraídos del wireframe</h2>
+      <p class="note">
+        Estas piezas conservan la anatomía visual del prototipo de administración. No son estilos
+        inferidos de las pantallas Vue.
+      </p>
+
+      <div class="row">
+        <UiIdentityCode value="CAT-GRUSS-01" copyable @copy="show('Código copiado')" />
+        <UiIdentityCode value="CAT · T-15" pending />
+        <UiTag label="Pleno sol" />
+        <UiTag label="Exterior" />
+        <UiTag label="Semillero" tone="brand" removable />
+      </div>
+
+      <UiEntityHero
+        title="Echinocactus grusonii"
+        subtitle="Asiento de suegra"
+        description="Cactus globular de crecimiento lento, reconocible por sus costillas y espinas doradas."
+      >
+        <template #visual><div class="entity-hero-mark">✺<small>8 fotos</small></div></template>
+        <template #identity><UiIdentityCode value="CAT-GRUSS" /><UiStatus tone="ok">Ficha completa</UiStatus></template>
+        <template #context><div class="row"><UiTag label="Pleno sol" /><UiTag label="Exterior" /></div></template>
+        <template #actions><UiButton>Editar especie</UiButton><UiButton variant="secondary">Ver ejemplares</UiButton><UiOverflowMenu :items="[{ value: 'duplicate', label: 'Duplicar especie' }, { value: 'remove', label: 'Retirar del catálogo', danger: true }]" /></template>
+      </UiEntityHero>
+
+      <div class="grid-2">
+        <UiPanel title="Entidad compacta">
+          <UiEntityCell code="CAT-GRUSS-01" title="Asiento de suegra" detail="Invernadero 1 / A3" />
+        </UiPanel>
+        <UiPanel title="Ficha de catálogo">
+          <UiDefinitionList :items="[{ key: 'code', label: 'Código', value: 'CAT-GRUSS' }, { key: 'genus', label: 'Género', value: 'Echinocactus' }, { key: 'plants', label: 'Ejemplares', value: 23 }]" />
+        </UiPanel>
+      </div>
+
+      <UiSectionHeader title="Condiciones recomendadas" eyebrow="Cultivo" count="7 valores" description="Estos valores los heredan los ejemplares.">
+        <template #actions><UiButton variant="text">Editar pauta</UiButton></template>
+      </UiSectionHeader>
+
+      <UiDetailLayout>
+        <UiPanel title="Contenido principal"><p class="note">Historial, condiciones y elementos relacionados.</p></UiPanel>
+        <template #aside><UiPanel title="Panel lateral"><p class="note">Ficha y contexto operativo.</p></UiPanel></template>
+      </UiDetailLayout>
+
+      <UiLoadingState label="Cargando la especie…" context="Conservamos el contexto mientras llegan los datos." />
+
+      <div class="grid-2">
+        <UiSegmentedControl v-model="environment" label="Entorno" :options="[{ value: 'inside', label: 'Interior' }, { value: 'exterior', label: 'Exterior' }, { value: 'mixed', label: 'Mixto' }]" />
+        <UiSwitch v-model="alertsEnabled" label="Alertas por temperatura" description="Avisa cuando una lectura sale del rango." />
+      </div>
+
+      <UiChoiceCards v-model="exposure" label="Exposición" :columns="3" :options="[{ value: 'shade', label: 'Semisombra', description: 'Sol suave o filtrado', mark: '◐' }, { value: 'sunny', label: 'Soleado', description: 'Varias horas directas', mark: '☼' }, { value: 'full-sun', label: 'Pleno sol', description: 'Exposición prolongada', mark: '☀' }]" />
+
+      <UiStepper :steps="['Subir CSV', 'Revisar datos', 'Importar']" :current="1" label="Importar inventario" />
+      <UiProgressBar :value="120" :max="180" label="Bancada norte" detail="120 de 180 posiciones" />
+
+      <UiEntityPicker v-model="pickedSpecies" v-model:query="pickerQuery" label="Especie" :options="[{ value: 'gruss', code: 'CAT-GRUSS', title: 'Echinocactus grusonii', detail: 'Asiento de suegra', mark: '✺' }, { value: 'mammi', code: 'CAT-MAMMI', title: 'Mammillaria bocasana', detail: 'Biznaga de lana', mark: '♧' }]" />
+
+      <UiFileItem v-if="sampleFileVisible" name="inventario-septiembre.csv" size="184 KB" detail="1.284 filas" status="Validado" tone="ok" kind="CSV" removable @remove="sampleFileVisible = false" />
+      <UiButton v-else variant="text" @click="sampleFileVisible = true">Restaurar archivo</UiButton>
+
+      <UiStickyActionBar message="Los cambios todavía no se han guardado.">
+        <template #actions><UiButton variant="text">Cancelar</UiButton><UiButton>Guardar especie</UiButton></template>
+      </UiStickyActionBar>
+    </section>
+
     <UiDialog
       :open="dialogOpen"
       title="Análisis de CAT-GRUSS-01"
@@ -706,5 +778,22 @@ const SEARCH_GROUPS = [
 .plant-cell code,
 .plant-cell strong {
   display: block;
+}
+
+.entity-hero-mark {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-md);
+  color: var(--color-brand);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-size-38);
+  height: 112px;
+  justify-content: center;
+  width: 112px;
+}
+
+.entity-hero-mark small {
+  font-size: var(--font-size-11);
 }
 </style>

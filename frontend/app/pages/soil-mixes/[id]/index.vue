@@ -123,32 +123,27 @@ onMounted(load)
     <UiInlineError v-else-if="error" data-test="error">{{ error.message }}</UiInlineError>
 
     <template v-else-if="mix">
-      <!-- La portada: la composición manda, porque es lo que la mezcla es. -->
-      <article class="hero">
-        <UiProportionWheel :parts="parts" data-test="composition-wheel" />
-
-        <div class="hero__identity">
-          <p class="hero__eyebrow">
-            <UiStatus :tone="canRemove ? 'neutral' : 'ok'">
-              {{ canRemove ? 'Sin uso' : 'En uso' }}
-            </UiStatus>
-          </p>
-          <h1>{{ mix.name }}</h1>
-          <p class="hero__recipe" data-test="recipe">{{ mix.description ?? '—' }}</p>
+      <!-- La portada: la composición manda, dentro del patrón común de ficha. -->
+      <UiEntityHero :title="mix.name">
+        <template #visual><UiProportionWheel :parts="parts" data-test="composition-wheel" /></template>
+        <template #identity>
+          <UiStatus :tone="canRemove ? 'neutral' : 'ok'">{{ canRemove ? 'Sin uso' : 'En uso' }}</UiStatus>
+        </template>
+        <template #description><span data-test="recipe">{{ mix.description ?? '—' }}</span></template>
+        <template #context>
           <p class="hero__use">
             <span data-test="species-count">
               <strong>{{ mix.speciesCount }}</strong> {{ speciesPhrase }}
             </span>
           </p>
-        </div>
-
-        <div class="hero__actions">
+        </template>
+        <template #actions>
           <UiButton :to="`/soil-mixes/${mix.id}/edit`" data-test="edit-soil-mix">Editar mezcla</UiButton>
           <UiButton variant="secondary" data-test="remove-soil-mix" @click="confirming = true">
             Retirar
           </UiButton>
-        </div>
-      </article>
+        </template>
+      </UiEntityHero>
 
       <UiInlineError v-if="removeError" class="hero-error" data-test="remove-error">
         {{ removeError }}
@@ -277,37 +272,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.hero {
-  align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  display: flex;
-  gap: var(--space-5);
-  margin-bottom: var(--space-4);
-  padding: var(--space-5);
-}
-
-.hero__identity {
-  flex: 1;
-  min-width: 0;
-}
-
-.hero__eyebrow {
-  margin: 0 0 var(--space-2);
-}
-
-.hero__identity h1 {
-  font-size: var(--font-size-24);
-  margin: 0;
-}
-
-.hero__recipe {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-13);
-  margin: var(--space-1) 0 0;
-}
-
 .hero__use {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
@@ -317,12 +281,6 @@ onMounted(load)
 .hero__use strong {
   color: var(--color-ink);
   font-size: var(--font-size-15);
-}
-
-.hero__actions {
-  display: flex;
-  flex-shrink: 0;
-  gap: var(--space-2);
 }
 
 .hero-error {
@@ -415,8 +373,5 @@ onMounted(load)
     grid-template-columns: 1fr;
   }
 
-  .hero {
-    flex-wrap: wrap;
-  }
 }
 </style>

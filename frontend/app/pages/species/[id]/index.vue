@@ -145,29 +145,19 @@ onMounted(load)
     <UiInlineError v-else-if="error" data-test="error">{{ error.message }}</UiInlineError>
 
     <template v-else-if="species">
-      <!-- La portada del prototipo: identidad a la izquierda, fotografías a la derecha. -->
-      <article class="hero">
-        <div class="hero__identity">
-          <p class="hero__eyebrow">
-            <code data-mock="true">CAT · T-15</code>
-            <span>Ficha completa</span>
-          </p>
-          <h1><em>{{ species.scientificName }}</em></h1>
-          <p class="hero__common">{{ species.commonName }}</p>
+      <!-- La portada usa el patrón visual común; sus datos pendientes siguen marcados. -->
+      <UiEntityHero :title="species.scientificName" :subtitle="species.commonName" visual-position="end">
+        <template #identity>
+          <UiIdentityCode value="CAT · T-15" pending data-mock="true" />
+          <UiStatus tone="ok">Ficha completa</UiStatus>
+        </template>
+        <template #context>
           <p class="hero__description" data-mock="true" data-test="description">
             La descripción de la especie llega con <strong>T-17</strong>.
           </p>
-
-          <div class="hero__actions">
-            <UiButton :to="`/species/${species.id}/edit`" data-test="edit-species">Editar especie</UiButton>
-            <UiButton variant="secondary" disabled data-mock="true">Ver ejemplares</UiButton>
-            <UiButton variant="secondary" data-test="remove-species" @click="confirming = true">
-              Retirar
-            </UiButton>
-          </div>
-        </div>
-
-        <div class="hero__media" data-mock="true" data-test="photos">
+        </template>
+        <template #visual>
+          <div class="hero__media" data-mock="true" data-test="photos">
           <div class="hero__photo" role="img" aria-label="Sin fotografía">
             <span aria-hidden="true">✺</span>
             <small>Fotografías · T-19</small>
@@ -175,8 +165,14 @@ onMounted(load)
           <div class="hero__thumbs" aria-hidden="true">
             <span v-for="n in 3" :key="n" />
           </div>
-        </div>
-      </article>
+          </div>
+        </template>
+        <template #actions>
+          <UiButton :to="`/species/${species.id}/edit`" data-test="edit-species">Editar especie</UiButton>
+          <UiButton variant="secondary" disabled data-mock="true">Ver ejemplares</UiButton>
+          <UiButton variant="secondary" data-test="remove-species" @click="confirming = true">Retirar</UiButton>
+        </template>
+      </UiEntityHero>
 
       <UiInlineError v-if="removeError" class="hero-error" data-test="remove-error">
         {{ removeError }}
@@ -341,44 +337,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.hero {
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  display: grid;
-  gap: var(--space-5);
-  grid-template-columns: 1fr 260px;
-  margin-bottom: var(--space-4);
-  padding: var(--space-5);
-}
-
-.hero__eyebrow {
-  align-items: center;
-  color: var(--color-ink-faint);
-  display: flex;
-  font-size: var(--font-size-11);
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  text-transform: uppercase;
-}
-
-.hero__eyebrow code {
-  border: 1px dashed var(--color-line-strong);
-  font-family: var(--font-mono);
-  padding: 0 2px;
-}
-
-.hero__identity h1 {
-  font-size: var(--font-size-24);
-  margin: 0;
-}
-
-.hero__common {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-15);
-  margin: var(--space-1) 0 0;
-}
-
 .hero__description {
   border: 1px dashed var(--color-line-strong);
   border-radius: var(--radius-sm);
@@ -388,16 +346,10 @@ onMounted(load)
   padding: var(--space-2) var(--space-3);
 }
 
-.hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-}
-
 .hero__media {
   display: grid;
   gap: var(--space-2);
+  width: 260px;
 }
 
 .hero__photo {
@@ -626,9 +578,10 @@ onMounted(load)
 }
 
 @media (max-width: 900px) {
-  .hero,
   .species {
     grid-template-columns: 1fr;
   }
+
+  .hero__media { width: 100%; }
 }
 </style>
