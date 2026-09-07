@@ -17,8 +17,14 @@ context: |
 
   Fuente de requisitos de producto:
   - README.md: descripción de producto, arquitectura, modelo de datos, API
+  - docs/producto/definicion-funcional-y-ux.md: definición funcional y de UX del producto completo;
+    manda sobre el alcance
+  - docs/wireframes/cactify-admin/index.html: el prototipo navegable. **Es la fuente de la
+    composición de toda pantalla**: cada `data-screen` es una pantalla del producto y define su
+    arquitectura de información, su jerarquía visual y sus flujos
+  - docs/ui-kit/: el sistema de diseño; la implementación viva está en frontend/app/components/ui/
   - docs/user-stories/: historias de usuario (0.x = en alcance del MVP, F.x = roadmap futuro)
-  - docs/tickets/: tickets T-01..T-08 que trocean el MVP
+  - docs/tickets/: tickets que trocean el trabajo en tres bloques
 
   Convenciones:
   - Documentación y specs en español; código e identificadores en inglés
@@ -85,20 +91,43 @@ rules:
   proposal:
     - Referenciar siempre el ticket (T-XX) y las historias de usuario (0.x) que originan el change
     - Incluir una sección de "Non-goals" para acotar el alcance
+    - 'Todo change que toque una pantalla nombra la pantalla del prototipo de la que sale —su
+      `data-screen` en docs/wireframes/cactify-admin/index.html— y describe su composición: qué
+      bloques la forman, en qué orden y cuál manda. Una pantalla que el prototipo define y que se
+      entrega como una tabla genérica está mal entregada aunque muestre los datos correctos'
   design:
+    - 'Abrir el prototipo de la pantalla antes de decidir nada de su presentación, y consignar en el
+      design qué composición se reproduce y qué se aparta, con su motivo. Apartarse es legítimo
+      —una parte del prototipo puede depender de datos que no existen—, pero es una decisión que se
+      escribe, no un descuido que se descubre al verla'
+    - 'Si el prototipo necesita un dato que el API no da, la salida por defecto es **servirlo**, no
+      recortar la pantalla: el bloque 0 existe para que construir las pantallas revele lo que falta.
+      Recortar la composición para no tocar el backend es la decisión que hay que justificar'
+    - 'Todo patrón que aparezca en dos pantallas sale al kit con su test y su muestra en /ui-kit
+      (ADR-014); una pantalla no declara CSS que debiera ser un componente'
     - Consultar docs/adr/ antes de decidir; referenciar el ADR aplicable en lugar de re-decidir
     - Si surge una decisión transversal nueva (aplicable a futuros changes), proponer promocionarla a un ADR nuevo en docs/adr/
     - Situar cada pieza en su capa según ADR-006 enmendado; los controllers solo inyectan servicios de application, y el mapeo a DTO ocurre dentro de la transacción
     - Cualquier restricción nueva de datos va en una migración Flyway nueva (ADR-001 y ADR-002); V1__schema.sql está aplicada y no se edita
   specs:
     - Escenarios en formato WHEN/THEN, en español
+    - 'Un requisito de pantalla especifica **su composición**, no solo sus datos: qué presenta como
+      figura y no solo como cifra, qué bloque abre la pantalla, qué va en la columna principal y qué
+      en la lateral. "Muestra la cabecera, los ejemplares y su administración" no es un requisito de
+      pantalla: no distingue el prototipo de una tabla, y lo que no se especifica no se construye'
+    - 'Lo que el prototipo muestra y el API todavía no sirve va como requisito de **hueco marcado
+      con su ticket en el sitio que le corresponde del layout**, nunca omitido: una pantalla a la
+      que le falta media composición no se distingue de una pantalla terminada'
     - Consultar openspec/specs/ antes de escribir el delta y no redeclarar lo ya construido; el contrato transversal del API (ids como cadena, envelope de paginación y cuerpo de error uniforme) vive en la capability plant-inventory
     - Todo listado nuevo se especifica paginado (ADR-009); una referencia inexistente o un cuerpo inválido nunca es un 5xx
   tasks:
     - Tareas pequeñas y verificables
+    - 'Toda pantalla lleva una tarea final de contraste contra su prototipo, bloque a bloque, con la
+      lista de lo que se reproduce y lo que queda marcado con su ticket'
     - Orden test-first (ADR-005), cada bloque funcional empieza por las tareas de test de sus escenarios (rojo) seguidas de la implementación que las pone en verde
 
 operations:
   apply:
     guidance:
       - "TDD (ADR-005): escribir primero el test del escenario y verlo fallar, después la implementación mínima que lo pone en verde, después refactorizar. No escribir código de producción sin un test en rojo que lo justifique."
+      - "Antes de dar una pantalla por terminada, abrir su `data-screen` en docs/wireframes/cactify-admin/index.html y contrastarla bloque a bloque. Lo que el prototipo compone y la pantalla no tiene, o se construye, o queda marcado con su ticket en su sitio del layout. Los datos correctos en una composición equivocada son una pantalla mal entregada."

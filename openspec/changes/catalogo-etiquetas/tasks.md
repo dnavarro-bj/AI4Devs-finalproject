@@ -43,9 +43,19 @@ Orden test-first ([ADR-005](../../../docs/adr/ADR-005-tdd.md)). El backend antes
 - [ ] 7.1 Escribir los escenarios de administración: renombrado, nombre ya usado señalado **junto al campo**, alcance de la combinación declarado antes de confirmar, combinación cancelada, y retirada en uso que **ofrece combinar** en lugar de dejar sin salida. En rojo
 - [ ] 7.2 Implementar renombrar, combinar y retirar desde la ficha con `UiDialog`, prefiriendo el mensaje del API cuando venga
 
+## 9. Las pantallas como el prototipo
+
+- [ ] 9.1 Contrastar las dos pantallas con `tags` y `tag-detail` del [prototipo](../../../docs/wireframes/cactify-admin/index.html), bloque a bloque, antes de darlas por hechas
+- [ ] 9.2 Escribir los escenarios de composición del catálogo: el uso como proporción del inventario, la etiqueta sin plantas señalada, y los ejemplos, fechas, duplicados y acciones por lote marcados con su ticket. En rojo
+- [ ] 9.3 Componer el catálogo: resumen de salud, y el uso con `UiProportionBar` o `UiProgressBar` en la celda, sin CSS que debiera ser un componente del kit
+- [ ] 9.4 Escribir los escenarios de composición de la ficha: distribución como cifras destacadas, nombre normalizado en la portada, y los huecos marcados en su bloque. En rojo
+- [ ] 9.5 Componer la ficha: portada con `UiEntityHero`, distribución con `UiStatTile`, las dos columnas con `UiDetailLayout` y el panel de administrar en la lateral
+- [ ] 9.6 Si algún patrón del prototipo no está en el kit, sacarlo a componente con su test y su muestra en `/ui-kit` (ADR-014)
+
 ## 8. Cierre
 
 - [ ] 8.1 Las dos suites en verde, incluido `test/architecture.spec.ts`
 - [ ] 8.2 `git diff` de los tests existentes mostrando que ninguno se reescribe
 - [ ] 8.3 Recorrer con la pila levantada: crear dos etiquetas parecidas, asignarlas a plantas distintas y a una común, combinarlas comprobando el recuento, y renombrar la resultante
 - [ ] 8.4 `openspec validate catalogo-etiquetas --strict` en verde, y `README.md` y `CLAUDE.md` al día con los endpoints nuevos
+- [ ] 8.5 Contraste final de las dos pantallas contra su `data-screen` del prototipo, con la lista de lo reproducido y lo marcado con su ticket

@@ -6,6 +6,22 @@ El sistema de diseño del frontend de Cactify: los tokens visuales compartidos, 
 
 ## Requirements
 
+### Requirement: Origen de los patrones del kit
+
+Los componentes del kit SHALL salir de los patrones que el [prototipo](../../../docs/wireframes/cactify-admin/index.html) repite, y no de una previsión de lo que podría hacer falta: construir las pantallas es lo que revela lo que al kit le falta.
+
+Un patrón que aparezca en **dos pantallas** SHALL sacarse a componente del kit con su test y su muestra en la galería, en lugar de copiarse; y una pantalla NO SHALL declarar como CSS propio lo que debería ser un componente.
+
+#### Scenario: Un patrón que se repite se saca al kit
+
+- **WHEN** un mismo patrón de presentación aparece en dos pantallas
+- **THEN** existe como componente del kit, con su test y su muestra en la galería
+
+#### Scenario: El kit no se adelanta a las pantallas
+
+- **WHEN** se plantea un componente que ninguna pantalla del prototipo necesita todavía
+- **THEN** no se añade al kit hasta que una pantalla lo pida
+
 ### Requirement: Tokens de diseño como origen único de la presentación
 
 El sistema SHALL exponer a toda la aplicación un conjunto único de tokens de diseño —color, familias y tamaños tipográficos, escala de espaciado, radios, sombra de superposición, anillo de foco, duraciones de transición y medidas de retícula— derivado de la referencia de diseño del producto. Ningún componente ni pantalla SHALL declarar un color, un radio, una duración o un tamaño tipográfico literal fuera de esos tokens.

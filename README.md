@@ -337,7 +337,10 @@ Tres reglas aplican a **todos** los endpoints:
 | `GET /soil-mixes/{id}` | Ficha de una mezcla, con cuántas especies la recomiendan. |
 | `PUT /soil-mixes/{id}` | Reemplaza la receta completa. El cambio lo reciben todas las especies que la recomiendan. |
 | `DELETE /soil-mixes/{id}` | Retira la mezcla del catálogo. `409` si alguna especie la recomienda. |
-| `POST /locations` · `GET /locations` | Crea y lista el catálogo de localizaciones. |
+| `POST /locations` · `GET /locations` | Crea y lista el catálogo de localizaciones. Cada fila trae **cuántos ejemplares alberga**, resuelto con una consulta agregada para la página entera. |
+| `GET /locations/{id}` | Ficha de una localización, con cuántos ejemplares alberga. |
+| `PUT /locations/{id}` | Corrige el nombre. Los ejemplares que alberga no cambian; un nombre en blanco es `400`. |
+| `DELETE /locations/{id}` | Retira la localización del catálogo. `409` si alberga ejemplares: una planta no puede quedarse sin sitio. |
 | `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
 | `POST /plants/{id}/care-records` | Registra una lectura de cultivo (humedad, temperatura, horas de luz, riego y acidez). La fecha la aporta el cliente o, si falta, la sella el servidor; una fecha futura se rechaza. |
 | `GET /plants/{id}/care-records` | Historial paginado de una planta, de la lectura más reciente a la más antigua, con la recomendación de IA de cada una cuando exista. |

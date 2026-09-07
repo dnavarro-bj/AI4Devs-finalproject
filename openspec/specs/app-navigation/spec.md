@@ -8,6 +8,8 @@ La arquitectura de información de la aplicación: qué secciones existen y cóm
 
 ### Requirement: Mapa de secciones
 
+Las secciones que existen y cómo se agrupan salen del [prototipo](../../../docs/wireframes/cactify-admin/index.html): cada `data-screen` es una sección del producto, y la navegación reproduce sus agrupaciones. Una sección nueva se declara porque el prototipo la define, no porque haga falta una ruta.
+
 La aplicación SHALL ofrecer una navegación principal disponible en toda pantalla, con sus entradas repartidas en las agrupaciones de trabajo del producto: la colección, el trabajo diario, los catálogos y la administración. Los encabezados de agrupación SHALL servir para agrupar y NO SHALL conducir a una pantalla propia. La entrada correspondiente a la pantalla en la que se está SHALL marcarse como la sección activa.
 
 #### Scenario: Entradas agrupadas
@@ -42,6 +44,8 @@ Cada sección SHALL tener una dirección propia y estable, y la aplicación SHAL
 ### Requirement: Sección todavía no construida
 
 Una sección declarada cuya pantalla todavía no está construida SHALL mostrar un estado vacío que explique que aún no lo está, conservando la navegación, los breadcrumbs y la orientación del resto de la aplicación. NO SHALL simular datos ni presentarse como una pantalla vacía sin explicación.
+
+Esto vale para la sección **entera**, que es lo que distingue este caso del de una pantalla ya construida: allí los bloques que el API no alimenta se muestran marcados en su sitio, porque la composición del prototipo ya existe; aquí no hay composición todavía y una tabla de mentira sería indistinguible de una pantalla rota.
 
 #### Scenario: Sección pendiente de construir
 

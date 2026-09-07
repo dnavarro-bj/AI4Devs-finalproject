@@ -57,3 +57,26 @@ El sistema SHALL permitir retirar una localización **que no albergue ningún ej
 
 - **WHEN** se intenta retirar un identificador que no corresponde a ninguna localización
 - **THEN** la respuesta es `404 Not Found`
+
+## MODIFIED Requirements
+
+### Requirement: Listado de localizaciones
+
+El sistema SHALL exponer el catálogo de localizaciones registradas, de forma que puedan seleccionarse al registrar una planta, y SHALL incluir en cada fila **cuántos ejemplares alberga**.
+
+El recuento SHALL resolverse en **una sola consulta** para toda la página, no con una consulta por fila: es el dato sobre el que se apoya el mapa del vivero del prototipo —una localización sin su carga no dice nada—, así que servirlo es más barato que recortar la pantalla.
+
+#### Scenario: Catálogo con localizaciones
+
+- **WHEN** existen las localizaciones `Invernadero 1` y `Bandeja A3` y se consulta el catálogo de localizaciones
+- **THEN** la respuesta es `200 OK` y contiene ambas localizaciones con su identificador, su nombre y su número de ejemplares
+
+#### Scenario: Localización recién creada aparece en el catálogo
+
+- **WHEN** se crea una localización y a continuación se consulta el catálogo
+- **THEN** la localización creada está presente en el resultado, con cero ejemplares
+
+#### Scenario: El recuento no multiplica las consultas
+
+- **WHEN** se consulta una página del catálogo con varias localizaciones
+- **THEN** los recuentos se obtienen en una sola consulta, sea cual sea el número de filas de la página

@@ -5,6 +5,8 @@ import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
+import com.cactify.application.LocationInUseException
+import com.cactify.application.LocationNotFoundException
 import com.cactify.application.PlantNotFoundException
 import com.cactify.application.RecommendationNotFoundException
 import com.cactify.application.SoilMixInUseException
@@ -85,6 +87,10 @@ class ApiExceptionHandler {
   fun onSpeciesNotFound(ex: SpeciesNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
 
+  @ExceptionHandler(LocationNotFoundException::class)
+  fun onLocationNotFound(ex: LocationNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
   @ExceptionHandler(SoilMixNotFoundException::class)
   fun onSoilMixNotFound(ex: SoilMixNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
@@ -117,6 +123,10 @@ class ApiExceptionHandler {
 
   @ExceptionHandler(SpeciesInUseException::class)
   fun onSpeciesInUse(ex: SpeciesInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
+
+  @ExceptionHandler(LocationInUseException::class)
+  fun onLocationInUse(ex: LocationInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
 
   @ExceptionHandler(SoilMixInUseException::class)

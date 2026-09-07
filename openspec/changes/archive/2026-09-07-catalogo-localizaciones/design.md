@@ -21,13 +21,25 @@ De lo que se parte:
 
 **Non-Goals:** los de la propuesta. A nivel de diseño: no se toca el esquema y no se añade componente al kit.
 
-### La jerarquía no se anticipa
+### La jerarquía no se anticipa en el esquema, pero la composición sí se reproduce
 
-Este change deja el catálogo **plano**, tal como está el esquema.
+Este change deja el **modelo** plano, tal como está el esquema, y construye la **pantalla** del prototipo entera.
 
-**Por qué**: T-18 no es un campo `parent_id`; es ruta completa, movimientos como evento, y el inventario preguntando por una localización *y todas sus descendientes*. Dejar hoy un `parentId` opcional sin nada que lo respete —ni la consulta, ni el borrado, ni el filtro— es una columna que miente. Es más barato añadir la jerarquía con quien la va a usar.
+**Por qué lo primero**: T-18 no es un campo `parent_id`; es ruta completa, movimientos como evento, y el inventario preguntando por una localización *y todas sus descendientes*. Dejar hoy un `parentId` opcional sin nada que lo respete —ni la consulta, ni el borrado, ni el filtro— es una columna que miente.
 
-**Lo que sí se hace** es no cerrarle la puerta: la ficha ya reserva el sitio de la jerarquía, marcado, así que T-18 rellena un hueco previsto en lugar de rehacer la pantalla.
+**Por qué lo segundo**: la composición no depende del esquema. El mapa del vivero se sostiene con un solo nivel —todas las localizaciones colgando de «Toda la colección»— y con el hueco de los niveles que faltan marcado **dentro del propio mapa**. Sustituir el mapa por una tabla porque falta la jerarquía es recortar la pantalla para no tocar nada, que es justo lo que el bloque 0 existe para evitar: construir las pantallas es lo que revela lo que falta.
+
+**Descartado**: entregar el catálogo como tabla y esperar a T-18 para componerlo. Es lo que se hizo en la primera versión de este change y lo que hubo que corregir en mezclas con `sustratos-como-el-wireframe`. Recomponer después cuesta más que componer bien la primera vez, y entretanto la pantalla no se distingue de una a medio hacer.
+
+### El recuento viaja también en el listado, con una sola consulta
+
+`GET /locations` devuelve `plantCount` por fila, resuelto con una agregación sobre `Plant` para toda la página.
+
+**Por qué**: el mapa del vivero y las tarjetas de zona **son** el recuento: «Invernadero 1 · 486 plantas» y su proporción ocupada. Sin él la pantalla del prototipo no se puede construir, y marcar la cifra como pendiente sería marcar como pendiente un dato que la base de datos tiene.
+
+**Por qué no es el `N+1` que se descartó en mezclas**: allí el recuento se dejó fuera del listado porque suponía una consulta por fila. Aquí se resuelve con un `LEFT JOIN` agregado y un `GROUP BY`: una consulta para la página entera, sea de 1 fila o de 25. Lo que se descarta sigue descartado —contar por fila—, no el dato.
+
+**Trade-off**: el listado hace una consulta agregada más que antes. A la escala del producto —2.000 ejemplares y decenas de localizaciones— es irrelevante, y es la consulta que sostiene la pantalla más navegada del módulo.
 
 ## Decisions
 
@@ -53,6 +65,17 @@ La pantalla no dice «conflicto»: dice cuántos ejemplares hay y ofrece verlos.
 
 **Por qué**: quien intenta retirar una localización llena casi siempre quiere vaciarla primero. El siguiente paso —el inventario filtrado por esa localización— **ya funciona** desde T-02, así que ofrecerlo no cuesta nada y convierte un error en una tarea.
 
+### La composición sale del prototipo, bloque a bloque
+
+`locations`: cabecera con recuento y alta · mapa del vivero (árbol) · vista general (tarjetas de zona con carga y proporción) · «Requieren atención».
+`location-detail`: portada con marca, identidad y acciones · fila de métricas · principal: «Dentro de» y ejemplares · lateral: características, próximo trabajo, últimos movimientos.
+
+De eso, hoy tienen dato real: el nombre, el recuento, los ejemplares y la administración. **Todo lo demás se dibuja igualmente, marcado con su ticket y en su sitio**: los niveles del árbol y la ruta (T-18), el código del espacio (T-15), las características (T-18), los movimientos (T-18 y T-20), las tareas (T-22) y las alertas (T-23).
+
+**Por qué marcarlo en su sitio y no omitirlo**: un hueco marcado enseña la pantalla completa y dice quién la termina; un bloque omitido no se distingue de un olvido, y hace que T-18 tenga que rehacer el layout en lugar de rellenarlo.
+
+**Del kit, sin CSS de pantalla**: el árbol es `UiTree`, las métricas `UiStatTile`, la proporción ocupada `UiProgressBar`, las celdas de entidad `UiEntityCell`, la portada `UiEntityHero` y las dos columnas `UiDetailLayout`. Si algún patrón no estuviera, sale al kit con su test y su muestra (ADR-014), no como CSS suelto.
+
 ### La ficha lista los ejemplares con el filtro que ya existe
 
 `GET /plants?location=` con su paginación, no un endpoint nuevo.
@@ -68,7 +91,7 @@ La jerarquía, las características del espacio, los movimientos y las tareas ap
 ## Risks / Trade-offs
 
 * **Sin unicidad, dos localizaciones pueden llamarse igual** → se acepta a conciencia (arriba). El catálogo muestra el recuento de ejemplares, que es lo que las distingue en la práctica hasta que haya ruta.
-* **La ficha se queda a medias respecto al prototipo** → precisamente por eso se marca: la mitad que falta tiene ticket y hueco reservado.
+* **La ficha y el catálogo enseñan bloques sin dato real** → por eso van marcados y con su ticket a la vista: el riesgo de un hueco marcado es que se vea que falta, que es exactamente lo que se busca. El riesgo contrario —rellenarlo— es que no se note.
 * **Retirar una localización no ofrece mover sus plantas** porque el movimiento no existe todavía → la salida que se ofrece es verlas; moverlas en bloque es T-18 con T-24.
 
 ## Migration Plan

@@ -20,11 +20,13 @@ El catálogo ya normaliza los nombres al crear, así que la infraestructura para
 * `POST /tags/{id}/merge` — combinar dos etiquetas: las plantas de la etiqueta de origen pasan a tener la de destino, y la de origen se retira. Una planta que ya tuviera ambas **no se duplica**.
 * `DELETE /tags/{id}` — retirada, permitida solo si ninguna planta la tiene.
 
-**Frontend**:
+**Frontend** — las dos pantallas del prototipo, con **su composición**, no solo con sus datos:
 
-* `/tags` — el catálogo con el recuento de plantas por etiqueta.
-* `/tags/[id]` — la ficha: distribución en la colección, plantas con esa etiqueta, y las acciones de administrar.
+* `/tags` — la pantalla `tags`: cabecera con recuento y alta, **resumen de salud del catálogo**, y el listado con el uso de cada etiqueta **como proporción del inventario** además de como cifra.
+* `/tags/[id]` — la pantalla `tag-detail`: portada con la marca, el nombre normalizado a la vista, el estado de uso y las tres acciones; principal con **la distribución en la colección** y las plantas que la tienen; lateral con la ficha, el impacto de renombrar y el panel de administrar.
 * Renombrar y combinar, con la combinación **declarando cuántas plantas se ven afectadas antes de confirmarla**.
+
+Lo que el prototipo muestra y el API todavía no sirve —los ejemplares de muestra y sus códigos ([T-15](../../../docs/tickets/T-15-codigos-de-inventario.md)), las fechas, el reparto por especies y localizaciones, la detección de duplicados y las acciones por lote ([T-21](../../../docs/tickets/T-21-inventario-a-escala.md), [T-24](../../../docs/tickets/T-24-dashboard-operativo-y-trabajo-por-lote.md))— **va marcado con su ticket y en el sitio del layout que le corresponde**, no omitido.
 
 **No hace falta migración**: la tabla `tag`, su índice único normalizado y `plant_tag` existen desde `V1__schema.sql`.
 
@@ -45,6 +47,7 @@ Ninguna.
 * No se ofrece deshacer una combinación: es destructiva y se avisa antes, que es la protección que corresponde a esta escala.
 * No se detectan duplicados automáticamente: la sugerencia de «estas dos etiquetas se parecen» es de §18.3 y necesita criterio de similitud, no solo normalización.
 * No se toca el esquema.
+* **No se detectan duplicados ni se opera por lote**: el prototipo los enseña y aquí se declaran con su ticket, no se construyen.
 
 ## Impact
 

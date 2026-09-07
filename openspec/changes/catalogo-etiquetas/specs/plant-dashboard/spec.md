@@ -2,7 +2,26 @@
 
 ### Requirement: Catálogo de etiquetas
 
-La aplicación SHALL mostrar el catálogo de etiquetas con su nombre y **cuántas plantas tiene cada una**, paginado y ordenable, con navegación a su ficha y al alta de una nueva. Con el catálogo vacío SHALL explicarlo y ofrecer crear la primera.
+La aplicación SHALL mostrar el catálogo de etiquetas con la composición de la pantalla `tags` del prototipo: cabecera con el recuento y el alta, **resumen de salud del catálogo**, y el listado con el nombre, **el uso en la colección**, cuántas plantas tiene cada una y sus acciones. El listado SHALL ser paginado y ordenable, con navegación a la ficha de cada etiqueta y al alta de una nueva. Con el catálogo vacío SHALL explicarlo y ofrecer crear la primera.
+
+El uso SHALL verse como **proporción sobre el inventario** además de leerse como cifra: una etiqueta con 286 plantas y otra con 12 se distinguen de un vistazo por su longitud, no comparando números. Una etiqueta **sin ninguna planta** SHALL aparecer igualmente, señalada como sin uso, porque es la que se puede retirar.
+
+Lo que el prototipo muestra y el API todavía no sirve —los ejemplares de ejemplo de cada etiqueta, la fecha de la última modificación, la detección de posibles duplicados y la selección múltiple con acciones por lote— SHALL aparecer **marcado con su ticket en el sitio del layout que le corresponde**, nunca omitido ni simulado.
+
+#### Scenario: El uso se ve, no solo se lee
+
+- **WHEN** se muestra una etiqueta del catálogo
+- **THEN** su uso aparece como proporción sobre el inventario, además de como número de plantas
+
+#### Scenario: Etiqueta sin plantas
+
+- **WHEN** una etiqueta no la tiene ninguna planta
+- **THEN** aparece en el listado señalada como sin uso, no se oculta
+
+#### Scenario: Lo que todavía no existe queda declarado
+
+- **WHEN** se abre el catálogo
+- **THEN** los ejemplares de muestra, la fecha de modificación, los posibles duplicados y las acciones por lote aparecen marcados con su ticket
 
 #### Scenario: Catálogo con etiquetas
 
@@ -16,7 +35,11 @@ La aplicación SHALL mostrar el catálogo de etiquetas con su nombre y **cuánta
 
 ### Requirement: Ficha de una etiqueta
 
-La aplicación SHALL mostrar la ficha de una etiqueta con su nombre, cuántas plantas la tienen y **las plantas que la tienen**, con navegación a cada una. La ficha SHALL ser el punto desde el que se renombra, se combina y se retira.
+La aplicación SHALL mostrar la ficha de una etiqueta con la composición de la pantalla `tag-detail` del prototipo: portada con su marca, su nombre normalizado, su estado de uso y sus tres acciones —ver sus plantas, renombrar y combinar—; columna principal con **la distribución en la colección** y las plantas que la tienen; y columna lateral con la ficha de la etiqueta, el impacto de renombrarla y el panel de administrar.
+
+La distribución SHALL presentarse como **cifras destacadas** —cuántas plantas y qué parte del inventario representan—, que es lo que responde a si la etiqueta sigue siendo útil. El **nombre normalizado** SHALL estar a la vista en la portada, porque es lo que decide si un renombrado choca con otra etiqueta.
+
+Lo que el prototipo muestra y el API todavía no sirve —el reparto por especies y por localizaciones, la descripción de la etiqueta, y sus fechas de creación y modificación— SHALL aparecer **marcado con su ticket y en su bloque**, nunca omitido ni simulado.
 
 #### Scenario: Ficha de una etiqueta con plantas
 

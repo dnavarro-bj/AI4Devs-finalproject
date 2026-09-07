@@ -22,6 +22,17 @@ De lo que se parte:
 
 ## Decisions
 
+### La composición sale del prototipo, bloque a bloque
+
+`tags`: cabecera con recuento y alta · salud del catálogo · barra de herramientas y selección · listado con nombre, uso como proporción, plantas, ejemplos y fecha.
+`tag-detail`: portada con marca, nombre normalizado, estado y tres acciones · principal: distribución en la colección y plantas con la etiqueta · lateral: ficha, impacto de renombrar y panel de administrar.
+
+Real hoy: el nombre, el nombre normalizado, el recuento de plantas, su proporción sobre el inventario —que sale del total del propio inventario, no de un dato nuevo— y las plantas que la tienen. **Todo lo demás se dibuja igualmente, marcado y en su sitio**: los códigos de ejemplo (T-15), las fechas, el reparto por especies y localizaciones, los duplicados y las acciones por lote (T-21, T-24).
+
+**Por qué la proporción y no solo la cifra**: el catálogo existe para decidir qué etiquetas sobran y cuáles se combinan, y esa decisión se toma comparando usos. Dos columnas de números obligan a comparar a mano lo que una longitud enseña de un vistazo.
+
+**Por qué marcar en lugar de omitir**: un bloque omitido no se distingue de un olvido, y obliga a rehacer el layout cuando llegue su ticket en vez de rellenarlo. Es el criterio ya aplicado en mezclas (`sustratos-como-el-wireframe`).
+
 ### Renombrar comprueba la unicidad, no la delega al índice
 
 El servicio busca el nombre normalizado antes de guardar y responde `409` si lo encuentra en **otra** etiqueta.

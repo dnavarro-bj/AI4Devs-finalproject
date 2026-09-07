@@ -38,6 +38,19 @@ class DuplicateScientificNameException(scientificName: String) :
 class SpeciesInUseException(id: String) :
   RuntimeException("La especie '$id' tiene ejemplares registrados y no se puede eliminar")
 
+/** La localización pedida por la ruta no existe: 404. */
+class LocationNotFoundException(id: String) :
+  RuntimeException("La localización '$id' no existe")
+
+/**
+ * La localización alberga ejemplares y no puede retirarse del catálogo: 409.
+ *
+ * `plant.location_id` es `NOT NULL` y no tiene `ON DELETE`: una planta no puede quedarse sin
+ * sitio, así que se pregunta antes de borrar en vez de convertir un caso previsible en un 500.
+ */
+class LocationInUseException(id: String) :
+  RuntimeException("La localización '$id' alberga ejemplares y no se puede eliminar")
+
 /** La mezcla de tierra pedida por la ruta no existe: 404. */
 class SoilMixNotFoundException(id: String) :
   RuntimeException("La mezcla de tierra '$id' no existe")

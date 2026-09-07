@@ -8,6 +8,24 @@ import java.math.BigDecimal
  */
 data class LocationResponse(val id: String, val name: String)
 
+/**
+ * La localización en el catálogo: el nombre más la carga que soporta.
+ *
+ * El recuento viaja también aquí, y no solo en la ficha como en mezclas, porque el mapa del vivero
+ * **es** la carga de cada sitio: sin ella el catálogo es una lista de nombres. Se resuelve con una
+ * agregación para toda la página, no con una consulta por fila.
+ */
+data class LocationSummaryResponse(val id: String, val name: String, val plantCount: Long)
+
+/**
+ * La localización en su propia ficha: el nombre más **cuántos ejemplares alberga**.
+ *
+ * El recuento vive aquí y no en el listado a propósito, igual que en mezclas: en el catálogo
+ * sería una consulta por fila, y en la ficha es la cifra que decide si la localización se puede
+ * retirar y cuántas plantas habría que mover antes.
+ */
+data class LocationDetailResponse(val id: String, val name: String, val plantCount: Long)
+
 data class TagResponse(val id: String, val name: String)
 
 /**
