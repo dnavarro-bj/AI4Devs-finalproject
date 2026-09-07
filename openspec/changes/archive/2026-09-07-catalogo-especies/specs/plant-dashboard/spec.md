@@ -4,7 +4,9 @@
 
 La aplicación SHALL mostrar el catálogo de especies registradas con su nombre científico y su nombre común, obtenidos del API y paginados. El listado SHALL poder ordenarse y SHALL ofrecer navegación a la ficha de cada especie y al alta de una nueva. Cuando el catálogo esté vacío, la pantalla SHALL explicarlo y ofrecer una única acción: registrar la primera especie.
 
-Los datos que el API todavía no sirve SHALL presentarse como **datos de ejemplo reconocibles**, nunca como si fueran reales.
+La celda identificativa SHALL presentar juntos el nombre científico y el común, para que la especie se reconozca por cualquiera de los dos sin salir de la fila.
+
+Los datos que el API todavía no sirve SHALL presentarse como **datos de ejemplo reconocibles**, nunca como si fueran reales. Esto **incluye los que el API sí sirve pero no en este endpoint**: el listado devuelve solo los nombres, así que la temperatura, el riego y el sustrato de una especie se marcan igual que lo que no existe, diciendo dónde sí están.
 
 #### Scenario: Catálogo con especies
 
@@ -26,9 +28,21 @@ Los datos que el API todavía no sirve SHALL presentarse como **datos de ejemplo
 - **WHEN** el usuario ordena por una columna
 - **THEN** el catálogo se vuelve a pedir al API con ese criterio, y no se reordena solo la página visible
 
+#### Scenario: La especie se reconoce por cualquiera de sus nombres
+
+- **WHEN** se muestra una especie en el listado
+- **THEN** su nombre científico y su nombre común aparecen juntos en la misma celda
+
+#### Scenario: Lo que el listado no trae se distingue de lo que no existe
+
+- **WHEN** se muestran columnas cuyo dato el endpoint del listado no devuelve
+- **THEN** quedan marcadas como ejemplo **y** dicen dónde está el dato de verdad, en lugar de sugerir que no existe
+
 ### Requirement: Ficha de una especie
 
 La aplicación SHALL mostrar la ficha de una especie con su nombre científico, su nombre común y **la pauta de cultivo que heredan sus ejemplares**: rangos de humedad, temperatura y horas de luz, y su pauta de riego. La ficha SHALL ser el punto desde el que se corrige o se retira la especie.
+
+La ficha SHALL abrir con la identidad de la especie —sus dos nombres— y SHALL agrupar la pauta de cultivo como **una sola lectura**, no como campos sueltos: es lo que se consulta de una especie.
 
 Las secciones cuyos datos el API todavía no sirve SHALL explicarlo, sin simular contenido.
 
@@ -46,6 +60,16 @@ Las secciones cuyos datos el API todavía no sirve SHALL explicarlo, sin simular
 
 - **WHEN** la ficha presenta datos que el API no sirve todavía
 - **THEN** quedan identificados como datos de ejemplo, y no se confunden con los reales
+
+#### Scenario: La pauta se lee de una vez
+
+- **WHEN** se abre la ficha de una especie
+- **THEN** temperatura, humedad, luz, riego y sustrato aparecen como una sola lectura de condiciones, cada una con su magnitud
+
+#### Scenario: El género se deduce del nombre científico
+
+- **WHEN** se muestra la ficha de catálogo de una especie
+- **THEN** su género aparece derivado del binomio, sin marcarse como ejemplo, porque no es un dato inventado
 
 ### Requirement: Alta y edición de una especie
 

@@ -9,7 +9,8 @@ De lo que se parte:
 * `/species` y `/species/[id]` son dos de las doce pantallas marcador de T-10.
 * `catalogsApiService` ya tiene `listSpecies` y `speciesCare`, que usa el alta de planta. Le faltan crear, corregir y retirar.
 * El kit tiene 34 componentes; todos los que estas pantallas necesitan existen ya, incluidos `UiEditorNav` y `UiSummaryGrid`, que nacieron en el change anterior.
-* El API: `GET /species` devuelve **solo** `id`, nombre científico y común; `GET /species/{id}` añade los seis rangos y la pauta de riego. Ni recuento de ejemplares, ni mezcla de sustrato.
+* El API: `GET /species` devuelve **solo** `id`, nombre científico y común; `GET /species/{id}` añade los seis rangos, la pauta de riego y **la mezcla de sustrato**. No hay recuento de ejemplares.
+* La mezcla dejó de ser maqueta mientras se escribía este diseño: la tarea 1.1 destapó que `soilMixId` es obligatorio en el `POST` y en el `PUT` sin venir en la ficha, lo que hacía imposible construir el editor con honestidad. Lo resolvió [`catalogo-sustratos`](../archive/2026-09-07-catalogo-sustratos/design.md), que se aplicó antes por ese motivo. El selector de mezclas sale ahora de `GET /soil-mixes`, y es dato real.
 
 ## Goals / Non-Goals
 

@@ -19,7 +19,9 @@ De hecho, hoy **nada de eso se usa desde la aplicación** salvo el listado que p
 
 **Retirada de una especie**, con confirmación y respetando el `409` del API: una especie con ejemplares no se puede retirar, y la pantalla lo explica en lugar de mostrar un error genérico.
 
-**Datos reales frente a datos de ejemplo.** Real: el nombre científico y común, los seis rangos, la pauta de riego, y las cuatro operaciones del CRUD. Maqueta marcada: el recuento de ejemplares, la mezcla de sustrato asociada, la exposición y el entorno (T-17), las épocas de crecimiento y la floración (T-17), las fotografías (T-19), el código (T-15) y los grupos de cultivo dinámicos (T-21).
+**Datos reales frente a datos de ejemplo.** Real: el nombre científico y común, los seis rangos, la pauta de riego, **la mezcla de sustrato** y las cuatro operaciones del CRUD. Maqueta marcada: el recuento de ejemplares, la exposición y el entorno (T-17), las épocas de crecimiento y la floración (T-17), las fotografías (T-19), el código (T-15) y los grupos de cultivo dinámicos (T-21).
+
+La mezcla estaba en la lista de maqueta al escribir esta propuesta. Dejó de estarlo: la verificación del API destapó que es **obligatoria** para crear y corregir una especie sin venir en su ficha, y [`catalogo-sustratos`](../archive/2026-09-07-catalogo-sustratos/proposal.md) se adelantó para resolverlo.
 
 ## Capabilities
 
@@ -46,6 +48,8 @@ Ninguna.
 * Sin cambios en backend, esquema ni infraestructura.
 
 ## Hallazgo: la historia 0.8 no tiene API
+
+> **Resuelto.** Se abrió [T-27](../../../docs/tickets/T-27-api-del-catalogo-de-mezclas-de-sustrato.md) y su change se aplicó **antes** que este, porque el editor de especie no se podía construir sin él.
 
 Al revisar los catálogos: **las mezclas de sustrato no tienen ningún endpoint**. La entidad `SoilMix` existe desde T-01, la historia [0.8](../../../docs/user-stories/0.8-registrar-mezcla-de-tierra.md) está marcada «Must-Have (soporte), en alcance del MVP», y el wireframe define su catálogo, su ficha y su editor — pero no hay controller.
 

@@ -37,3 +37,69 @@ describe('UiProportionBar', () => {
     expect(first.text()).toContain('70')
   })
 })
+
+/**
+ * Escenarios "Partes rotuladas dentro de la barra" y "Barra compacta en una celda".
+ *
+ * Las dos variantes existen porque la misma pregunta —cómo se reparte un total— se hace en una
+ * ficha y en una celda de tabla. Lo que **ninguna** puede perder es leer el valor como texto y
+ * señalar el desajuste: eso es lo que impide que «compacto» acabe significando «a medias».
+ */
+describe('UiProportionBar: variantes', () => {
+  const PARTS = [{ label: 'Orgánico', value: 20 }, { label: 'Mineral', value: 80 }]
+
+  it('rotulada por dentro, cada parte lleva su etiqueta y su valor en su propio tramo', () => {
+    const wrapper = mount(UiProportionBar, { props: { parts: PARTS, labels: 'inside' } })
+
+    const fills = wrapper.findAll('.proportion__fill')
+    expect(fills[0]!.text()).toContain('Orgánico')
+    expect(fills[0]!.text()).toContain('20')
+    expect(fills[1]!.text()).toContain('Mineral')
+  })
+
+  it('rotulada por dentro no repite la leyenda debajo', () => {
+    const wrapper = mount(UiProportionBar, { props: { parts: PARTS, labels: 'inside' } })
+
+    expect(wrapper.find('.proportion__legend').exists()).toBe(false)
+  })
+
+  it('rotulada por dentro sigue señalando el desajuste', () => {
+    const wrapper = mount(UiProportionBar, {
+      props: { parts: [{ label: 'Orgánico', value: 20 }, { label: 'Mineral', value: 50 }], labels: 'inside' },
+    })
+
+    expect(wrapper.find('[data-test="mismatch"]').text()).toContain('30')
+  })
+
+  it('compacta conserva la leyenda y el valor legible', () => {
+    const wrapper = mount(UiProportionBar, { props: { parts: PARTS, size: 'compact' } })
+
+    expect(wrapper.classes()).toContain('is-compact')
+    expect(wrapper.findAll('[data-role="part"]')).toHaveLength(2)
+    expect(wrapper.text()).toContain('80')
+  })
+
+  it('compacta sigue señalando el desajuste: no es una barra con menos información', () => {
+    const wrapper = mount(UiProportionBar, {
+      props: { parts: [{ label: 'Orgánico', value: 20 }, { label: 'Mineral', value: 50 }], size: 'compact' },
+    })
+
+    expect(wrapper.find('[data-test="mismatch"]').exists()).toBe(true)
+  })
+
+  /** Un kit que sabe qué es «orgánico» ya no es un kit: el tono entra por la parte. */
+  it('el tono de cada parte lo decide quien la usa, no el componente', () => {
+    const wrapper = mount(UiProportionBar, {
+      props: {
+        parts: [
+          { label: 'Orgánico', value: 20, tone: 'warning' },
+          { label: 'Mineral', value: 80, tone: 'info' },
+        ],
+      },
+    })
+
+    const fills = wrapper.findAll('.proportion__fill')
+    expect(fills[0]!.classes()).toContain('is-warning')
+    expect(fills[1]!.classes()).toContain('is-info')
+  })
+})

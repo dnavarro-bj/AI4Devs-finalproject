@@ -31,17 +31,23 @@ describe('ficha de una mezcla de sustrato', () => {
     ...overrides,
   })
 
+  /**
+   * El escenario «Ficha de una mezcla». Comprueba el requisito —la composición se ve **y** se
+   * lee— y no un marcado concreto: al recomponer la ficha sobre el prototipo, la proporción pasó
+   * de una barra con leyenda a una rueda más una barra rotulada por dentro, y el requisito no
+   * cambió.
+   */
   it('muestra la composición en proporción y en cifras', async () => {
     api.get.mockResolvedValue(detail())
 
     const wrapper = await mountSuspended(SoilMixDetail)
     await settle()
 
-    // La proporción se ve como barra…
-    expect(wrapper.findAll('[data-role="part"]')).toHaveLength(2)
-    // …y se lee como cifra: una barra sin número obliga a estimar a ojo un dato exacto.
-    expect(wrapper.text()).toContain('20%')
-    expect(wrapper.text()).toContain('80%')
+    // Se ve como figura…
+    expect(wrapper.find('[data-test="composition-wheel"]').exists()).toBe(true)
+    // …y se lee como cifra: una figura sin número obliga a estimar a ojo un dato exacto.
+    expect(wrapper.text()).toContain('20')
+    expect(wrapper.text()).toContain('80')
   })
 
   it('muestra el rango de pH y la receta', async () => {
@@ -90,6 +96,70 @@ describe('ficha de una mezcla de sustrato', () => {
     await settle()
 
     expect(wrapper.find('[data-test="edit-soil-mix"]').attributes('href')).toBe('/soil-mixes/100001/edit')
+  })
+
+  /** Escenarios «Composición como figura» y «El pH sobre su escala». */
+  it('abre con la composición como figura, que es la identidad de la receta', async () => {
+    api.get.mockResolvedValue(detail())
+
+    const wrapper = await mountSuspended(SoilMixDetail)
+    await settle()
+
+    const wheel = wrapper.find('[data-test="composition-wheel"]')
+    expect(wheel.exists(), 'la ficha no abre con la rueda de composición').toBe(true)
+    // Sigue leyéndose como cifra, no solo como sector.
+    expect(wheel.text()).toContain('80')
+    expect(wheel.text()).toContain('20')
+  })
+
+  it('la receta de referencia rotula las partes dentro de la barra', async () => {
+    api.get.mockResolvedValue(detail())
+
+    const wrapper = await mountSuspended(SoilMixDetail)
+    await settle()
+
+    const recipe = wrapper.find('[data-test="recipe-bar"] .proportion')
+    expect(recipe.classes()).toContain('has-labels-inside')
+    expect(recipe.text()).toContain('Orgánico')
+  })
+
+  it('sitúa el pH sobre una escala con sus extremos nombrados', async () => {
+    api.get.mockResolvedValue(detail())
+
+    const wrapper = await mountSuspended(SoilMixDetail)
+    await settle()
+
+    const scale = wrapper.find('[data-test="ph-scale"]')
+    expect(scale.exists(), 'el pH no está sobre una escala').toBe(true)
+    expect(scale.text()).toContain('Ácido')
+    expect(scale.text()).toContain('Alcalino')
+  })
+
+  it('acompaña el pH de su lectura cualitativa', async () => {
+    api.get.mockResolvedValue(detail())
+
+    const wrapper = await mountSuspended(SoilMixDetail)
+    await settle()
+
+    expect(wrapper.find('[data-test="ph-quality"]').text()).toContain('Ligeramente ácido')
+  })
+
+  /**
+   * El prototipo muestra unos datos muy convincentes que el API no sirve. Cada uno declara su
+   * ticket: una ficha con «Drenaje: muy alto» inventado es indistinguible de una que lo calcula.
+   */
+  it('cada sección que el API no alimenta dice qué ticket la llena', async () => {
+    api.get.mockResolvedValue(detail())
+
+    const wrapper = await mountSuspended(SoilMixDetail)
+    await settle()
+
+    for (const test of ['components', 'properties', 'species-usage', 'preparation'] as const) {
+      const section = wrapper.find(`[data-test="${test}"]`)
+      expect(section.exists(), `falta la sección ${test}`).toBe(true)
+      expect(section.attributes('data-mock'), `${test} no está marcada`).toBe('true')
+      expect(section.text(), `${test} no dice su ticket`).toMatch(/T-\d+/)
+    }
   })
 
   it('una mezcla inexistente se dice, con salida al catálogo y sin pantalla en blanco', async () => {

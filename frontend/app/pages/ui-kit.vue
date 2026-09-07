@@ -388,6 +388,111 @@ const SEARCH_GROUPS = [
     </section>
 
     <section class="gallery__section">
+      <h2>Proporciones y escalas</h2>
+      <p class="note">
+        El tono de cada parte lo decide quien las usa: un kit que sabe qué es «orgánico» deja de
+        ser un kit.
+      </p>
+
+      <div class="grid-2">
+        <UiPanel title="Rueda de proporción">
+          <UiProportionWheel
+            :parts="[
+              { label: 'Orgánico', value: 20, tone: 'warning' },
+              { label: 'Mineral', value: 80, tone: 'info' },
+            ]"
+          />
+          <p class="note">
+            Para cuando el reparto <em>es</em> la identidad de la cosa, no un dato más de una fila.
+            Funciona con más de dos partes.
+          </p>
+        </UiPanel>
+
+        <UiPanel title="Barra rotulada por dentro">
+          <UiProportionBar
+            :parts="[
+              { label: 'Orgánico', value: 20, tone: 'warning' },
+              { label: 'Mineral', value: 80, tone: 'info' },
+            ]"
+            labels="inside"
+          />
+          <p class="note">La misma barra con la etiqueta en el tramo, para cuando es la figura principal.</p>
+        </UiPanel>
+
+        <UiPanel title="Barra compacta">
+          <UiProportionBar
+            :parts="[
+              { label: 'Orgánico', value: 35, tone: 'warning' },
+              { label: 'Mineral', value: 65, tone: 'info' },
+            ]"
+            size="compact"
+          />
+          <p class="note">
+            A la altura de una fila de tabla. Conserva el valor legible y el aviso de desajuste:
+            «compacto» no puede significar «con la mitad de la información».
+          </p>
+        </UiPanel>
+
+        <UiPanel title="Pauta anual">
+          <UiYearGrid
+            :rows="[
+              { label: 'Crecimiento', levels: [0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0], tone: 'brand' },
+              { label: 'Floración', levels: [0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0], tone: 'warning' },
+              { label: 'Riego', levels: [1, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1, 1], tone: 'info' },
+            ]"
+            :legend="[
+              { tone: 'brand', label: 'Crecimiento' },
+              { tone: 'warning', label: 'Floración habitual' },
+              { tone: 'info', label: 'Intensidad orientativa de riego' },
+            ]"
+          />
+          <p class="note">
+            El riego no se enciende y se apaga: sube y baja. Por eso la intensidad va por mes y no
+            como un periodo.
+          </p>
+        </UiPanel>
+
+        <UiPanel title="Pauta anual sin actividad">
+          <UiYearGrid
+            :rows="[
+              { label: 'Crecimiento', levels: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], tone: 'brand' },
+              { label: 'Floración', levels: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], tone: 'warning' },
+            ]"
+          />
+          <p class="note">
+            La rejilla vacía se muestra igual: ocultarla convertiría «todavía no lo sé» en «esto no
+            existe».
+          </p>
+        </UiPanel>
+
+        <UiPanel title="Escala con rango">
+          <UiScale
+            :min="0"
+            :max="14"
+            :from="5.8"
+            :to="6.8"
+            low-label="Ácido"
+            high-label="Alcalino"
+            label="Rango de pH"
+          />
+          <UiScale
+            :min="-5"
+            :max="45"
+            :from="10"
+            :to="35"
+            low-label="Frío"
+            high-label="Calor"
+            label="Rango de temperatura"
+          />
+          <p class="note">
+            Los límites entran por prop: un componente que supiera de pH dejaría de ser genérico.
+            Un rango de un solo punto sigue viéndose, y uno que se sale se recorta.
+          </p>
+        </UiPanel>
+      </div>
+    </section>
+
+    <section class="gallery__section">
       <h2>Superficies y feedback</h2>
       <div class="grid-2">
         <UiPanel title="Cuidados recomendados">

@@ -587,6 +587,8 @@ El sistema SHALL ofrecer un componente que presenta un periodo del año por mese
 
 El sistema SHALL ofrecer un componente que presenta partes de un total con su proporción y su etiqueta, y **SHALL señalar cuando la suma no cuadra**, indicando en cuánto se desvía. El valor de cada parte SHALL leerse como texto además de verse como proporción.
 
+El componente SHALL admitir **rotular cada parte dentro de la barra** en lugar de bajo ella, y un **tamaño compacto** para presentarse dentro de la celda de una tabla. Ninguna de las dos variantes SHALL renunciar a leer el valor como texto ni a señalar el desajuste.
+
 #### Scenario: Proporciones que suman el total
 
 - **WHEN** las partes suman exactamente el total esperado
@@ -601,6 +603,16 @@ El sistema SHALL ofrecer un componente que presenta partes de un total con su pr
 
 - **WHEN** se muestra una parte
 - **THEN** su valor aparece como texto, no solo como longitud de la barra
+
+#### Scenario: Partes rotuladas dentro de la barra
+
+- **WHEN** se pide el rotulado interior
+- **THEN** cada parte muestra su etiqueta y su valor dentro de su tramo, sin leyenda aparte
+
+#### Scenario: Barra compacta en una celda
+
+- **WHEN** se pide el tamaño compacto
+- **THEN** la barra y su leyenda ocupan la altura de una fila de tabla, y el valor sigue leyéndose
 
 ### Requirement: Navegación de secciones de un formulario
 
@@ -667,3 +679,74 @@ El sistema SHALL ofrecer una forma de colocar **un control sin rótulo** —un b
 
 - **WHEN** el control declara su propio rótulo
 - **THEN** se muestra ese rótulo en lugar del hueco
+
+### Requirement: Rueda de proporción
+
+El sistema SHALL ofrecer un componente que presenta partes de un total como un anillo, con la parte dominante expresada como cifra en el centro. Las partes SHALL leerse como texto además de verse como sector, y el componente SHALL declarar su contenido a quien no ve el anillo.
+
+#### Scenario: Reparto de dos partes
+
+- **WHEN** se le dan dos partes que suman el total
+- **THEN** cada una ocupa su sector y la dominante aparece como cifra en el centro
+
+#### Scenario: El anillo se describe
+
+- **WHEN** se muestra la rueda
+- **THEN** su descripción accesible enuncia las partes y su proporción, no solo el dibujo
+
+#### Scenario: Más de dos partes
+
+- **WHEN** se le dan tres o más partes
+- **THEN** todas se representan, sin que la rueda dependa de que sean exactamente dos
+
+### Requirement: Escala con rango
+
+El sistema SHALL ofrecer un componente que sitúa un rango de valores sobre una escala continua con sus dos extremos nombrados, mostrando dónde empieza y dónde acaba el rango. Los valores SHALL leerse como texto además de verse como posición.
+
+#### Scenario: Rango dentro de la escala
+
+- **WHEN** se sitúa un rango dentro de los límites de la escala
+- **THEN** se muestra su tramo y sus dos valores, y los extremos de la escala quedan nombrados
+
+#### Scenario: Rango de un solo punto
+
+- **WHEN** el valor mínimo y el máximo coinciden
+- **THEN** el tramo sigue siendo visible y no desaparece por tener anchura cero
+
+#### Scenario: Rango que excede la escala
+
+- **WHEN** el rango se sale de los límites de la escala
+- **THEN** se recorta a la escala en lugar de desbordarla, y los valores siguen leyéndose
+
+### Requirement: Pauta anual
+
+El sistema SHALL ofrecer un componente que presenta una o varias pautas a lo largo de los doce meses del año, cada una con su nombre y con una **intensidad por mes**, de modo que un vistazo baste para ver cuándo ocurre cada cosa y con cuánta fuerza.
+
+El componente SHALL mostrar los doce meses aunque ninguna pauta tenga actividad, porque la rejilla vacía sigue diciendo qué se va a poder registrar. El tono de cada pauta SHALL decidirlo quien la usa: el componente no conoce qué es «crecimiento» ni «riego».
+
+Cuando se le dé una leyenda, el componente SHALL mostrarla, porque una intensidad en color no se interpreta sola.
+
+#### Scenario: Varias pautas a lo largo del año
+
+- **WHEN** se le dan varias pautas con su actividad por mes
+- **THEN** cada una ocupa su fila, con los doce meses rotulados una sola vez en la cabecera
+
+#### Scenario: Intensidad por mes
+
+- **WHEN** una pauta declara distinta intensidad en distintos meses
+- **THEN** cada mes se representa con la intensidad que le corresponde, y no solo como presente o ausente
+
+#### Scenario: Pauta sin actividad
+
+- **WHEN** ninguna pauta tiene actividad en ningún mes
+- **THEN** la rejilla se muestra igual, con sus doce meses y sus filas, en lugar de desaparecer
+
+#### Scenario: Meses fuera de la rejilla
+
+- **WHEN** se le dan más o menos de doce valores para una pauta
+- **THEN** la rejilla sigue teniendo doce meses, sin descuadrarse ni omitir columnas
+
+#### Scenario: La leyenda explica la intensidad
+
+- **WHEN** se le da una leyenda
+- **THEN** se muestra con la muestra de color de cada pauta junto a su significado
