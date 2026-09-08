@@ -38,6 +38,24 @@ class DuplicateScientificNameException(scientificName: String) :
 class SpeciesInUseException(id: String) :
   RuntimeException("La especie '$id' tiene ejemplares registrados y no se puede eliminar")
 
+/** La etiqueta pedida por la ruta no existe: 404. */
+class TagNotFoundException(id: String) :
+  RuntimeException("El tag '$id' no existe")
+
+/**
+ * La etiqueta la tiene alguna planta y no puede retirarse del catálogo: 409.
+ *
+ * A diferencia de especies o localizaciones, aquí no hay una FK que fuese a saltar —`plant_tag`
+ * se borraría en cascada—, y precisamente por eso la comprobación es imprescindible: sin ella el
+ * borrado se llevaría por delante las asignaciones en silencio.
+ */
+class TagInUseException(id: String) :
+  RuntimeException("El tag '$id' lo tienen plantas registradas y no se puede eliminar")
+
+/** Combinar una etiqueta consigo misma no es una operación: 400. */
+class TagMergeIntoItselfException(id: String) :
+  RuntimeException("No se puede combinar el tag '$id' consigo mismo")
+
 /** La localización pedida por la ruta no existe: 404. */
 class LocationNotFoundException(id: String) :
   RuntimeException("La localización '$id' no existe")

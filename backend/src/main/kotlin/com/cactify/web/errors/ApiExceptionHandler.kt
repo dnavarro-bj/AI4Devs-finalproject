@@ -12,6 +12,9 @@ import com.cactify.application.RecommendationNotFoundException
 import com.cactify.application.SoilMixInUseException
 import com.cactify.application.SoilMixNotFoundException
 import com.cactify.application.SpeciesInUseException
+import com.cactify.application.TagInUseException
+import com.cactify.application.TagMergeIntoItselfException
+import com.cactify.application.TagNotFoundException
 import com.cactify.application.SpeciesNotFoundException
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -87,6 +90,14 @@ class ApiExceptionHandler {
   fun onSpeciesNotFound(ex: SpeciesNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
 
+  @ExceptionHandler(TagNotFoundException::class)
+  fun onTagNotFound(ex: TagNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  @ExceptionHandler(TagMergeIntoItselfException::class)
+  fun onTagMergeIntoItself(ex: TagMergeIntoItselfException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    badRequest(ex.message ?: "La petición no es válida", request)
+
   @ExceptionHandler(LocationNotFoundException::class)
   fun onLocationNotFound(ex: LocationNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
@@ -123,6 +134,10 @@ class ApiExceptionHandler {
 
   @ExceptionHandler(SpeciesInUseException::class)
   fun onSpeciesInUse(ex: SpeciesInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
+
+  @ExceptionHandler(TagInUseException::class)
+  fun onTagInUse(ex: TagInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
 
   @ExceptionHandler(LocationInUseException::class)

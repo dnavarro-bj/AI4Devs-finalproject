@@ -1,6 +1,14 @@
 import type { SpeciesCare } from '@features/species/types/species.types'
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
-import type { Location, LocationDetail, LocationListItem } from '../types/catalog.types'
+import type {
+  Location,
+  LocationDetail,
+  LocationListItem,
+  Tag,
+  TagDetail,
+  TagListItem,
+  TagMergeResult,
+} from '../types/catalog.types'
 import { catalogsApiService } from '../services/catalogs.api.service'
 
 /**
@@ -28,6 +36,24 @@ export function useCatalogs() {
 
   const removeLocation = (id: string): Promise<ServiceResponse<null>> =>
     catalogsApiService.removeLocation(id)
+  const listTags = (page = 0, sort?: string): Promise<ServiceResponse<PageResponse<TagListItem>>> =>
+    catalogsApiService.listTags(page, sort)
+
+  const tagDetail = (id: string): Promise<ServiceResponse<TagDetail>> =>
+    catalogsApiService.tagDetail(id)
+
+  const createTag = (name: string): Promise<ServiceResponse<Tag>> =>
+    catalogsApiService.createTag(name)
+
+  const renameTag = (id: string, name: string): Promise<ServiceResponse<Tag>> =>
+    catalogsApiService.renameTag(id, name)
+
+  const mergeTags = (sourceId: string, targetId: string): Promise<ServiceResponse<TagMergeResult>> =>
+    catalogsApiService.mergeTags(sourceId, targetId)
+
+  const removeTag = (id: string): Promise<ServiceResponse<null>> =>
+    catalogsApiService.removeTag(id)
+
   const listSpecies = () => catalogsApiService.listSpecies()
 
   async function speciesCare(id: string): Promise<ServiceResponse<SpeciesCare>> {
@@ -45,6 +71,12 @@ export function useCatalogs() {
     createLocation,
     renameLocation,
     removeLocation,
+    listTags,
+    tagDetail,
+    createTag,
+    renameTag,
+    mergeTags,
+    removeTag,
     listSpecies,
     speciesCare,
   }

@@ -16,6 +16,15 @@ class Tag(
     private set
 
   init {
-    require(name.isNotBlank()) { "El nombre del tag es obligatorio" }
+    requireName(name)
   }
+
+  /** Único camino para cambiar el nombre: revalida la invariante antes de tocar nada. */
+  fun rename(name: String) {
+    requireName(name)
+    this.name = name
+  }
+
+  private fun requireName(value: String) =
+    require(value.isNotBlank()) { "El nombre del tag es obligatorio" }
 }

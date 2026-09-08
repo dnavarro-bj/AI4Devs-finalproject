@@ -341,7 +341,11 @@ Tres reglas aplican a **todos** los endpoints:
 | `GET /locations/{id}` | Ficha de una localización, con cuántos ejemplares alberga. |
 | `PUT /locations/{id}` | Corrige el nombre. Los ejemplares que alberga no cambian; un nombre en blanco es `400`. |
 | `DELETE /locations/{id}` | Retira la localización del catálogo. `409` si alberga ejemplares: una planta no puede quedarse sin sitio. |
-| `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. |
+| `POST /tags` · `GET /tags` | Crea y lista el catálogo de tags. El nombre se normaliza y es único sin distinguir mayúsculas ni espacios. Cada fila trae **cuántas plantas la tienen**, resuelto con una consulta agregada para la página entera. |
+| `GET /tags/{id}` | Ficha de una etiqueta, con su nombre normalizado y cuántas plantas la tienen. |
+| `PUT /tags/{id}` | Renombra respetando la unicidad normalizada; renombrarla al nombre que ya tenía no es conflicto. Las plantas conservan la etiqueta. |
+| `POST /tags/{id}/merge` | Combina la etiqueta de la ruta en la del cuerpo (`{"targetId": "..."}`): sus plantas pasan al destino, el origen se retira y la respuesta dice a cuántas plantas alcanzó. Una planta que tuviera ambas la conserva una sola vez. |
+| `DELETE /tags/{id}` | Retira la etiqueta. `409` si alguna planta la tiene: `plant_tag` caería en cascada y se llevaría las asignaciones en silencio. |
 | `POST /plants/{id}/care-records` | Registra una lectura de cultivo (humedad, temperatura, horas de luz, riego y acidez). La fecha la aporta el cliente o, si falta, la sella el servidor; una fecha futura se rechaza. |
 | `GET /plants/{id}/care-records` | Historial paginado de una planta, de la lectura más reciente a la más antigua, con la recomendación de IA de cada una cuando exista. |
 | `POST /plants/{id}/care-records/{crId}/recommendation` | Genera la recomendación de IA de una lectura y la persiste. Idempotente: si ya existe, la devuelve con `200` sin volver a consultar al proveedor. |

@@ -80,3 +80,26 @@ El sistema SHALL permitir retirar una etiqueta del catálogo **salvo que alguna 
 
 - **WHEN** se retira una etiqueta que alguna planta tiene asignada
 - **THEN** la respuesta es `409 Conflict` explicando que está en uso, y la etiqueta permanece
+
+## MODIFIED Requirements
+
+### Requirement: Listado de tags
+
+El sistema SHALL exponer el catálogo de tags registrados, de forma que puedan asignarse a una planta, y SHALL incluir en cada fila **cuántas plantas la tienen**.
+
+El recuento SHALL resolverse en **una sola consulta** para toda la página, no con una consulta por fila: el catálogo existe para decidir qué etiquetas sobran y cuáles se combinan, y esa decisión se toma comparando usos.
+
+#### Scenario: Catálogo con tags
+
+- **WHEN** existen tags registrados y se consulta el catálogo
+- **THEN** la respuesta es `200 OK` y contiene cada tag con su identificador, su nombre y su número de plantas
+
+#### Scenario: Tag sin uso en el listado
+
+- **WHEN** un tag no lo tiene ninguna planta
+- **THEN** aparece igualmente en el listado, con cero plantas
+
+#### Scenario: El recuento no multiplica las consultas
+
+- **WHEN** se consulta una página del catálogo con varios tags
+- **THEN** los recuentos se obtienen en una sola consulta, sea cual sea el número de filas de la página

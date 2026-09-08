@@ -29,6 +29,35 @@ data class LocationDetailResponse(val id: String, val name: String, val plantCou
 data class TagResponse(val id: String, val name: String)
 
 /**
+ * La etiqueta en el catálogo: el nombre más cuántas plantas la tienen.
+ *
+ * El recuento viaja en el listado porque el catálogo existe para **comparar** usos —qué etiqueta
+ * sobra, cuál duplica a cuál—, y esa comparación no se puede hacer entrando en cada ficha. Se
+ * resuelve con una agregación para la página entera.
+ */
+data class TagSummaryResponse(val id: String, val name: String, val plantCount: Long)
+
+/**
+ * La etiqueta en su propia ficha: el nombre, **su forma normalizada** y cuántas plantas la tienen.
+ *
+ * El nombre normalizado viaja porque es lo que decide si un renombrado choca con otra etiqueta:
+ * enseñarlo evita que un `409` parezca arbitrario cuando los dos nombres se ven distintos.
+ */
+data class TagDetailResponse(
+  val id: String,
+  val name: String,
+  val normalizedName: String,
+  val plantCount: Long,
+)
+
+/**
+ * El resultado de combinar dos etiquetas: cuántas plantas se vieron afectadas y qué etiqueta
+ * queda. La cifra se devuelve porque la operación es destructiva: permite confirmar lo ocurrido y
+ * no solo prometerlo antes.
+ */
+data class TagMergeResponse(val target: TagResponse, val affectedPlants: Long)
+
+/**
  * Mezcla de tierra en su ficha y en el catálogo: la receta completa.
  *
  * Los porcentajes suman 100 por invariante de la entidad, así que la suma no viaja: sería un dato
