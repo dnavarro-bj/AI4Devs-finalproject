@@ -10,7 +10,7 @@ Diseñar e implementar las tablas necesarias para soportar el catálogo de espec
 ## Alcance
 
 * Migración de base de datos (PostgreSQL) con las tablas: `soil_mix`, `species`, `location`, `plant`, `tag`, `plant_tag`, `care_record`, `ai_recommendation`.
-* Claves primarias (UUID) y claves foráneas correspondientes (incluidas `species.soil_mix_id` → `soil_mix.id`, `plant.location_id` → `location.id`, y `plant_tag.plant_id`/`plant_tag.tag_id` con clave primaria compuesta).
+* Claves primarias TSID y claves foráneas correspondientes (incluidas `species.soil_mix_id` → `soil_mix.id`, `plant.location_id` → `location.id`, y `plant_tag.plant_id`/`plant_tag.tag_id` con clave primaria compuesta).
 * Restricciones `NOT NULL` en los campos obligatorios (nombre de especie, especie de la planta, fecha de lectura).
 * Restricción a nivel de aplicación (o `CHECK` en base de datos) que garantice que `soil_mix.organic_percentage + soil_mix.mineral_percentage = 100`.
 * Restricción a nivel de aplicación (o `CHECK` en base de datos) que garantice que `soil_mix.ph_min <= soil_mix.ph_max`.
@@ -19,7 +19,7 @@ Diseñar e implementar las tablas necesarias para soportar el catálogo de espec
 
 ## Fuera de alcance de este ticket
 
-* Campos de override individual de cuidados (pendiente de decisión, ver [0.7](../user-stories/0.7-personalizar-cuidados-de-un-ejemplar.md)).
+* Campos de personalización individual de cuidados (planificados para T-16; ver [0.7](../user-stories/0.7-personalizar-cuidados-de-un-ejemplar.md)).
 
 ## Criterios de aceptación
 

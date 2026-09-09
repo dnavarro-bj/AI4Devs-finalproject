@@ -14,9 +14,9 @@ docker compose up --build
 
 | Servicio | Puerto | Descripción |
 |---|---|---|
-| `db` | 5432 | PostgreSQL 16 |
+| `db` | 25432 | PostgreSQL 16 (el contenedor usa 5432 dentro de la red) |
 | `backend` | 8080 | API Spring Boot ([../../backend](../../backend)) |
-| `frontend` | 3000 | Nuxt 4 ([../../frontend](../../frontend)) |
+| `frontend` | 3005 | Nuxt 4 ([../../frontend](../../frontend)) |
 
 Al arrancar, el backend aplica las migraciones de Flyway y carga los datos semilla, así que la API queda usable sin ningún paso manual:
 
@@ -25,7 +25,8 @@ curl localhost:8080/locations
 curl 'localhost:8080/plants?tag=400001'
 ```
 
-El frontend, de momento, es solo el esqueleto de Nuxt.
+El frontend incluye el inventario, la ficha y alta de plantas, el historial de lecturas y análisis,
+los catálogos administrativos y la galería del sistema de diseño en `/ui-kit`.
 
 ## Variables de entorno
 

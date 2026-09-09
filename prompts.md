@@ -1,153 +1,174 @@
-# Prompts
+# Prompts principales utilizados en Cactify
 
-Registro de los prompts más relevantes utilizados durante la creación de Cactify, siguiendo la misma estructura de secciones que el `README.md`. Se documentan dos fuentes de IA:
-
-* **ChatGPT** — fase de ideación y definición formal de producto, antes de escribir ninguna línea de documentación técnica ([chats/chatgp1.txt](chats/chatgp1.txt), [chats/primera-definicion-producto.ms](chats/primera-definicion-producto.ms)).
-* **Claude Code** — construcción y refinamiento de toda la documentación técnica (README, modelo de datos, historias de usuario, tickets, infraestructura).
-
-## Índice
-
-1. [Descripción general del producto](#1-descripción-general-del-producto)
-2. [Arquitectura del sistema](#2-arquitectura-del-sistema)
-3. [Modelo de datos](#3-modelo-de-datos)
-4. [Especificación de la API](#4-especificación-de-la-api)
-5. [Historias de usuario](#5-historias-de-usuario)
-6. [Tickets de trabajo](#6-tickets-de-trabajo)
-7. [Pull requests](#7-pull-requests)
-
----
-
-## 1. Descripción general del producto
-
-Fuente: [chats/primera-definicion-producto.ms](chats/primera-definicion-producto.ms) (conversación con ChatGPT).
-
-**Prompt 1:**
-
-> "Actúa como un Product Manager, Solution Architect, Consultor de Startups SaaS, experto en IoT y especialista en validación de productos digitales [...] Tu objetivo no es validar mi idea automáticamente, sino analizarla de forma crítica y objetiva [...] No asumas que la idea es buena únicamente porque sea la propuesta inicial. Evalúala con criterios objetivos y, si consideras que no es adecuada para el Proyecto Final, indícalo claramente." (extracto de un prompt de rol + contexto + instrucciones + formato de salida de ~290 líneas — ver fichero completo)
-
-Fija el problema real (gestionar ~500 cactus manualmente), pide que el MVP sea completamente manual sin depender de hardware, y exige un análisis completo: validación del problema, público objetivo, competencia, MVP con matriz de priorización, historias de usuario, arquitectura, estrategias de captura de datos, riesgos y roadmap. Es la base directa de las secciones 1 y 3 del README (objetivo, alcance del MVP, historias Must/Should-Have).
-
-**Prompt 2:**
-
-> "Hay cosas que me gustarían añadir: Las distintas especies de cactus necesitan distintas composiciones de tierras así que habría que poder añadirlas también, la composiciión mineral/orgánica y con distintas categorías. El registro de especies debería tener también los cuidados asociados aunque esto tiene que poder sobreescribirse en cada cáctus pues no cada individuo también puede variar. También tags para poder hacer búsquedas rápidas"
-
-Este único prompt originó tres funcionalidades que luego se llevaron literalmente al modelo de datos con Claude Code: la mezcla de tierra por especie (`SoilMix`, historia [0.8](docs/user-stories/0.8-registrar-mezcla-de-tierra.md)), el override de cuidados por ejemplar individual (historia [0.7](docs/user-stories/0.7-personalizar-cuidados-de-un-ejemplar.md)) y el catálogo de tags (historia [0.10](docs/user-stories/0.10-etiquetar-cactus-con-tags.md)).
-
-**Prompt 3:**
-
-> "quiero añadir en el roadmap 2 cosas más: Sesonres que registren luz, temperatura, humedad y acided de la tierras / app que capture estos datos de los sensores y se sincronice con el backend / Obviamente esto queda fuera del MVP pero quiero añadirlo al roadmap"
-
-Origen directo de las dos historias de roadmap sobre IoT: la carga automática desde sensor ([F.4](docs/user-stories/F.4-carga-automatica-desde-sensor-iot.md)) y la app móvil con sincronización de sensores por Bluetooth ([F.5](docs/user-stories/F.5-app-movil-sincronizacion-sensores-bluetooth.md)) — esta última reordenada más tarde a máxima prioridad del roadmap (ver sección 5, prompts 2 y 3).
-
-**Cómo se guió al LLM:** a diferencia de la lluvia de ideas inicial y abierta con ChatGPT ([chats/chatgp1.txt](chats/chatgp1.txt)), esta sesión usó un prompt de rol e instrucciones muy estructurado, pidiendo explícitamente que la IA no validara la idea por defecto sino que la cuestionara con criterios objetivos (mercado, competencia, complejidad vs. tiempo disponible). Las rondas de refinamiento posteriores fueron peticiones cortas y muy concretas del usuario, que la IA tradujo cada vez en un modelo de entidades propuesto antes de que se llevara a la documentación técnica definitiva.
-
----
-
-## 2. Arquitectura del Sistema
-
-### **2.1. Diagrama de arquitectura:**
-
-*(sin prompt dedicado — el diagrama de alto nivel se redactó directamente en el README junto con la descripción de componentes)*
-
-### **2.2. Descripción de componentes principales:**
-
-*(sin prompt dedicado)*
-
-### **2.3. Descripción de alto nivel del proyecto y estructura de ficheros**
-
-*(pendiente de detallar hasta que exista código de aplicación; ver prompt 1 de la sección 2.4, que ya fijó dónde vive cada cosa en el repo)*
-
-### **2.4. Infraestructura y despliegue**
-
-**Prompt 1:**
-
-> "escribe un CLAUDE.md conciso sobre qué va a ir el proyecto y dónde está cada cosa: backend, frontend, modelo de datos, user stories, tickets, diagramas. Además quiero que se haga un dockerfile para cada uno de los proyectos (backend y frontend) y un iac/local con un docker compose para arrancar ambos y una bbdd postgres"
-
-Petición directa y acotada: documento guía del repo ([CLAUDE.md](CLAUDE.md)) + esqueleto de infraestructura local ([iac/local/](iac/local/)). Se validó la sintaxis del `docker-compose.yml` generado antes de darlo por bueno.
-
-**Prompt 2:**
-
-> "quiero añadir git, ya tengo el github creado que es este: git@github.com:dnavarro-bj/AI4Devs-finalproject.git"
-
-Inicialización del repositorio y conexión al remoto ya creado por el usuario. Se guio explícitamente a no hacer commit todavía ("no quiero que hagas ningún commit de momento"), respetado en todas las sesiones posteriores hasta que el usuario lo pidió expresamente.
-
-### **2.5. Seguridad**
-
-*(pendiente — sin prácticas de seguridad implementadas todavía, no hay código de aplicación)*
-
-### **2.6. Tests**
-
-*(pendiente — no hay código de aplicación todavía)*
-
----
-
-## 3. Modelo de Datos
-
-**Prompt 1:**
-
-> "el proyecto va tomando forma pero el modelo es bastante pobre y quiero añadir alguna cosilla más como mix de soil que va a necesitar cada cactus (dividiendo porcentajes de orgánico y mineral) así que hay que añadir una funcionalidad para registrar estas tierras y luego poder añadirlo en las especies"
-
-Petición de ampliar el modelo con una nueva entidad de dominio (`SoilMix`). El asistente propuso el diseño (catálogo reutilizable vs. campos embebidos en `Species`) y se confirmó la opción de catálogo 1:N mediante pregunta directa antes de implementarla.
-
-**Prompt 2:**
-
-> "me gustaría añadir también localizaciones para estos cactus y un registro de tags para poder buscarlos de forma sencilla (globulares, pequeños, sin espinas, híbridos, etc)"
-
-Ampliación de modelo con dos entidades nuevas (`Location`, `Tag`). Se preguntó explícitamente por la forma de la relación (catálogo plano vs. jerárquico para `Location`; N:M con tabla intermedia vs. array de strings para `Tag`) antes de tocar ningún fichero.
-
-**Prompt 3:**
-
-> "dime el estado actual del proyecto y esta ultima conversacion de definicion que te he pasado y dime que falta, diría que añadir la acided del soilmix y en el registro de datos de los cactus"
-
-En vez de pedir el cambio directamente, el usuario pidió primero un contraste entre lo ya documentado y [primera-definicion-producto.ms](chats/primera-definicion-producto.ms) (que sí mencionaba el pH como variable de sustrato a monitorizar). El asistente confirmó el hueco exacto — faltaba en `SoilMix` y en `CareRecord` — y propuso dónde encajaba cada campo antes de tocar nada; el usuario confirmó con un simple "si, haz todo eso". Resultado: `phMin`/`phMax` como rango recomendado en `SoilMix` (mismo patrón que humedad/temperatura en `Species`) y `soilPh` como lectura real en `CareRecord`.
-
-**Cómo se guió al LLM:** cada ampliación de modelo se trató como una decisión de diseño, no como una ejecución directa — se le pidió al asistente plantear alternativas concretas (con trade-offs) y se eligió una explícitamente antes de propagar el cambio a modelo de datos, README, historias de usuario y tickets a la vez, manteniendo todo consistente.
-
----
-
-## 4. Especificación de la API
-
-*(sin prompt dedicado — los endpoints se fueron añadiendo como consecuencia directa de cada cambio de modelo de datos, documentados junto a él; ver sección 3)*
-
----
-
-## 5. Historias de Usuario
-**Prompt 1:**
-
-> "está bastante bien, me gustaría en docs, crear una carpeta para user stories e ir añadiendo ahí un archivo por userstory, otra carpeta de tickets y un archivo por ticket. En las historias de usuario quiero añadir más aunque no entren (las historias deben de ser del tipo 0.1 - Registrar cactus...) y las que no entren en el alcance tendrán que tener una codificación distinta para que estén al final del todo"
-
-Definió la convención de organización (`0.x` para alcance MVP, `F.x` para roadmap, un fichero por historia) que se ha mantenido durante todo el proyecto.
-
-**Prompt 2:**
-
-> "quiero que añadas una app movil en el roadmap"
-
-Alta inicial de una historia de roadmap (`F.x`) genérica de app móvil.
-
-**Prompt 3:**
-
-> "la app movil para registrar via bluetooth los datos de los sensores y que se sincronice con el backend debería tener mucha más prioridad creo yo"
-
-Corrección de prioridad sobre el prompt anterior: obligó a renumerar todo el bloque `F.x` (respetando que "el orden de los archivos es el orden de prioridad", regla fijada en el prompt 1) y a reformular la historia genérica de "app móvil nativa" como algo concreto (sincronización de sensores por Bluetooth, historia [F.5](docs/user-stories/F.5-app-movil-sincronizacion-sensores-bluetooth.md)), en vez de mantenerla como placeholder de baja prioridad.
-
-**Cómo se guió al LLM:** primero se fijaron las reglas de organización del repositorio (una historia/ticket por fichero, convención de numeración por prioridad); después, el feedback de priorización en lenguaje natural ("mucha más prioridad") se tradujo en una operación mecánica pero delicada (renumerar 9 ficheros, arreglar enlaces cruzados y cabeceras), verificando al final que no quedaran referencias rotas.
-
----
-
-## 6. Tickets de Trabajo
-
-*(misma convención de organización que las historias de usuario — ver prompt 1 de la sección 5, que creó a la vez las carpetas `docs/user-stories/` y `docs/tickets/` con un fichero por ticket)*
-
----
-
-## 7. Pull Requests
-
-*(pendiente — se documentará aquí una vez abiertas las PRs de cada entrega)*
-
----
-
-## Notas generales de uso de la IA
-
-* Todo el trabajo de documentación (README, modelo de datos, historias, tickets, diagramas Mermaid) se ha generado con Claude Code, siempre a partir de instrucciones en español dadas de forma incremental, revisando cada resultado antes de pedir el siguiente cambio.
-* La fase de producto tuvo dos etapas, ambas antes de empezar a usar Claude Code: primero una lluvia de ideas abierta con ChatGPT ([chatgp1.txt](chats/chatgp1.txt) / [chat gpt 1.pdf](chats/chat%20gpt%201.pdf), y [chat gpt 2.pdf](chats/chat%20gpt%202.pdf)) para decidir el dominio, arrancada con el prompt "Tengo unos 500 cactus y como entenderás, gestionarlos todos es bastante lío [...]"; después un análisis formal con prompt estructurado de rol ([primera-definicion-producto.ms](chats/primera-definicion-producto.ms), sección 1 de este documento).
-* Ajuste humano constante: ninguna entidad o decisión de alcance se ha aceptado tal cual la propuso la IA sin al menos una pregunta de confirmación (tipo de relación de datos, alcance del MVP vs. roadmap, nombres de campos); varias funcionalidades sugeridas por ChatGPT (hardware IoT, riego físico automatizado, visión artificial) se descartaron explícitamente del MVP por exceder las ~30h disponibles.
+Esta selección recoge un prompt especialmente relevante para cada una de las tres áreas solicitadas
+en la entrega: modelo de datos, frontend y backend. Las conversaciones completas se conservan en
+[chats/](chats/) y los textos citados mantienen la redacción original.
+
+## 1. Modelo de datos — definición del alcance funcional
+
+Fuente: [conversación del 3 de septiembre de 2026](chats/2026-09-03.md), 00:00.
+
+### Prompt
+
+> quiero hacer unos wireframes y prototipos, esto tendrá que ir en la caperta docs y esa luego será
+> la referencia visual para implementar las distintas pantallas y features del front
+>
+> pero antes de nada vamos a revisar las user stories. Ahora mismo tenemos un listado de cactus y
+> algunas cosas más donde se registran pero solo lo quería como prueba y para ver pintado de datos.
+> Ahora quiero ya a ponerme en serio con todas las funcionalidades así que vamos por partes.
+>
+> Quiero que des una búsqueda por inet y me digas que cosas básicas necesitaría para gestionar unos
+> 500-2000 cactus incluyendo lo que ya tenemos del modelo actual, primero a gran escala para poderlas
+> poner en el menu lateral
+>
+> Yo tendría un dashboard que mirara a ver si hay alguna alerta sobre algunas plantas, tendría
+> secciones para añadir localizaciones, soil mix, especies, alertas, configuración
+>
+> Arriba en la barra tendría el buscador
+>
+> Todas las pantallas deben tener un breadcrumbs
+
+### Relevancia y resultado
+
+Es el origen del modelo de datos conceptual del producto completo. Antes de decidir tablas o
+relaciones se investigaron las necesidades de una colección de 500–2000 ejemplares y se definieron
+las funcionalidades que el modelo debía soportar.
+
+Las siguientes rondas de conversación añadieron fotografías, descripciones, floraciones,
+comentarios, códigos de inventario, historial, tareas y automatizaciones futuras. A partir de ese
+alcance se identificaron o diseñaron entidades como `Species`, `Plant`, `SoilMix`, `Location`,
+`Tag`, `CareRecord`, fotografías, eventos, intervenciones, tareas y alertas, además de sus relaciones
+y ciclos de vida.
+
+El resultado se consolidó en la
+[definición funcional y de UX](docs/producto/definicion-funcional-y-ux.md) y se trasladó a tres
+vistas del modelo:
+
+- [Modelo de datos actual](docs/diagramas/modelo-datos-actual.md).
+- [Borrador de gestión de plantas](docs/diagramas/borrador-modelo-datos-gestion.md).
+- [Borrador de tareas y alertas](docs/diagramas/borrador-modelo-datos-tareas.md).
+
+La principal aportación humana fue partir del problema y de la forma de trabajar, no de una lista de
+tablas. También se corrigieron propuestas posteriores de la IA, como dividir `CareRecord`: el riego
+se mantuvo junto a las mediciones porque será un dato observable cuando se automatice y porque se
+quiere correlacionar con el estrés de las plantas.
+
+## 2. Frontend — arquitectura orientada a features
+
+Fuente: [conversación del 6 de septiembre de 2026](chats/2026-09-06.md), 05:48.
+
+### Prompt
+
+> de momento está bien pero vamos a hacer una cosa. Quiero especificar un poco la arquitectura del
+> frontend así como hice con el back. Quiero que el front tenga una arquitectura orientada a
+> features, puedes ver el diseño en ../../bjaland/hub4fans/studio-monorepo/frontend, si echas un
+> vistazo a su claude.md verá´s como lo quiero
+
+### Relevancia y resultado
+
+Este prompt afectó a todo el frontend, no solo a una pantalla. En lugar de describir la arquitectura
+desde cero, se proporcionó como referencia otro proyecto real del autor para que la IA extrajera el
+patrón y lo adaptara a Cactify.
+
+El resultado fue [ADR-015](docs/adr/ADR-015-arquitectura-del-frontend.md), el ticket
+[T-25](docs/tickets/T-25-arquitectura-del-frontend.md) y la migración del código a una organización
+por features con el siguiente orden de dependencias:
+
+```text
+Component → Composable → Service → HTTP
+                ↘ Store, solo para estado compartido
+```
+
+También se fijaron estas reglas:
+
+- Los componentes no acceden al API ni al store directamente.
+- Los composables contienen el estado y la orquestación de cada caso de uso.
+- Los services son la única capa que habla con el backend.
+- Los errores viajan como valores mediante `ServiceResponse<T>`.
+- Los DTO no llegan a los componentes.
+- Los datos de ejemplo se consumen desde los services tras una bandera.
+
+La propuesta de la IA se revisó antes de aplicarla: se conservaron el CSS propio y los diálogos de
+Cactify, y no se copiaron elementos del proyecto de referencia que no encajaban, como Tailwind,
+multi-tenant o internacionalización por feature.
+
+## 3. Backend — generación de recomendaciones con IA
+
+Fuente: [conversación del 2 de septiembre de 2026](chats/2026-09-02.md), 14:56.
+
+### Prompt
+
+> te voy a mandar esto que es un prompt algo antiguo antes de los cambios que hemos hecho hoy,
+> cualqueir contradicción prevalece lo que hayamos hecho hoy: Prepara el change de T-04
+> (docs/tickets/T-04-servicio-de-recomendaciones-con-ia.md, historia 0.4): servicio y endpoint de
+> recomendacion de IA por lectura. No lo propongas hasta archivar api-crud-plantas y
+> api-lecturas-cultivo: openspec/specs/ solo contiene data-model. Numera la migracion por lo que
+> quede libre en backend/src/main/resources/db/migration tras T-03 (hoy solo V1 y V2); ADR-001
+> prohibe editar una aplicada.
+>
+> No reinventes: la tabla ai_recommendation, la entidad AIRecommendation (var riskLevel: String;
+> risk_level TEXT NOT NULL, sin CHECK ni UNIQUE) y AIRecommendationId. Reutiliza el patron puerto en
+> domain/repos (findOneById) mas Jpa*Repository en infrastructure/persistence sin adaptador, amplia
+> web/errors/ApiExceptionHandler.kt, pon las excepciones en application/ApplicationExceptions.kt y
+> extiende AbstractApiIntegrationTest, cuyo clearPlants() ya borra ai_recommendation. ADRs
+> vinculantes que openspec/config.yaml no resume (llega a ADR-005): ADR-006 enmendado (adaptador de
+> OpenAI en infrastructure; DTOs montados en application dentro de la transaccion, open-in-view
+> false), ADR-007 (da el codigo de RiskLevel y RiskLevelConverter con @Converter(autoApply=true) para
+> infrastructure/persistence/converters, hoy vacio: aplicalo, no lo re-decidas) y ADR-008 (ids como
+> cadena). Por ADR-002 las restricciones nuevas bajan a la base de datos; declara el impacto sobre la
+> capability archivada data-model.
+>
+> Decide, con la alternativa descartada escrita. Cuantos campos persiste la recomendacion: 0.4,
+> README 1.2, flujo-e2e.md y T-05 piden riesgo, explicacion, accion y prioridad; T-04 parsea dos;
+> dejar dos columnas, anadir recommended_action y priority (enum con su CHECK), o JSONB; si te quedas
+> en dos, apunta el ajuste documental. Verbo del endpoint: el GET generador del ticket frente a POST
+> que genera mas GET que solo lee (404 si falta); condiciona a T-06 (hasta 25 llamadas por pantalla)
+> y T-07. UNIQUE (care_record_id), inexistente pese al ||--o| del diagrama, y que devuelve la
+> carrera: la existente o 409. Vocabulario de RiskLevel: low/medium/high de ADR-007 frente a
+> bajo/moderado/alto de README:284 y del criterio 1 del ticket. Punto de sustitucion del proveedor
+> para que T-07 corra sin red (ADR-006 no formalizo puertos para la IA): no hay mockk, WireMock ni
+> MockWebServer. Cliente, modelo, timeout y reintentos: no hay dependencia de OpenAI ni cliente HTTP
+> salvo starter-web en build.gradle.kts, ni propiedades suyas en application.yml; OPENAI_API_KEY ya
+> llega por docker-compose. Codigo del fallo del proveedor: 502, 503 o 424. Definicion de ultimo
+> riego (water_amount_ml > 0 frente a IS NOT NULL), que va al prompt si no hay ninguno, y si las
+> desviaciones van precalculadas contra species.min_*/max_*. Que responde si el careRecordId cuelga
+> de otra planta. Y donde se documenta el prompt: prompts.md ya existe con otro proposito.
+>
+> Dos trampas pagadas: RiskLevel(value) lanza IllegalArgumentException, hoy sin handler ni
+> server.error configurado, y saldria como 500 sin campo message; AIRecommendation.createdAt lleva
+> insertable=false pero NO @Generated(event=[EventType.INSERT]) como Plant.createdAt, y vuelve null
+> tras el insert.
+>
+> Non-goals: overrides por ejemplar (0.7), API de especies, frontend, regeneracion, resiliencia
+> avanzada, OpenAPI y autenticacion; el presupuesto de ~30 h aprieta.
+>
+> Nombre del change: recomendaciones-ia
+
+### Relevancia y resultado
+
+Este prompt desarrolla la funcionalidad diferencial del backend y conecta API, aplicación, dominio,
+persistencia e integración externa. No ordena directamente una solución: enumera las decisiones que
+el diseño debe cerrar, exige comparar alternativas y delimita expresamente lo que queda fuera.
+
+El change resultante definió:
+
+- `POST` para generar una recomendación y `GET` para consultar la existente.
+- Riesgo, explicación, acción recomendada y prioridad como respuesta persistida.
+- Una única recomendación por lectura, con idempotencia también ante peticiones concurrentes.
+- Un puerto de aplicación y un adaptador de OpenAI en infraestructura.
+- Un doble del proveedor para ejecutar los tests sin acceder a la red.
+- Desviaciones calculadas por el backend contra los rangos reales de la especie.
+- Traducción de los fallos de red, timeout o parseo a un error controlado `502`.
+
+Durante la revisión se actualizaron las partes antiguas del prompt con las decisiones más recientes:
+el `Clock` y el manejo de `IllegalArgumentException` ya estaban resueltos, y la consulta del último
+riego debía ignorar registros posteriores a la lectura analizada. El resultado está documentado en
+la capability de recomendaciones, el código del backend y
+[los prompts que Cactify envía a la IA en ejecución](docs/prompts-ia.md).
+
+## Conclusión
+
+Los tres prompts muestran usos distintos de la IA durante el proyecto: descubrir las necesidades
+que dan forma al modelo, adaptar una arquitectura frontend ya conocida y diseñar una integración de
+backend compleja mediante decisiones contrastadas. En los tres casos, la salida fue revisada y
+corregida antes de incorporarse al proyecto.
