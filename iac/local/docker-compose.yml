@@ -26,7 +26,7 @@ services:
       PAGE_SIZE_DEFAULT: ${PAGE_SIZE_DEFAULT:-25}
       PAGE_SIZE_MAX: ${PAGE_SIZE_MAX:-500}
     ports:
-      - "8080:8080"
+      - "8091:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -35,9 +35,9 @@ services:
     build:
       context: ../../frontend
     environment:
-      NUXT_PUBLIC_API_BASE_URL: http://localhost:8080
+      NUXT_PUBLIC_API_BASE_URL: http://localhost:8091
     ports:
-      - "3005:3000"
+      - "3500:3000"
     depends_on:
       - backend
 

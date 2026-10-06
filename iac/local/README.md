@@ -15,14 +15,14 @@ docker compose up --build
 | Servicio | Puerto | Descripción |
 |---|---|---|
 | `db` | 25432 | PostgreSQL 16 (el contenedor usa 5432 dentro de la red) |
-| `backend` | 8080 | API Spring Boot ([../../backend](../../backend)) |
-| `frontend` | 3005 | Nuxt 4 ([../../frontend](../../frontend)) |
+| `backend` | 8091 | API Spring Boot ([../../backend](../../backend)) |
+| `frontend` | 3500 | Nuxt 4 ([../../frontend](../../frontend)) |
 
 Al arrancar, el backend aplica las migraciones de Flyway y carga los datos semilla, así que la API queda usable sin ningún paso manual:
 
 ```bash
-curl localhost:8080/locations
-curl 'localhost:8080/plants?tag=400001'
+curl localhost:8091/locations
+curl 'localhost:8091/plants?tag=400001'
 ```
 
 El frontend incluye el inventario, la ficha y alta de plantas, el historial de lecturas y análisis,
