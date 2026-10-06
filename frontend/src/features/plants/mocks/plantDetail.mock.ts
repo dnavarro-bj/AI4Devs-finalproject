@@ -41,15 +41,11 @@ export const MOCK_LAST_BLOOM = { value: 'Mayo de 2026', context: 'Duró 4 días'
 /**
  * Eventos de la cronología que no son lecturas — los sustituye T-20, cuando exista la espina de
  * eventos. Las lecturas sí son reales y salen del API.
+ *
+ * **No hay evento «Riego»**: el riego es una medida más de la lectura (`waterAmountMl`) y se
+ * muestra como tal. Un tipo de evento propio duplicaría el dato en dos sitios.
  */
 export const MOCK_EVENTS = [
-  {
-    id: 'm1',
-    type: 'water',
-    title: 'Riego de mantenimiento',
-    at: '2026-08-16T08:42:00Z',
-    body: '450 ml · registrado desde la tarea «Regar bandejas A3 y A4».',
-  },
   {
     id: 'm2',
     type: 'photo',

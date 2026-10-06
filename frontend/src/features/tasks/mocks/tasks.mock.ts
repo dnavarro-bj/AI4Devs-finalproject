@@ -17,7 +17,7 @@ export const TASKS_MOCK: Task[] = [
   { id: 't1', type: 'root-pruning', title: 'Revisar raíces antes del trasplante', target: '4 plantas', location: 'Invernadero 1', due: '2026-08-31', time: null, priority: 'high', status: 'pending' },
   { id: 't2', type: 'other', title: 'Revisar CAT-GRUSS-01', target: 'Asiento de suegra · Bandeja A3', location: 'Invernadero 1', due: '2026-09-01', time: null, priority: 'normal', status: 'pending' },
   { id: 't3', type: 'watering', title: 'Regar bandejas A3 y A4', target: '31 plantas', location: 'Invernadero 1', due: '2026-09-03', time: '09:00', priority: 'high', status: 'pending' },
-  { id: 't4', type: 'repotting', title: 'Revisar ejemplares marcados', target: '6 plantas · selección guardada', location: 'Invernadero 1', due: '2026-09-03', time: null, priority: 'normal', status: 'pending' },
+  { id: 't4', type: 'repotting', title: 'Revisar ejemplares marcados', target: '6 plantas', location: 'Invernadero 1', due: '2026-09-03', time: null, priority: 'normal', status: 'pending' },
   { id: 't5', type: 'sun-protection', title: 'Instalar sombreo temporal', target: 'Bancada sur', location: 'Invernadero 2', due: '2026-09-04', time: '08:30', priority: 'normal', status: 'pending' },
   { id: 't6', type: 'watering', title: 'Riego de la zona exterior', target: '407 plantas', location: 'Zona exterior', due: '2026-09-08', time: null, priority: 'normal', status: 'pending' },
   { id: 't7', type: 'other', title: 'Revisión de ejemplares nuevos', target: '8 plantas', location: 'Invernadero 1', due: '2026-09-10', time: null, priority: 'normal', status: 'pending' },

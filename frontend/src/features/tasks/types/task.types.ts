@@ -21,7 +21,7 @@ export interface Task {
   id: string
   type: TaskType
   title: string
-  /** A qué se dirige, en una línea: «31 plantas», «6 plantas · selección guardada». */
+  /** A qué se dirige, en una línea: «31 plantas», «Bancada sur». Una selección hecha en el inventario no se guarda: la tarea guarda las plantas. */
   target: string
   location: string
   /** `YYYY-MM-DD`. «Vencida» se calcula contra la fecha de referencia, no se almacena. */

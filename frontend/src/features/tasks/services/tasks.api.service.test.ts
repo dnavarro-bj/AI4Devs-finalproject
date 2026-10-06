@@ -18,6 +18,12 @@ describe('tasksApiService', () => {
     expect(second.data![0]!.title).not.toBe('cambiada')
   })
 
+  it('ningún destino habla de una «selección guardada»: la tarea guarda las plantas, no la selección', async () => {
+    const result = await tasksApiService.list()
+
+    expect(result.data!.some((task) => /selecci[óo]n/i.test(task.target))).toBe(false)
+  })
+
   it('«vencida» no se almacena: ninguna tarea trae ese estado', async () => {
     const result = await tasksApiService.list()
 

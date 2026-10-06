@@ -161,3 +161,15 @@ describe('ficha de la planta', () => {
     expect(wrapper.text()).toContain('T-19')
   })
 })
+
+/**
+ * El riego es una medida de la lectura, no un tipo de evento: la cronología no ofrece «Riego»
+ * como filtro propio ni lo inventa en la maqueta.
+ */
+describe('cronología de la ficha: el riego no es un evento', () => {
+  it('no ofrece «Riego» como tipo de evento ni lo simula en los datos de ejemplo', async () => {
+    const { MOCK_EVENTS } = await import('@features/plants/mocks/plantDetail.mock')
+
+    expect(MOCK_EVENTS.some((event) => event.type === 'water')).toBe(false)
+  })
+})

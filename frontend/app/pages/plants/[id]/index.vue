@@ -67,7 +67,6 @@ const timelineEvents = computed(() => [...readingEvents.value, ...MOCK_EVENTS])
 /** El color de la marca es lo que hace la cronología legible de un vistazo, como en el wireframe. */
 const TIMELINE_TYPES = [
   { value: 'reading', label: 'Lectura de cultivo', mark: '∿', tone: 'brand' as const },
-  { value: 'water', label: 'Riego', mark: '◇', tone: 'info' as const },
   { value: 'photo', label: 'Fotografía y comentario', mark: '▧', tone: 'brand' as const },
   { value: 'bloom', label: 'Floración', mark: '✣', tone: 'warning' as const },
   { value: 'move', label: 'Movimiento', mark: '⌖', tone: 'neutral' as const },

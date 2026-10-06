@@ -138,6 +138,8 @@ describe('editor de una especie', () => {
 
     expect(wrapper.find('[data-test="species-exposure"]').text()).toContain('Pleno sol')
     expect(wrapper.find('[data-test="species-environment"]').text()).toContain('Exterior')
+    // La estacionalidad la dice el calendario anual: un cuarto valor duplicaría el dato.
+    expect(wrapper.find('[data-test="species-environment"]').text()).not.toContain('Estacional')
 
     const seasons = wrapper.find('[data-test="species-seasons"]')
     expect(seasons.attributes('data-mock')).toBeUndefined()

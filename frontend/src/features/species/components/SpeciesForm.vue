@@ -74,7 +74,6 @@ const ENVIRONMENT_OPTIONS = [
   { value: 'inside', label: 'Interior' },
   { value: 'outside', label: 'Exterior' },
   { value: 'both', label: 'Ambos' },
-  { value: 'seasonal', label: 'Estacional' },
 ]
 
 const YEAR_ROWS = [
