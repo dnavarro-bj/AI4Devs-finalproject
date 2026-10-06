@@ -4,6 +4,8 @@
 
 **Fase siguiente:** [borrador-modelo-datos-tareas.md](borrador-modelo-datos-tareas.md), que organiza el trabajo *sobre* estas plantas (tareas y alertas). Nada de aquí depende de aquello; aquello sí depende de esto.
 
+**Revisado contra el frontend (6 de octubre de 2026).** Tras terminar el bloque 0 se cruzó este borrador con lo que enseñan las pantallas ya construidas. Los campos que el frontend pide y el borrador no tenía están en el diagrama marcados como *«propuesto por el frontend»*, y lo que cambia el esquema y no está decidido, en «Pendiente de decidir» (puntos 10 a 20). Ver también [Contraste con el frontend](#contraste-con-el-frontend).
+
 **Alcance de la fase:** dar de alta plantas, listarlas y filtrarlas a escala, editarlas, identificarlas con un código estable, fotografiarlas, ubicarlas y moverlas, registrar medidas e intervenciones, comentarlas, anotar sus floraciones y consultar todo lo anterior en una sola cronología.
 
 ## Diagrama completo
@@ -14,7 +16,7 @@ Incluye lo que ya existe. Lo **nuevo** de esta fase está marcado en la tabla de
 erDiagram
     SOIL_MIX ||--o{ SPECIES : "recomienda"
     SPECIES ||--o{ PLANT : "es de"
-    SPECIES ||--o{ SPECIES_GROWTH_PERIOD : "crece en"
+    SPECIES ||--o{ SPECIES_PERIOD : "se calendariza en"
     SPECIES ||--o{ SPECIES_MEDIA : "ilustra con"
     LOCATION ||--o{ LOCATION : "contiene"
     LOCATION ||--o{ PLANT : "ubica"
@@ -50,19 +52,21 @@ erDiagram
         int maxLightHours
         string wateringGuideline
         enum sunExposure "sombra|semisombra|soleado|pleno_sol"
-        enum environment "interior|exterior|ambos"
-        int bloomStartMonth
-        int bloomEndMonth
-        string bloomDescription
+        enum environment "interior|exterior|ambos; la estacionalidad la dice el calendario"
+        string bloomDescription "el periodo de floracion es una fila de SPECIES_PERIOD"
+        string bloomColor "propuesto por el frontend"
+        string bloomMaturity "propuesto por el frontend: madurez aproximada"
+        string bloomTypicalDuration "propuesto por el frontend"
         TSID soilMixId FK
     }
 
-    SPECIES_GROWTH_PERIOD {
+    SPECIES_PERIOD {
         TSID id PK
         TSID speciesId FK
-        int startMonth
-        int endMonth
-        enum periodType "crecimiento|reposo|transicion"
+        enum periodType "crecimiento|reposo|floracion|riego"
+        int startMonth "1-12"
+        int endMonth "1-12; inicio > fin = cruza el anio (nov-feb)"
+        enum intensity "solo riego: escaso|moderado|abundante"
         string notes
     }
 
@@ -74,14 +78,23 @@ erDiagram
         decimal phMin
         decimal phMax
         string description
+        enum drainage "propuesto por el frontend (T-27)"
+        enum moistureRetention "propuesto por el frontend (T-27)"
+        string preparationNotes "propuesto por el frontend (T-27)"
     }
 
     LOCATION {
         TSID id PK
         TSID parentId FK "nulo en la raiz"
+        string code UK "propuesto por el frontend: LOC-..."
         string name
         string path "ruta materializada"
         string description
+        enum locationType "propuesto por el frontend, sin valores definidos"
+        int capacity "propuesto por el frontend: orientativa"
+        string operationalNotes "propuesto por el frontend"
+        enum environment "propuesto por el frontend: interior|cubierto|exterior"
+        enum sunExposure "propuesto por el frontend: exposicion predominante"
     }
 
     PLANT {
@@ -95,7 +108,7 @@ erDiagram
         int germinationYear "puede ser nulo"
         int germinationMonth "puede ser nulo aunque haya anio"
         date acquiredOn
-        string origin "vivero, intercambio, germinacion propia"
+        string origin "vivero, intercambio, germinacion propia; el frontend lo pinta como select, ver pendiente 14"
     }
 
     PLANT_CARE_OVERRIDE {
@@ -115,6 +128,7 @@ erDiagram
     TAG {
         TSID id PK
         string name UK
+        string description "propuesto por el frontend: descripcion de uso"
     }
 
     PLANT_TAG {
@@ -206,6 +220,7 @@ erDiagram
         TSID plantId FK
         TSID mediaId FK
         TSID eventId FK "nulo si no cuelga de un evento"
+        enum purpose "propuesto por el frontend: general|detalle|etiqueta_fisica"
         int position
         boolean isPrimary
     }
@@ -218,13 +233,26 @@ erDiagram
 | Códigos | `SPECIES.code`, `SPECIES.nextSequence`, `PLANT.code` | §6 del documento de producto: identidad legible, estable e imprimible |
 | Ficha del ejemplar | `PLANT` ampliada | Descripción, estado, germinación, adquisición y procedencia (§5.2, §11) |
 | Herencia | `PLANT_CARE_OVERRIDE` | La historia [0.7](../user-stories/0.7-personalizar-cuidados-de-un-ejemplar.md), pendiente desde T-01 |
-| Especie ampliada | `SPECIES` ampliada, `SPECIES_GROWTH_PERIOD` | Exposición, entorno, épocas de crecimiento y floración esperada (§9) |
-| Espacio | `LOCATION.parentId`/`path`, `PLANT_MOVEMENT` | Jerarquía y trazabilidad del movimiento (§16), la historia [F.1](../user-stories/F.1-organizar-cactus-por-ubicacion-jerarquica.md) |
+| Especie ampliada | `SPECIES` ampliada, `SPECIES_PERIOD` | Exposición, entorno y calendario anual —crecimiento, reposo, floración y riego— (§9) |
+| Espacio | `LOCATION.parentId`/`path`, `PLANT_MOVEMENT` y, **a petición del frontend**, `code`, `locationType`, `capacity`, `operationalNotes`, `environment` y `sunExposure` | Jerarquía y trazabilidad del movimiento (§16), la historia [F.1](../user-stories/F.1-organizar-cactus-por-ubicacion-jerarquica.md), y la ficha de localización del prototipo |
 | Multimedia | `MEDIA_ASSET`, `SPECIES_MEDIA`, `PLANT_MEDIA` | Fotografías de especie y galería del ejemplar (§8) |
 | Cronología | `PLANT_EVENT` y sus satélites | El historial unificado de la ficha (§7.3) |
 | Intervenciones | `INTERVENTION` | Trasplante, sustrato, tratamiento y poda: lo de §13.2 que **no** es una medida |
 
 `CARE_RECORD` y `AI_RECOMMENDATION` **no cambian**.
+
+## Contraste con el frontend
+
+Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aquí solo se recoge el **qué**; lo que cambia el esquema y no está decidido va a «Pendiente de decidir».
+
+**Campos que las pantallas piden y el borrador no tenía** (ya añadidos al diagrama como *propuestos por el frontend*): código, tipo, capacidad, notas, entorno y exposición de la localización; color, madurez y duración habitual de la floración de la especie; drenaje, retención y notas de preparación del sustrato; descripción de la etiqueta; propósito de la fotografía de planta.
+
+**Una contradicción con una decisión ya tomada.** La cronología de la ficha tiene, **solo en la maqueta (T-20)**, un tipo de evento «Riego» con su cantidad en ml. Se decidió que **el riego vive dentro de `CareRecord`** y no en `PLANT_EVENT`, y la ficha ya deriva «Último riego» de las lecturas reales. El evento «Riego» de la maqueta debe leerse como **una lectura con `waterAmountMl`**, no como un tipo de evento propio. Los tipos que sí son eventos son los del diagrama: comentario, intervención, floración, movimiento y cambio de estado.
+
+**Dos huecos que el borrador no cierra:**
+
+* **`INTERVENTION` no aparece en ninguna pantalla.** Es una entidad núcleo —trasplante, sustrato, tratamiento, poda— y el frontend solo la insinúa a través de dos tipos de *tarea* («Cambio de maceta», «Poda de raíces»). Falta decir qué evento crea cada tipo de tarea al completarse. Ver el [borrador de tareas](borrador-modelo-datos-tareas.md).
+* **El formulario de lecturas tiene un campo «Observación»** (maqueta, T-20) que `CARE_RECORD` no tiene. Si se admite, es un `PLANT_COMMENT` enlazado a la lectura, no una columna: el borrador decide que la lectura es una serie de medidas.
 
 ## Decisiones ya tomadas
 
@@ -234,6 +262,9 @@ erDiagram
 * **`PLANT_EVENT` con satélites tipados**, no una tabla con payload JSON (perdería las invariantes que [ADR-002](../adr/ADR-002-restricciones-en-base-de-datos.md) exige en el esquema) ni una unión de quince tablas (ordenar y paginar así no escala a 2000 plantas, y [ADR-009](../adr/ADR-009-paginacion-obligatoria.md) obliga a paginar).
 * **Los overrides son columnas nullable en una tabla 1-1**, no pares clave-valor: nulo significa «hereda», y así cambiar la especie se propaga sin recalcular nada. La alternativa clave-valor es más flexible pero pierde el tipado y las invariantes.
 * **`batchId` en `PLANT_EVENT`** para que una operación sobre varias plantas deje su evento en cada ficha sin que el sistema pierda que fue una sola operación (§13.3).
+
+* **El entorno de la especie tiene tres valores —`interior|exterior|ambos`— y no existe «Estacional»** (6 oct 2026). La estacionalidad ya la expresa el calendario anual; un cuarto valor duplicaría el dato en dos sitios. Se retira «Estacional» del formulario de especie. Resuelve la pregunta 5 del §24 **para la especie**; la pregunta de si una *planta* concreta puede moverse de entorno por estación es otra y sigue abierta.
+* **El calendario anual de la especie es una sola tabla de periodos por tipo** (6 oct 2026): `SPECIES_PERIOD` con tipo `crecimiento|reposo|floracion|riego`, mes de inicio y de fin, e `intensity` solo para riego. Un periodo que **cruza el año se guarda con inicio > fin** (noviembre a febrero), con `CHECK` de rango 1–12 en el esquema. La floración deja de vivir en columnas de `SPECIES` y pasa a ser una fila más; `transicion` desaparece del enum porque nadie la pide.
 
 ## Pendiente de decidir
 
@@ -246,3 +277,14 @@ erDiagram
 7. **Datos parciales.** `germinationMonth` nulo con `germinationYear` informado choca con el estilo de invariantes estrictas de [ADR-011](../adr/ADR-011-invariantes-de-negocio-en-el-dominio.md). Necesita una regla escrita, no una excepción por entidad.
 8. **Vistas guardadas y columnas configurables** del inventario (§5.1): probablemente una tabla `SAVED_VIEW` con el filtro serializado. No se dibuja todavía porque puede caer al final de la fase o pasar a la siguiente.
 9. **`LOCATION.path`** es redundante con `parentId`, y se propone porque abarata las dos consultas que el producto pide en todas partes: ruta completa para los breadcrumbs y recuento de descendientes. Falta decidir quién lo mantiene coherente al mover una localización.
+10. ~~¿Existe el entorno «Estacional»?~~ **Resuelta (6 oct 2026):** no, el entorno queda en tres valores. Sigue abierto si la localización (`interior|cubierto|exterior`) y la especie deben usar el mismo conjunto: son conceptos distintos —una cubre el sitio, la otra la tolerancia de la planta— y de momento se mantienen separados.
+11. ~~Calendario anual de la especie~~ **Resuelta (6 oct 2026):** una sola tabla `SPECIES_PERIOD` por tipo, con el cruce de año como inicio > fin. Ver «Decisiones ya tomadas».
+12. **Grupos de cultivo de especies** («Pleno sol», «Sensibles al frío: mínima > 8 °C», «Crecimiento invernal»). Son filtros guardados, pero sobre **especies**, y el punto 8 solo contempla vistas de plantas. Depende de si los grupos son manuales o dinámicos (§24.11).
+13. **«Año de cultivo» en la ficha de especie.** No está claro qué dato es ni de dónde sale; hasta saberlo, no tiene campo.
+14. **Procedencia del ejemplar: ¿texto libre o enum?** El borrador dice texto libre y el formulario la pinta como select.
+15. **Componentes del sustrato.** El frontend muestra una lista de «componentes orientativos» con su proporción. Es una lista de longitud variable: ¿tabla `SOIL_MIX_COMPONENT` o descripción de texto? Lo decide T-27.
+16. **Código de las localizaciones.** El frontend muestra `LOC-···`, pero T-15 solo cubre códigos de especie y de ejemplar. Falta un ticket que lo cubra o retirar el código de la maqueta.
+17. **Valores de `LOCATION.locationType`.** El select del formulario existe y está vacío. Sin valores no se puede hacer un enum (ADR-007).
+18. **Texto de la etiqueta.** Decidir si `TAG.description` es un campo opcional y quién lo edita.
+19. **Propósito de la foto de planta**: los tres valores (`general`, `detalle`, `etiqueta_fisica`) salen del formulario de alta del frontend y no están confirmados como enum.
+20. **Configuración de la aplicación** (formato de códigos, unidades, umbrales de alerta, ajustes de IA). Ningún borrador la modela y ningún ticket la recoge. El **formato de código** sí toca este borrador: si el prefijo y los dígitos son configurables, `SPECIES.code` y `PLANT.code` guardan el texto ya compuesto y el cambio de formato no puede reescribir los existentes.
