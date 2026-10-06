@@ -32,6 +32,17 @@ describe('armazón de la aplicación', () => {
     }
   })
 
+  it('el Dashboard abre la navegación, fuera de toda agrupación, y solo se marca en la raíz', async () => {
+    const home = await mountSuspended(DefaultLayout, { route: '/' })
+    const nav = home.find('nav[aria-label="Navegación principal"]')
+    expect(nav.findAll('a')[0]!.text()).toContain('Dashboard')
+    expect(nav.find('.is-active').text()).toContain('Dashboard')
+
+    const elsewhere = await mountSuspended(DefaultLayout, { route: '/tasks' })
+    const active = elsewhere.findAll('nav[aria-label="Navegación principal"] .is-active')
+    expect(active.map((link) => link.text())).toEqual([expect.stringContaining('Tareas')])
+  })
+
   it('alcanza todas las secciones declaradas desde la navegación', async () => {
     const wrapper = await mountSuspended(DefaultLayout)
 
@@ -53,6 +64,7 @@ describe('armazón de la aplicación', () => {
     const wrapper = await mountSuspended(DefaultLayout)
     const router = useRouter()
     const pushed: string[] = []
+    const push = router.push
     router.push = (async (to: unknown) => { pushed.push(String(to)) }) as typeof router.push
 
     const input = wrapper.find('input[role="combobox"]')
@@ -61,6 +73,7 @@ describe('armazón de la aplicación', () => {
     await input.trigger('keydown', { key: 'Enter' })
 
     expect(pushed).toHaveLength(1)
+    router.push = push
   })
 
   it('pinta los breadcrumbs que fija la pantalla', async () => {
@@ -74,6 +87,20 @@ describe('armazón de la aplicación', () => {
     expect(crumbs.text()).toContain('Bola verde')
 
     useBreadcrumbs().clear()
+  })
+
+  it('limpia los breadcrumbs anteriores antes de montar la pantalla siguiente', async () => {
+    const wrapper = await mountSuspended(DefaultLayout, { route: '/tasks' })
+    const router = useRouter()
+
+    useBreadcrumbs().set([{ label: 'Tareas' }])
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('nav[aria-label="Ruta de navegación"]').text()).toContain('Tareas')
+
+    await router.push('/alerts')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('nav[aria-label="Ruta de navegación"]').exists()).toBe(false)
   })
 
   it('la navegación se pliega y se despliega con controles con nombre accesible', async () => {

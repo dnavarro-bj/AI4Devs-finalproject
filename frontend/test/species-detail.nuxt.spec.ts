@@ -79,6 +79,29 @@ describe('ficha de una especie', () => {
     expect(wrapper.find('[data-test="remove-species"]').exists()).toBe(true)
   })
 
+  it('cambia entre resumen, cultivo, fotografías y ejemplares sin abandonar la ficha', async () => {
+    api.get.mockResolvedValue(care())
+
+    const wrapper = await mountSuspended(SpeciesDetail)
+    await settle()
+    const tabs = wrapper.findAll('[role="tab"]')
+
+    expect(tabs.map(item => item.text())).toEqual([
+      'Resumen', 'Cultivo', 'Fotografías', 'Ejemplares',
+    ])
+
+    await tabs[1]!.trigger('click')
+    expect(wrapper.find('[data-test="cultivation-view"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="specimens"]').exists()).toBe(false)
+
+    await tabs[2]!.trigger('click')
+    expect(wrapper.find('[data-test="photos-view"]').text()).toContain('T-19')
+
+    await tabs[3]!.trigger('click')
+    expect(wrapper.find('[data-test="specimens"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="specimens-toolbar"]').exists()).toBe(true)
+  })
+
   /**
    * La ficha del wireframe es mucho más ancha que lo que el API sirve. Lo que falta se declara con
    * su ticket: una sección inventada y sin marcar es indistinguible de una que funciona.

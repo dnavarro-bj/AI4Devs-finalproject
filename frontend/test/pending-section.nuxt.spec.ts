@@ -46,7 +46,7 @@ describe('sección todavía no construida', () => {
     const wrapper = await mountSuspended(SpeciesPage)
 
     expect(useBreadcrumbs().breadcrumbs.value.at(-1)?.label).toBe('Especies')
-    expect(wrapper.find('h1').text()).toBe('Especies')
+    expect(wrapper.find('h1').text()).toContain('Especies')
 
     useBreadcrumbs().clear()
   })

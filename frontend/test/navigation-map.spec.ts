@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { NAVIGATION, sectionAddresses } from '@features/layout/navigation'
+import { HOME, NAVIGATION, isActiveSection, sectionAddresses } from '@features/layout/navigation'
 
 /**
  * Escenarios "Entradas agrupadas" y "Toda sección de la navegación es alcanzable" de la
@@ -20,6 +20,19 @@ describe('mapa de secciones', () => {
       'Administración',
     ])
     expect(NAVIGATION.every((group) => group.entries.length > 0)).toBe(true)
+  })
+
+  it('el Dashboard es la primera entrada, vive en la raíz y no pertenece a ninguna agrupación', () => {
+    expect(HOME.to).toBe('/')
+    expect(sectionAddresses()[0]).toBe('/')
+    expect(NAVIGATION.flatMap((group) => group.entries).map((entry) => entry.to)).not.toContain('/')
+  })
+
+  it('el Dashboard solo se marca activo en la raíz, no en todas las secciones', () => {
+    expect(isActiveSection('/', '/')).toBe(true)
+    expect(isActiveSection('/', '/plants')).toBe(false)
+    expect(isActiveSection('/', '/tasks/1')).toBe(false)
+    expect(isActiveSection('/plants', '/plants/882687672222443468')).toBe(true)
   })
 
   it('ninguna entrada repite dirección', () => {

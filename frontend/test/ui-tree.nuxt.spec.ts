@@ -80,4 +80,17 @@ describe('UiTree', () => {
     expect(wrapper.attributes('role')).toBe('tree')
     expect(wrapper.findAll('[role="treeitem"]').length).toBeGreaterThanOrEqual(4)
   })
+
+  it('puede mostrar identidad, detalle y selección sin conocer el dominio', () => {
+    const wrapper = mount(UiTree, {
+      props: {
+        selected: '1',
+        nodes: [{ id: '1', label: 'Invernadero 1', detail: '6 sublocalizaciones', mark: '⌂', count: 486 }],
+      },
+    })
+
+    expect(wrapper.find('.tree-node__row').classes()).toContain('is-selected')
+    expect(wrapper.find('.tree-node__mark').text()).toBe('⌂')
+    expect(wrapper.text()).toContain('6 sublocalizaciones')
+  })
 })

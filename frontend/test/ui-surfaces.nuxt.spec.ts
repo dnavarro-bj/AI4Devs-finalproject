@@ -31,6 +31,14 @@ describe('UiPanel', () => {
 
     expect(wrapper.classes()).toContain('panel')
   })
+
+  it('separa el antetítulo del título cuando el panel necesita jerarquía', () => {
+    const wrapper = mount(UiPanel, { props: { eyebrow: 'Atención', eyebrowTone: 'danger', title: 'Alertas' } })
+
+    expect(wrapper.find('.panel__eyebrow').text()).toBe('Atención')
+    expect(wrapper.find('.panel__eyebrow').classes()).toContain('is-danger')
+    expect(wrapper.find('h2').text()).toBe('Alertas')
+  })
 })
 
 describe('UiNotice', () => {

@@ -37,6 +37,7 @@ const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>(null)
 
 const tagFilter = ref('')
 const locationFilter = ref('')
+const moreFiltersOpen = ref(false)
 
 const selected = ref<string[]>([])
 
@@ -108,7 +109,7 @@ const COLUMNS = [
   { key: 'location', label: 'Localización', sortable: true },
   { key: 'lastWatering', label: 'Último riego' },
   { key: 'attention', label: 'Atención' },
-  { key: 'actions', label: 'Acciones' },
+  { key: 'actions', label: 'Acciones', visuallyHidden: true },
 ]
 
 /** La identificativa no se puede ocultar, así que no aparece entre las configurables. */
@@ -119,67 +120,91 @@ const columnsOpen = ref(false)
 const asPlant = (row: unknown) => row as PlantSummary
 
 /** Código de ejemplo hasta T-15: el API no expone código de inventario todavía. */
-const mockCode = (id: string) => `CAT-GRUSS-${id.slice(-2)}`
+function mockCode(plant: PlantSummary) {
+  const scientificName = plant.species.scientificName.toLowerCase()
+  const prefix = scientificName.includes('grusonii')
+    ? 'GRUSS'
+    : scientificName.includes('mammillaria')
+      ? 'MAMMI'
+      : scientificName.includes('elegans')
+        ? 'ELEG'
+        : plant.species.scientificName.split(' ')[0]!.slice(0, 5).toUpperCase()
+
+  return `CAT-${prefix}-${plant.id.slice(-2)}`
+}
 </script>
 
 <template>
   <section>
     <UiPageHeader
       title="Plantas"
-      :context="page ? `${page.totalElements} ejemplares` : undefined"
+      eyebrow="Colección"
     >
+      <template #title>
+        Plantas <span class="heading-count">{{ page?.totalElements ?? '—' }}</span>
+      </template>
       <template #actions>
-        <UiButton to="/plants/new" data-test="new-plant">Añadir planta</UiButton>
+        <UiButton to="/plants/new" data-test="new-plant"><span aria-hidden="true">＋</span> Añadir planta</UiButton>
       </template>
     </UiPageHeader>
 
     <UiFilterBar
       :applied="appliedFilters"
       label="Filtros del inventario"
+      density="compact"
       @remove="removeFilter"
       @clear="clearFilters"
     >
-      <UiField
+      <UiToolbarField
         label="Buscar"
-        placeholder="Código, apodo o especie"
+        type="search"
+        icon="⌕"
+        placeholder="Código, apodo o especie · T-21"
         disabled
         data-mock="true"
         data-test="filter-search"
-        help="La búsqueda por texto llega en T-21."
       />
-      <UiField
+      <UiToolbarField
         v-model="locationFilter"
         label="Localización"
         as="select"
-        placeholder="Todas"
+        placeholder="Localización"
         :options="locationOptions"
         data-test="filter-location"
       />
-      <UiField v-model="tagFilter" label="Etiqueta" data-test="filter-tag" />
-      <UiField
+      <UiToolbarField
         label="Especie"
         as="select"
+        placeholder="Especie · T-21"
         :options="[]"
         disabled
         data-mock="true"
         data-test="filter-species"
-        help="El API no filtra por especie todavía."
       />
-      <UiField
+      <UiToolbarField
         label="Estado"
         as="select"
+        placeholder="Estado · T-16"
         :options="[]"
         disabled
         data-mock="true"
         data-test="filter-status"
-        help="El estado del ejemplar llega en T-16."
       />
-      <!-- Sin rótulo propio, pero alineado con los campos: el envoltorio reserva su hueco. -->
-      <UiFieldAction>
-        <UiButton variant="secondary" data-test="configure-columns" @click="columnsOpen = !columnsOpen">
-          Columnas
-        </UiButton>
-      </UiFieldAction>
+      <UiButton variant="secondary" data-test="more-filters" @click="moreFiltersOpen = !moreFiltersOpen">
+        {{ moreFiltersOpen ? 'Menos filtros' : 'Más filtros' }} <span aria-hidden="true">{{ moreFiltersOpen ? '−' : '＋' }}</span>
+      </UiButton>
+      <UiButton
+        variant="icon"
+        label="Configurar columnas"
+        data-test="configure-columns"
+        @click="columnsOpen = !columnsOpen"
+      >
+        ☷
+      </UiButton>
+
+      <div v-show="moreFiltersOpen || tagFilter" class="more-filters">
+        <UiToolbarField v-model="tagFilter" label="Etiqueta" placeholder="Etiqueta" data-test="filter-tag" />
+      </div>
     </UiFilterBar>
 
     <div v-if="columnsOpen" class="columns-picker" data-test="columns-picker">
@@ -223,15 +248,15 @@ const mockCode = (id: string) => `CAT-GRUSS-${id.slice(-2)}`
         <UiButton variant="secondary" disabled data-mock="true">Etiquetar</UiButton>
       </template>
 
-      <!-- La celda identificativa del wireframe: miniatura, código y nombre. -->
       <template #cell-nickname="{ row }">
-        <NuxtLink class="plant-cell" :to="`/plants/${asPlant(row).id}`" data-test="plant-link">
-          <span class="plant-cell__thumb" aria-hidden="true">♧</span>
-          <span>
-            <code data-mock="true">{{ mockCode(asPlant(row).id) }}</code>
-            <strong>{{ asPlant(row).nickname }}</strong>
-          </span>
-        </NuxtLink>
+        <UiEntityCell
+          :title="asPlant(row).nickname"
+          :code="mockCode(asPlant(row))"
+          :to="`/plants/${asPlant(row).id}`"
+          mark="♧"
+          code-mock
+          data-test="plant-link"
+        />
       </template>
 
       <template #cell-species="{ row }">
@@ -262,18 +287,16 @@ const mockCode = (id: string) => `CAT-GRUSS-${id.slice(-2)}`
       </template>
     </UiTable>
 
-    <UiPagination
-      :page="page?.pageNumber ?? 0"
-      :total-pages="page?.totalPages ?? 0"
+    <UiListFooter
+      v-if="page?.content.length"
+      :page="page.pageNumber"
+      :page-size="page.pageSize"
+      :total-elements="page.totalElements"
+      :total-pages="page.totalPages"
       :loading="loading"
       label="Paginación del inventario"
       @update:page="load"
     />
-
-    <p class="inventory__note">
-      El código, el último riego, el nivel de atención, los filtros de especie y estado y las
-      acciones masivas son <strong>maqueta</strong>: llegan con su ticket.
-    </p>
   </section>
 </template>
 
@@ -293,39 +316,15 @@ const mockCode = (id: string) => `CAT-GRUSS-${id.slice(-2)}`
   gap: var(--space-1);
 }
 
-.plant-cell {
-  align-items: center;
-  color: var(--color-ink);
+.heading-count {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-17);
+  font-weight: 400;
+}
+
+.more-filters {
   display: flex;
-  gap: var(--space-2);
-  text-decoration: none;
-}
-
-.plant-cell__thumb {
-  align-items: center;
-  background: var(--color-brand-soft);
-  border-radius: var(--radius-sm);
-  color: var(--color-brand);
-  display: flex;
-  height: 32px;
-  justify-content: center;
-  width: 32px;
-}
-
-/* El código es de ejemplo hasta T-15: se marca, como en la ficha. */
-.plant-cell code {
-  border: 1px dashed var(--color-line-strong);
-  color: var(--color-ink-faint);
-  display: block;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-11);
-  padding: 0 2px;
-  width: fit-content;
-}
-
-.plant-cell strong {
-  display: block;
-  font-size: var(--font-size-13);
+  flex-basis: 100%;
 }
 
 .cell-mock {
@@ -338,9 +337,4 @@ const mockCode = (id: string) => `CAT-GRUSS-${id.slice(-2)}`
   padding: 0 2px;
 }
 
-.inventory__note {
-  color: var(--color-ink-faint);
-  font-size: var(--font-size-11);
-  margin-top: var(--space-5);
-}
 </style>

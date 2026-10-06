@@ -55,6 +55,17 @@ const GROUPS = [
   { key: 'winter', mark: '◒', label: 'Crecimiento invernal', tone: 'winter' },
 ]
 
+/**
+ * La escala visual que ocupará la exposición real con T-17. Mientras falta el dato se muestran
+ * todas las posibilidades —no una elegida al azar— y el ticket deja claro que aún no hay valor.
+ */
+const EXPOSURE_SCALE = [
+  { mark: '◑', label: 'Sombra', tone: 'shade' },
+  { mark: '◐', label: 'Semisombra', tone: 'partial' },
+  { mark: '◒', label: 'Soleado', tone: 'sunny' },
+  { mark: '☼', label: 'Pleno sol', tone: 'full-sun' },
+]
+
 async function load(pageNumber: number) {
   loading.value = true
   error.value = null
@@ -88,8 +99,11 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
       title="Especies"
       context="La base de conocimiento que heredan los ejemplares."
     >
+      <template #title>
+        Especies <span class="heading-count">{{ page?.totalElements ?? '—' }}</span>
+      </template>
       <template #actions>
-        <UiButton to="/species/new" data-test="new-species">Añadir especie</UiButton>
+        <UiButton to="/species/new" data-test="new-species"><span aria-hidden="true">＋</span> Añadir especie</UiButton>
       </template>
     </UiPageHeader>
 
@@ -114,39 +128,42 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         <span class="groups__symbol" aria-hidden="true">{{ group.mark }}</span>
         <span>
           <strong>{{ group.label }}</strong>
-          <small>— <i>T-21</i></small>
+          <small><i>T-21</i> · recuento pendiente</small>
         </span>
       </span>
     </nav>
 
-    <UiFilterBar :applied="[]" label="Filtros del catálogo de especies">
-      <UiField
+    <UiFilterBar :applied="[]" label="Filtros del catálogo de especies" density="compact">
+      <UiToolbarField
         v-model="query"
-        label="Buscar"
-        placeholder="Nombre científico o común"
+        label="Buscar especies"
+        type="search"
+        icon="⌕"
+        placeholder="Nombre científico, común o código · T-21"
         disabled
         data-mock="true"
         data-test="filter-search"
-        help="La búsqueda por texto llega en T-21."
       />
-      <UiField
-        label="Exposición"
+      <UiToolbarField
+        label="Exposición · T-17"
         as="select"
         :options="[]"
         disabled
         data-mock="true"
         data-test="filter-exposure"
-        help="La exposición llega en T-17."
       />
-      <UiField
-        label="Temperatura"
+      <UiToolbarField
+        label="Temperatura · T-21"
         as="select"
         :options="[]"
         disabled
         data-mock="true"
         data-test="filter-temperature"
-        help="Los filtros por rango llegan en T-21."
       />
+      <UiToolbarField label="Riego · T-21" as="select" :options="[]" disabled data-mock="true" />
+      <span class="toolbar-spacer" />
+      <UiButton variant="icon" label="Vista de tabla" class="view-button is-selected">☷</UiButton>
+      <UiButton variant="icon" label="Vista de fotografías" disabled data-mock="true">▦</UiButton>
     </UiFilterBar>
 
     <p v-if="loading" data-test="loading" role="status">Cargando el catálogo…</p>
@@ -191,9 +208,16 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
 
         <!-- No existe en ningún endpoint: es T-17. Conserva la forma de rasgo del prototipo. -->
         <template #cell-exposure>
-          <span class="trait" data-mock="true" data-test="col-exposure">
-            <i aria-hidden="true">◔</i>
-            <span>— <small>T-17</small></span>
+          <span class="exposure-pending" data-mock="true" data-test="col-exposure">
+            <span class="exposure-pending__icons" aria-hidden="true">
+              <i
+                v-for="exposure in EXPOSURE_SCALE"
+                :key="exposure.label"
+                :class="`is-${exposure.tone}`"
+                :title="exposure.label"
+              >{{ exposure.mark }}</i>
+            </span>
+            <small>T-17</small>
           </span>
         </template>
 
@@ -211,7 +235,10 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         </template>
 
         <template #cell-specimens>
-          <span class="count-link" data-mock="true" data-test="specimens-count">— <small>T-15</small></span>
+          <span class="count-link" data-mock="true" data-test="specimens-count">
+            <span><strong>—</strong> ejemplares</span>
+            <small>T-15</small>
+          </span>
         </template>
       </UiTable>
     </template>
@@ -232,6 +259,12 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
 </template>
 
 <style scoped>
+.heading-count {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-17);
+  font-weight: 400;
+}
+
 /*
  * Las tarjetas de grupo del prototipo: símbolo en círculo, nombre y recuento. La seleccionada va
  * en oscuro, que es lo que hace legible de un vistazo qué se está mirando.
@@ -284,9 +317,11 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
 }
 
 .groups__card small i {
-  border: 1px dashed var(--color-line-strong);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-muted);
   font-style: normal;
-  padding: 0 2px;
+  padding: 2px var(--space-2);
 }
 
 .groups__symbol {
@@ -295,10 +330,10 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   border-radius: 50%;
   color: var(--color-brand);
   display: flex;
-  font-size: var(--font-size-15);
-  height: 32px;
+  font-size: var(--font-size-17);
+  height: 36px;
   justify-content: center;
-  width: 32px;
+  width: 36px;
 }
 
 .groups__card.is-selected .groups__symbol {
@@ -328,6 +363,15 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   margin: 0 0 var(--space-2);
 }
 
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.view-button.is-selected {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+}
+
 /* La celda identificativa: miniatura de 43 px con su aro, como en el prototipo. */
 .species-cell {
   align-items: center;
@@ -349,6 +393,27 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   justify-content: center;
   position: relative;
   width: 43px;
+}
+
+/* Variación puramente visual: no inventa atributos de la especie, solo evita un catálogo monótono. */
+:deep(tbody tr:nth-child(4n + 1)) .species-cell__thumb {
+  background: color-mix(in srgb, var(--color-warning-soft) 62%, var(--color-brand-soft));
+  color: var(--color-warning);
+}
+
+:deep(tbody tr:nth-child(4n + 2)) .species-cell__thumb {
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+
+:deep(tbody tr:nth-child(4n + 3)) .species-cell__thumb {
+  background: color-mix(in srgb, var(--color-info-soft) 68%, var(--color-brand-soft));
+  color: var(--color-info);
+}
+
+:deep(tbody tr:nth-child(4n)) .species-cell__thumb {
+  background: color-mix(in srgb, var(--color-danger-soft) 38%, var(--color-warning-soft));
+  color: var(--color-danger);
 }
 
 .species-cell__thumb::after {
@@ -387,35 +452,72 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   font-size: var(--font-size-11);
 }
 
-/* El rasgo del prototipo: símbolo en círculo y su lectura al lado. */
-.trait {
+/* La escala queda preparada sin adjudicar a una especie un valor que el API aún no conoce. */
+.exposure-pending {
   align-items: center;
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   white-space: nowrap;
 }
 
-.trait i {
-  align-items: center;
-  background: var(--color-surface-muted);
-  border-radius: 50%;
-  color: var(--color-ink-faint);
-  display: inline-flex;
-  font-style: normal;
-  height: 24px;
-  justify-content: center;
-  width: 24px;
+.exposure-pending__icons {
+  display: flex;
 }
 
-.trait span,
+.exposure-pending__icons i {
+  align-items: center;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  display: inline-flex;
+  font-size: var(--font-size-11);
+  font-style: normal;
+  height: 25px;
+  justify-content: center;
+  margin-left: -5px;
+  width: 25px;
+}
+
+.exposure-pending__icons i:first-child {
+  margin-left: 0;
+}
+
+.exposure-pending__icons .is-shade,
+.exposure-pending__icons .is-partial {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+
+.exposure-pending__icons .is-sunny,
+.exposure-pending__icons .is-full-sun {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.exposure-pending small,
 .cell-pending {
   color: var(--color-ink-faint);
 }
 
 .count-link {
-  color: var(--color-ink-faint);
-  font-weight: 700;
+  display: grid;
+  gap: var(--space-1);
   white-space: nowrap;
+}
+
+.count-link > span {
+  color: var(--color-brand);
+  font-size: var(--font-size-12);
+  font-weight: 800;
+}
+
+.count-link strong {
+  color: var(--color-brand-strong);
+  font-size: var(--font-size-15);
+}
+
+.count-link small {
+  color: var(--color-ink-faint);
+  font-size: var(--font-size-11);
 }
 
 .trait small,

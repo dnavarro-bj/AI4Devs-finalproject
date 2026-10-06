@@ -21,7 +21,8 @@ const props = withDefaults(defineProps<{
   context?: string
   to?: string
   tone?: Tone
-}>(), { context: undefined, to: undefined, tone: 'neutral' })
+  layout?: 'stacked' | 'row'
+}>(), { context: undefined, to: undefined, tone: 'neutral', layout: 'stacked' })
 
 /** La severidad se lee, no solo se ve: el color nunca es la única señal (ADR-014). */
 const TONE_LABELS: Record<Tone, string | null> = {
@@ -42,12 +43,15 @@ const tag = computed(() => (props.to ? resolveComponent('NuxtLink') : 'div'))
     :is="tag"
     :to="to"
     class="stat-tile"
-    :class="[`is-${tone}`, { 'is-navigable': to }]"
+    :class="[`is-${tone}`, `is-${layout}`, { 'is-navigable': to }]"
   >
     <span class="stat-tile__value">{{ value }}</span>
-    <span class="stat-tile__label">{{ label }}</span>
-    <span v-if="context" class="stat-tile__context">{{ context }}</span>
-    <span v-if="toneLabel" class="stat-tile__tone" data-test="tone-label">{{ toneLabel }}</span>
+    <span class="stat-tile__body">
+      <span class="stat-tile__label">{{ label }}</span>
+      <span v-if="context" class="stat-tile__context">{{ context }}</span>
+      <span v-if="toneLabel" class="stat-tile__tone" data-test="tone-label">{{ toneLabel }}</span>
+    </span>
+    <span v-if="to && layout === 'row'" class="stat-tile__arrow" aria-hidden="true">→</span>
   </component>
 </template>
 
@@ -80,6 +84,11 @@ const tag = computed(() => (props.to ? resolveComponent('NuxtLink') : 'div'))
   display: block;
   font-size: var(--font-size-13);
   font-weight: 700;
+}
+
+.stat-tile__body {
+  display: block;
+  min-width: 0;
 }
 
 .stat-tile__context {
@@ -120,5 +129,21 @@ const tag = computed(() => (props.to ? resolveComponent('NuxtLink') : 'div'))
 
 .stat-tile.is-danger .stat-tile__tone {
   color: var(--color-danger);
+}
+
+.stat-tile.is-row {
+  align-items: center;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.stat-tile.is-row .stat-tile__value {
+  min-width: var(--space-10);
+}
+
+.stat-tile__arrow {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-17);
 }
 </style>

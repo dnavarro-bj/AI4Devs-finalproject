@@ -37,10 +37,19 @@ const slots = useSlots()
 }
 
 .entity-hero.has-visual { grid-template-columns: auto minmax(0, 1fr) auto; }
-.entity-hero.has-visual.is-visual-end { grid-template-columns: minmax(0, 1fr) auto auto; }
-.entity-hero.is-visual-end .entity-hero__visual { grid-column: 2; grid-row: 1; }
-.entity-hero.is-visual-end .entity-hero__identity { grid-column: 1; grid-row: 1; }
-.entity-hero.is-visual-end .entity-hero__actions { grid-column: 3; grid-row: 1; }
+.entity-hero.has-visual.is-visual-end {
+  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.82fr);
+  grid-template-rows: 1fr auto;
+}
+
+/*
+ * Con la figura al final, identidad y acciones forman una sola columna. Mantener las acciones en
+ * una tercera columna comprimía el nombre justo en las portadas que necesitan más presencia.
+ */
+.entity-hero.is-visual-end .entity-hero__visual { grid-column: 2; grid-row: 1 / 3; }
+.entity-hero.is-visual-end .entity-hero__identity { align-self: end; grid-column: 1; grid-row: 1; }
+.entity-hero.is-visual-end .entity-hero__actions { grid-column: 1; grid-row: 2; justify-content: start; }
 .entity-hero__visual { min-width: 0; }
 .entity-hero__line { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
 h1 { font-size: var(--font-size-24); letter-spacing: -0.02em; margin: 0; }

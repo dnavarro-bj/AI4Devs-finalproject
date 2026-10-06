@@ -124,10 +124,10 @@ const selectedLocation = computed(
 /** La pauta heredada, en el mismo formato comparable que «de un vistazo». */
 const inherited = computed(() => (selectedSpecies.value
   ? [
-      { label: 'Humedad', value: `${selectedSpecies.value.minHumidity}–${selectedSpecies.value.maxHumidity} %` },
       { label: 'Temperatura', value: `${selectedSpecies.value.minTemperature}–${selectedSpecies.value.maxTemperature} °C` },
-      { label: 'Luz', value: `${selectedSpecies.value.minLightHours}–${selectedSpecies.value.maxLightHours} h` },
+      { label: 'Humedad', value: `${selectedSpecies.value.minHumidity}–${selectedSpecies.value.maxHumidity} %` },
       { label: 'Riego', value: selectedSpecies.value.wateringGuideline },
+      { label: 'Sustrato', value: selectedSpecies.value.soilMix.name },
     ]
   : []))
 
@@ -318,9 +318,14 @@ function submit() {
 
         <div data-mock="true">
           <UiUploadArea
-            label="Añadir fotografías"
+            label="Arrastra fotografías o selecciónalas"
             accept="image/*"
             hint="JPG, PNG o WebP · hasta 10 MB cada una"
+            action-label="Seleccionar archivos"
+            layout="inline"
+            mark="▧"
+            disabled
+            data-test="plant-photo-upload"
           />
         </div>
         <ul class="photo-purpose">
@@ -337,16 +342,12 @@ function submit() {
       <!-- 6. Cuidados efectivos -->
       <UiFormSection id="plant-editor-care" standalone title="Cuidados efectivos" description="La planta hereda la pauta de su especie. Personaliza solo lo que sea distinto.">
 
-        <div v-if="selectedSpecies" class="inherited" data-test="species-ranges">
-          <div class="inherited__from">
-            <span class="species-option__thumb" aria-hidden="true">✺</span>
-            <span>
-              <small>Hereda de</small>
-              <strong><em>{{ selectedSpecies.scientificName }}</em></strong>
-            </span>
-          </div>
-          <UiSummaryGrid density="compact" :items="inherited" />
-        </div>
+        <UiInheritanceSummary
+          v-if="selectedSpecies"
+          :source="selectedSpecies.scientificName"
+          :items="inherited"
+          data-test="species-ranges"
+        />
         <p v-else class="editor__hint">Elige una especie para ver la pauta que heredará.</p>
 
         <button
@@ -657,30 +658,6 @@ function submit() {
   color: var(--color-brand);
   content: '○';
   margin-right: var(--space-1);
-}
-
-.inherited {
-  background: var(--color-surface-muted);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-}
-
-.inherited__from {
-  align-items: center;
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.inherited__from small,
-.inherited__from strong {
-  display: block;
-}
-
-.inherited__from small {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
 }
 
 .override-toggle {

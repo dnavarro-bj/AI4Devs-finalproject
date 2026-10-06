@@ -27,14 +27,14 @@ export interface DuenessGroup<T extends DueEntry> {
 const LABELS: Record<DuenessKey, string> = {
   overdue: 'Vencidas',
   today: 'Hoy',
-  soon: 'Próximos días',
+  soon: 'Próximos 7 días',
   later: 'Más adelante',
 }
 
 /** Lo vencido primero: es lo que arrastra el trabajo del día. */
 const ORDER: DuenessKey[] = ['overdue', 'today', 'soon', 'later']
 
-/** «Próximos días» son los siete siguientes a hoy; a partir de ahí es posterior. */
+/** «Próximos 7 días» son los siete siguientes a hoy; a partir de ahí es posterior. */
 const SOON_DAYS = 7
 
 export function classify(due: string, today: string): DuenessKey {

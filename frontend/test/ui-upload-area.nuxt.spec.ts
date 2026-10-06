@@ -61,4 +61,27 @@ describe('UiUploadArea', () => {
     expect(wrapper.find('input[type="file"]').attributes('accept')).toBe('image/jpeg,image/png')
     expect(wrapper.text()).toContain('JPG o PNG')
   })
+
+  it('ofrece una composición horizontal sin exponer el control nativo', () => {
+    const wrapper = mount(UiUploadArea, {
+      props: {
+        label: 'Arrastra fotografías o selecciónalas',
+        layout: 'inline',
+        actionLabel: 'Seleccionar archivos',
+        mark: '▧',
+      },
+    })
+
+    expect(wrapper.find('[data-role="dropzone"]').classes()).toContain('is-inline')
+    expect(wrapper.find('.upload__mark').text()).toBe('▧')
+    expect(wrapper.find('.upload__action').text()).toContain('Seleccionar archivos')
+    expect(wrapper.find('input[type="file"]').classes()).toContain('sr-only')
+  })
+
+  it('puede marcar una subida pendiente como no disponible', () => {
+    const wrapper = mount(UiUploadArea, { props: { disabled: true } })
+
+    expect(wrapper.find('input[type="file"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-role="dropzone"]').classes()).toContain('is-disabled')
+  })
 })

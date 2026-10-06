@@ -5,7 +5,8 @@ const props = withDefaults(defineProps<{
   detail?: string
   mark?: string
   to?: string
-}>(), { code: undefined, detail: undefined, mark: '♧', to: undefined })
+  codeMock?: boolean
+}>(), { code: undefined, detail: undefined, mark: '♧', to: undefined, codeMock: false })
 
 const emit = defineEmits<{ select: [] }>()
 const tag = computed(() => props.to ? resolveComponent('NuxtLink') : 'button')
@@ -15,7 +16,7 @@ const tag = computed(() => props.to ? resolveComponent('NuxtLink') : 'button')
   <component :is="tag" class="entity-cell" :to="to" :type="to ? undefined : 'button'" @click="emit('select')">
     <span class="entity-cell__mark" aria-hidden="true"><slot name="mark">{{ mark }}</slot></span>
     <span class="entity-cell__copy">
-      <code v-if="code">{{ code }}</code>
+      <code v-if="code" :class="{ 'is-mock': codeMock }" :data-mock="codeMock || undefined">{{ code }}</code>
       <strong>{{ title }}</strong>
       <small v-if="detail">{{ detail }}</small>
     </span>
@@ -29,6 +30,7 @@ const tag = computed(() => props.to ? resolveComponent('NuxtLink') : 'button')
 .entity-cell__copy { min-width: 0; }
 code, strong, small { display: block; }
 code { font-family: var(--font-mono); font-size: var(--font-size-11); font-weight: 700; }
+code.is-mock { border: 1px dashed var(--color-line-strong); color: var(--color-ink-faint); width: fit-content; }
 strong { color: var(--color-ink); font-size: var(--font-size-13); margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 small { color: var(--color-ink-muted); font-size: var(--font-size-11); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entity-cell__trailing { justify-self: end; }

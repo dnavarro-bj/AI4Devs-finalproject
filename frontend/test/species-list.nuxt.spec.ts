@@ -103,6 +103,7 @@ describe('catálogo de especies', () => {
     const cell = wrapper.find('[data-test="specimens-count"]')
     expect(cell.attributes('data-mock')).toBe('true')
     expect(cell.text()).toContain('T-15')
+    expect(cell.find('strong').exists(), 'falta el peso visual del recuento').toBe(true)
   })
 
   /** Escenario «La especie se reconoce por cualquiera de sus nombres». */
@@ -147,6 +148,7 @@ describe('catálogo de especies', () => {
     const exposure = wrapper.find('[data-test="col-exposure"]')
     expect(exposure.attributes('data-mock')).toBe('true')
     expect(exposure.text()).toContain('T-17')
+    expect(exposure.findAll('i')).toHaveLength(4)
   })
 
   /**

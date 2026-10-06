@@ -117,6 +117,18 @@ describe('catálogo de localizaciones', () => {
     expect(wrapper.find('[data-test="all-plants"]').attributes('href')).toBe('/plants')
   })
 
+  it('mantiene el mapa a la izquierda y la vista general como contenido principal', async () => {
+    respond()
+
+    const wrapper = await mountSuspended(LocationsIndex)
+    await settle()
+
+    const overview = wrapper.find('.overview')
+    expect(overview.element.firstElementChild?.getAttribute('data-test')).toBe('nursery-map')
+    expect(overview.find('.overview-main').exists()).toBe(true)
+    expect(overview.find('.metric-strip').exists()).toBe(true)
+  })
+
   /** Los niveles que faltan se declaran **dentro del mapa**, no sustituyendo el mapa. */
   it('los niveles de la jerarquía quedan marcados dentro del propio mapa', async () => {
     respond()
@@ -162,37 +174,14 @@ describe('catálogo de localizaciones', () => {
     expect(wrapper.find('[data-test="nursery-map"]').exists()).toBe(false)
   })
 
-  /** Escenario «Alta de una localización»: se crea desde el propio catálogo. */
-  it('crea una localización desde el catálogo y vuelve a pedir el listado', async () => {
+  /** El wireframe abre el editor completo, no comprime el alta en un diálogo. */
+  it('abre el editor de alta en su propia pantalla', async () => {
     respond()
-    api.post.mockResolvedValue({ id: '300004', name: 'Bandeja B1' })
-
-    const wrapper = await mountSuspended(LocationsIndex)
-    await settle()
-    api.get.mockClear()
-
-    await wrapper.find('[data-test="new-location"]').trigger('click')
-    await wrapper.find('[data-test="new-location-name"]').setValue('Bandeja B1')
-    await wrapper.find('[data-test="new-location-submit"]').trigger('submit')
-    await settle()
-
-    expect(api.post).toHaveBeenCalledWith('/locations', { name: 'Bandeja B1' })
-    expect(api.get).toHaveBeenCalledWith('/locations', expect.anything())
-  })
-
-  it('un alta rechazada se explica y el diálogo sigue abierto', async () => {
-    respond()
-    api.post.mockRejectedValue(new ApiError(400, 'name: el nombre es obligatorio'))
 
     const wrapper = await mountSuspended(LocationsIndex)
     await settle()
 
-    await wrapper.find('[data-test="new-location"]').trigger('click')
-    await wrapper.find('[data-test="new-location-name"]').setValue('   ')
-    await wrapper.find('[data-test="new-location-submit"]').trigger('submit')
-    await settle()
-
-    expect(wrapper.find('[data-test="new-location-error"]').text()).toContain('obligatorio')
-    expect(wrapper.find('[data-test="new-location-name"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="new-location"]').attributes('href')).toBe('/locations/new')
+    expect(wrapper.find('[data-test="new-location-dialog"]').exists()).toBe(false)
   })
 })

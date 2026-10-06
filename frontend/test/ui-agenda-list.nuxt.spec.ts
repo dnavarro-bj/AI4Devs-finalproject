@@ -63,4 +63,25 @@ describe('UiAgendaList', () => {
     expect(wrapper.findAll('[data-role="group"]')).toHaveLength(0)
     expect(wrapper.text().toLowerCase()).toContain('pendiente')
   })
+
+  it('el grupo de lo próximo se llama «Próximos 7 días»: dice cuánto abarca', () => {
+    const wrapper = agenda({ entries: [ENTRIES[2]] })
+
+    expect(wrapper.find('[data-role="group"] h3').text()).toContain('Próximos 7 días')
+  })
+
+  it('una pantalla puede componer sus filas con el slot `entry` sin perder los grupos', () => {
+    const wrapper = mount(UiAgendaList, {
+      props: { entries: ENTRIES, today: TODAY },
+      slots: {
+        entry: `<template #entry="{ entry, overdue }"><b data-role="custom">{{ entry.title }}|{{ overdue }}</b></template>`,
+      },
+    })
+
+    const custom = wrapper.findAll('[data-role="custom"]')
+    expect(custom).toHaveLength(4)
+    expect(custom[0]!.text()).toBe('Revisión general|true')
+    expect(custom[1]!.text()).toBe('Regar bandeja A3|false')
+    expect(wrapper.findAll('[data-role="group"]')).toHaveLength(4)
+  })
 })

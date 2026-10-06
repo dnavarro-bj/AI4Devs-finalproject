@@ -23,6 +23,12 @@ export interface NavigationGroup {
   entries: NavigationEntry[]
 }
 
+/**
+ * El Dashboard: la entrada de la aplicación. Va **fuera de toda agrupación**, como en el prototipo,
+ * y vive en la raíz: no redirige a ninguna otra sección.
+ */
+export const HOME: NavigationEntry = { label: 'Dashboard', to: '/', mark: '⌂' }
+
 export const NAVIGATION: NavigationGroup[] = [
   {
     label: 'Colección',
@@ -56,7 +62,7 @@ export const NAVIGATION: NavigationGroup[] = [
 ]
 
 export function sectionAddresses(): string[] {
-  return NAVIGATION.flatMap((group) => group.entries.map((entry) => entry.to))
+  return [HOME.to, ...NAVIGATION.flatMap((group) => group.entries.map((entry) => entry.to))]
 }
 
 /**
@@ -64,5 +70,7 @@ export function sectionAddresses(): string[] {
  * `/plants/882687672222443468` sigue estando en Plantas.
  */
 export function isActiveSection(address: string, path: string): boolean {
+  // La raíz solo coincide consigo misma: por prefijo contendría todas las rutas.
+  if (address === '/') return path === '/'
   return path === address || path.startsWith(`${address}/`)
 }

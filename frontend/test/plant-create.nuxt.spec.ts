@@ -137,6 +137,22 @@ describe('alta de una planta', () => {
     expect(api.post).not.toHaveBeenCalled()
   })
 
+  it('presenta las fotografías y los cuidados con los patrones del editor', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { speciesId: '200001' })
+
+    const upload = wrapper.find('[data-test="plant-photo-upload"]')
+    expect(upload.classes()).toContain('is-inline')
+    expect(upload.text()).toContain('Seleccionar archivos')
+    expect(upload.find('input[type="file"]').attributes('disabled')).toBeDefined()
+
+    const care = wrapper.find('[data-test="species-ranges"]')
+    expect(care.text()).toContain('Hereda de')
+    expect(care.text()).toContain('Mineral drenante')
+    expect(care.findAll('dl > div')).toHaveLength(4)
+  })
+
   it('cambia los rangos al cambiar de especie, y no repite la llamada si se vuelve a una ya vista', async () => {
     const wrapper = await mountSuspended(NewPlantPage)
     await settle()

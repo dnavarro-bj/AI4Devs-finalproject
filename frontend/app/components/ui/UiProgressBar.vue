@@ -6,14 +6,22 @@ const props = withDefaults(defineProps<{
   detail?: string
   tone?: 'brand' | 'warning' | 'danger'
   showValue?: boolean
-}>(), { max: 100, label: undefined, detail: undefined, tone: 'brand', showValue: true })
+  layout?: 'inline' | 'stacked'
+}>(), {
+  max: 100,
+  label: undefined,
+  detail: undefined,
+  tone: 'brand',
+  showValue: true,
+  layout: 'inline',
+})
 
 const percent = computed(() => props.max > 0 ? Math.min(100, Math.max(0, (props.value / props.max) * 100)) : 0)
 const style = computed(() => ({ width: `${percent.value}%` }))
 </script>
 
 <template>
-  <div :class="['progress', `progress--${tone}`]">
+  <div :class="['progress', `progress--${tone}`, `is-${layout}`]">
     <span v-if="label || detail" class="progress__copy"><strong v-if="label">{{ label }}</strong><small v-if="detail">{{ detail }}</small></span>
     <span class="progress__track" role="progressbar" :aria-label="label" :aria-valuenow="value" aria-valuemin="0" :aria-valuemax="max"><i :style="style" /></span>
     <em v-if="showValue">{{ Math.round(percent) }}%</em>
@@ -32,4 +40,8 @@ const style = computed(() => ({ width: `${percent.value}%` }))
 em { color: var(--color-brand); font-size: var(--font-size-12); font-style: normal; font-weight: 800; }
 .progress--warning em { color: var(--color-warning); }
 .progress--danger em { color: var(--color-danger); }
+.progress.is-stacked { gap: var(--space-1); grid-template-columns: 1fr; }
+.progress.is-stacked .progress__track { order: 1; width: 100%; }
+.progress.is-stacked .progress__copy { order: 2; }
+.progress.is-stacked em { justify-self: end; order: 3; }
 </style>

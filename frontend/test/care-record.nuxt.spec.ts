@@ -93,6 +93,16 @@ describe('registro de una lectura de cultivo', () => {
     expect(api.post.mock.calls[1]![0]).toContain('/recommendation')
   })
 
+  it('explica el efecto de generar la recomendación en una decisión destacada', async () => {
+    const wrapper = await mountSuspended(CareRecordForm, { props: { plantId, now: NOW } })
+
+    const checkbox = wrapper.find('[data-test="generate-ai"]')
+    expect(checkbox.element.tagName).toBe('INPUT')
+    expect((checkbox.element as HTMLInputElement).checked).toBe(true)
+    expect(wrapper.text()).toContain('los rangos efectivos y el historial reciente')
+    expect(checkbox.element.closest('label')?.classList.contains('checkbox-panel')).toBe(true)
+  })
+
   it('exige al menos un valor y no registra nada', async () => {
     const wrapper = await mountSuspended(CareRecordForm, { props: { plantId } })
 

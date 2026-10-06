@@ -36,11 +36,29 @@ describe('patrones extraídos del wireframe', () => {
     expect(wrapper.text()).toContain('Editar')
   })
 
+  it('agrupa identidad y acciones cuando la figura cierra la portada', () => {
+    const wrapper = mount(UiEntityHero, {
+      props: { title: 'Echinocactus grusonii', visualPosition: 'end' },
+      slots: { visual: '<span>Fotografía</span>', actions: '<button>Editar</button>' },
+    })
+
+    expect(wrapper.classes()).toContain('is-visual-end')
+    expect(wrapper.find('.entity-hero__visual').text()).toBe('Fotografía')
+    expect(wrapper.find('.entity-hero__actions').text()).toBe('Editar')
+  })
+
   it('mantiene junta la identidad compacta de una entidad', () => {
     const wrapper = mount(UiEntityCell, { props: { code: 'CAT-GRUSS-01', title: 'Bola verde', detail: 'A3' } })
     expect(wrapper.find('code').text()).toBe('CAT-GRUSS-01')
     expect(wrapper.text()).toContain('Bola verde')
     expect(wrapper.text()).toContain('A3')
+  })
+
+  it('puede marcar un código de identidad como dato pendiente', () => {
+    const wrapper = mount(UiEntityCell, { props: { code: 'CAT-GRUSS-01', title: 'Bola verde', codeMock: true } })
+
+    expect(wrapper.find('code').attributes('data-mock')).toBe('true')
+    expect(wrapper.find('code').classes()).toContain('is-mock')
   })
 
   it('una etiqueta removible nombra y comunica su retirada', async () => {

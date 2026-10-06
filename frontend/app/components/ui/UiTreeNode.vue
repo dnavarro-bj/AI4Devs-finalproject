@@ -7,7 +7,7 @@
  */
 import type { TreeNode } from './UiTree.vue'
 
-const props = defineProps<{ node: TreeNode }>()
+const props = defineProps<{ node: TreeNode, selected?: string }>()
 const emit = defineEmits<{ select: [string] }>()
 
 const hasChildren = computed(() => (props.node.children?.length ?? 0) > 0)
@@ -18,7 +18,7 @@ const expanded = ref(true)
 
 <template>
   <li class="tree-node" role="treeitem" :aria-expanded="hasChildren ? String(expanded) : undefined">
-    <div class="tree-node__row">
+    <div class="tree-node__row" :class="{ 'is-selected': node.id === selected }">
       <button
         v-if="hasChildren"
         type="button"
@@ -39,7 +39,11 @@ const expanded = ref(true)
         :data-test="`select-${node.id}`"
         @click="emit('select', node.id)"
       >
-        {{ node.label }}
+        <span v-if="node.mark" class="tree-node__mark" aria-hidden="true">{{ node.mark }}</span>
+        <span class="tree-node__copy">
+          <strong>{{ node.label }}</strong>
+          <small v-if="node.detail">{{ node.detail }}</small>
+        </span>
       </button>
 
       <span
@@ -54,6 +58,7 @@ const expanded = ref(true)
         v-for="child in node.children"
         :key="child.id"
         :node="child"
+        :selected="selected"
         @select="emit('select', $event)"
       />
     </ul>
@@ -67,9 +72,21 @@ const expanded = ref(true)
 
 .tree-node__row {
   align-items: center;
-  display: flex;
+  border-radius: var(--radius-sm);
+  display: grid;
   gap: var(--space-1);
-  min-height: 36px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  min-height: 47px;
+  padding: var(--space-1);
+}
+
+.tree-node__row:hover {
+  background: var(--color-surface-muted);
+}
+
+.tree-node__row.is-selected {
+  background: var(--color-brand-strong);
+  color: var(--color-sidebar-text);
 }
 
 .tree-node__toggle {
@@ -83,25 +100,80 @@ const expanded = ref(true)
 }
 
 .tree-node__label {
+  align-items: center;
   background: transparent;
   border: 0;
   border-radius: var(--radius-sm);
   color: var(--color-ink);
+  display: grid;
   font: inherit;
+  gap: var(--space-2);
+  grid-template-columns: auto minmax(0, 1fr);
   margin-right: auto;
   padding: var(--space-1) var(--space-2);
   text-align: left;
+  width: 100%;
 }
 
-.tree-node__label:hover {
-  background: var(--color-surface-muted);
+.tree-node__row.is-selected .tree-node__label,
+.tree-node__row.is-selected .tree-node__toggle,
+.tree-node__row.is-selected .tree-node__count {
+  color: var(--color-sidebar-text);
+}
+
+.tree-node__mark {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-sm);
+  color: var(--color-brand);
+  display: flex;
+  font-size: var(--font-size-13);
+  height: 29px;
+  justify-content: center;
+  width: 29px;
+}
+
+.tree-node__row.is-selected .tree-node__mark {
+  background: color-mix(in srgb, var(--color-sidebar-text) 14%, transparent);
+  color: var(--color-sidebar-text);
+}
+
+.tree-node__copy strong,
+.tree-node__copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node__copy strong {
+  font-size: var(--font-size-12);
+}
+
+.tree-node__copy small {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-11);
+  margin-top: 2px;
+}
+
+.tree-node__row.is-selected .tree-node__copy small {
+  color: color-mix(in srgb, var(--color-sidebar-text) 72%, transparent);
 }
 
 /* El recuento se distingue del nombre: otra escala, otro color y ancho propio. */
 .tree-node__count {
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-pill);
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
   font-variant-numeric: tabular-nums;
+  min-width: 28px;
+  padding: var(--space-1) var(--space-2);
+  text-align: center;
+}
+
+.tree-node__row.is-selected .tree-node__count {
+  background: color-mix(in srgb, var(--color-sidebar-text) 14%, transparent);
 }
 
 .tree-node ul {

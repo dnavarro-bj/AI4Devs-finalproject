@@ -14,6 +14,8 @@
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSpecies } from '@features/species/composables/useSpecies'
+import SpeciesPhotosPanel from '@features/species/components/SpeciesPhotosPanel.vue'
+import SpeciesSpecimensPanel from '@features/species/components/SpeciesSpecimensPanel.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
 import type { SpeciesCare } from '@features/species/types/species.types'
 import type { DomainError } from '@shared/types/api.types'
@@ -39,6 +41,8 @@ const notFound = computed(() => !loading.value && isNotFound(error.value))
 const TABS = [
   { value: 'summary', label: 'Resumen' },
   { value: 'cultivation', label: 'Cultivo' },
+  { value: 'photos', label: 'Fotografías' },
+  { value: 'specimens', label: 'Ejemplares' },
 ]
 const tab = ref('summary')
 
@@ -146,30 +150,40 @@ onMounted(load)
 
     <template v-else-if="species">
       <!-- La portada usa el patrón visual común; sus datos pendientes siguen marcados. -->
-      <UiEntityHero :title="species.scientificName" :subtitle="species.commonName" visual-position="end">
+      <UiEntityHero
+        class="species-hero"
+        :title="species.scientificName"
+        :subtitle="species.commonName"
+        visual-position="end"
+      >
         <template #identity>
           <UiIdentityCode value="CAT · T-15" pending data-mock="true" />
           <UiStatus tone="ok">Ficha completa</UiStatus>
         </template>
         <template #context>
           <p class="hero__description" data-mock="true" data-test="description">
-            La descripción de la especie llega con <strong>T-17</strong>.
+            La descripción botánica completará esta portada con rasgos, origen y comportamiento.
+            <span>T-17</span>
           </p>
         </template>
         <template #visual>
           <div class="hero__media" data-mock="true" data-test="photos">
-          <div class="hero__photo" role="img" aria-label="Sin fotografía">
-            <span aria-hidden="true">✺</span>
-            <small>Fotografías · T-19</small>
-          </div>
-          <div class="hero__thumbs" aria-hidden="true">
-            <span v-for="n in 3" :key="n" />
-          </div>
+            <div class="hero__photo" role="img" aria-label="Sin fotografía principal">
+              <span aria-hidden="true">✺</span>
+              <small>Imagen principal · T-19</small>
+            </div>
+            <div class="hero__thumbs">
+              <span v-for="n in 2" :key="n" aria-hidden="true">✺</span>
+              <button type="button" disabled aria-label="Añadir fotografías con T-19">
+                <b aria-hidden="true">＋</b>
+                <small>Añadir</small>
+              </button>
+            </div>
           </div>
         </template>
         <template #actions>
           <UiButton :to="`/species/${species.id}/edit`" data-test="edit-species">Editar especie</UiButton>
-          <UiButton variant="secondary" disabled data-mock="true">Ver ejemplares</UiButton>
+          <UiButton variant="secondary" disabled data-mock="true">Ver plantas</UiButton>
           <UiButton variant="secondary" data-test="remove-species" @click="confirming = true">Retirar</UiButton>
         </template>
       </UiEntityHero>
@@ -180,21 +194,30 @@ onMounted(load)
 
       <UiTabs v-model="tab" :tabs="TABS" />
 
-      <div class="species">
+      <div v-if="tab === 'summary' || tab === 'cultivation'" class="species" data-test="cultivation-view">
         <div class="species__main">
           <!-- La rejilla anual del prototipo, con su forma aunque no tenga periodos. -->
-          <UiPanel title="Año de cultivo" data-mock="true" data-test="year-cycle">
-            <p class="species__hint">
-              Referencia anual de la especie. Los periodos de crecimiento, floración y riego llegan
-              con <strong>T-17</strong>: la rejilla enseña su forma, todavía sin marcar ningún mes.
-            </p>
-            <UiYearGrid :rows="YEAR_ROWS" :legend="YEAR_LEGEND" />
-          </UiPanel>
+          <section class="detail-section" data-mock="true" data-test="year-cycle">
+            <UiSectionHeader
+              title="Año de cultivo"
+              description="Referencia para clima mediterráneo y cultivo exterior."
+            >
+              <template #actions><NuxtLink :to="`/species/${species.id}/edit#species-editor-seasons`">Editar periodos</NuxtLink></template>
+            </UiSectionHeader>
+            <div class="year-card">
+              <UiYearGrid :rows="YEAR_ROWS" :legend="YEAR_LEGEND" />
+              <p class="section-ticket">Los periodos se incorporarán con <strong>T-17</strong>.</p>
+            </div>
+          </section>
 
           <!-- Real salvo las dos primeras filas, que llevan su marca en la propia fila. -->
-          <UiPanel title="Condiciones recomendadas" data-test="conditions">
-            <p class="species__hint">Estos valores los heredan los ejemplares que no los personalicen.</p>
-
+          <section class="detail-section" data-test="conditions">
+            <UiSectionHeader
+              title="Condiciones recomendadas"
+              description="Estos valores los heredan los ejemplares que no los personalicen."
+            >
+              <template #actions><NuxtLink :to="`/species/${species.id}/edit#species-editor-care`">Editar cuidados</NuxtLink></template>
+            </UiSectionHeader>
             <dl class="conditions">
               <div
                 v-for="item in conditions"
@@ -225,13 +248,13 @@ onMounted(load)
                 <small>La mezcla que recomienda el catálogo</small>
               </div>
             </dl>
-          </UiPanel>
+          </section>
 
           <!-- La floración del prototipo: su forma, con los cuatro valores marcados. -->
-          <UiPanel title="Floración" data-mock="true" data-test="flowering">
-            <p class="species__hint">
-              Comportamiento habitual de la especie. Llega con <strong>T-17</strong>.
-            </p>
+          <section class="detail-section" data-mock="true" data-test="flowering">
+            <UiSectionHeader title="Floración" description="Comportamiento habitual de la especie.">
+              <template #actions><NuxtLink :to="`/species/${species.id}/edit#species-editor-seasons`">Editar</NuxtLink></template>
+            </UiSectionHeader>
             <div class="flowering">
               <div class="flowering__figure" role="img" aria-label="Sin fotografía de floración">
                 <span aria-hidden="true">✣</span>
@@ -242,28 +265,17 @@ onMounted(load)
                   <dd>— <small>T-17</small></dd>
                 </div>
               </dl>
+              <p class="flowering__note">
+                Las condiciones, el color y la duración se documentarán con <strong>T-17</strong>.
+              </p>
             </div>
-          </UiPanel>
+          </section>
 
-          <!-- Las filas de ejemplares del prototipo, con su forma y sin datos inventados. -->
-          <UiPanel title="Ejemplares de esta especie" data-mock="true" data-test="specimens">
-            <p class="species__hint">
-              El inventario todavía no filtra por especie, así que no se pueden listar ni contar
-              aquí: llega con <strong>T-15</strong>.
-            </p>
-            <div class="specimens">
-              <div v-for="n in 3" :key="n" class="specimens__row">
-                <span class="specimens__thumb" aria-hidden="true">♧</span>
-                <span class="specimens__name">— <small>T-15</small></span>
-                <span class="specimens__where">—</span>
-                <span class="specimens__state">—</span>
-              </div>
-            </div>
-          </UiPanel>
+          <SpeciesSpecimensPanel v-if="tab === 'summary'" />
         </div>
 
-        <aside class="species__aside">
-          <UiPanel title="Ficha de catálogo">
+        <aside v-if="tab === 'summary'" class="species__aside">
+          <UiPanel class="catalog-card" title="Ficha de catálogo">
             <dl class="facts">
               <div>
                 <dt>Código</dt>
@@ -289,7 +301,7 @@ onMounted(load)
           </UiPanel>
 
           <!-- Los grupos del prototipo, con su forma de tarjeta y sin recuentos inventados. -->
-          <UiPanel title="Grupos de cultivo" data-mock="true" data-test="groups">
+          <UiPanel class="groups-card" title="Grupos de cultivo" data-mock="true" data-test="groups">
             <p class="species__hint">
               La especie entrará automáticamente en estos grupos. Llegan con <strong>T-21</strong>.
             </p>
@@ -304,7 +316,7 @@ onMounted(load)
             </div>
           </UiPanel>
 
-          <UiPanel title="Herencia activa">
+          <UiPanel class="inheritance-note" title="Herencia activa">
             <p class="species__hint">
               Si corriges un valor, se actualizará en todos los ejemplares que no lo hayan
               personalizado. Las lecturas ya registradas no cambian.
@@ -312,6 +324,9 @@ onMounted(load)
           </UiPanel>
         </aside>
       </div>
+
+      <SpeciesPhotosPanel v-else-if="tab === 'photos'" :species-name="species.scientificName" />
+      <SpeciesSpecimensPanel v-else-if="tab === 'specimens'" standalone />
 
       <UiDialog
         :open="confirming"
@@ -338,31 +353,44 @@ onMounted(load)
 
 <style scoped>
 .hero__description {
-  border: 1px dashed var(--color-line-strong);
-  border-radius: var(--radius-sm);
-  color: var(--color-ink-faint);
-  font-size: var(--font-size-12);
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-13);
+  line-height: 1.65;
   margin: var(--space-3) 0 0;
-  padding: var(--space-2) var(--space-3);
+  max-width: 58ch;
+}
+
+.hero__description span,
+.section-ticket strong {
+  border: 1px dashed var(--color-line-strong);
+  color: var(--color-ink-faint);
+  font-size: var(--font-size-11);
+  padding: 0 2px;
 }
 
 .hero__media {
   display: grid;
   gap: var(--space-2);
-  width: 260px;
+  height: 100%;
+  min-height: 244px;
+  min-width: 0;
+  width: min(380px, 34vw);
 }
 
 .hero__photo {
   align-items: center;
-  background: var(--color-surface-muted);
-  border: 1px dashed var(--color-line-strong);
+  background:
+    radial-gradient(circle at 50% 48%, var(--color-brand-soft) 0 19%, transparent 20% 34%),
+    radial-gradient(circle at 50% 48%, var(--color-brand) 0 34%, var(--color-warning-soft) 35% 100%);
   border-radius: var(--radius-md);
-  color: var(--color-ink-faint);
+  color: color-mix(in srgb, var(--color-surface) 72%, transparent);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   justify-content: center;
-  min-height: 150px;
+  min-height: 172px;
+  overflow: hidden;
+  position: relative;
 }
 
 .hero__photo span {
@@ -370,7 +398,14 @@ onMounted(load)
 }
 
 .hero__photo small {
+  background: color-mix(in srgb, var(--color-ink) 80%, transparent);
+  border-radius: var(--radius-sm);
+  bottom: var(--space-2);
+  color: var(--color-surface);
   font-size: var(--font-size-11);
+  padding: var(--space-1) var(--space-2);
+  position: absolute;
+  right: var(--space-2);
 }
 
 .hero__thumbs {
@@ -379,12 +414,34 @@ onMounted(load)
   grid-template-columns: repeat(3, 1fr);
 }
 
-.hero__thumbs span {
-  background: var(--color-surface-muted);
-  border: 1px dashed var(--color-line-strong);
+.hero__thumbs span,
+.hero__thumbs button {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border: 0;
   border-radius: var(--radius-sm);
-  height: 44px;
+  color: color-mix(in srgb, var(--color-brand) 58%, transparent);
+  display: flex;
+  height: 58px;
+  justify-content: center;
 }
+
+.hero__thumbs span:nth-child(2) {
+  background: color-mix(in srgb, var(--color-info-soft) 72%, var(--color-brand-soft));
+}
+
+.hero__thumbs button {
+  background: var(--color-canvas);
+  border: 1px dashed var(--color-line-strong);
+  color: var(--color-brand);
+  flex-direction: column;
+  opacity: 1;
+}
+
+.hero__thumbs button b { font-size: var(--font-size-17); }
+.hero__thumbs button small { font-size: var(--font-size-11); }
+
+.species-hero { overflow: hidden; }
 
 .hero-error {
   margin-bottom: var(--space-4);
@@ -405,6 +462,28 @@ onMounted(load)
   gap: var(--space-4);
 }
 
+.species__aside { align-items: start; }
+
+.detail-section { min-width: 0; }
+
+.detail-section > :first-child { margin-bottom: var(--space-3); }
+
+.detail-section :deep(.section-header a) {
+  color: var(--color-brand);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+}
+
+.year-card { overflow-x: auto; }
+
+.year-card > :first-child { min-width: 680px; }
+
+.section-ticket {
+  color: var(--color-ink-faint);
+  font-size: var(--font-size-11);
+  margin: var(--space-2) 0 0;
+}
+
 .species__hint {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
@@ -414,25 +493,45 @@ onMounted(load)
 /* Las condiciones se leen en rejilla: siete magnitudes de un vistazo, no una lista larga. */
 .conditions {
   display: grid;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  grid-template-columns: repeat(3, 1fr);
   margin: 0;
+  overflow: hidden;
 }
 
 .conditions > div {
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3);
+  min-height: 112px;
+  padding: var(--space-4);
+}
+
+.conditions > div:nth-child(n+4) {
+  border-top: 1px solid var(--color-line);
+}
+
+.conditions > div:not(:nth-child(3n+1)) {
+  border-left: 1px solid var(--color-line);
+}
+
+.conditions > div:last-child:nth-child(3n+1) {
+  grid-column: 1 / -1;
 }
 
 .conditions > div[data-mock] {
-  background: transparent;
-  border: 1px dashed var(--color-line-strong);
+  background: color-mix(in srgb, var(--color-surface-muted) 42%, var(--color-surface));
 }
 
 .conditions__mark {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-pill);
   color: var(--color-brand);
+  display: inline-flex;
+  height: 26px;
+  justify-content: center;
   margin-right: var(--space-1);
+  width: 26px;
 }
 
 .conditions small {
@@ -443,21 +542,26 @@ onMounted(load)
 }
 
 .flowering {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: 108px 1fr 1fr;
+  padding: var(--space-4);
 }
 
 .flowering__figure {
   align-items: center;
-  background: var(--color-surface-muted);
-  border: 1px dashed var(--color-line-strong);
-  border-radius: var(--radius-md);
-  color: var(--color-ink-faint);
+  background: var(--color-warning-soft);
+  border-radius: var(--radius-pill);
+  color: var(--color-warning);
   display: flex;
   font-size: var(--font-size-24);
+  height: 102px;
   justify-content: center;
-  min-height: 96px;
+  width: 102px;
 }
 
 .flowering__facts {
@@ -467,35 +571,11 @@ onMounted(load)
   margin: 0;
 }
 
-.specimens {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.specimens__row {
-  align-items: center;
-  border: 1px dashed var(--color-line-strong);
-  border-radius: var(--radius-sm);
-  display: grid;
-  gap: var(--space-3);
-  grid-template-columns: 32px 1fr auto auto;
-  padding: var(--space-2) var(--space-3);
-}
-
-.specimens__thumb {
-  align-items: center;
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-sm);
-  color: var(--color-ink-faint);
-  display: flex;
-  height: 32px;
-  justify-content: center;
-  width: 32px;
-}
-
-.specimens__row span:not(.specimens__thumb) {
-  color: var(--color-ink-faint);
+.flowering__note {
+  color: var(--color-ink-muted);
   font-size: var(--font-size-12);
+  line-height: 1.6;
+  margin: 0;
 }
 
 .groups {
@@ -511,6 +591,42 @@ onMounted(load)
   display: flex;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
+}
+
+.catalog-card .facts > div {
+  align-items: baseline;
+  border-top: 1px solid var(--color-line);
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+}
+
+.catalog-card .facts > div:first-child { border-top: 0; }
+.catalog-card .facts dd { max-width: 62%; text-align: right; }
+
+.groups-card .groups__item {
+  border: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--color-line);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.groups-card .groups__mark {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-pill);
+  color: var(--color-brand);
+  display: inline-flex;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.inheritance-note {
+  background: var(--color-brand-soft);
+  border-left: 4px solid var(--color-brand);
 }
 
 .groups__mark {
@@ -570,18 +686,35 @@ onMounted(load)
 }
 
 .is-pending small,
-.flowering__facts dd small,
-.specimens__name small {
+.flowering__facts dd small {
   border: 1px dashed var(--color-line-strong);
   font-size: var(--font-size-11);
   padding: 0 2px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .species {
     grid-template-columns: 1fr;
   }
 
+  .species__aside { grid-template-columns: repeat(3, 1fr); }
+
   .hero__media { width: 100%; }
+}
+
+@media (max-width: 900px) {
+  .conditions { grid-template-columns: repeat(2, 1fr); }
+  .conditions > div { border-left: 0; border-top: 1px solid var(--color-line); }
+  .conditions > div:nth-child(odd) { border-right: 1px solid var(--color-line); }
+  .conditions > div:nth-child(-n+2) { border-top: 0; }
+}
+
+@media (max-width: 620px) {
+  .species__aside { grid-template-columns: 1fr; }
+  .conditions { grid-template-columns: 1fr; }
+  .conditions > div,
+  .conditions > div:nth-child(odd) { border-left: 0; border-right: 0; border-top: 1px solid var(--color-line); }
+  .conditions > div:first-child { border-top: 0; }
+  .flowering { grid-template-columns: 1fr; }
 }
 </style>

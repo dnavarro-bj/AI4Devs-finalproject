@@ -5,7 +5,7 @@
  * galería del kit pueda no llevarlo, sin condicionales aquí dentro.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
-import { NAVIGATION } from '@features/layout/navigation'
+import { HOME, NAVIGATION } from '@features/layout/navigation'
 import { useGlobalSearch } from '@features/search/composables/useGlobalSearch'
 import type { SearchResult } from '@features/search/types/search.types'
 
@@ -24,12 +24,13 @@ function openResult(result: Pick<SearchResult, 'to'>) {
   router.push(result.to)
 }
 
-// Ninguna pantalla hereda los breadcrumbs de la anterior: se limpian antes de que la nueva monte
-// y los fije.
-router.afterEach(() => {
+// Ninguna pantalla hereda los breadcrumbs de la anterior. La ruta reactiva cambia antes de que se
+// monte su página; con `flush: 'sync'` limpiamos en ese instante y la página nueva puede fijar los
+// suyos después. Un `afterEach` los borraba tarde y dejaba el breadcrumb una pantalla por detrás.
+watch(() => route.fullPath, () => {
   clear()
   navigationOpen.value = false
-})
+}, { flush: 'sync' })
 </script>
 
 <template>
@@ -54,6 +55,7 @@ router.afterEach(() => {
       </div>
 
       <nav aria-label="Navegación principal">
+        <UiNavGroup :entries="[HOME]" :active-path="route.path" />
         <UiNavGroup
           v-for="group in NAVIGATION"
           :key="group.label"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ asideWidth?: 'narrow' | 'regular' }>(), { asideWidth: 'regular' })
+withDefaults(defineProps<{ asideWidth?: 'narrow' | 'regular' | 'wide' }>(), { asideWidth: 'regular' })
 </script>
 
 <template>
@@ -12,6 +12,7 @@ withDefaults(defineProps<{ asideWidth?: 'narrow' | 'regular' }>(), { asideWidth:
 <style scoped>
 .detail-layout { align-items: start; display: grid; gap: var(--space-5); grid-template-columns: minmax(0, 1fr) 290px; }
 .detail-layout--narrow { grid-template-columns: minmax(0, 1fr) 250px; }
+.detail-layout--wide { grid-template-columns: minmax(0, 1fr) 360px; }
 main, aside { align-content: start; display: grid; gap: var(--space-4); min-width: 0; }
-@media (max-width: 900px) { .detail-layout, .detail-layout--narrow { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .detail-layout, .detail-layout--narrow, .detail-layout--wide { grid-template-columns: 1fr; } }
 </style>

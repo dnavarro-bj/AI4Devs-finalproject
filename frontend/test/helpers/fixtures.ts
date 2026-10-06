@@ -14,6 +14,7 @@ export const speciesCare = (overrides: Partial<SpeciesCare> = {}): SpeciesCare =
   minLightHours: 6,
   maxLightHours: 10,
   wateringGuideline: 'cada 10-20 dias',
+  soilMix: { id: '700001', name: 'Mineral drenante' },
   ...overrides,
 })
 

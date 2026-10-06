@@ -124,6 +124,28 @@ describe('editor de una especie', () => {
     expect(options.map((option) => option.text())).toContain('Sustrato mineral de drenaje rápido')
   })
 
+  it('mantiene en el editor la sección de fotografías del wireframe, marcada con T-19', async () => {
+    const wrapper = await mountForm()
+
+    const photos = wrapper.find('[data-test="species-photos"]')
+    expect(photos.exists()).toBe(true)
+    expect(photos.text()).toContain('T-19')
+    expect(photos.find('[data-test="species-photo-upload"]').exists()).toBe(true)
+  })
+
+  it('prepara exposición, entorno y calendario anual sin fingir que se persisten', async () => {
+    const wrapper = await mountForm()
+
+    expect(wrapper.find('[data-test="species-exposure"]').text()).toContain('Pleno sol')
+    expect(wrapper.find('[data-test="species-environment"]').text()).toContain('Exterior')
+
+    const seasons = wrapper.find('[data-test="species-seasons"]')
+    expect(seasons.attributes('data-mock')).toBeUndefined()
+    expect(seasons.text()).toContain('T-17')
+    expect(seasons.findAll('[data-role="month-head"]')).toHaveLength(12)
+    expect(seasons.findAll('[data-role="year-row"]')).toHaveLength(2)
+  })
+
   it('la edición llega prellenada con lo que la especie tenía, mezcla incluida', async () => {
     const wrapper = await mountForm({
       initial: {

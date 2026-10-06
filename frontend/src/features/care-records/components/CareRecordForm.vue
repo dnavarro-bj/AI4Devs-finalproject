@@ -191,13 +191,12 @@ async function submit() {
       data-mock="true"
     />
 
-    <label class="reading__ai">
-      <input v-model="generateAi" type="checkbox" data-test="generate-ai">
-      <span>
-        <strong>Generar una recomendación con IA al guardar</strong>
-        <small>Usará esta lectura y los rangos efectivos de la planta.</small>
-      </span>
-    </label>
+    <UiCheckboxPanel
+      v-model="generateAi"
+      title="Generar una recomendación con IA al guardar"
+      description="Usará esta lectura, los rangos efectivos y el historial reciente."
+      data-test="generate-ai"
+    />
 
     <footer class="reading__foot">
       <span data-test="ready-count">
@@ -266,19 +265,6 @@ async function submit() {
   height: 28px;
   justify-content: center;
   width: 28px;
-}
-
-.reading__ai {
-  align-items: start;
-  display: grid;
-  gap: var(--space-2);
-  grid-template-columns: auto 1fr;
-}
-
-.reading__ai small {
-  color: var(--color-ink-muted);
-  display: block;
-  font-size: var(--font-size-11);
 }
 
 .reading__foot {

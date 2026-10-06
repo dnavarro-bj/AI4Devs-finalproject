@@ -56,4 +56,13 @@ describe('UiStatTile', () => {
 
     expect(wrapper.find('[data-test="tone-label"]').exists()).toBe(false)
   })
+
+  it('en disposición de fila alinea cifra, explicación y camino al listado', async () => {
+    const wrapper = await mountSuspended(UiStatTile, {
+      props: { value: 5, label: 'Vencidas', context: '2 desde hace una semana', to: '/tasks', layout: 'row' },
+    })
+
+    expect(wrapper.find('.stat-tile').classes()).toContain('is-row')
+    expect(wrapper.find('.stat-tile__arrow').text()).toBe('→')
+  })
 })

@@ -51,6 +51,7 @@ const NAVIGATION = APP_NAVIGATION
 const galleryPage = ref(3)
 const filterLocation = ref('')
 const filterTag = ref('globular')
+const recommendAfterReading = ref(true)
 const calendarMonth = ref('2026-09')
 
 const TIMELINE_TYPES = [
@@ -272,6 +273,51 @@ const SEARCH_GROUPS = [
         </UiFieldAction>
       </UiFilterBar>
 
+      <!-- Variante de listado denso: los rótulos siguen accesibles aunque no ocupen otra fila. -->
+      <UiFilterBar label="Barra compacta del inventario" :applied="[]" density="compact">
+        <UiToolbarField label="Buscar" type="search" icon="⌕" placeholder="Código, apodo o especie" />
+        <UiToolbarField v-model="filterLocation" label="Localización" as="select" placeholder="Localización" :options="[]" />
+        <UiToolbarField label="Estado" as="select" placeholder="Estado" :options="[]" />
+        <UiButton variant="secondary">Más filtros ＋</UiButton>
+        <UiButton variant="icon" label="Configurar columnas">☷</UiButton>
+      </UiFilterBar>
+      <UiListFooter :page="0" :page-size="25" :total-elements="486" :total-pages="20" />
+      <UiMetricStrip
+        label="Resumen operativo de localizaciones"
+        :items="[
+          { value: 43, label: 'Tareas pendientes', note: '5 vencidas', to: '/tasks' },
+          { value: 4, label: 'Alertas abiertas', note: '1 crítica', to: '/alerts', tone: 'danger' },
+          { value: 18, label: 'Localizaciones', note: '3 niveles de profundidad' },
+        ]"
+      />
+      <div class="stat-tiles">
+        <UiZoneCard
+          title="Invernadero 1"
+          summary="486 plantas · 6 sublocalizaciones"
+          to="/locations/1"
+          mark="⌂"
+          status="21 tareas"
+          status-tone="warning"
+          :progress="78"
+          progress-label="78 % de la capacidad orientativa"
+        />
+        <UiZoneCard
+          title="Zona exterior"
+          summary="407 plantas · 4 sublocalizaciones"
+          to="/locations/2"
+          mark="☼"
+          status="Al día"
+          status-tone="ok"
+          :progress="51"
+          progress-label="51 % de la capacidad orientativa"
+        />
+      </div>
+      <UiCheckboxPanel
+        v-model="recommendAfterReading"
+        title="Generar una recomendación con IA al guardar"
+        description="Usará esta lectura, los rangos efectivos y el historial reciente."
+      />
+
       <!-- Resumen de estado: valor compacto y una sola superficie dividida. No es la métrica. -->
       <UiSummaryGrid
         eyebrow="Estado actual"
@@ -288,11 +334,35 @@ const SEARCH_GROUPS = [
 
       <!-- Métrica navegable: una cifra grande que lleva a su conjunto. Otra cosa. -->
       <div class="stat-tiles">
-        <UiStatTile :value="12" label="Alertas importantes" to="/alerts" tone="danger" />
+        <UiStatTile :value="12" label="Alertas importantes" context="Una requiere atención inmediata" to="/alerts" tone="danger" layout="row" />
         <UiStatTile :value="7" label="Tareas vencidas" to="/tasks" tone="warning" />
         <UiStatTile :value="0" label="Sin revisar" context="más de 30 días" to="/plants" />
         <UiStatTile :value="1284" label="Ejemplares" />
       </div>
+
+      <UiPanel eyebrow="Agenda" title="Siguiente trabajo">
+        <UiDateAgenda
+          today="2026-09-03"
+          :entries="[
+            { id: 'today-1', due: '2026-09-03' },
+            { id: 'tomorrow-1', due: '2026-09-04' },
+          ]"
+        >
+          <template #entry="{ entry }">
+            <strong>{{ entry.id === 'today-1' ? 'Regar bandejas A3 y A4' : 'Instalar sombreo temporal' }}</strong>
+          </template>
+        </UiDateAgenda>
+      </UiPanel>
+
+      <UiPanel eyebrow="Atención" eyebrow-tone="danger" title="Alertas">
+        <UiSignalList
+          label="Alertas abiertas"
+          :items="[
+            { id: 'temperature', title: 'Temperatura crítica', detail: 'CAT-FEROC-08 · Invernadero 2', trailing: 'Hace 32 min', tone: 'danger' },
+            { id: 'review', title: 'Sin revisar durante 43 días', detail: 'CAT-GRUSS-01 · Bandeja A3', trailing: 'Ayer', tone: 'warning' },
+          ]"
+        />
+      </UiPanel>
 
       <!-- Acotado como en su sitio real: un panel lateral, no el ancho de la pantalla. -->
       <div class="tree-sample">
@@ -362,7 +432,15 @@ const SEARCH_GROUPS = [
       </UiTimeline>
 
       <div class="two-columns">
-        <UiAgendaList :entries="AGENDA" today="2026-09-06" @select="show(`Tarea ${$event}`)" />
+        <div>
+          <UiAgendaList :entries="AGENDA" today="2026-09-06" @select="show(`Tarea ${$event}`)" />
+          <!-- Con el slot `entry`, una pantalla compone sus filas sin perder los grupos. -->
+          <UiAgendaList :entries="AGENDA.slice(0, 2)" today="2026-09-06" data-test="agenda-composed">
+            <template #entry="{ entry, overdue }">
+              <span>{{ overdue ? 'Vencida · ' : '' }}{{ entry.title }}</span>
+            </template>
+          </UiAgendaList>
+        </div>
         <UiCalendarMonth
           v-model:month="calendarMonth"
           today="2026-09-06"
@@ -379,6 +457,24 @@ const SEARCH_GROUPS = [
       <UiMediaGallery :images="[]" />
       <!-- La subida real —formatos, tamaño, miniaturas y almacenamiento— llega en T-19. -->
       <UiUploadArea label="Añadir fotografías" accept="image/*" hint="JPG o PNG" @files="show(`${$event.length} fichero(s)`)" />
+
+      <UiUploadArea
+        label="Arrastra fotografías o selecciónalas"
+        accept="image/*"
+        hint="JPG, PNG o WebP · hasta 10 MB cada una"
+        action-label="Seleccionar archivos"
+        layout="inline"
+        mark="▧"
+      />
+      <UiInheritanceSummary
+        source="Echinocactus grusonii"
+        :items="[
+          { label: 'Temperatura', value: '8–35 °C' },
+          { label: 'Humedad', value: '20–40 %' },
+          { label: 'Riego', value: 'Cada 15–25 días' },
+          { label: 'Sustrato', value: 'Mineral drenante' },
+        ]"
+      />
 
       <UiFormSection title="Identidad" description="Cómo reconocer este ejemplar">
         <UiField v-model="humidity" label="Apodo" />

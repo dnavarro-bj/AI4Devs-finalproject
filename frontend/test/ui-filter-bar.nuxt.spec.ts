@@ -87,4 +87,10 @@ describe('UiFilterBar: semántica y alineación', () => {
 
     expect(wrapper.find('[data-test="filter-controls"]').classes()).toContain('filter-bar__controls')
   })
+
+  it('expone una variante compacta para barras de listado', () => {
+    const wrapper = bar({ density: 'compact' })
+
+    expect(wrapper.classes()).toContain('is-compact')
+  })
 })

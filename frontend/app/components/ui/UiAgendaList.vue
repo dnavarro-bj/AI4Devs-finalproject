@@ -6,6 +6,9 @@
  * calendario mensual no basta —demasiadas entradas en una celda dejan de ser legibles—, y quien
  * va a trabajar necesita saber por dónde empezar, no cómo se reparte el mes.
  *
+ * Las filas se pueden **componer por el slot `entry`** —con su casilla, su prioridad, sus acciones—
+ * sin perder el agrupamiento, que es lo que esta pieza sabe hacer.
+ *
  * **Recibe la fecha de referencia**; no la consulta. Ver `agendaGrouping.ts`.
  */
 import { groupByDueness, type DueEntry } from './agendaGrouping'
@@ -51,11 +54,14 @@ function formatDate(due: string): string {
 
       <ul>
         <li v-for="entry in group.entries" :key="entry.id" data-role="entry">
-          <button type="button" @click="emit('select', entry.id)">
-            <span class="agenda__title">{{ entry.title }}</span>
-            <span v-if="entry.detail" class="agenda__detail">{{ entry.detail }}</span>
-          </button>
-          <time :datetime="entry.due">{{ formatDate(entry.due) }}</time>
+          <!-- Una pantalla compone sus filas por el slot; sin él, la fila es título, detalle y fecha. -->
+          <slot name="entry" :entry="entry" :overdue="group.key === 'overdue'">
+            <button type="button" @click="emit('select', entry.id)">
+              <span class="agenda__title">{{ entry.title }}</span>
+              <span v-if="entry.detail" class="agenda__detail">{{ entry.detail }}</span>
+            </button>
+            <time :datetime="entry.due">{{ formatDate(entry.due) }}</time>
+          </slot>
         </li>
       </ul>
     </div>
@@ -107,10 +113,28 @@ function formatDate(due: string): string {
 
 .agenda__group li {
   align-items: center;
-  border-top: 1px solid var(--color-line);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
   display: flex;
   gap: var(--space-3);
-  min-height: 48px;
+  min-height: 74px;
+  padding: var(--space-3);
+}
+
+.agenda__group li + li {
+  margin-top: -1px;
+}
+
+.agenda__group li:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.agenda__group li:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.agenda__group li:only-child {
+  border-radius: var(--radius-md);
 }
 
 .agenda__group button {

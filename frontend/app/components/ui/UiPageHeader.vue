@@ -7,13 +7,14 @@
  *
  * El título es el `h1` de la pantalla: hay exactamente uno y dice dónde está el usuario.
  */
-defineProps<{ title: string, context?: string }>()
+defineProps<{ title: string, context?: string, eyebrow?: string }>()
 </script>
 
 <template>
   <header class="page-header">
     <div class="page-header__text">
-      <h1>{{ title }}</h1>
+      <p v-if="eyebrow" class="page-header__eyebrow" data-test="page-eyebrow">{{ eyebrow }}</p>
+      <h1><slot name="title">{{ title }}</slot></h1>
       <p v-if="context" class="page-header__context" data-test="page-context">{{ context }}</p>
     </div>
     <div v-if="$slots.actions" class="page-header__actions" data-test="page-actions">
@@ -35,6 +36,13 @@ defineProps<{ title: string, context?: string }>()
   font-size: var(--font-size-24);
   letter-spacing: -0.02em;
   margin: 0;
+}
+
+.page-header__eyebrow {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+  margin: 0 0 var(--space-1);
 }
 
 .page-header__context {

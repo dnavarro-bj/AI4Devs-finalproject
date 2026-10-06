@@ -16,13 +16,14 @@
 withDefaults(defineProps<{
   applied: { id: string, label: string }[]
   label?: string
-}>(), { label: 'Filtros' })
+  density?: 'regular' | 'compact'
+}>(), { label: 'Filtros', density: 'regular' })
 
 defineEmits<{ remove: [string], clear: [] }>()
 </script>
 
 <template>
-  <fieldset class="filter-bar">
+  <fieldset class="filter-bar" :class="`is-${density}`">
     <legend class="sr-only">{{ label }}</legend>
 
     <div v-if="$slots.default" class="filter-bar__controls" data-test="filter-controls">
@@ -64,6 +65,11 @@ defineEmits<{ remove: [string], clear: [] }>()
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+.filter-bar.is-compact .filter-bar__controls {
+  align-items: stretch;
+  gap: var(--space-2);
 }
 
 .filter-bar__applied {

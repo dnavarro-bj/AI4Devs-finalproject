@@ -46,6 +46,9 @@ describe('listado del inventario', () => {
     expect(text).toContain('Pinchitos')
     expect(text).toContain('Echinocactus grusonii')
     expect(text).toContain('Invernadero 1')
+    expect(wrapper.find('h1').text()).toBe('Plantas 2')
+    expect(wrapper.find('[data-test="page-eyebrow"]').text()).toBe('Colección')
+    expect(text).toContain('1–2 de 2 resultados')
   })
 
   it('avisa de que el inventario está vacío en lugar de pintar una tabla en blanco', async () => {
@@ -247,6 +250,39 @@ describe('inventario: columnas y filtros del wireframe', () => {
       expect(field.exists()).toBe(true)
       expect(field.attributes('disabled')).toBeDefined()
     }
+  })
+
+  it('reserva los filtros secundarios hasta que se piden', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const tag = wrapper.find('[data-test="filter-tag"]')
+    expect((tag.element.parentElement?.parentElement as HTMLElement).style.display).toBe('none')
+
+    await wrapper.find('[data-test="more-filters"]').trigger('click')
+
+    expect((tag.element.parentElement?.parentElement as HTMLElement).style.display).not.toBe('none')
+  })
+
+  it('oculta visualmente el encabezado de acciones, pero conserva su nombre accesible', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const actionsHeader = wrapper.findAll('thead th').at(-1)!
+    expect(actionsHeader.text()).toBe('Acciones')
+    expect(actionsHeader.find('.sr-only').exists()).toBe(true)
+  })
+
+  it('el código de ejemplo refleja la especie en vez de repetir el prefijo de Grusonii', async () => {
+    const mammillaria = plant('22', 'Dedo de dama')
+    mammillaria.species.scientificName = 'Mammillaria elongata'
+    serve([mammillaria])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    expect(wrapper.find('tbody code').text()).toBe('CAT-MAMMI-22')
   })
 
   it('las columnas se pueden ocultar, salvo la identificativa', async () => {

@@ -75,6 +75,7 @@ function onClick(event: MouseEvent) {
   align-items: center;
   border-radius: var(--radius-sm);
   display: inline-flex;
+  gap: var(--space-2);
   font-weight: 700;
   justify-content: center;
   min-height: 40px;

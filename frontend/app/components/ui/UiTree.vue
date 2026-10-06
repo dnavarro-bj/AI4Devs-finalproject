@@ -18,10 +18,15 @@ export interface TreeNode {
   id: string
   label: string
   count?: number
+  detail?: string
+  mark?: string
   children?: TreeNode[]
 }
 
-withDefaults(defineProps<{ nodes: TreeNode[], label?: string }>(), { label: 'Jerarquía' })
+withDefaults(defineProps<{ nodes: TreeNode[], label?: string, selected?: string }>(), {
+  label: 'Jerarquía',
+  selected: undefined,
+})
 
 const emit = defineEmits<{ select: [string] }>()
 </script>
@@ -32,6 +37,7 @@ const emit = defineEmits<{ select: [string] }>()
       v-for="node in nodes"
       :key="node.id"
       :node="node"
+      :selected="selected"
       @select="emit('select', $event)"
     />
   </ul>

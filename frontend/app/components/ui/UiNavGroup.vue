@@ -13,19 +13,21 @@
  * Un componente del kit que importara de una feature invertiría la dependencia.
  */
 const props = defineProps<{
-  label: string
+  /** Sin etiqueta, el grupo es una entrada suelta: el Dashboard no pertenece a ninguna agrupación. */
+  label?: string
   entries: { label: string, to: string, mark: string }[]
   activePath?: string
 }>()
 
 /** Activa la entrada que **contiene** la ruta, no solo la que coincide: `/plants/1` es Plantas. */
 const isActive = (to: string) =>
-  !!props.activePath && (props.activePath === to || props.activePath.startsWith(`${to}/`))
+  !!props.activePath
+  && (props.activePath === to || (to !== '/' && props.activePath.startsWith(`${to}/`)))
 </script>
 
 <template>
   <div class="nav-group">
-    <p class="nav-group__label" data-test="group-label">{{ label }}</p>
+    <p v-if="label" class="nav-group__label" data-test="group-label">{{ label }}</p>
     <NuxtLink
       v-for="entry in entries"
       :key="entry.to"

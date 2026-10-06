@@ -19,7 +19,7 @@ export type SortDirection = 'asc' | 'desc'
 export interface TableSort { key: string, direction: SortDirection }
 
 const props = withDefaults(defineProps<{
-  columns: { key: string, label: string, sortable?: boolean }[]
+  columns: { key: string, label: string, sortable?: boolean, visuallyHidden?: boolean }[]
   rows: Row[]
   rowKey: string
   selectable?: boolean
@@ -125,7 +125,7 @@ function toggleAll(checked: boolean) {
                 <!-- El sentido se ve además de anunciarse: no depende solo del color. -->
                 <span aria-hidden="true">{{ sort?.key === column.key ? (sort.direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
               </button>
-              <template v-else>{{ column.label }}</template>
+              <span v-else :class="{ 'sr-only': column.visuallyHidden }">{{ column.label }}</span>
             </th>
           </tr>
         </thead>

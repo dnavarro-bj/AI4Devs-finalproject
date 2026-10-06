@@ -37,6 +37,25 @@ describe('UiPageHeader', () => {
     expect(wrapper.find('[data-test="page-context"]').exists()).toBe(false)
   })
 
+  it('admite un antetítulo separado del contexto', async () => {
+    const wrapper = await mountSuspended(UiPageHeader, {
+      props: { title: 'Trabajo de hoy', eyebrow: 'Jueves, 3 de septiembre', context: 'Primero lo vencido.' },
+    })
+
+    expect(wrapper.find('[data-test="page-eyebrow"]').text()).toBe('Jueves, 3 de septiembre')
+    expect(wrapper.find('[data-test="page-context"]').text()).toBe('Primero lo vencido.')
+  })
+
+  it('permite componer el título sin perder el único h1', async () => {
+    const wrapper = await mountSuspended(UiPageHeader, {
+      props: { title: 'Plantas' },
+      slots: { title: 'Plantas <span>312</span>' },
+    })
+
+    expect(wrapper.findAll('h1')).toHaveLength(1)
+    expect(wrapper.find('h1').text()).toBe('Plantas 312')
+  })
+
   it('tiene un solo elemento raíz, para que los atributos del punto de uso caigan en él', async () => {
     const wrapper = await mountSuspended(UiPageHeader, {
       props: { title: 'Plantas' },

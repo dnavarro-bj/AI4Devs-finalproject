@@ -14,8 +14,8 @@
  * ticket: los niveles de la jerarquía y la capacidad orientativa (T-18), y el trabajo que requiere
  * atención (T-23).
  *
- * El alta va en un diálogo y no en una pantalla propia: una localización es hoy un nombre. El
- * editor completo del prototipo —padre, tipo, capacidad, exposición— llega con T-18.
+ * El alta abre el editor completo del prototipo. Solo el nombre se persiste hoy; los campos de
+ * jerarquía y características permanecen visibles y marcados con T-18 en su propia pantalla.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
@@ -27,7 +27,7 @@ import type { PageResponse } from '@shared/types/api.types'
 useHead({ title: 'Cactify · Localizaciones' })
 useBreadcrumbs().set([{ label: 'Localizaciones' }])
 
-const { listLocations, createLocation } = useCatalogs()
+const { listLocations } = useCatalogs()
 const { list: listPlants } = usePlants()
 
 const page = ref<PageResponse<LocationListItem> | null>(null)
@@ -35,11 +35,6 @@ const page = ref<PageResponse<LocationListItem> | null>(null)
 const collectionSize = ref(0)
 const loading = ref(true)
 const error = ref<string | null>(null)
-
-const creating = ref(false)
-const newName = ref('')
-const saving = ref(false)
-const createError = ref<string | null>(null)
 
 async function load(pageNumber: number) {
   loading.value = true
@@ -56,29 +51,6 @@ async function load(pageNumber: number) {
   if (plants.success) collectionSize.value = plants.data!.totalElements
 }
 
-function openCreation() {
-  newName.value = ''
-  createError.value = null
-  creating.value = true
-}
-
-/** El mensaje del API se prefiere al nuestro: lo escribe quien conoce la regla. */
-async function submitCreation() {
-  saving.value = true
-  createError.value = null
-
-  const result = await createLocation(newName.value)
-  saving.value = false
-
-  if (!result.success) {
-    createError.value = result.error!.message || 'No se ha podido crear la localización.'
-    return
-  }
-
-  creating.value = false
-  await load(page.value?.pageNumber ?? 0)
-}
-
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
 onMounted(() => load(0))
 
@@ -93,16 +65,36 @@ const tree = computed<TreeNode[]>(() => [{
   id: 'all',
   label: 'Toda la colección',
   count: collectionSize.value,
+  detail: `${page.value?.totalElements ?? 0} localizaciones`,
+  mark: '⌖',
   children: locations.value.map((location) => ({
     id: location.id,
     label: location.name,
     count: location.plantCount,
+    detail: `${location.plantCount} ${location.plantCount === 1 ? 'planta' : 'plantas'} · niveles T-18`,
+    mark: locationMark(location.name),
   })),
 }])
 
 /** Qué parte de la colección vive en cada sitio. La capacidad orientativa del prototipo es T-18. */
 const shareOf = (location: LocationListItem) =>
   collectionSize.value > 0 ? Math.round((location.plantCount / collectionSize.value) * 100) : 0
+
+function locationMark(name: string) {
+  const normalized = name.toLowerCase()
+  if (normalized.includes('invernadero')) return '⌂'
+  if (normalized.includes('bandeja')) return '▦'
+  if (normalized.includes('exterior')) return '☼'
+  if (normalized.includes('cuarentena')) return '!'
+  if (normalized.includes('bancada')) return '═'
+  return '⌖'
+}
+
+const workSummary = computed(() => [
+  { value: '—', label: 'Tareas pendientes', note: 'Trabajo por zona · T-22', to: '/tasks', mock: true },
+  { value: '—', label: 'Alertas abiertas', note: 'Incidencias · T-23', to: '/alerts', tone: 'danger' as const, mock: true },
+  { value: page.value?.totalElements ?? 0, label: 'Localizaciones', note: 'Jerarquía completa · T-18' },
+])
 
 function openLocation(id: string) {
   if (id !== 'all') navigateTo(`/locations/${id}`)
@@ -113,12 +105,14 @@ function openLocation(id: string) {
   <section>
     <UiPageHeader
       title="Localizaciones"
-      :context="page
-        ? `${page.totalElements} sitios donde viven los ejemplares de la colección`
-        : undefined"
+      eyebrow="Colección"
+      context="Organiza el vivero tal como lo recorres: de la zona a la bancada y de la bancada a la bandeja."
     >
+      <template #title>
+        Localizaciones <span class="heading-count">{{ page?.totalElements ?? '—' }}</span>
+      </template>
       <template #actions>
-        <UiButton data-test="new-location" @click="openCreation">Añadir localización</UiButton>
+        <UiButton to="/locations/new" data-test="new-location"><span aria-hidden="true">＋</span> Añadir localización</UiButton>
       </template>
     </UiPageHeader>
 
@@ -134,96 +128,93 @@ function openLocation(id: string) {
     >
       Un ejemplar necesita un sitio para darse de alta. Crea la primera para empezar.
       <template #action>
-        <UiButton @click="openCreation">Crear la primera localización</UiButton>
+        <UiButton to="/locations/new">Crear la primera localización</UiButton>
       </template>
     </UiEmptyState>
 
-    <UiDetailLayout v-else-if="locations.length" class="overview">
-      <!-- Vista general: una tarjeta por sitio, con su carga como proporción. -->
-      <UiPanel>
-        <UiSectionHeader
-          eyebrow="Vista general"
-          title="Toda la colección"
-          :description="`${collectionSize} ejemplares repartidos en ${page!.totalElements} localizaciones.`"
-        >
-          <template #actions>
-            <UiButton variant="secondary" to="/plants" data-test="all-plants">
-              Ver todas las plantas
-            </UiButton>
-          </template>
-        </UiSectionHeader>
+    <div v-else-if="locations.length" class="overview">
+      <aside class="nursery-map" data-test="nursery-map">
+        <header>
+          <div>
+            <h2>Mapa del vivero</h2>
+            <p data-test="collection-total">
+              <strong>{{ collectionSize }}</strong> plantas en
+              <strong>{{ page!.totalElements }}</strong> localizaciones
+            </p>
+          </div>
+          <UiButton variant="icon" label="Opciones del mapa" disabled data-mock="true">•••</UiButton>
+        </header>
+
+        <label class="map-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" placeholder="Buscar localización · T-21" disabled data-mock="true">
+        </label>
+
+        <div class="map-tree">
+          <UiTree
+            :nodes="tree"
+            selected="all"
+            label="Jerarquía de localizaciones"
+            @select="openLocation"
+          />
+        </div>
+
+        <p class="map-pending" data-mock="true" data-test="hierarchy-pending">
+          El esquema todavía es plano. Los niveles de zona, bancada y bandeja completarán este mapa
+          con <strong>T-18</strong>.
+        </p>
+      </aside>
+
+      <main class="overview-main">
+        <header class="overview-head">
+          <div>
+            <span>Vista general</span>
+            <h2>Toda la colección</h2>
+            <p>{{ collectionSize }} ejemplares repartidos en {{ page!.totalElements }} localizaciones.</p>
+          </div>
+          <UiButton variant="secondary" to="/plants" data-test="all-plants">
+            Ver todas las plantas
+          </UiButton>
+        </header>
+
+        <UiMetricStrip :items="workSummary" label="Resumen operativo de localizaciones" />
 
         <div class="zones">
-          <NuxtLink
+          <UiZoneCard
             v-for="location in locations"
             :key="location.id"
-            class="zone"
+            :title="location.name"
+            :summary="`${location.plantCount} ${location.plantCount === 1 ? 'planta' : 'plantas'}`"
             :to="`/locations/${location.id}`"
+            :mark="locationMark(location.name)"
+            :status="location.plantCount ? 'En uso' : 'Vacía'"
+            :status-tone="location.plantCount ? 'ok' : 'neutral'"
+            :progress="shareOf(location)"
+            :progress-label="`${shareOf(location)} % de la colección`"
             data-test="zone-card"
-          >
-            <span class="zone__top">
-              <i class="zone__mark" aria-hidden="true">⌖</i>
-              <UiStatus :tone="location.plantCount ? 'ok' : 'neutral'">
-                {{ location.plantCount ? 'En uso' : 'Vacía' }}
-              </UiStatus>
-            </span>
-            <strong>{{ location.name }}</strong>
-            <small>
-              {{ location.plantCount }}
-              {{ location.plantCount === 1 ? 'planta' : 'plantas' }}
-            </small>
-            <UiProgressBar
-              :value="location.plantCount"
-              :max="collectionSize || 1"
-              :detail="`${shareOf(location)} % de la colección`"
-              :show-value="false"
-            />
-          </NuxtLink>
-        </div>
-
-        <div class="capacity-pending" data-mock="true" data-test="capacity-pending">
-          <p class="pending">
-            El prototipo mide la ocupación contra la <strong>capacidad orientativa</strong> de cada
-            zona. Todavía no existe como dato: llega con <strong>T-18</strong>. Hasta entonces la
-            barra dice qué parte de la colección vive en cada sitio.
-          </p>
-        </div>
-      </UiPanel>
-
-      <UiPanel data-mock="true" data-test="attention">
-        <UiSectionHeader
-          title="Requieren atención"
-          description="Ordenadas por urgencia y carga de trabajo."
-        />
-        <p class="pending">
-          Las alertas abiertas por localización llegan con <strong>T-23</strong>, y el trabajo
-          pendiente de cada sitio con <strong>T-22</strong>. Ninguno de los dos existe todavía como
-          dato, así que aquí no se inventa ninguna incidencia.
-        </p>
-      </UiPanel>
-
-      <template #aside>
-        <UiPanel data-test="nursery-map">
-          <UiSectionHeader
-            title="Mapa del vivero"
-            :description="`${collectionSize} plantas en ${page!.totalElements} localizaciones`"
           />
+        </div>
 
-          <p class="collection-total" data-test="collection-total">
-            <strong>{{ collectionSize }}</strong> ejemplares ·
-            <strong>{{ page!.totalElements }}</strong> localizaciones
-          </p>
+        <p class="capacity-note" data-mock="true" data-test="capacity-pending">
+          Las barras comparan hoy cada sitio con la colección. La capacidad orientativa de cada
+          zona llega con <strong>T-18</strong>.
+        </p>
 
-          <UiTree :nodes="tree" label="Jerarquía de localizaciones" @select="openLocation" />
-
-          <p class="pending" data-mock="true" data-test="hierarchy-pending">
-            El vivero del prototipo se recorre de la zona a la bancada y de la bancada a la bandeja.
-            El esquema es plano hoy: los niveles intermedios y la ruta completa llegan con
-            <strong>T-18</strong>, y hasta entonces todo cuelga de la colección.
-          </p>
-        </UiPanel>
-      </template>
-    </UiDetailLayout>
+        <section class="attention" data-mock="true" data-test="attention">
+          <header>
+            <h2>Requieren atención</h2>
+            <p>Ordenadas por urgencia y carga de trabajo.</p>
+          </header>
+          <div>
+            <span aria-hidden="true">○</span>
+            <p>
+              <strong>Sin incidencias disponibles todavía</strong>
+              <small>Las alertas por localización llegan con T-23 y el trabajo pendiente con T-22.</small>
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <UiPagination
       :page="page?.pageNumber ?? 0"
@@ -233,109 +224,202 @@ function openLocation(id: string) {
       @update:page="load"
     />
 
-    <UiDialog
-      :open="creating"
-      title="Añadir localización"
-      subtitle="Un nombre breve facilita encontrarla al mover plantas o dar de alta un ejemplar."
-      data-test="new-location-dialog"
-      @close="creating = false"
-    >
-      <form id="new-location-form" data-test="new-location-submit" @submit.prevent="submitCreation">
-        <UiField
-          v-model="newName"
-          label="Nombre"
-          help="Por ejemplo, «Invernadero 1» o «Bandeja A3»."
-          data-test="new-location-name"
-        />
-      </form>
-
-      <UiInlineError v-if="createError" data-test="new-location-error">{{ createError }}</UiInlineError>
-
-      <template #footer>
-        <UiButton variant="secondary" @click="creating = false">Cancelar</UiButton>
-        <UiButton type="submit" form="new-location-form" :disabled="saving">
-          {{ saving ? 'Guardando…' : 'Crear localización' }}
-        </UiButton>
-      </template>
-    </UiDialog>
   </section>
 </template>
 
 <style scoped>
+.heading-count {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-17);
+  font-weight: 400;
+}
+
 .overview {
+  align-items: start;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: clamp(280px, 30vw, 360px) minmax(0, 1fr);
   margin-bottom: var(--space-4);
+}
+
+.nursery-map {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+}
+
+.nursery-map > header {
+  align-items: start;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.nursery-map h2 {
+  font-size: var(--font-size-17);
+  margin: 0;
+}
+
+.nursery-map header p {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-11);
+  margin: var(--space-1) 0 0;
+}
+
+.nursery-map header p strong {
+  color: var(--color-ink);
+}
+
+.map-search {
+  align-items: center;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: auto 1fr;
+  margin: var(--space-1) var(--space-3) var(--space-3);
+  min-height: 38px;
+  padding: 0 var(--space-2);
+}
+
+.map-search input {
+  background: transparent;
+  border: 0;
+  color: var(--color-ink-muted);
+  font: inherit;
+  font-size: var(--font-size-13);
+  min-width: 0;
+  width: 100%;
+}
+
+.map-tree {
+  border-top: 1px solid var(--color-line);
+  padding: var(--space-2);
+}
+
+.map-pending {
+  border-top: 1px solid var(--color-line);
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-11);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.overview-main {
+  min-width: 0;
+}
+
+.overview-head {
+  align-items: end;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.overview-head > div > span {
+  color: var(--color-brand);
+  font-size: var(--font-size-11);
+  font-weight: 800;
+}
+
+.overview-head h2 {
+  font-size: var(--font-size-24);
+  margin: var(--space-1) 0;
+}
+
+.overview-head p {
+  color: var(--color-ink-muted);
+  margin: 0;
+  max-width: 570px;
 }
 
 .zones {
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  margin-top: var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-3);
 }
 
-.zone {
+.capacity-note {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-11);
+  margin: var(--space-3) 0 0;
+}
+
+.attention {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-md);
-  color: var(--color-ink);
-  display: grid;
-  gap: 4px;
-  padding: var(--space-3);
-  text-decoration: none;
+  margin-top: var(--space-5);
+  overflow: hidden;
 }
 
-.zone:hover {
-  border-color: var(--color-brand);
+.attention > header {
+  padding: var(--space-4) var(--space-4) var(--space-2);
 }
 
-.zone__top {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2px;
+.attention h2 {
+  font-size: var(--font-size-17);
+  margin: 0;
 }
 
-.zone__mark {
-  align-items: center;
-  background: var(--color-brand-soft);
-  border-radius: var(--radius-sm);
-  color: var(--color-brand);
-  display: flex;
-  font-style: normal;
-  height: 28px;
-  justify-content: center;
-  width: 28px;
-}
-
-.zone strong {
-  font-size: var(--font-size-13);
-}
-
-.zone small {
+.attention header p,
+.attention small {
   color: var(--color-ink-muted);
   font-size: var(--font-size-11);
 }
 
-.collection-total {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-12);
-  margin: var(--space-3) 0;
+.attention header p {
+  margin: var(--space-1) 0 0;
 }
 
-.collection-total strong {
-  color: var(--color-ink);
-  font-size: var(--font-size-15);
-}
-
-.capacity-pending {
+.attention > div {
+  align-items: start;
   border-top: 1px solid var(--color-line);
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: auto 1fr;
+  padding: var(--space-3) var(--space-4);
 }
 
-.pending {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-12);
-  margin: var(--space-3) 0 0;
+.attention > div > span {
+  color: var(--color-ink-faint);
+}
+
+.attention > div p {
+  margin: 0;
+}
+
+.attention strong,
+.attention small {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .overview {
+    grid-template-columns: 1fr;
+  }
+
+  .nursery-map {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .overview-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .zones {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
