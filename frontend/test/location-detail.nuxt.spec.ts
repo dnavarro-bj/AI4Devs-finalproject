@@ -70,6 +70,19 @@ describe('ficha de una localización', () => {
     expect(wrapper.text()).toContain('Asiento de suegra')
   })
 
+  /** Escenario «Estado en el inventario y en la localización»: el estado de cada ejemplar es el real. */
+  it('cada ejemplar muestra su estado real, sin marca de maqueta', async () => {
+    respond(2, [{ ...plant('400001', 'Asiento de suegra'), status: 'cuarentena' }, { ...plant('400002', 'Bola blanca'), status: 'activa' }])
+
+    const wrapper = await mountSuspended(LocationDetail)
+    await settle()
+
+    const statuses = wrapper.findAll('[data-test="row-status"]')
+    expect(statuses.map((cell) => cell.text())).toEqual(['En cuarentena', 'Activa'])
+    expect(statuses.every((cell) => cell.attributes('data-mock') === undefined)).toBe(true)
+    expect(wrapper.text()).not.toContain('T-16')
+  })
+
   it('cada ejemplar navega a su ficha', async () => {
     respond(1, [plant('400001', 'Asiento de suegra')])
 

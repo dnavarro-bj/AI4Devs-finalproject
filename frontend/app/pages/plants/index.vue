@@ -12,6 +12,7 @@
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useDebouncedRef } from '@shared/composables/useDebouncedRef'
 import { usePlants } from '@features/plants/composables/usePlants'
+import { PLANT_STATUSES, STATUS_LABELS } from '@features/plants/mappers/plantProfile'
 import type { PlantSummary } from '@features/plants/types/plant.types'
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
 import type { Location } from '@features/catalogs/types/catalog.types'
@@ -43,6 +44,20 @@ const locationFilter = ref('')
  * La búsqueda por **código** de inventario. El texto de la caja se aplica tras una pausa, no por
  * tecla; apodo y especie son T-21. Como los demás filtros, aparece como filtro aplicado y se quita.
  */
+/**
+ * El estado: **por defecto no se pide ninguno** y el API devuelve solo lo que está en curso —lo
+ * archivado no se mezcla con lo activo—. Elegir uno pide ese; `all` incluye las archivadas.
+ */
+const statusFilter = ref('')
+const statusOptions = [
+  ...PLANT_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] })),
+  { value: 'all', label: 'Todas, incluidas las archivadas' },
+]
+const statusQuery = computed(() => {
+  if (statusFilter.value === 'all') return PLANT_STATUSES
+  return statusFilter.value ? [statusFilter.value] : undefined
+})
+
 const searchText = ref('')
 const appliedSearch = useDebouncedRef(searchText, 250)
 const moreFiltersOpen = ref(false)
@@ -57,6 +72,9 @@ const appliedFilters = computed(() => [
   ...(locationFilter.value ? [{ id: 'location', label: `Localización: ${locationName.value}` }] : []),
   ...(tagFilter.value ? [{ id: 'tag', label: `Etiqueta: ${tagFilter.value}` }] : []),
   ...(appliedSearch.value.trim() ? [{ id: 'code', label: `Código: ${appliedSearch.value.trim()}` }] : []),
+  ...(statusFilter.value
+    ? [{ id: 'status', label: `Estado: ${statusOptions.find((option) => option.value === statusFilter.value)?.label}` }]
+    : []),
 ])
 
 /** Quitar la búsqueda se aplica **al instante**: no tiene sentido esperar la pausa para deshacerla. */
@@ -69,11 +87,13 @@ function removeFilter(id: string) {
   if (id === 'tag') tagFilter.value = ''
   if (id === 'location') locationFilter.value = ''
   if (id === 'code') clearSearch()
+  if (id === 'status') statusFilter.value = ''
 }
 
 function clearFilters() {
   tagFilter.value = ''
   locationFilter.value = ''
+  statusFilter.value = ''
   clearSearch()
 }
 
@@ -82,7 +102,7 @@ function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
   load(page.value?.pageNumber ?? 0)
 }
 
-watch([tagFilter, locationFilter, appliedSearch], () => load(0))
+watch([tagFilter, locationFilter, appliedSearch, statusFilter], () => load(0))
 
 async function load(pageNumber: number) {
   loading.value = true
@@ -94,6 +114,7 @@ async function load(pageNumber: number) {
     tag: tagFilter.value ? [tagFilter.value] : undefined,
     location: locationFilter.value || undefined,
     code: appliedSearch.value.trim() || undefined,
+    status: statusQuery.value,
   })
   loading.value = false
 
@@ -127,6 +148,7 @@ const COLUMNS = [
   { key: 'nickname', label: 'Planta', sortable: true },
   { key: 'species', label: 'Especie', sortable: true },
   { key: 'location', label: 'Localización', sortable: true },
+  { key: 'status', label: 'Estado' },
   { key: 'lastWatering', label: 'Último riego' },
   { key: 'attention', label: 'Atención' },
   { key: 'actions', label: 'Acciones', visuallyHidden: true },
@@ -187,12 +209,11 @@ const asPlant = (row: unknown) => row as PlantSummary
         data-test="filter-species"
       />
       <UiToolbarField
+        v-model="statusFilter"
         label="Estado"
         as="select"
-        placeholder="Estado · T-16"
-        :options="[]"
-        disabled
-        data-mock="true"
+        placeholder="Estado: en curso"
+        :options="statusOptions"
         data-test="filter-status"
       />
       <UiButton variant="secondary" data-test="more-filters" @click="moreFiltersOpen = !moreFiltersOpen">
@@ -282,6 +303,13 @@ const asPlant = (row: unknown) => row as PlantSummary
       <template #cell-location="{ row }">
         {{ asPlant(row).location.name }}
       </template>
+
+      <template #cell-status="{ row }">
+
+        <span data-test="row-status">{{ STATUS_LABELS[asPlant(row).status] }}</span>
+
+      </template>
+
 
       <template #cell-lastWatering>
         <span data-mock="true" class="cell-mock">— <small>T-20</small></span>

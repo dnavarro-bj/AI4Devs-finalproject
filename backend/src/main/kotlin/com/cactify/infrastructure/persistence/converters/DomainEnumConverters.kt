@@ -1,5 +1,7 @@
 package com.cactify.infrastructure.persistence.converters
 
+import com.cactify.domain.PlantOrigin
+import com.cactify.domain.PlantStatus
 import com.cactify.domain.Priority
 import com.cactify.domain.RiskLevel
 import jakarta.persistence.AttributeConverter
@@ -20,4 +22,16 @@ class RiskLevelConverter : AttributeConverter<RiskLevel, String> {
 class PriorityConverter : AttributeConverter<Priority, String> {
   override fun convertToDatabaseColumn(attribute: Priority?): String? = attribute?.value
   override fun convertToEntityAttribute(dbData: String?): Priority? = dbData?.let { Priority(it) }
+}
+
+@Converter(autoApply = true)
+class PlantStatusConverter : AttributeConverter<PlantStatus, String> {
+  override fun convertToDatabaseColumn(attribute: PlantStatus?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): PlantStatus? = dbData?.let { PlantStatus(it) }
+}
+
+@Converter(autoApply = true)
+class PlantOriginConverter : AttributeConverter<PlantOrigin, String> {
+  override fun convertToDatabaseColumn(attribute: PlantOrigin?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): PlantOrigin? = dbData?.let { PlantOrigin(it) }
 }

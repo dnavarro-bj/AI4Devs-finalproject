@@ -16,6 +16,8 @@ import type { PlantDetail } from '@features/plants/types/plant.types'
 import { usePlantHistory, toTimelineEvents } from '@features/care-records/composables/usePlantHistory'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
 import { plantGlance } from '@features/plants/composables/plantGlance'
+import { ORIGIN_LABELS, germinationLabel } from '@features/plants/mappers/plantProfile'
+import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import { MOCK_EVENTS, MOCK_NOTICE, MOCK_TASKS } from '@features/plants/mocks/plantDetail.mock'
 
 const route = useRoute()
@@ -30,6 +32,24 @@ const error = ref<string | null>(null)
 
 const tab = ref('resumen')
 const readingOpen = ref(false)
+const statusOpen = ref(false)
+/** Se incrementa tras cada cambio de estado: es lo que refresca el historial de la pestaña de datos. */
+const historyVersion = ref(0)
+const today = useReferenceDate()
+
+function onStatusChanged(updated: PlantDetail) {
+  plant.value = updated
+  statusOpen.value = false
+  historyVersion.value += 1
+}
+
+const germination = computed(() => plant.value
+  ? germinationLabel(plant.value.germinationYear, plant.value.germinationMonth, Number(today.value.slice(0, 4)))
+  : null)
+
+const acquired = computed(() => plant.value?.acquiredOn
+  ? new Date(`${plant.value.acquiredOn}T00:00:00Z`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  : null)
 const noticeDismissed = ref(false)
 
 /*
@@ -99,7 +119,7 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
     </div>
 
     <template v-else-if="plant">
-      <PlantHeader :plant="plant" @register-reading="readingOpen = true" />
+      <PlantHeader :plant="plant" @register-reading="readingOpen = true" @change-status="statusOpen = true" />
 
       <UiNotice
         v-if="!noticeDismissed"
@@ -189,6 +209,24 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
           <div><dt>Especie</dt><dd>{{ plant.species.scientificName }}</dd></div>
           <div><dt>Localización</dt><dd>{{ plant.location.name }}</dd></div>
           <div>
+            <dt>Descripción</dt>
+            <dd data-test="profile-description">{{ plant.description ?? 'Sin indicar' }}</dd>
+          </div>
+          <div>
+            <dt>Germinación</dt>
+            <dd data-test="profile-germination">{{ germination ?? 'Sin indicar' }}</dd>
+          </div>
+          <div>
+            <dt>Entrada en la colección</dt>
+            <dd data-test="profile-acquired">{{ acquired ?? 'Sin indicar' }}</dd>
+          </div>
+          <div>
+            <dt>Procedencia</dt>
+            <dd data-test="profile-origin">
+              {{ plant.origin ? ORIGIN_LABELS[plant.origin] : 'Sin indicar' }}<template v-if="plant.originNote"> · {{ plant.originNote }}</template>
+            </dd>
+          </div>
+          <div>
             <dt>Tags</dt>
             <dd>
               <template v-if="plant.tags.length">
@@ -198,7 +236,17 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
             </dd>
           </div>
         </dl>
+
+        <h3 class="data-heading">Historial de estado</h3>
+        <PlantStatusHistory :plant-id="plant.id" :version="historyVersion" />
       </UiPanel>
+
+      <PlantStatusDialog
+        :open="statusOpen"
+        :plant="plant"
+        @changed="onStatusChanged"
+        @close="statusOpen = false"
+      />
 
       <UiDialog
         :open="readingOpen"
@@ -272,6 +320,11 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
   color: var(--color-ink-muted);
   display: block;
   font-size: var(--font-size-12);
+}
+
+.data-heading {
+  font-size: var(--font-size-13);
+  margin: var(--space-4) 0 var(--space-2);
 }
 
 .data div {

@@ -126,4 +126,48 @@ describe('edición de una planta', () => {
 
     expect(wrapper.find('.editor__impact').text().toLowerCase()).not.toContain('el resto llega')
   })
+
+  // --- Ficha ampliada (`ficha-del-ejemplar`) ---
+
+  it('llega prellenada con la ficha ampliada de la planta', async () => {
+    serve()
+    api.get.mockImplementation(async (path: string) => {
+      if (path === '/locations') return { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      if (path === '/species') return { content: [{ id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      if (path === '/species/200001') return speciesCare()
+      return plantDetail({ description: 'Adulto', germinationYear: 2021, germinationMonth: 4, acquiredOn: '2022-03-01', origin: 'vivero', originNote: 'El del barrio' })
+    })
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect((wrapper.find('[data-test="description"]').element as HTMLTextAreaElement).value).toBe('Adulto')
+    expect((wrapper.find('[data-test="germination-year"]').element as HTMLInputElement).value).toBe('2021')
+    expect((wrapper.find('[data-test="germination-month"]').element as HTMLSelectElement).value).toBe('4')
+    expect((wrapper.find('[data-test="acquired-on"]').element as HTMLInputElement).value).toBe('2022-03-01')
+    expect((wrapper.find('[data-test="origin"]').element as HTMLSelectElement).value).toBe('vivero')
+    expect((wrapper.find('[data-test="origin-note"]').element as HTMLInputElement).value).toBe('El del barrio')
+  })
+
+  it('la edición no ofrece cambiar el estado: tiene su propia acción en la ficha', async () => {
+    serve()
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="status"]').exists()).toBe(false)
+  })
+
+  it('guardar envía la ficha completa y nunca el estado', async () => {
+    serve()
+    api.put.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    await wrapper.find('[data-test="description"]').setValue('Nueva descripción')
+    await wrapper.find('[data-test="plant-form"]').trigger('submit')
+    await settle()
+
+    const body = api.put.mock.calls[0]![1] as Record<string, unknown>
+    expect(body).toMatchObject({ nickname: 'Bola verde', description: 'Nueva descripción' })
+    expect(body).not.toHaveProperty('status')
+  })
 })

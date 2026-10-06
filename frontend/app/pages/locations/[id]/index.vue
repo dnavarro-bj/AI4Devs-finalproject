@@ -17,6 +17,7 @@
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
 import { usePlants } from '@features/plants/composables/usePlants'
+import { STATUS_LABELS } from '@features/plants/mappers/plantProfile'
 import { isNotFound } from '@shared/services/errorNormalizer'
 import type { LocationDetail } from '@features/catalogs/types/catalog.types'
 import type { PlantSummary } from '@features/plants/types/plant.types'
@@ -257,9 +258,8 @@ const asPlant = (row: unknown) => row as PlantSummary
               <em>{{ asPlant(row).species.scientificName }}</em>
             </template>
 
-            <!-- El estado del ejemplar todavía no existe como dato: es T-16. -->
-            <template #cell-status>
-              <span data-mock="true" class="cell-mock">— <small>T-16</small></span>
+            <template #cell-status="{ row }">
+              <span data-test="row-status">{{ STATUS_LABELS[asPlant(row).status] }}</span>
             </template>
           </UiTable>
 

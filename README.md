@@ -381,6 +381,11 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `code`: String. **Código de inventario** del ejemplar (`CAT-GRUSS-01`): el código de su especie más un número correlativo propio de esa especie, con al menos dos cifras (`-100` pasa con naturalidad). Único, asignado al dar de alta y **inmutable**: no cambia al editar la planta ni al cambiarle la especie.
 * `nickname`: String. Nombre libre del ejemplar. **Invariante**: no puede quedar en blanco.
+* `status`: Enum. En qué situación está: `activa`, `cuarentena`, `enferma` (**en curso**) o `cedida`, `vendida`, `muerta`, `perdida` (**finales**). Un ejemplar en un estado final **no desaparece**: sale del inventario por defecto, pero conserva su código y su historial. Solo cambia por `PUT /plants/{id}/status`, que deja constancia; de un estado final solo se vuelve a `activa`, con motivo.
+* `description`: String, opcional. Qué es el ejemplar.
+* `germinationYear` / `germinationMonth`: Int, opcionales. El mes **solo existe con año**: nunca se inventa un mes (la ficha dice «~5 años» cuando falta).
+* `acquiredOn`: Date, opcional. Cuándo entró en la colección.
+* `origin` / `originNote`: Enum opcional (`vivero`, `intercambio`, `germinacion_propia`, `compra`, `regalo`, `otro`) y una nota libre con el detalle.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
 * La personalización de cuidados por ejemplar todavía no forma parte del esquema actual; está diseñada para T-16 en el [borrador de evolución del modelo](docs/diagramas/borrador-modelo-datos-gestion.md), pero no se presenta como implementada.
@@ -389,6 +394,14 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
 * `name`: String. Nombre de la etiqueta (p. ej. "globular", "pequeño", "sin espinas", "híbrido"). Único.
+
+**plant_status_change** (historial de estado de un ejemplar)
+
+* `id`: TSID. Clave primaria.
+* `plantId`: TSID. Clave foránea → `Plant.id`.
+* `fromStatus` / `toStatus`: Enum. Los dos estados, siempre distintos.
+* `reason`: String, opcional. Obligatorio al volver a `activa` desde un estado final, porque es una corrección.
+* `occurredAt`: Instant. Cuándo ocurrió el cambio.
 
 **plant_tag** (tabla de unión de la relación N:M entre `Plant` y `Tag`)
 
@@ -473,6 +486,12 @@ paths:
         - name: location
           in: query
           schema: { type: string, pattern: '^[0-9]+$' }
+        - name: status
+          in: query
+          description: >
+            Repetible. Sin él, solo los ejemplares en curso; los finales (cedida, vendida, muerta,
+            perdida) se piden explícitamente.
+          schema: { type: array, items: { type: string } }
         - name: tag
           in: query
           description: Repetible; la planta debe tener todos los indicados.
@@ -509,9 +528,53 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /plants/{plantId}/status:
+    put:
+      summary: Cambiar el estado de un ejemplar, dejando constancia
+      operationId: changePlantStatus
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [activa, cuarentena, enferma, cedida, vendida, muerta, perdida] }
+                reason: { type: string, description: Obligatorio al volver a activa desde un estado final. }
+      responses:
+        '200':
+          description: Ejemplar con su estado nuevo
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Transición no permitida (desde un estado final solo se vuelve a activa) o el mismo estado
+
+  /plants/{plantId}/status-changes:
+    get:
+      summary: Historial de cambios de estado, paginado, del más reciente al más antiguo
+      operationId: listPlantStatusChanges
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Página de cambios
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /plants/{plantId}:
     put:
-      summary: Editar un ejemplar (reemplazo completo de apodo, localización y especie)
+      summary: Editar la ficha de un ejemplar (reemplazo completo; el estado tiene su propia operación)
       operationId: updatePlant
       parameters:
         - name: plantId

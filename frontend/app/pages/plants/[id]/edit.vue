@@ -6,14 +6,14 @@
  * rechaza la edición, explica el motivo **sin perder lo escrito**: el formulario es el dueño de sus
  * valores y esta pantalla solo lo envuelve, así que si no se navega sigue montado tal como estaba.
  *
- * Lo que el API todavía no acepta —descripción, estado, procedencia, cuidados propios— no es
- * editable: el formulario lo muestra deshabilitado con su ticket, en lugar de admitir un texto
- * que se perdería.
+ * Lo que el API todavía no acepta —los cuidados propios por ejemplar— no es editable: el formulario
+ * lo muestra deshabilitado con su ticket, en lugar de admitir un texto que se perdería.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantDetail } from '@features/plants/types/plant.types'
 import type { PlantFormValues } from '@features/plants/components/PlantForm.vue'
+import { toProfile } from '@features/plants/mappers/plantProfile'
 
 const route = useRoute()
 const plantId = String(route.params.id)
@@ -49,7 +49,8 @@ async function onSubmit(values: PlantFormValues) {
   saveError.value = null
   submitting.value = true
 
-  const result = await update(plantId, values.nickname, values.locationId, values.speciesId)
+  // Reemplazo completo de la ficha. El estado no viaja: tiene su propia acción en la ficha.
+  const result = await update(plantId, values.nickname, values.locationId, values.speciesId, toProfile(values))
   submitting.value = false
 
   if (!result.success) {
@@ -82,6 +83,12 @@ async function onSubmit(values: PlantFormValues) {
           nickname: plant.nickname,
           locationId: plant.location.id,
           speciesId: plant.species.id,
+          description: plant.description ?? '',
+          origin: plant.origin ?? '',
+          originNote: plant.originNote ?? '',
+          acquiredOn: plant.acquiredOn ?? '',
+          germinationYear: plant.germinationYear ? String(plant.germinationYear) : '',
+          germinationMonth: plant.germinationMonth ? String(plant.germinationMonth) : '',
         }"
         :locked-code="plant.code"
         :submitting="submitting"

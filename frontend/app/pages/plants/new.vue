@@ -6,6 +6,7 @@
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantFormValues } from '@features/plants/components/PlantForm.vue'
+import { toProfile } from '@features/plants/mappers/plantProfile'
 
 const { create } = usePlants()
 const { set: setBreadcrumbs } = useBreadcrumbs()
@@ -19,7 +20,14 @@ async function onSubmit(values: PlantFormValues) {
   error.value = null
   submitting.value = true
 
-  const result = await create(values.nickname, values.locationId, values.speciesId)
+  // `activa` es el estado por defecto del API: solo viaja si se ha elegido otro en curso.
+  const result = await create(
+    values.nickname,
+    values.locationId,
+    values.speciesId,
+    toProfile(values),
+    values.status === 'activa' ? undefined : values.status,
+  )
   submitting.value = false
 
   if (!result.success) {

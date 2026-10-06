@@ -1,6 +1,7 @@
 package com.cactify.application.dto
 
 import java.time.Instant
+import java.time.LocalDate
 
 /** Datos de cuidado que la planta hereda de su especie. */
 data class SpeciesCareResponse(
@@ -40,11 +41,20 @@ data class PlantDetailResponse(
   val location: LocationResponse,
   val species: SpeciesCareResponse,
   val tags: List<TagResponse>,
+  /** En qué situación está: `activa`, `cuarentena`, `enferma`, `cedida`, `vendida`, `muerta` o `perdida`. */
+  val status: String,
+  val description: String?,
+  val germinationYear: Int?,
+  val germinationMonth: Int?,
+  val acquiredOn: LocalDate?,
+  val origin: String?,
+  val originNote: String?,
 )
 
 data class PlantSummaryResponse(
   val id: String,
   val code: String,
+  val status: String,
   val nickname: String,
   val createdAt: Instant?,
   val location: LocationResponse,
@@ -74,4 +84,13 @@ data class SpeciesDetailResponse(
   val wateringGuideline: String,
   val soilMix: SoilMixSummaryResponse,
   val plantCount: Long,
+)
+
+/** Un cambio de estado del historial de un ejemplar. */
+data class PlantStatusChangeResponse(
+  val id: String,
+  val fromStatus: String,
+  val toStatus: String,
+  val reason: String?,
+  val occurredAt: Instant,
 )

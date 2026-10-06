@@ -22,6 +22,7 @@ export const speciesCare = (overrides: Partial<SpeciesCare> = {}): SpeciesCare =
 export const plantDetail = (overrides: Partial<PlantDetail> = {}): PlantDetail => ({
   id: '882687672222443468',
   code: 'CAT-GRUSS-01',
+  status: 'activa',
   nickname: 'Bola verde',
   createdAt: '2026-09-01T10:00:00Z',
   location: { id: '300001', name: 'Invernadero 1' },

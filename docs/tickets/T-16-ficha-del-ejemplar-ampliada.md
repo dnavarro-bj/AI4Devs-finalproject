@@ -23,6 +23,13 @@ Ampliar el ejemplar con lo que la ficha del prototipo da por supuesto y el model
 * Cambiar la pauta de la especie cambia la de sus ejemplares salvo en los campos sobrescritos.
 * La ficha distingue visualmente el valor heredado del sobrescrito.
 
-## Pendiente antes de empezar
+## Se implementa en dos changes
 
-Los estados válidos del ejemplar y sus transiciones (§24.4), y la regla general sobre datos parciales, que choca con el estilo de invariantes estrictas de [ADR-011](../adr/ADR-011-invariantes-de-negocio-en-el-dominio.md).
+1. **`ficha-del-ejemplar`** — hecho: descripción, estado con su historial y sus transiciones, germinación con datos parciales, adquisición y procedencia; el inventario por estado.
+2. **`cuidados-por-ejemplar`** — pendiente: los overrides de la pauta con herencia de la especie y el perfil efectivo.
+
+## Decisiones tomadas
+
+* **Siete estados**: en curso (`activa`, `cuarentena`, `enferma`) y finales (`cedida`, `vendida`, `muerta`, `perdida`). Entre en curso, libres; a un final, libre; de un final solo a `activa`, con motivo obligatorio.
+* **Germinación parcial**: año y mes opcionales, el mes solo con año.
+* **Procedencia**: lista cerrada más nota libre.

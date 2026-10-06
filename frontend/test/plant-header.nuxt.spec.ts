@@ -38,7 +38,7 @@ describe('PlantHeader', () => {
   it('marca como ejemplo lo que el API todavía no sirve', async () => {
     const wrapper = await header()
 
-    // Estado, contexto y fotografía son maqueta: la pantalla lo dice. El código, no: es el real.
+    // Contexto y fotografía son maqueta: la pantalla lo dice. El código y el estado, no: son reales.
     const marks = wrapper.findAll('[data-mock="true"]')
     expect(marks.length).toBeGreaterThanOrEqual(3)
     expect(wrapper.text().toLowerCase()).toContain('ejemplo')
@@ -63,5 +63,59 @@ describe('PlantHeader', () => {
     const wrapper = await header({ plant: { ...plantDetail(), tags: [] } })
 
     expect(wrapper.find('h1').exists()).toBe(true)
+  })
+
+  // --- Estado y germinación reales (`ficha-del-ejemplar`) ---
+
+  it('muestra el estado real del ejemplar, sin marca de ejemplo', async () => {
+    const wrapper = await header({ plant: { ...plantDetail(), status: 'cuarentena' } })
+
+    const status = wrapper.find('[data-test="plant-status"]')
+    expect(status.text()).toContain('En cuarentena')
+    expect(status.attributes('data-mock')).toBeUndefined()
+  })
+
+  it('la germinación con mes dice el mes con dos cifras', async () => {
+    const wrapper = await header({ plant: { ...plantDetail(), germinationYear: 2021, germinationMonth: 4 } })
+
+    expect(wrapper.find('[data-test="germination"]').text()).toBe('Germinada 04/2021')
+    expect(wrapper.find('[data-test="germination"]').attributes('data-mock')).toBeUndefined()
+  })
+
+  it('con solo el año dice el año y una edad aproximada, sin inventar un mes', async () => {
+    const wrapper = await header({ plant: { ...plantDetail(), germinationYear: 2021 } })
+
+    const text = wrapper.find('[data-test="germination"]').text()
+    expect(text).toContain('Germinada en 2021')
+    expect(text).toContain('~')
+    expect(text).not.toContain('/')
+  })
+
+  it('sin germinación no muestra ninguna inventada', async () => {
+    const wrapper = await header()
+
+    expect(wrapper.find('[data-test="germination"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Germinada 04/2021')
+  })
+
+  it('un ejemplar archivado se distingue por texto y forma, no solo por el color', async () => {
+    const wrapper = await header({ plant: { ...plantDetail(), status: 'vendida' } })
+
+    expect(wrapper.find('[data-test="plant-status"]').text()).toContain('Vendida')
+    expect(wrapper.find('[data-test="archived-mark"]').text()).toContain('Archivada')
+  })
+
+  it('un ejemplar en curso no lleva la marca de archivado', async () => {
+    const wrapper = await header()
+
+    expect(wrapper.find('[data-test="archived-mark"]').exists()).toBe(false)
+  })
+
+  it('ofrece cambiar el estado y comunica la intención', async () => {
+    const wrapper = await header()
+
+    await wrapper.find('[data-test="change-status"]').trigger('click')
+
+    expect(wrapper.emitted('change-status')).toHaveLength(1)
   })
 })

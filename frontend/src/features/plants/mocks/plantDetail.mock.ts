@@ -10,11 +10,11 @@
  * programador, la marca en pantalla protege la conversación sobre el producto.
  */
 
-/** Estado del ejemplar — lo sustituye T-16. */
-export const MOCK_STATUS = { label: 'Activa', tone: 'ok' as const }
-
-/** Contexto botánico: exposición y entorno son T-17; la germinación, T-16. */
-export const MOCK_CONTEXT = ['Pleno sol', 'Exterior', 'Germinada 04/2021']
+/**
+ * Contexto botánico: exposición y entorno, que sustituye T-17. El **estado** y la **germinación** ya
+ * son reales y salen del ejemplar (`ficha-del-ejemplar`).
+ */
+export const MOCK_CONTEXT = ['Pleno sol', 'Exterior']
 
 /** Fotografías — las sustituye T-19. La ficha solo enseña el hueco y el recuento. */
 export const MOCK_PHOTO_COUNT = 8

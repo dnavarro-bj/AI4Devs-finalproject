@@ -19,11 +19,12 @@ mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }
  * distinguirlas, porque un `mockResolvedValue` único devolvería una planta donde se espera un
  * envelope paginado.
  */
-function serve(plant: unknown, records: unknown[] = []) {
+function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = []) {
+  const envelope = (content: unknown[]) => ({ content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 })
   api.get.mockImplementation((path: string) => Promise.resolve(
     path.endsWith('/care-records')
-      ? { content: records, totalElements: records.length, totalPages: 1, pageNumber: 0, pageSize: 25 }
-      : plant,
+      ? envelope(records)
+      : path.endsWith('/status-changes') ? envelope(statusChanges) : plant,
   ))
 }
 
@@ -171,5 +172,92 @@ describe('cronología de la ficha: el riego no es un evento', () => {
     const { MOCK_EVENTS } = await import('@features/plants/mocks/plantDetail.mock')
 
     expect(MOCK_EVENTS.some((event) => event.type === 'water')).toBe(false)
+  })
+})
+
+/** Escenarios de «Perfil real del ejemplar en las pantallas»: la ficha con su perfil, estado e historial. */
+describe('ficha de la planta: perfil, estado e historial', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.put.mockReset()
+    api.post.mockReset()
+  })
+
+  const openTab = async (wrapper: Awaited<ReturnType<typeof mountSuspended>>, label: string) => {
+    await wrapper.findAll('[role="tab"]').find((tab) => tab.text().includes(label))!.trigger('click')
+    await settle()
+  }
+
+  it('la pestaña de datos muestra el perfil real del ejemplar', async () => {
+    serve(plantDetail({
+      description: 'Ejemplar adulto', germinationYear: 2021, germinationMonth: 4,
+      acquiredOn: '2022-03-01', origin: 'intercambio', originNote: 'Con un vecino',
+    }))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    await openTab(wrapper, 'Datos')
+
+    const data = wrapper.find('.data').text()
+    expect(data).toContain('Ejemplar adulto')
+    expect(data).toContain('Intercambio')
+    expect(data).toContain('Con un vecino')
+    expect(data).toContain('04/2021')
+    expect(data).toContain('2022')
+  })
+
+  it('un perfil vacío no inventa nada: los campos ausentes dicen «Sin indicar»', async () => {
+    serve(plantDetail())
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    await openTab(wrapper, 'Datos')
+
+    expect(wrapper.find('[data-test="profile-description"]').text()).toContain('Sin indicar')
+    expect(wrapper.find('[data-test="profile-germination"]').text()).toContain('Sin indicar')
+  })
+
+  it('la pestaña de datos incluye el historial de cambios de estado', async () => {
+    serve(plantDetail(), [], [
+      { id: '2', fromStatus: 'activa', toStatus: 'cuarentena', reason: 'Cochinilla', occurredAt: '2026-08-01T09:00:00Z' },
+    ])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    await openTab(wrapper, 'Datos')
+
+    expect(wrapper.find('[data-test="status-change"]').text()).toContain('Cochinilla')
+  })
+
+  it('cambiar el estado desde la cabecera actualiza la ficha y refresca el historial', async () => {
+    serve(plantDetail())
+    api.put.mockResolvedValue(plantDetail({ status: 'cuarentena' }))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await openTab(wrapper, 'Datos')
+    const before = api.get.mock.calls.filter(([path]) => String(path).endsWith('/status-changes')).length
+
+    await wrapper.find('[data-test="change-status"]').trigger('click')
+    await wrapper.find('[data-test="new-status"]').setValue('cuarentena')
+    await wrapper.find('[data-test="status-form"]').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="plant-status"]').text()).toContain('En cuarentena')
+    expect(wrapper.find('[data-test="status-form"]').exists()).toBe(false)
+    expect(api.get.mock.calls.filter(([path]) => String(path).endsWith('/status-changes')).length).toBe(before + 1)
+  })
+
+  it('un cambio rechazado por el API deja el estado como estaba y el diálogo abierto', async () => {
+    serve(plantDetail())
+    api.put.mockRejectedValue(new ApiError(409, "Desde el estado 'muerta' solo se puede volver a 'activa'"))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    await wrapper.find('[data-test="change-status"]').trigger('click')
+    await wrapper.find('[data-test="status-form"]').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="status-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="plant-status"]').text()).toContain('Activa')
   })
 })

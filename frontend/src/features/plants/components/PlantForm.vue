@@ -8,30 +8,43 @@
  * obliga a recorrerlas para saber si falta algo. El pie con las acciones también queda pegado,
  * para no tener que volver arriba a guardar.
  *
- * **Casi todo el editor es maqueta todavía**, y va marcado y deshabilitado: `POST /plants` acepta
- * exactamente `nickname`, `locationId` y `speciesId`. El estado, la descripción,
- * el origen y la edad (T-16), las etiquetas al crear, las fotografías (T-19) y los cuidados
- * personalizados (0.7) no tienen dónde guardarse. Un formulario que parece guardar y no guarda es
- * peor que uno que no deja editar.
+ * **Lo que el API guarda es real; lo que no, va marcado y deshabilitado.** `POST /plants` y
+ * `PUT /plants/{id}` aceptan apodo, localización, especie, descripción, germinación, adquisición y
+ * procedencia; el estado inicial solo en el alta. Las etiquetas al crear, las fotografías (T-19) y
+ * los cuidados personalizados (`cuidados-por-ejemplar`) no tienen dónde guardarse todavía. Un
+ * formulario que parece guardar y no guarda es peor que uno que no deja editar.
  */
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
 import type { Location } from '@features/catalogs/types/catalog.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
+import {
+  INITIAL_STATUSES,
+  ORIGINS,
+  ORIGIN_LABELS,
+  STATUS_LABELS,
+  type ProfileFields,
+} from '../mappers/plantProfile'
+import type { PlantStatus } from '../types/plant.types'
 
-export interface PlantFormValues {
+/**
+ * Lo que el formulario entrega. La ficha ampliada va como **texto**, tal y como se teclea; quien
+ * guarda la convierte con `toProfile`. El estado inicial solo existe en el alta.
+ */
+export interface PlantFormValues extends ProfileFields {
   nickname: string
   locationId: string
   speciesId: string
+  status: PlantStatus
 }
 
 const props = withDefaults(defineProps<{
-  initial?: PlantFormValues
+  initial?: Partial<PlantFormValues>
   submitting?: boolean
   submitLabel?: string
   /** En edición el código no se regenera ni se toca. */
   lockedCode?: string
 }>(), {
-  initial: () => ({ nickname: '', locationId: '', speciesId: '' }),
+  initial: () => ({}),
   submitting: false,
   submitLabel: 'Guardar',
   lockedCode: undefined,
@@ -41,9 +54,30 @@ const emit = defineEmits<{ submit: [PlantFormValues] }>()
 
 const { listLocations, listSpecies, speciesCare } = useCatalogs()
 
-const nickname = ref(props.initial.nickname)
-const locationId = ref(props.initial.locationId)
-const speciesId = ref(props.initial.speciesId)
+const nickname = ref(props.initial.nickname ?? '')
+const locationId = ref(props.initial.locationId ?? '')
+const speciesId = ref(props.initial.speciesId ?? '')
+
+/** El estado solo se elige al **dar de alta**: después cambia por su propia acción, que deja rastro. */
+const creating = computed(() => props.lockedCode === undefined)
+const status = ref<PlantStatus>(props.initial.status ?? 'activa')
+const description = ref(props.initial.description ?? '')
+const origin = ref(props.initial.origin ?? '')
+const originNote = ref(props.initial.originNote ?? '')
+const acquiredOn = ref(props.initial.acquiredOn ?? '')
+const germinationYear = ref(props.initial.germinationYear ?? '')
+const germinationMonth = ref(props.initial.germinationMonth ?? '')
+
+const statusOptions = INITIAL_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }))
+const originOptions = ORIGINS.map((value) => ({ value, label: ORIGIN_LABELS[value] }))
+const monthOptions = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+  .map((label, index) => ({ value: String(index + 1), label: label.charAt(0).toUpperCase() + label.slice(1) }))
+
+/** El mes sin año no significa nada: sin año no se puede elegir, y quitar el año borra el mes. */
+const monthDisabled = computed(() => germinationYear.value.trim() === '')
+watch(germinationYear, (year) => {
+  if (year.trim() === '') germinationMonth.value = ''
+})
 
 const locations = ref<Location[]>([])
 const species = ref<SpeciesSummary[]>([])
@@ -59,7 +93,7 @@ const codeLabel = computed(() => props.lockedCode
 
 const loading = ref(true)
 const loadError = ref<string | null>(null)
-const fieldErrors = reactive({ nickname: '', location: '', species: '' })
+const fieldErrors = reactive({ germinationYear: '', nickname: '', location: '', species: '' })
 
 const SECTIONS = [
   { value: 'species', label: 'Especie y código' },
@@ -146,9 +180,20 @@ function validate(): boolean {
   fieldErrors.nickname = nickname.value.trim() === '' ? 'El nickname es obligatorio.' : ''
   fieldErrors.location = locationId.value === '' ? 'Elige una localización.' : ''
   fieldErrors.species = speciesId.value === '' ? 'Elige una especie.' : ''
+  // Una comprobación de rango, permitida en el borde: el servidor la repite.
+  const year = germinationYear.value.trim()
+  fieldErrors.germinationYear = year !== '' && !(Number.isInteger(Number(year)) && Number(year) >= 1900 && Number(year) <= 2100)
+    ? 'El año de germinación debe estar entre 1900 y 2100.'
+    : ''
 
   // Si falta algo, llevar a su sección: en un formulario de seis, decir «falta un campo» no basta.
-  const missing = fieldErrors.species ? 'species' : fieldErrors.nickname ? 'identity' : fieldErrors.location ? 'location' : null
+  const missing = fieldErrors.species
+    ? 'species'
+    : fieldErrors.nickname
+      ? 'identity'
+      : fieldErrors.location
+        ? 'location'
+        : fieldErrors.germinationYear ? 'origin' : null
   if (missing) goToSection(missing)
 
   return !missing
@@ -160,6 +205,13 @@ function submit() {
     nickname: nickname.value.trim(),
     locationId: locationId.value,
     speciesId: speciesId.value,
+    status: status.value,
+    description: description.value,
+    origin: origin.value,
+    originNote: originNote.value,
+    acquiredOn: acquiredOn.value,
+    germinationYear: germinationYear.value,
+    germinationMonth: germinationMonth.value,
   })
 }
 </script>
@@ -256,22 +308,24 @@ function submit() {
             :error="fieldErrors.nickname"
             error-test="nickname-error"
           />
+          <!-- El estado solo se elige al dar de alta: después cambia por su propia acción, que deja rastro. -->
           <UiField
+            v-if="creating"
+            v-model="status"
             label="Estado inicial"
             as="select"
-            :options="[{ value: 'active', label: 'Activa' }]"
-            disabled
-            help="El estado del ejemplar llega en T-16."
-            data-mock="true"
+            :options="statusOptions"
+            help="Un ejemplar nace en curso. Cambiarlo después deja constancia en su historial."
+            data-test="status"
           />
           <div class="editor__span">
             <UiField
+              v-model="description"
               label="Descripción"
               as="textarea"
               :rows="4"
-              disabled
-              help="La descripción del ejemplar llega en T-16."
-              data-mock="true"
+              help="Qué es este ejemplar: rasgos, particularidades, lo que quieras recordar."
+              data-test="description"
             />
           </div>
           <div class="editor__span">
@@ -313,15 +367,42 @@ function submit() {
       <UiFormSection id="plant-editor-origin" standalone title="Origen y edad" description="Registra lo que conozcas. El mes de germinación puede quedar sin especificar.">
 
         <div class="editor__grid">
-          <UiField label="Procedencia" as="select" :options="[]" disabled data-mock="true" />
-          <UiField label="Fecha de entrada en la colección" disabled data-mock="true" />
-          <UiField label="Año de germinación" disabled data-mock="true" />
-          <UiField label="Mes de germinación" as="select" :options="[]" disabled data-mock="true" />
+          <UiField
+            v-model="origin"
+            label="Procedencia"
+            as="select"
+            placeholder="Sin especificar"
+            :options="originOptions"
+            data-test="origin"
+          />
+          <UiField
+            v-model="originNote"
+            label="Detalle de la procedencia"
+            help="El vivero, a quién se compró, con quién se intercambió…"
+            data-test="origin-note"
+          />
+          <UiField v-model="acquiredOn" label="Fecha de entrada en la colección" type="date" data-test="acquired-on" />
+          <UiField
+            v-model="germinationYear"
+            label="Año de germinación"
+            type="number"
+            min="1900"
+            max="2100"
+            :error="fieldErrors.germinationYear"
+            error-test="germination-year-error"
+            data-test="germination-year"
+          />
+          <UiField
+            v-model="germinationMonth"
+            label="Mes de germinación"
+            as="select"
+            placeholder="Sin especificar"
+            :options="monthOptions"
+            :disabled="monthDisabled"
+            help="Solo con año. Si no lo conoces, déjalo sin especificar: no se inventa."
+            data-test="germination-month"
+          />
         </div>
-        <p class="editor__hint">
-          El origen y la edad del ejemplar llegan en <strong>T-16</strong>: el API todavía no tiene
-          dónde guardarlos.
-        </p>
       </UiFormSection>
 
       <!-- 5. Fotografías -->

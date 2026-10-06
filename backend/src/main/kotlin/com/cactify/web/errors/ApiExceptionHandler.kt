@@ -3,6 +3,7 @@ package com.cactify.web.errors
 import com.cactify.application.AIProviderException
 import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
+import com.cactify.domain.InvalidPlantStatusTransitionException
 import com.cactify.application.DuplicateSpeciesCodeException
 import com.cactify.application.SpeciesCodeLockedException
 import com.cactify.application.DuplicateTagNameException
@@ -149,6 +150,11 @@ class ApiExceptionHandler {
   @ExceptionHandler(SoilMixInUseException::class)
   fun onSoilMixInUse(ex: SoilMixInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
+
+  /** Una transición de estado que el dominio no admite depende del estado actual: 409, no 400. */
+  @ExceptionHandler(InvalidPlantStatusTransitionException::class)
+  fun onInvalidStatusTransition(ex: InvalidPlantStatusTransitionException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "Transición de estado no permitida", request)
 
   @ExceptionHandler(DuplicateSpeciesCodeException::class, SpeciesCodeLockedException::class)
   fun onSpeciesCodeConflict(ex: RuntimeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =

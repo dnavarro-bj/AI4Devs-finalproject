@@ -97,3 +97,87 @@ describe('plantsApiService.list con código', () => {
     }))
   })
 })
+
+/** La ficha ampliada y el estado (`ficha-del-ejemplar`). */
+describe('plantsApiService: ficha ampliada y estado', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.post.mockReset()
+    api.put.mockReset()
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+  })
+
+  it('el alta envía la ficha y el estado inicial junto a lo de siempre', async () => {
+    api.post.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.create('Bola', '300001', '200001', {
+      description: 'Adulto', germinationYear: 2021, origin: 'vivero',
+    }, 'cuarentena')
+
+    expect(api.post).toHaveBeenCalledWith('/plants', {
+      nickname: 'Bola', locationId: '300001', speciesId: '200001',
+      description: 'Adulto', germinationYear: 2021, origin: 'vivero', status: 'cuarentena',
+    })
+  })
+
+  it('el alta sin ficha envía solo lo obligatorio', async () => {
+    api.post.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.create('Bola', '300001', '200001')
+
+    expect(api.post).toHaveBeenCalledWith('/plants', { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+  })
+
+  it('la edición envía la ficha entera y nunca el estado', async () => {
+    api.put.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.update('1', 'Bola', '300001', '200001', { description: 'Adulto', germinationYear: 2021, germinationMonth: 4 })
+
+    const body = api.put.mock.calls[0]![1] as Record<string, unknown>
+    expect(body).toMatchObject({ nickname: 'Bola', description: 'Adulto', germinationYear: 2021, germinationMonth: 4 })
+    expect(body).not.toHaveProperty('status')
+  })
+
+  it('cambiar el estado va a su propia operación, con el motivo si lo hay', async () => {
+    api.put.mockResolvedValue({ id: '1', status: 'vendida' })
+
+    const result = await plantsApiService.changeStatus('1', 'vendida', 'A un coleccionista')
+
+    expect(api.put).toHaveBeenCalledWith('/plants/1/status', { status: 'vendida', reason: 'A un coleccionista' })
+    expect(result.data!.status).toBe('vendida')
+  })
+
+  it('un cambio de estado sin motivo no envía el campo', async () => {
+    api.put.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.changeStatus('1', 'enferma')
+    await plantsApiService.changeStatus('1', 'enferma', '   ')
+
+    for (const [, body] of api.put.mock.calls) expect(body).toEqual({ status: 'enferma' })
+  })
+
+  it('un 409 de transición no permitida sale como valor', async () => {
+    api.put.mockRejectedValue(new ApiError(409, "Desde el estado 'muerta' solo se puede volver a 'activa'"))
+
+    const result = await plantsApiService.changeStatus('1', 'vendida')
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.CONFLICT)
+  })
+
+  it('el historial se pide paginado a su endpoint', async () => {
+    await plantsApiService.statusChanges('1', 2)
+
+    expect(api.get).toHaveBeenCalledWith('/plants/1/status-changes', { page: 2 })
+  })
+
+  it('el listado envía los estados pedidos, repetidos, y nada si no se pide ninguno', async () => {
+    await plantsApiService.list({ status: ['activa', 'muerta'] })
+    await plantsApiService.list({})
+    await plantsApiService.list({ status: [] })
+
+    expect(api.get.mock.calls[0]![1]).toMatchObject({ status: ['activa', 'muerta'] })
+    expect(api.get.mock.calls[1]![1]).not.toHaveProperty('status')
+    expect(api.get.mock.calls[2]![1]).not.toHaveProperty('status')
+  })
+})

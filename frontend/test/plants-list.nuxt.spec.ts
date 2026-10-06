@@ -194,7 +194,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
       : { content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 }))
   }
 
-  it('muestra las seis columnas de la pantalla', async () => {
+  it('muestra las columnas de la pantalla, con el estado real', async () => {
     serve([plant('1', 'Bola verde')])
     const wrapper = await mountSuspended(PlantsIndex)
     await settle()
@@ -203,8 +203,9 @@ describe('inventario: columnas y filtros del wireframe', () => {
     const headers = wrapper.findAll('thead th')
       .map((th) => th.text().replace(/[↕↑↓]/g, '').trim())
       .filter(Boolean)
+    // El estado es real desde `ficha-del-ejemplar`: se añade a las del prototipo, que no lo pinta.
     expect(headers).toEqual([
-      'Planta', 'Especie', 'Localización', 'Último riego', 'Atención', 'Acciones',
+      'Planta', 'Especie', 'Localización', 'Estado', 'Último riego', 'Atención', 'Acciones',
     ])
   })
 
@@ -248,7 +249,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
     const wrapper = await mountSuspended(PlantsIndex)
     await settle()
 
-    for (const test of ['filter-species', 'filter-status']) {
+    for (const test of ['filter-species']) {
       const field = wrapper.find(`[data-test="${test}"]`)
       expect(field.exists()).toBe(true)
       expect(field.attributes('disabled')).toBeDefined()
@@ -430,5 +431,106 @@ describe('inventario: búsqueda por código', () => {
     const box = wrapper.find('[data-test="filter-search"]')
     expect(box.attributes('type')).toBe('search')
     expect(box.attributes('aria-label')).toBeTruthy()
+  })
+})
+
+/** Escenarios de «Perfil real del ejemplar en las pantallas» para el inventario: lo archivado no se mezcla. */
+describe('inventario: estado', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+  })
+
+  const plant = (id: string, status: PlantSummary['status'] = 'activa'): PlantSummary => ({
+    id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
+    status,
+    nickname: `Planta ${id}`,
+    createdAt: '2026-09-01T10:00:00Z',
+    location: { id: '300001', name: 'Invernadero 1' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+  })
+
+  const serve = (content: PlantSummary[]) => api.get.mockImplementation(async (path: string) => (
+    path === '/locations'
+      ? { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      : { content, totalElements: content.length, totalPages: content.length ? 1 : 0, pageNumber: 0, pageSize: 25 }))
+
+  const lastPlantsCall = () => api.get.mock.calls.filter(([path]) => path === '/plants').at(-1)![1] as Record<string, unknown>
+
+  it('por defecto no pide ningún estado: el API devuelve solo lo que está en curso', async () => {
+    serve([plant('1')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    expect(lastPlantsCall()).not.toHaveProperty('status')
+    expect(wrapper.find('[data-test="filter-status"]').attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('[data-test="filter-status"]').attributes('data-mock')).toBeUndefined()
+  })
+
+  it('el filtro ofrece los siete estados y una opción visible para incluir las archivadas', async () => {
+    serve([plant('1')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const options = wrapper.findAll('[data-test="filter-status"] option').map((option) => option.attributes('value'))
+    expect(options).toEqual(['', 'activa', 'cuarentena', 'enferma', 'cedida', 'vendida', 'muerta', 'perdida', 'all'])
+    expect(wrapper.find('[data-test="filter-status"] option[value="all"]').text().toLowerCase()).toContain('archivada')
+  })
+
+  it('filtrar por un estado lo pide al API y aparece como filtro aplicado', async () => {
+    serve([plant('1', 'vendida')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-status"]').setValue('vendida')
+    await settle()
+
+    expect(lastPlantsCall()).toMatchObject({ status: ['vendida'], page: 0 })
+    expect(wrapper.find('.filter-chip').text()).toContain('Vendida')
+  })
+
+  it('incluir las archivadas pide los siete estados', async () => {
+    serve([plant('1')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-status"]').setValue('all')
+    await settle()
+
+    expect(lastPlantsCall().status).toEqual(['activa', 'cuarentena', 'enferma', 'cedida', 'vendida', 'muerta', 'perdida'])
+  })
+
+  it('quitar el filtro de estado vuelve al comportamiento por defecto', async () => {
+    serve([plant('1', 'vendida')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+    await wrapper.find('[data-test="filter-status"]').setValue('vendida')
+    await settle()
+
+    await wrapper.find('.filter-chip button').trigger('click')
+    await settle()
+
+    expect(lastPlantsCall()).not.toHaveProperty('status')
+  })
+
+  it('cada fila muestra el estado real del ejemplar', async () => {
+    serve([plant('1'), plant('2', 'cuarentena'), plant('3', 'muerta')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const statuses = wrapper.findAll('[data-test="row-status"]').map((cell) => cell.text())
+    expect(statuses).toEqual(['Activa', 'En cuarentena', 'Muerta'])
+  })
+
+  it('se combina con la búsqueda por código y con la localización', async () => {
+    serve([plant('1', 'vendida')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-location"]').setValue('300001')
+    await wrapper.find('[data-test="filter-status"]').setValue('vendida')
+    await settle()
+
+    expect(lastPlantsCall()).toMatchObject({ location: '300001', status: ['vendida'] })
   })
 })

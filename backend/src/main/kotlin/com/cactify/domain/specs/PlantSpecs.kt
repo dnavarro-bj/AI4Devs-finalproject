@@ -3,6 +3,7 @@ package com.cactify.domain.specs
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.PlantStatus
 import com.cactify.domain.Species
 import com.cactify.domain.Tag
 import com.cactify.domain.TagId
@@ -18,6 +19,16 @@ object PlantSpecs {
   fun byLocation(locationId: LocationId?): Specification<Plant> =
     Specification { root, _, cb ->
       locationId?.let { cb.equal(root.get<Location>("location").get<LocationId>("id"), it) }
+    }
+
+  /**
+   * Los ejemplares en **cualquiera** de los estados indicados. El servicio decide qué pasa cuando no
+   * se indica ninguno —por defecto, solo lo que está en curso—, así que aquí un conjunto vacío no
+   * filtra, igual que en el resto de factorías.
+   */
+  fun byStatuses(statuses: Set<PlantStatus>): Specification<Plant> =
+    Specification { root, _, _ ->
+      if (statuses.isEmpty()) null else root.get<PlantStatus>("status").`in`(statuses)
     }
 
   /**

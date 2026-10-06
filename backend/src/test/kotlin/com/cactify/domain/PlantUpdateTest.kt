@@ -39,13 +39,20 @@ class PlantUpdateTest {
   private val grusonii = species("Echinocactus grusonii", "TEST-A")
   private val elongata = species("Mammillaria elongata", "TEST-B")
 
+  /** Edita con el perfil vacío: estos tests no tratan de la ficha ampliada. */
+  private fun update(plant: Plant, nickname: String) = plant.update(
+    nickname = nickname, location = tray, species = elongata,
+    description = null, germinationYear = null, germinationMonth = null,
+    acquiredOn = null, origin = null, originNote = null,
+  )
+
   private fun plant() = Plant(code = "TEST-A-01", nickname = "Bola 1", location = greenhouse, species = grusonii)
 
   @Test
   fun `updating changes the three fields`() {
     val plant = plant()
 
-    plant.update(nickname = "Bola 2", location = tray, species = elongata)
+    update(plant, "Bola 2")
 
     assertEquals("Bola 2", plant.nickname)
     assertSame(tray, plant.location)
@@ -57,7 +64,7 @@ class PlantUpdateTest {
     val plant = plant()
     val id = plant.id
 
-    plant.update(nickname = "Bola 2", location = tray, species = elongata)
+    update(plant, "Bola 2")
 
     assertEquals(id, plant.id)
   }
@@ -67,7 +74,7 @@ class PlantUpdateTest {
     val plant = plant()
 
     assertFailsWith<IllegalArgumentException> {
-      plant.update(nickname = "   ", location = tray, species = elongata)
+      update(plant, "   ")
     }
 
     assertEquals("Bola 1", plant.nickname)
@@ -81,7 +88,7 @@ class PlantUpdateTest {
     val tag = Tag(name = "globular")
     plant.updateTags(setOf(tag))
 
-    plant.update(nickname = "Bola 2", location = tray, species = elongata)
+    update(plant, "Bola 2")
 
     assertEquals(setOf(tag), plant.tags)
   }

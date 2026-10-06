@@ -107,7 +107,11 @@ class InventoryCodeTest {
     val other = species("CAT-MAMMI")
     val plant = Plant(code = grusonii.nextPlantCode(), nickname = "Bola", location = location, species = grusonii)
 
-    plant.update(nickname = "Bola 2", location = location, species = other)
+    plant.update(
+      nickname = "Bola 2", location = location, species = other,
+      description = null, germinationYear = null, germinationMonth = null,
+      acquiredOn = null, origin = null, originNote = null,
+    )
 
     assertEquals("CAT-GRUSS-01", plant.code)
     assertNotEquals(other.code, plant.code.substringBeforeLast('-'))

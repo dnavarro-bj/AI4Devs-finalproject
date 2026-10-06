@@ -183,4 +183,115 @@ describe('alta de una planta', () => {
     expect(wrapper.find('[data-test="species-ranges"]').text()).toContain('cada 10-20 dias')
     expect(callsAfter).toBe(callsBefore)
   })
+
+  // --- Ficha ampliada (`ficha-del-ejemplar`) ---
+
+  it('los campos de la ficha están habilitados: ya no esperan a T-16', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    for (const test of ['status', 'description', 'origin', 'origin-note', 'acquired-on', 'germination-year']) {
+      const field = wrapper.find(`[data-test="${test}"]`)
+      expect(field.exists(), `falta el campo ${test}`).toBe(true)
+      expect(field.attributes('disabled'), `${test} sigue deshabilitado`).toBeUndefined()
+      expect(field.attributes('data-mock'), `${test} sigue marcado como maqueta`).toBeUndefined()
+    }
+    expect(wrapper.find('#plant-editor-origin').text()).not.toContain('T-16')
+  })
+
+  it('el mes de germinación está deshabilitado mientras no haya año', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    expect(wrapper.find('[data-test="germination-month"]').attributes('disabled')).toBeDefined()
+
+    await wrapper.find('[data-test="germination-year"]').setValue('2021')
+
+    expect(wrapper.find('[data-test="germination-month"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('vaciar el año vacía y deshabilita el mes: no puede quedar un mes sin año', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await wrapper.find('[data-test="germination-year"]').setValue('2021')
+    await wrapper.find('[data-test="germination-month"]').setValue('4')
+
+    await wrapper.find('[data-test="germination-year"]').setValue('')
+
+    expect(wrapper.find('[data-test="germination-month"]').attributes('disabled')).toBeDefined()
+    expect((wrapper.find('[data-test="germination-month"]').element as HTMLSelectElement).value).toBe('')
+  })
+
+  it('el estado inicial ofrece solo los que están en curso y por defecto activa', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    const select = wrapper.find('[data-test="status"]')
+    expect((select.element as HTMLSelectElement).value).toBe('activa')
+    expect(select.findAll('option').map((option) => option.attributes('value'))).toEqual(['activa', 'cuarentena', 'enferma'])
+  })
+
+  it('envía la ficha completa y el estado inicial al guardar', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    await fill(wrapper, { nickname: 'Bola verde', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="status"]').setValue('cuarentena')
+    await wrapper.find('[data-test="description"]').setValue('Ejemplar adulto')
+    await wrapper.find('[data-test="origin"]').setValue('intercambio')
+    await wrapper.find('[data-test="origin-note"]').setValue('Con un vecino')
+    await wrapper.find('[data-test="acquired-on"]').setValue('2022-03-01')
+    await wrapper.find('[data-test="germination-year"]').setValue('2021')
+    await wrapper.find('[data-test="germination-month"]').setValue('4')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(api.post).toHaveBeenCalledWith('/plants', {
+      nickname: 'Bola verde', locationId: '300001', speciesId: '200001',
+      description: 'Ejemplar adulto', germinationYear: 2021, germinationMonth: 4,
+      acquiredOn: '2022-03-01', origin: 'intercambio', originNote: 'Con un vecino', status: 'cuarentena',
+    })
+  })
+
+  it('solo con el año de germinación no envía ningún mes', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    await fill(wrapper, { nickname: 'Bola verde', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="germination-year"]').setValue('2021')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    const body = api.post.mock.calls[0]![1] as Record<string, unknown>
+    expect(body.germinationYear).toBe(2021)
+    expect(body).not.toHaveProperty('germinationMonth')
+  })
+
+  it('un año fuera de rango se señala en su campo y no se envía', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    await fill(wrapper, { nickname: 'Bola verde', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="germination-year"]').setValue('1700')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="germination-year-error"]').exists()).toBe(true)
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('un error del API en la ficha se explica sin perder lo escrito', async () => {
+    api.post.mockRejectedValue(new ApiError(400, 'No se puede indicar el mes de germinación sin el año'))
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    await fill(wrapper, { nickname: 'Bola verde', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="description"]').setValue('Ejemplar adulto')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').text()).toContain('germinación')
+    expect((wrapper.find('[data-test="description"]').element as HTMLTextAreaElement).value).toBe('Ejemplar adulto')
+  })
 })
