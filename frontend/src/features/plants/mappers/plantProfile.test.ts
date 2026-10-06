@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ORIGIN_LABELS,
+  careToOverrides,
   toProfile,
   PLANT_STATUSES,
   STATUS_LABELS,
@@ -103,5 +104,54 @@ describe('plantProfile: del formulario al API', () => {
 
   it('un mes sin año se descarta: sin año no significa nada', () => {
     expect(toProfile({ ...empty, germinationMonth: '4' })).toEqual({})
+  })
+})
+
+describe('plantProfile: cuidados propios del formulario al API', () => {
+  const noCare = { minHumidity: '', maxHumidity: '', minTemperature: '', maxTemperature: '', minLightHours: '', maxLightHours: '', wateringGuideline: '', soilMixId: '' }
+
+  it('sin ningún valor no hay cuidados propios', () => {
+    expect(careToOverrides(noCare)).toBeUndefined()
+  })
+
+  it('solo viaja lo rellenado, convertido a número donde toca', () => {
+    expect(careToOverrides({ ...noCare, wateringGuideline: ' cada 5 dias ', maxTemperature: '30' })).toEqual({
+      wateringGuideline: 'cada 5 dias', maxTemperature: 30,
+    })
+  })
+
+  it('la mezcla viaja por identificador', () => {
+    expect(careToOverrides({ ...noCare, soilMixId: '100002' })).toEqual({ soilMixId: '100002' })
+  })
+
+  it('un cero es un valor, no una ausencia', () => {
+    expect(careToOverrides({ ...noCare, minLightHours: '0' })).toEqual({ minLightHours: 0 })
+  })
+
+  it('con la personalización desactivada no se envía nada, aunque queden valores escritos', () => {
+    const profile = toProfile({
+      description: '', germinationYear: '', germinationMonth: '', acquiredOn: '', origin: '', originNote: '',
+      careEnabled: false, care: { ...noCare, wateringGuideline: 'cada 5 dias' },
+    })
+
+    expect(profile).toEqual({})
+  })
+
+  it('con la personalización activa y valores, van dentro de la ficha', () => {
+    const profile = toProfile({
+      description: '', germinationYear: '', germinationMonth: '', acquiredOn: '', origin: '', originNote: '',
+      careEnabled: true, care: { ...noCare, wateringGuideline: 'cada 5 dias' },
+    })
+
+    expect(profile).toEqual({ careOverrides: { wateringGuideline: 'cada 5 dias' } })
+  })
+
+  it('activa pero sin ningún valor equivale a no personalizar', () => {
+    const profile = toProfile({
+      description: '', germinationYear: '', germinationMonth: '', acquiredOn: '', origin: '', originNote: '',
+      careEnabled: true, care: noCare,
+    })
+
+    expect(profile).toEqual({})
   })
 })

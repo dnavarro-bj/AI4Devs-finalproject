@@ -118,7 +118,7 @@ class PlantProfileTest {
       plant.update(
         nickname = "Nueva", location = location, species = species,
         description = "Nueva", germinationYear = null, germinationMonth = 4,
-        acquiredOn = null, origin = null, originNote = null,
+        acquiredOn = null, origin = null, originNote = null, careOverrides = null,
       )
     }
 
@@ -134,7 +134,7 @@ class PlantProfileTest {
     plant.update(
       nickname = "Bola", location = location, species = species,
       description = null, germinationYear = null, germinationMonth = null,
-      acquiredOn = null, origin = null, originNote = null,
+      acquiredOn = null, origin = null, originNote = null, careOverrides = null,
     )
 
     assertNull(plant.description)

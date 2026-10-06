@@ -58,7 +58,7 @@ describe('flujo completo', () => {
     // 2. La ficha, con los rangos visibles antes de guardar la lectura.
     const detail = await mountSuspended(PlantDetailPage)
     await settle()
-    expect(detail.find('[data-test="species-ranges"]').exists()).toBe(true)
+    expect(detail.find('[data-test="effective-care"]').exists()).toBe(true)
 
     // 3. La lectura, que la ficha refleja en su cronología sin recarga. El formulario vive ahora
     //    en un diálogo, así que hay que abrirlo.

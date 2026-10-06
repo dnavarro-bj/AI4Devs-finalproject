@@ -26,10 +26,13 @@ Ampliar el ejemplar con lo que la ficha del prototipo da por supuesto y el model
 ## Se implementa en dos changes
 
 1. **`ficha-del-ejemplar`** — hecho: descripción, estado con su historial y sus transiciones, germinación con datos parciales, adquisición y procedencia; el inventario por estado.
-2. **`cuidados-por-ejemplar`** — pendiente: los overrides de la pauta con herencia de la especie y el perfil efectivo.
+2. **`cuidados-por-ejemplar`** — hecho: los overrides de la pauta con herencia de la especie y el perfil efectivo, con la ficha distinguiendo lo propio de lo heredado.
+
+**El ticket queda cerrado.** Lo que no cubre —exposición y entorno propios— llega con [T-17](T-17-especie-ampliada.md), y la IA sigue usando los rangos de la especie.
 
 ## Decisiones tomadas
 
 * **Siete estados**: en curso (`activa`, `cuarentena`, `enferma`) y finales (`cedida`, `vendida`, `muerta`, `perdida`). Entre en curso, libres; a un final, libre; de un final solo a `activa`, con motivo obligatorio.
 * **Germinación parcial**: año y mes opcionales, el mes solo con año.
 * **Procedencia**: lista cerrada más nota libre.
+* **Cuidados propios**: columnas opcionales del ejemplar (nulo = hereda), perfil efectivo resuelto por el servidor, y cambiar la especie **conserva** lo propio y revalida.

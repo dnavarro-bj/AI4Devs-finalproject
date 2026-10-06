@@ -378,4 +378,144 @@ describe('editor de una especie', () => {
     expect(codeOf(wrapper)).toBe('CAT-MAMMI')
     expect(wrapper.find('[data-test="code-suggested"]').exists()).toBe(false)
   })
+
+  // --- Validadores de los rangos (escala y número entero) ---
+
+  const submitWith = async (overrides: Record<string, string>) => {
+    const wrapper = await mountForm()
+    await fill(wrapper, { ...VALID, 'soil-mix': '100001', ...overrides })
+    await wrapper.find('[data-test="species-form"]').trigger('submit')
+    return wrapper
+  }
+
+  it('una humedad fuera de 0 a 100 se señala en su rango y no se envía', async () => {
+    const wrapper = await submitWith({ 'max-humidity': '150' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="humidity-error"]').text()).toContain('entre 0 y 100')
+  })
+
+  it('una humedad negativa también se rechaza', async () => {
+    const wrapper = await submitWith({ 'min-humidity': '-5' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(true)
+  })
+
+  it('unas horas de luz fuera de 0 a 24 se señalan en su rango', async () => {
+    const wrapper = await submitWith({ 'max-light': '30' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="light-error"]').text()).toContain('entre 0 y 24')
+  })
+
+  it('una temperatura implausible se señala en su rango', async () => {
+    const wrapper = await submitWith({ 'max-temperature': '500' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="temperature-error"]').text()).toContain('temperatura')
+  })
+
+  it('vaciar un extremo no lo convierte en un cero silencioso: se pide', async () => {
+    const wrapper = await submitWith({ 'min-humidity': '' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="humidity-error"]').text()).toContain('Indica el mínimo y el máximo')
+  })
+
+  it('un decimal se rechaza: el API guarda enteros', async () => {
+    const wrapper = await submitWith({ 'min-temperature': '10.5' })
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="temperature-error"]').text()).toContain('número entero')
+  })
+
+  it('los tres rangos inválidos a la vez se señalan cada uno en el suyo', async () => {
+    const wrapper = await submitWith({ 'max-humidity': '150', 'max-temperature': '500', 'max-light': '30' })
+
+    for (const error of ['humidity-error', 'temperature-error', 'light-error']) {
+      expect(wrapper.find(`[data-test="${error}"]`).exists(), error).toBe(true)
+    }
+  })
+
+  it('los límites de la escala se aceptan', async () => {
+    const wrapper = await submitWith({
+      'min-humidity': '0', 'max-humidity': '100', 'min-light': '0', 'max-light': '24',
+    })
+
+    expect(wrapper.emitted('submit')).toHaveLength(1)
+  })
+
+  it('corregir el valor hace desaparecer el error al volver a guardar', async () => {
+    const wrapper = await submitWith({ 'max-humidity': '150' })
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="max-humidity"]').setValue('90')
+    await wrapper.find('[data-test="species-form"]').trigger('submit')
+
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(false)
+    expect(wrapper.emitted('submit')).toHaveLength(1)
+  })
+
+  // --- Validación al salir del campo (blur) ---
+
+  it('un valor fuera de escala se señala al salir del campo, sin esperar al envío', async () => {
+    const wrapper = await mountForm()
+
+    await wrapper.find('[data-test="max-humidity"]').setValue('150')
+    await wrapper.find('[data-test="max-humidity"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="humidity-error"]').text()).toContain('entre 0 y 100')
+    expect(wrapper.emitted('submit')).toBeUndefined()
+  })
+
+  it('un mínimo por encima del máximo se señala al salir de cualquiera de los dos campos', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="min-temperature"]').setValue('40')
+    await wrapper.find('[data-test="max-temperature"]').setValue('10')
+
+    await wrapper.find('[data-test="min-temperature"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="temperature-error"]').text()).toContain('no puede superar')
+  })
+
+  it('pasar de un extremo al otro con el otro aún vacío no regaña antes de tiempo', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="min-light"]').setValue('')
+
+    await wrapper.find('[data-test="min-light"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="light-error"]').exists()).toBe(false)
+  })
+
+  it('corregir el valor hace desaparecer el error al teclear, sin volver a salir del campo', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="max-humidity"]').setValue('150')
+    await wrapper.find('[data-test="max-humidity"]').trigger('blur')
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="max-humidity"]').setValue('90')
+
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(false)
+  })
+
+  it('mientras se teclea un valor correcto por primera vez no aparece ningún error', async () => {
+    const wrapper = await mountForm()
+
+    await wrapper.find('[data-test="max-humidity"]').setValue('9')
+    await wrapper.find('[data-test="max-humidity"]').setValue('90')
+
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(false)
+  })
+
+  it('cada rango valida el suyo al salir del campo', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="max-light"]').setValue('30')
+
+    await wrapper.find('[data-test="max-light"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="light-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="humidity-error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="temperature-error"]').exists()).toBe(false)
+  })
 })

@@ -110,7 +110,7 @@ class InventoryCodeTest {
     plant.update(
       nickname = "Bola 2", location = location, species = other,
       description = null, germinationYear = null, germinationMonth = null,
-      acquiredOn = null, origin = null, originNote = null,
+      acquiredOn = null, origin = null, originNote = null, careOverrides = null,
     )
 
     assertEquals("CAT-GRUSS-01", plant.code)

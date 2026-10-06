@@ -19,6 +19,19 @@ export const speciesCare = (overrides: Partial<SpeciesCare> = {}): SpeciesCare =
   ...overrides,
 })
 
+/** El perfil efectivo de una planta que no sobrescribe nada: el de su especie. */
+export const effectiveCare = (species: SpeciesCare = speciesCare(), overridden: string[] = []) => ({
+  minHumidity: species.minHumidity,
+  maxHumidity: species.maxHumidity,
+  minTemperature: species.minTemperature,
+  maxTemperature: species.maxTemperature,
+  minLightHours: species.minLightHours,
+  maxLightHours: species.maxLightHours,
+  wateringGuideline: species.wateringGuideline,
+  soilMix: species.soilMix,
+  overridden,
+})
+
 export const plantDetail = (overrides: Partial<PlantDetail> = {}): PlantDetail => ({
   id: '882687672222443468',
   code: 'CAT-GRUSS-01',
@@ -28,6 +41,7 @@ export const plantDetail = (overrides: Partial<PlantDetail> = {}): PlantDetail =
   location: { id: '300001', name: 'Invernadero 1' },
   species: speciesCare(),
   tags: [{ id: '400001', name: 'globular' }],
+  effectiveCare: effectiveCare(),
   ...overrides,
 })
 

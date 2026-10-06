@@ -181,3 +181,42 @@ describe('plantsApiService: ficha ampliada y estado', () => {
     expect(api.get.mock.calls[2]![1]).not.toHaveProperty('status')
   })
 })
+
+/** Los cuidados propios (`cuidados-por-ejemplar`): viajan dentro de la ficha, como reemplazo completo. */
+describe('plantsApiService: cuidados propios', () => {
+  beforeEach(() => {
+    api.post.mockReset()
+    api.put.mockReset()
+  })
+
+  it('el alta envía los cuidados propios dentro de la ficha', async () => {
+    api.post.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.create('Bola', '300001', '200001', { careOverrides: { wateringGuideline: 'cada 5 dias', maxTemperature: 30 } })
+
+    expect(api.post).toHaveBeenCalledWith('/plants', {
+      nickname: 'Bola', locationId: '300001', speciesId: '200001',
+      careOverrides: { wateringGuideline: 'cada 5 dias', maxTemperature: 30 },
+    })
+  })
+
+  it('la edición los envía enteros, y sin ellos no envía el objeto: quita los propios', async () => {
+    api.put.mockResolvedValue({ id: '1' })
+
+    await plantsApiService.update('1', 'Bola', '300001', '200001', { careOverrides: { minHumidity: 12 } })
+    await plantsApiService.update('1', 'Bola', '300001', '200001', {})
+
+    expect(api.put.mock.calls[0]![1]).toMatchObject({ careOverrides: { minHumidity: 12 } })
+    expect(api.put.mock.calls[1]![1]).not.toHaveProperty('careOverrides')
+  })
+
+  it('un 400 de coherencia sale como valor, con el rango que falla', async () => {
+    api.put.mockRejectedValue(new ApiError(400, 'La humedad mínima (40) no puede superar a la máxima (30)'))
+
+    const result = await plantsApiService.update('1', 'Bola', '300001', '200001', { careOverrides: { minHumidity: 40 } })
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.VALIDATION_ERROR)
+    expect(result.error!.message).toContain('humedad')
+  })
+})

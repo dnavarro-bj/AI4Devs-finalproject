@@ -13,7 +13,7 @@ import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantDetail } from '@features/plants/types/plant.types'
 import type { PlantFormValues } from '@features/plants/components/PlantForm.vue'
-import { toProfile } from '@features/plants/mappers/plantProfile'
+import { EMPTY_CARE, toProfile, type CareFields } from '@features/plants/mappers/plantProfile'
 
 const route = useRoute()
 const plantId = String(route.params.id)
@@ -27,6 +27,14 @@ const submitting = ref(false)
 const saveError = ref<string | null>(null)
 
 setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: 'Editar planta' }])
+
+/** Los cuidados propios del ejemplar como los guarda el formulario: texto, vacío = hereda. */
+function careFieldsOf(source: PlantDetail): CareFields {
+  const own = source.careOverrides ?? {}
+  return Object.fromEntries(
+    Object.keys(EMPTY_CARE).map((key) => [key, String((own as Record<string, unknown>)[key] ?? '')]),
+  ) as unknown as CareFields
+}
 
 onMounted(async () => {
   const result = await detail(plantId)
@@ -89,6 +97,8 @@ async function onSubmit(values: PlantFormValues) {
           acquiredOn: plant.acquiredOn ?? '',
           germinationYear: plant.germinationYear ? String(plant.germinationYear) : '',
           germinationMonth: plant.germinationMonth ? String(plant.germinationMonth) : '',
+          careEnabled: !!plant.careOverrides,
+          care: careFieldsOf(plant),
         }"
         :locked-code="plant.code"
         :submitting="submitting"

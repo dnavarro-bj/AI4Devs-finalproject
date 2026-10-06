@@ -1,4 +1,4 @@
-import type { PlantOrigin, PlantProfile, PlantStatus } from '../types/plant.types'
+import type { PlantCareOverrides, PlantOrigin, PlantProfile, PlantStatus } from '../types/plant.types'
 
 /**
  * Lo que la interfaz sabe del perfil de un ejemplar: los estados, sus textos, qué transiciones
@@ -72,6 +72,23 @@ export function germinationLabel(
   return `Germinada en ${year} · ~${age} ${age === 1 ? 'año' : 'años'}`
 }
 
+/** Los cuidados propios tal y como los guarda el formulario: todo texto, vacío = hereda. */
+export interface CareFields {
+  minHumidity: string
+  maxHumidity: string
+  minTemperature: string
+  maxTemperature: string
+  minLightHours: string
+  maxLightHours: string
+  wateringGuideline: string
+  soilMixId: string
+}
+
+export const EMPTY_CARE: CareFields = {
+  minHumidity: '', maxHumidity: '', minTemperature: '', maxTemperature: '',
+  minLightHours: '', maxLightHours: '', wateringGuideline: '', soilMixId: '',
+}
+
 /** Los campos de la ficha tal y como los guarda el formulario: todos texto. */
 export interface ProfileFields {
   description: string
@@ -80,6 +97,32 @@ export interface ProfileFields {
   acquiredOn: string
   origin: string
   originNote: string
+  /** La personalización de cuidados: desactivada, no se envía nada aunque queden valores escritos. */
+  careEnabled?: boolean
+  care?: CareFields
+}
+
+/**
+ * De los cuidados del formulario a los del API: solo viaja lo rellenado, y un cero es un valor, no
+ * una ausencia. Sin ningún valor, `undefined`: no personalizar y no tener nada que personalizar son lo
+ * mismo, y el servidor trata un objeto vacío como ausente.
+ */
+export function careToOverrides(care: CareFields): PlantCareOverrides | undefined {
+  const number = (value: string) => (value.trim() === '' ? undefined : Number(value))
+  const text = (value: string) => value.trim() || undefined
+
+  const overrides = Object.fromEntries(Object.entries({
+    minHumidity: number(care.minHumidity),
+    maxHumidity: number(care.maxHumidity),
+    minTemperature: number(care.minTemperature),
+    maxTemperature: number(care.maxTemperature),
+    minLightHours: number(care.minLightHours),
+    maxLightHours: number(care.maxLightHours),
+    wateringGuideline: text(care.wateringGuideline),
+    soilMixId: text(care.soilMixId),
+  }).filter(([, value]) => value !== undefined)) as PlantCareOverrides
+
+  return Object.keys(overrides).length ? overrides : undefined
 }
 
 /**
@@ -99,5 +142,6 @@ export function toProfile(fields: ProfileFields): PlantProfile {
     acquiredOn: text(fields.acquiredOn),
     origin: (text(fields.origin) as PlantOrigin | undefined),
     originNote: text(fields.originNote),
+    careOverrides: fields.careEnabled && fields.care ? careToOverrides(fields.care) : undefined,
   }).filter(([, value]) => value !== undefined)) as PlantProfile
 }

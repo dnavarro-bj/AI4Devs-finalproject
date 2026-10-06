@@ -17,6 +17,7 @@
  * selector se puebla de `GET /soil-mixes` desde `catalogo-sustratos`. Antes de eso este formulario
  * no se podía construir con honestidad.
  */
+import { validateRange, type CareConcept } from '@shared/utils/careRanges'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import type { SpeciesInput } from '../types/species.types'
@@ -178,8 +179,39 @@ const generalError = computed(
   () => (props.submitError && props.submitError.field === null ? props.submitError.message : null),
 )
 
-function rangeError(min: string, max: string, what: string): string {
-  return num(min) > num(max) ? `El ${what} mínimo (${num(min)}) no puede superar al máximo (${num(max)}).` : ''
+/**
+ * Los dos extremos de un rango son **obligatorios** en la especie —el API los exige—, así que vaciar
+ * uno no puede convertirse en un cero silencioso: se pide. Lo demás es el validador compartido:
+ * número entero, dentro de su escala y con el mínimo sin superar al máximo.
+ */
+function rangeError(concept: CareConcept, min: string, max: string): string {
+  if (min.trim() === '' || max.trim() === '') return 'Indica el mínimo y el máximo.'
+  return validateRange(concept, min, max)
+}
+
+/**
+ * Validar un rango **al salir de cualquiera de sus dos campos**: así el mínimo que supera al máximo
+ * —o el máximo que queda por debajo del mínimo— se ve en cuanto se sale del campo, sin esperar al
+ * envío. Un extremo aún vacío no se regaña: es lo normal mientras se pasa de uno al otro, y el
+ * «indica el mínimo y el máximo» queda para el envío.
+ */
+const RANGES: Record<CareConcept, [keyof typeof ranges, keyof typeof ranges]> = {
+  humidity: ['minHumidity', 'maxHumidity'],
+  temperature: ['minTemperature', 'maxTemperature'],
+  light: ['minLightHours', 'maxLightHours'],
+}
+
+function blurRange(concept: CareConcept) {
+  const [min, max] = RANGES[concept]
+  errors[concept] = validateRange(concept, ranges[min], ranges[max])
+}
+
+// Con un error a la vista, corregir el valor lo revalida al teclear: no hace falta volver a salir del campo.
+for (const concept of Object.keys(RANGES) as CareConcept[]) {
+  const [min, max] = RANGES[concept]
+  watch(() => [ranges[min], ranges[max]], () => {
+    if (errors[concept]) blurRange(concept)
+  })
 }
 
 function validate(): boolean {
@@ -188,9 +220,9 @@ function validate(): boolean {
   errors.commonName = commonName.value.trim() === '' ? 'El nombre común es obligatorio.' : ''
   errors.watering = wateringGuideline.value.trim() === '' ? 'La pauta de riego es obligatoria.' : ''
   errors.soilMix = soilMixId.value === '' ? 'Elige un sustrato.' : ''
-  errors.humidity = rangeError(ranges.minHumidity, ranges.maxHumidity, 'valor de humedad')
-  errors.temperature = rangeError(ranges.minTemperature, ranges.maxTemperature, 'valor de temperatura')
-  errors.light = rangeError(ranges.minLightHours, ranges.maxLightHours, 'número de horas de luz')
+  errors.humidity = rangeError('humidity', ranges.minHumidity, ranges.maxHumidity)
+  errors.temperature = rangeError('temperature', ranges.minTemperature, ranges.maxTemperature)
+  errors.light = rangeError('light', ranges.minLightHours, ranges.maxLightHours)
 
   // Llevar a la sección que falla: en un formulario de tres, «falta un campo» no basta.
   const missing = (errors.code || errors.scientificName || errors.commonName)
@@ -347,9 +379,9 @@ onMounted(async () => {
         </div>
 
         <div class="range">
-          <UiField v-model="ranges.minHumidity" label="Humedad mínima" unit="%" type="number" data-test="min-humidity" />
+          <UiField v-model="ranges.minHumidity" @blur="blurRange('humidity')" label="Humedad mínima" unit="%" type="number" data-test="min-humidity" />
           <UiField
-            v-model="ranges.maxHumidity"
+            v-model="ranges.maxHumidity" @blur="blurRange('humidity')"
             label="Humedad máxima"
             unit="%"
             type="number"
@@ -360,9 +392,9 @@ onMounted(async () => {
         </div>
 
         <div class="range">
-          <UiField v-model="ranges.minTemperature" label="Temperatura mínima" unit="°C" type="number" data-test="min-temperature" />
+          <UiField v-model="ranges.minTemperature" @blur="blurRange('temperature')" label="Temperatura mínima" unit="°C" type="number" data-test="min-temperature" />
           <UiField
-            v-model="ranges.maxTemperature"
+            v-model="ranges.maxTemperature" @blur="blurRange('temperature')"
             label="Temperatura máxima"
             unit="°C"
             type="number"
@@ -373,9 +405,9 @@ onMounted(async () => {
         </div>
 
         <div class="range">
-          <UiField v-model="ranges.minLightHours" label="Horas de luz mínimas" unit="h" type="number" data-test="min-light" />
+          <UiField v-model="ranges.minLightHours" @blur="blurRange('light')" label="Horas de luz mínimas" unit="h" type="number" data-test="min-light" />
           <UiField
-            v-model="ranges.maxLightHours"
+            v-model="ranges.maxLightHours" @blur="blurRange('light')"
             label="Horas de luz máximas"
             unit="h"
             type="number"

@@ -1,5 +1,7 @@
 package com.cactify.application
 
+import com.cactify.application.dto.CareOverridesResponse
+import com.cactify.application.dto.EffectiveCareResponse
 import com.cactify.application.dto.LocationResponse
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.PlantDetailResponse
@@ -9,6 +11,7 @@ import com.cactify.application.dto.SoilMixSummaryResponse
 import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import com.cactify.application.dto.TagResponse
+import com.cactify.domain.CareOverrides
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
@@ -17,12 +20,14 @@ import com.cactify.domain.PlantOrigin
 import com.cactify.domain.PlantStatus
 import com.cactify.domain.PlantStatusChange
 import com.cactify.domain.Species
+import com.cactify.domain.SoilMixId
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.Tag
 import com.cactify.domain.TagId
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.PlantStatusChangeRepository
+import com.cactify.domain.repos.SoilMixRepository
 import com.cactify.domain.repos.SpeciesRepository
 import com.cactify.domain.repos.TagRepository
 import com.cactify.domain.specs.PlantSpecs
@@ -44,8 +49,24 @@ class PlantService(
   private val speciesRepository: SpeciesRepository,
   private val tagRepository: TagRepository,
   private val statusChangeRepository: PlantStatusChangeRepository,
+  private val soilMixRepository: SoilMixRepository,
   private val clock: Clock,
 ) {
+
+  /**
+   * Los cuidados propios tal y como entran: todo opcional, y la mezcla por identificador. Ausente
+   * significa «hereda de la especie»; un objeto sin ningún valor es lo mismo que no enviarlo.
+   */
+  data class CareOverridesInput(
+    val minHumidity: Int? = null,
+    val maxHumidity: Int? = null,
+    val minTemperature: Int? = null,
+    val maxTemperature: Int? = null,
+    val minLightHours: Int? = null,
+    val maxLightHours: Int? = null,
+    val wateringGuideline: String? = null,
+    val soilMixId: String? = null,
+  )
 
   /** Lo que se puede indicar al dar de alta o editar la ficha: todo opcional, todo texto del borde. */
   data class Profile(
@@ -55,6 +76,7 @@ class PlantService(
     val acquiredOn: LocalDate? = null,
     val origin: String? = null,
     val originNote: String? = null,
+    val careOverrides: CareOverridesInput? = null,
   )
 
   @Transactional
@@ -83,6 +105,7 @@ class PlantService(
         acquiredOn = profile.acquiredOn,
         origin = profile.origin?.let { PlantOrigin(it) },
         originNote = profile.originNote,
+        careOverrides = resolveCare(profile.careOverrides),
       ),
     )
     return plant.toDetail()
@@ -114,6 +137,7 @@ class PlantService(
       acquiredOn = profile.acquiredOn,
       origin = profile.origin?.let { PlantOrigin(it) },
       originNote = profile.originNote,
+      careOverrides = resolveCare(profile.careOverrides),
     )
     return plant.toDetail()
   }
@@ -183,6 +207,22 @@ class PlantService(
     return PageResponse.of(plantRepository.findAll(spec, pageable)) { it.toSummary() }
   }
 
+  /** La mezcla propia, si la hay, tiene que existir: una referencia inválida es un `400`. */
+  private fun resolveCare(input: CareOverridesInput?): CareOverrides? = input?.let {
+    CareOverrides(
+      minHumidity = it.minHumidity,
+      maxHumidity = it.maxHumidity,
+      minTemperature = it.minTemperature,
+      maxTemperature = it.maxTemperature,
+      minLightHours = it.minLightHours,
+      maxLightHours = it.maxLightHours,
+      wateringGuideline = it.wateringGuideline,
+      soilMix = it.soilMixId?.let { id ->
+        soilMixRepository.findOneById(SoilMixId.from(id)) ?: throw InvalidReferenceException("La mezcla de tierra", id)
+      },
+    )
+  }
+
   private fun requireLocation(locationId: String): Location =
     locationRepository.findOneById(LocationId.from(locationId))
       ?: throw InvalidReferenceException("La localización", locationId)
@@ -222,6 +262,31 @@ class PlantService(
     acquiredOn = acquiredOn,
     origin = origin?.value,
     originNote = originNote,
+    careOverrides = careOverrides?.let {
+      CareOverridesResponse(
+        minHumidity = it.minHumidity,
+        maxHumidity = it.maxHumidity,
+        minTemperature = it.minTemperature,
+        maxTemperature = it.maxTemperature,
+        minLightHours = it.minLightHours,
+        maxLightHours = it.maxLightHours,
+        wateringGuideline = it.wateringGuideline,
+        soilMixId = it.soilMix?.id?.toString(),
+      )
+    },
+    effectiveCare = effectiveCare().let {
+      EffectiveCareResponse(
+        minHumidity = it.minHumidity,
+        maxHumidity = it.maxHumidity,
+        minTemperature = it.minTemperature,
+        maxTemperature = it.maxTemperature,
+        minLightHours = it.minLightHours,
+        maxLightHours = it.maxLightHours,
+        wateringGuideline = it.wateringGuideline,
+        soilMix = SoilMixSummaryResponse(it.soilMix.id.toString(), it.soilMix.name),
+        overridden = it.overridden,
+      )
+    },
   )
 
   private fun PlantStatusChange.toResponse() = PlantStatusChangeResponse(

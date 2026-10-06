@@ -177,10 +177,7 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
 
         <aside class="plant-side">
           <UiPanel title="Cuidados efectivos">
-            <SpeciesRanges :species="plant.species" data-test="species-ranges" />
-            <p class="inheritance">
-              Hereda todos los valores de <em>{{ plant.species.scientificName }}</em>.
-            </p>
+            <PlantEffectiveCare :care="plant.effectiveCare" :species-name="plant.species.scientificName" />
           </UiPanel>
 
           <UiPanel title="Próximo trabajo" data-mock="true">

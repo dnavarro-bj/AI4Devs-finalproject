@@ -385,6 +385,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `description`: String, opcional. Qué es el ejemplar.
 * `germinationYear` / `germinationMonth`: Int, opcionales. El mes **solo existe con año**: nunca se inventa un mes (la ficha dice «~5 años» cuando falta).
 * `acquiredOn`: Date, opcional. Cuándo entró en la colección.
+* `careMinHumidity` … `careSoilMixId`: opcionales. Los **cuidados propios** del ejemplar: lo que sobrescribe de la pauta de su especie —rangos de humedad, temperatura y luz, riego y sustrato—. **Nulo significa «hereda de la especie»**. Se envían en `careOverrides` y la respuesta trae `careOverrides` (lo propio) y `effectiveCare` (lo que se aplica, con la lista de campos `overridden`). Cambiar la especie los conserva; si dejan de encajar con la nueva, se rechaza con `400`.
 * `origin` / `originNote`: Enum opcional (`vivero`, `intercambio`, `germinacion_propia`, `compra`, `regalo`, `otro`) y una nota libre con el detalle.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
@@ -681,8 +682,14 @@ components:
         speciesId: { type: string, pattern: '^[0-9]+$' }
     PlantDetail:
       type: object
-      required: [id, code, nickname, location, species, tags]
+      required: [id, code, nickname, location, species, tags, effectiveCare]
       properties:
+        careOverrides:
+          type: [object, 'null']
+          description: Lo que el ejemplar sobrescribe de la pauta de su especie; nulo si hereda todo.
+        effectiveCare:
+          type: object
+          description: El perfil que se aplica, ya resuelto, y la lista de campos `overridden` que se apartan de la especie.
         id: { type: string }
         code: { type: string, example: CAT-GRUSS-01 }
         nickname: { type: string }

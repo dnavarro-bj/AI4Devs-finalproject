@@ -1,6 +1,7 @@
 package com.cactify.domain
 
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -35,6 +36,7 @@ class Plant(
   acquiredOn: LocalDate? = null,
   origin: PlantOrigin? = null,
   originNote: String? = null,
+  careOverrides: CareOverrides? = null,
 ) : AbstractEntity<PlantId>() {
 
   var nickname: String = nickname
@@ -78,8 +80,18 @@ class Plant(
   var originNote: String? = originNote.cleaned()
     private set
 
+  /**
+   * Lo que sobrescribe de la pauta de su especie; `null` si no sobrescribe nada, y entonces hereda
+   * todo. Cambiar la especie **lo conserva** —son decisiones sobre esta planta— y lo no sobrescrito
+   * pasa a heredarse de la nueva.
+   */
+  @Embedded
+  var careOverrides: CareOverrides? = careOverrides.normalized()
+    private set
+
   init {
     InventoryCodes.requireValid(code, "del ejemplar", InventoryCodes.PLANT_MAX_LENGTH)
+    requireCareFits(this.careOverrides, species)
     requireNickname(nickname)
     requireGermination(germinationYear, germinationMonth)
     // Un ejemplar nace en curso: «muerta» como estado inicial no tiene sentido y se rechaza.
@@ -103,9 +115,12 @@ class Plant(
     acquiredOn: LocalDate?,
     origin: PlantOrigin?,
     originNote: String?,
+    careOverrides: CareOverrides?,
   ) {
     requireNickname(nickname)
     requireGermination(germinationYear, germinationMonth)
+    val ownCare = careOverrides.normalized()
+    requireCareFits(ownCare, species)
     this.nickname = nickname
     this.location = location
     this.species = species
@@ -115,7 +130,11 @@ class Plant(
     this.acquiredOn = acquiredOn
     this.origin = origin
     this.originNote = originNote.cleaned()
+    this.careOverrides = ownCare
   }
+
+  /** El perfil que se aplica: lo propio donde lo hay y la pauta de la especie donde no. */
+  fun effectiveCare(): EffectiveCare = (careOverrides ?: CareOverrides()).effective(species)
 
   /**
    * Cambia el estado y **devuelve el cambio** ya construido, para que el estado actual y su
@@ -144,6 +163,18 @@ class Plant(
     require(year == null || year in GERMINATION_YEARS) { "El año de germinación $year no es plausible" }
     require(month == null || month in 1..12) { "El mes de germinación debe estar entre 1 y 12, y es $month" }
     require(month == null || year != null) { "No se puede indicar el mes de germinación sin el año" }
+  }
+
+  /** Los cuidados propios tienen que encajar con la especie: si no, el perfil efectivo sería imposible. */
+  private fun requireCareFits(care: CareOverrides?, species: Species) {
+    try {
+      care?.validateAgainst(species)
+    } catch (cause: IllegalArgumentException) {
+      throw IllegalArgumentException(
+        "Los cuidados propios del ejemplar no encajan con la especie '${species.scientificName}': ${cause.message}",
+        cause,
+      )
+    }
   }
 
   private fun String?.cleaned(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

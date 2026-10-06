@@ -43,7 +43,7 @@ class PlantUpdateTest {
   private fun update(plant: Plant, nickname: String) = plant.update(
     nickname = nickname, location = tray, species = elongata,
     description = null, germinationYear = null, germinationMonth = null,
-    acquiredOn = null, origin = null, originNote = null,
+    acquiredOn = null, origin = null, originNote = null, careOverrides = null,
   )
 
   private fun plant() = Plant(code = "TEST-A-01", nickname = "Bola 1", location = greenhouse, species = grusonii)

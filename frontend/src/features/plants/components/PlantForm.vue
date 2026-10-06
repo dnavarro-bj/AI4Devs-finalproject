@@ -17,7 +17,11 @@
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
 import type { Location } from '@features/catalogs/types/catalog.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
+import { validateRange } from '@shared/utils/careRanges'
+import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
+import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import {
+  EMPTY_CARE,
   INITIAL_STATUSES,
   ORIGINS,
   ORIGIN_LABELS,
@@ -53,6 +57,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ submit: [PlantFormValues] }>()
 
 const { listLocations, listSpecies, speciesCare } = useCatalogs()
+const { list: listSoilMixes } = useSoilMixes()
 
 const nickname = ref(props.initial.nickname ?? '')
 const locationId = ref(props.initial.locationId ?? '')
@@ -173,8 +178,70 @@ const inherited = computed(() => (selectedSpecies.value
     ]
   : []))
 
-/** Personalizar cuidados no tiene dónde guardarse todavía (0.7 / T-16): el interruptor lo dice. */
-const overridesOpen = ref(false)
+/**
+ * La personalización de cuidados (historia 0.7). Desactivada, el ejemplar hereda toda la pauta de su
+ * especie y no se envía nada aunque queden valores escritos; activada, solo lo que se rellene se
+ * sobrescribe y lo demás se sigue heredando. La edición de un ejemplar que ya sobrescribe algo
+ * llega con ella activa y con sus valores.
+ */
+const careEnabled = ref(props.initial.careEnabled ?? false)
+const care = reactive({ ...EMPTY_CARE, ...props.initial.care })
+
+/** Un error por rango, junto a su rango: en un editor de tres rangos, «algo falla» obliga a buscar cuál. */
+const careErrors = reactive({ humidity: '', temperature: '', light: '' })
+
+/** El catálogo de mezclas para el sustrato propio. Si no carga, el resto del editor sigue sirviendo. */
+const soilMixes = ref<SoilMix[]>([])
+const soilMixOptions = computed(() => soilMixes.value.map((mix) => ({ value: mix.id, label: mix.name })))
+
+watch(careEnabled, async (enabled) => {
+  if (!enabled || soilMixes.value.length) return
+  const result = await listSoilMixes()
+  if (result.success) soilMixes.value = result.data!.content
+}, { immediate: true })
+
+/** El valor heredado, como referencia al lado de cada campo propio. */
+const inheritedCare = computed(() => selectedSpecies.value && {
+  humidity: `${selectedSpecies.value.minHumidity}–${selectedSpecies.value.maxHumidity} %`,
+  temperature: `${selectedSpecies.value.minTemperature}–${selectedSpecies.value.maxTemperature} °C`,
+  light: `${selectedSpecies.value.minLightHours}–${selectedSpecies.value.maxLightHours} h`,
+  watering: selectedSpecies.value.wateringGuideline,
+  soilMix: selectedSpecies.value.soilMix.name,
+})
+
+/**
+ * La misma validación al salir de un campo, para los cuidados propios: el máximo que queda por
+ * debajo del mínimo, o el mínimo por encima del máximo, se señala al salir del campo. Se juzga contra
+ * el otro extremo que se aplicaría —el propio si lo hay y, si no, el de la especie—. Con la
+ * personalización desactivada no hay nada que validar.
+ */
+function blurCare(concept: 'humidity' | 'temperature' | 'light') {
+  if (!careEnabled.value) {
+    careErrors[concept] = ''
+    return
+  }
+  const species = selectedSpecies.value
+  const [own, inherited] = {
+    humidity: [[care.minHumidity, care.maxHumidity], species && { min: species.minHumidity, max: species.maxHumidity }],
+    temperature: [[care.minTemperature, care.maxTemperature], species && { min: species.minTemperature, max: species.maxTemperature }],
+    light: [[care.minLightHours, care.maxLightHours], species && { min: species.minLightHours, max: species.maxLightHours }],
+  }[concept] as [[string, string], { min: number, max: number } | null]
+  careErrors[concept] = validateRange(concept, own[0], own[1], inherited ?? undefined)
+}
+
+// Con un error a la vista, corregir el valor lo revalida al teclear; y cambiar de especie revalida
+// contra la nueva herencia.
+watch(
+  () => [
+    care.minHumidity, care.maxHumidity, care.minTemperature, care.maxTemperature,
+    care.minLightHours, care.maxLightHours, selectedSpecies.value?.id,
+  ],
+  () => {
+    for (const concept of ['humidity', 'temperature', 'light'] as const) {
+      if (careErrors[concept]) blurCare(concept)
+    }
+  },
+)
 
 function validate(): boolean {
   fieldErrors.nickname = nickname.value.trim() === '' ? 'El nickname es obligatorio.' : ''
@@ -186,6 +253,22 @@ function validate(): boolean {
     ? 'El año de germinación debe estar entre 1900 y 2100.'
     : ''
 
+  // Los cuidados propios solo se juzgan si la personalización está activa: desactivada no se envía
+  // nada, así que lo que quede escrito no puede bloquear el guardado. Cada extremo se juzga contra el
+  // otro que se aplicaría —el propio si lo hay y, si no, el de la especie—.
+  const species = selectedSpecies.value
+  if (careEnabled.value) {
+    careErrors.humidity = validateRange('humidity', care.minHumidity, care.maxHumidity,
+      species && { min: species.minHumidity, max: species.maxHumidity })
+    careErrors.temperature = validateRange('temperature', care.minTemperature, care.maxTemperature,
+      species && { min: species.minTemperature, max: species.maxTemperature })
+    careErrors.light = validateRange('light', care.minLightHours, care.maxLightHours,
+      species && { min: species.minLightHours, max: species.maxLightHours })
+  } else {
+    careErrors.humidity = careErrors.temperature = careErrors.light = ''
+  }
+  const careInvalid = !!(careErrors.humidity || careErrors.temperature || careErrors.light)
+
   // Si falta algo, llevar a su sección: en un formulario de seis, decir «falta un campo» no basta.
   const missing = fieldErrors.species
     ? 'species'
@@ -193,7 +276,7 @@ function validate(): boolean {
       ? 'identity'
       : fieldErrors.location
         ? 'location'
-        : fieldErrors.germinationYear ? 'origin' : null
+        : fieldErrors.germinationYear ? 'origin' : careInvalid ? 'care' : null
   if (missing) goToSection(missing)
 
   return !missing
@@ -212,6 +295,8 @@ function submit() {
     acquiredOn: acquiredOn.value,
     germinationYear: germinationYear.value,
     germinationMonth: germinationMonth.value,
+    careEnabled: careEnabled.value,
+    care: { ...care },
   })
 }
 </script>
@@ -446,9 +531,9 @@ function submit() {
           type="button"
           class="override-toggle"
           role="switch"
-          :aria-checked="overridesOpen"
-          data-mock="true"
-          @click="overridesOpen = !overridesOpen"
+          :aria-checked="careEnabled"
+          data-test="override-toggle"
+          @click="careEnabled = !careEnabled"
         >
           <span>
             <strong>Personalizar cuidados para esta planta</strong>
@@ -459,13 +544,58 @@ function submit() {
           <i aria-hidden="true" />
         </button>
 
-        <div v-if="overridesOpen" class="overrides">
-          <p class="overrides__warning">
-            <strong>Personalizar cuidados llega en T-16</strong>
-            <small>
-              La historia 0.7 necesita que el ejemplar tenga dónde guardar sus valores propios; hoy
-              hereda todos los de su especie.
-            </small>
+        <div v-if="careEnabled" class="overrides" data-test="care-editor">
+          <p class="editor__hint">
+            Rellena <strong>solo lo que sea distinto</strong> de la especie: lo que dejes vacío se
+            sigue heredando.
+          </p>
+
+          <fieldset class="care-concept">
+            <legend>Humedad</legend>
+            <UiField v-model="care.minHumidity" @blur="blurCare('humidity')" label="Mínima (%)" type="number" min="0" max="100"
+              :placeholder="selectedSpecies ? String(selectedSpecies.minHumidity) : undefined" data-test="care-min-humidity" />
+            <UiField v-model="care.maxHumidity" @blur="blurCare('humidity')" label="Máxima (%)" type="number" min="0" max="100"
+              :placeholder="selectedSpecies ? String(selectedSpecies.maxHumidity) : undefined" data-test="care-max-humidity" />
+            <small v-if="inheritedCare" data-test="care-inherited-humidity">Heredado: {{ inheritedCare.humidity }}</small>
+            <p v-if="careErrors.humidity" class="care-error" role="alert" data-test="care-humidity-error">{{ careErrors.humidity }}</p>
+          </fieldset>
+
+          <fieldset class="care-concept">
+            <legend>Temperatura</legend>
+            <UiField v-model="care.minTemperature" @blur="blurCare('temperature')" label="Mínima (°C)" type="number"
+              :placeholder="selectedSpecies ? String(selectedSpecies.minTemperature) : undefined" data-test="care-min-temperature" />
+            <UiField v-model="care.maxTemperature" @blur="blurCare('temperature')" label="Máxima (°C)" type="number"
+              :placeholder="selectedSpecies ? String(selectedSpecies.maxTemperature) : undefined" data-test="care-max-temperature" />
+            <small v-if="inheritedCare" data-test="care-inherited-temperature">Heredado: {{ inheritedCare.temperature }}</small>
+            <p v-if="careErrors.temperature" class="care-error" role="alert" data-test="care-temperature-error">{{ careErrors.temperature }}</p>
+          </fieldset>
+
+          <fieldset class="care-concept">
+            <legend>Horas de luz</legend>
+            <UiField v-model="care.minLightHours" @blur="blurCare('light')" label="Mínimas (h)" type="number" min="0" max="24"
+              :placeholder="selectedSpecies ? String(selectedSpecies.minLightHours) : undefined" data-test="care-min-light" />
+            <UiField v-model="care.maxLightHours" @blur="blurCare('light')" label="Máximas (h)" type="number" min="0" max="24"
+              :placeholder="selectedSpecies ? String(selectedSpecies.maxLightHours) : undefined" data-test="care-max-light" />
+            <small v-if="inheritedCare" data-test="care-inherited-light">Heredado: {{ inheritedCare.light }}</small>
+            <p v-if="careErrors.light" class="care-error" role="alert" data-test="care-light-error">{{ careErrors.light }}</p>
+          </fieldset>
+
+          <fieldset class="care-concept">
+            <legend>Riego</legend>
+            <UiField v-model="care.wateringGuideline" label="Pauta de riego propia"
+              :placeholder="selectedSpecies?.wateringGuideline" data-test="care-watering" />
+            <small v-if="inheritedCare" data-test="care-inherited-watering">Heredado: {{ inheritedCare.watering }}</small>
+          </fieldset>
+
+          <fieldset class="care-concept">
+            <legend>Sustrato</legend>
+            <UiField v-model="care.soilMixId" label="Sustrato propio" as="select" placeholder="El de la especie"
+              :options="soilMixOptions" data-test="care-soil-mix" />
+            <small v-if="inheritedCare" data-test="care-inherited-soil">Heredado: {{ inheritedCare.soilMix }}</small>
+          </fieldset>
+
+          <p class="editor__hint" data-mock="true">
+            La exposición y el entorno propios llegan con <strong>T-17</strong>: la especie todavía no los tiene.
           </p>
         </div>
       </UiFormSection>
@@ -750,6 +880,34 @@ function submit() {
   color: var(--color-brand);
   content: '○';
   margin-right: var(--space-1);
+}
+
+.care-concept {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+}
+
+.care-concept legend {
+  font-weight: 700;
+  padding: 0 var(--space-1);
+}
+
+.care-error {
+  color: var(--color-danger);
+  font-size: var(--font-size-12);
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.care-concept small {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  grid-column: 1 / -1;
 }
 
 .override-toggle {

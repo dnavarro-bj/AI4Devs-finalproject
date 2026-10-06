@@ -38,6 +38,8 @@ data class CreatePlantRequest(
   val acquiredOn: LocalDate? = null,
   val origin: String? = null,
   val originNote: String? = null,
+  /** Lo que el ejemplar sobrescribe de la pauta de su especie; ausente = hereda todo. */
+  val careOverrides: PlantService.CareOverridesInput? = null,
 )
 
 /** El cuerpo del cambio de estado: el estado nuevo y, opcionalmente, el motivo. */
@@ -61,6 +63,8 @@ data class UpdatePlantRequest(
   val acquiredOn: LocalDate? = null,
   val origin: String? = null,
   val originNote: String? = null,
+  /** Reemplazo completo: lo que no se envíe vuelve a heredarse, y no enviarlo quita todos los propios. */
+  val careOverrides: PlantService.CareOverridesInput? = null,
 )
 
 /** Reemplazo del conjunto completo de tags: semántica PUT, no `PATCH` incremental. */
@@ -79,7 +83,7 @@ class PlantController(private val plantService: PlantService) {
       request.speciesId,
       PlantService.Profile(
         request.description, request.germinationYear, request.germinationMonth,
-        request.acquiredOn, request.origin, request.originNote,
+        request.acquiredOn, request.origin, request.originNote, request.careOverrides,
       ),
       request.status,
     )
@@ -98,7 +102,7 @@ class PlantController(private val plantService: PlantService) {
     request.speciesId,
     PlantService.Profile(
       request.description, request.germinationYear, request.germinationMonth,
-      request.acquiredOn, request.origin, request.originNote,
+      request.acquiredOn, request.origin, request.originNote, request.careOverrides,
     ),
   )
 

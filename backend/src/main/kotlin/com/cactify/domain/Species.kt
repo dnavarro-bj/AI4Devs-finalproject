@@ -155,15 +155,7 @@ class Species(
       require(scientificName.isNotBlank()) { "El nombre científico es obligatorio" }
       require(commonName.isNotBlank()) { "El nombre común es obligatorio" }
       require(wateringGuideline.isNotBlank()) { "La pauta de riego es obligatoria" }
-      require(minHumidity <= maxHumidity) {
-        "La humedad mínima ($minHumidity) no puede superar a la máxima ($maxHumidity)"
-      }
-      require(minTemperature <= maxTemperature) {
-        "La temperatura mínima ($minTemperature) no puede superar a la máxima ($maxTemperature)"
-      }
-      require(minLightHours <= maxLightHours) {
-        "Las horas de luz mínimas ($minLightHours) no pueden superar a las máximas ($maxLightHours)"
-      }
+      CareRanges.requireCoherent(minHumidity, maxHumidity, minTemperature, maxTemperature, minLightHours, maxLightHours)
     }
   }
 }

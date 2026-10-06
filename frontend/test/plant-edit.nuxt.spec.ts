@@ -170,4 +170,61 @@ describe('edición de una planta', () => {
     expect(body).toMatchObject({ nickname: 'Bola verde', description: 'Nueva descripción' })
     expect(body).not.toHaveProperty('status')
   })
+
+  // --- Cuidados propios (`cuidados-por-ejemplar`) ---
+
+  function serveWithCare() {
+    api.get.mockImplementation(async (path: string) => {
+      if (path === '/locations') return { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      if (path === '/species') return { content: [{ id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      if (path === '/species/200001') return speciesCare()
+      if (path === '/soil-mixes') return { content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 }
+      return plantDetail({ careOverrides: { wateringGuideline: 'cada 5 dias', maxTemperature: 30 } })
+    })
+  }
+
+  it('la edición de un ejemplar con cuidados propios llega con la personalización activa y sus valores', async () => {
+    serveWithCare()
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="override-toggle"]').attributes('aria-checked')).toBe('true')
+    expect((wrapper.find('[data-test="care-watering"]').element as HTMLInputElement).value).toBe('cada 5 dias')
+    expect((wrapper.find('[data-test="care-max-temperature"]').element as HTMLInputElement).value).toBe('30')
+    // Lo no sobrescrito queda vacío: se hereda.
+    expect((wrapper.find('[data-test="care-min-humidity"]').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('guardar envía los cuidados propios dentro de la ficha', async () => {
+    serveWithCare()
+    api.put.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    await wrapper.find('[data-test="plant-form"]').trigger('submit')
+    await settle()
+
+    expect(api.put.mock.calls[0]![1]).toMatchObject({ careOverrides: { wateringGuideline: 'cada 5 dias', maxTemperature: 30 } })
+  })
+
+  it('desactivar la personalización en la edición quita los cuidados propios', async () => {
+    serveWithCare()
+    api.put.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+    await wrapper.find('[data-test="plant-form"]').trigger('submit')
+    await settle()
+
+    expect(api.put.mock.calls[0]![1]).not.toHaveProperty('careOverrides')
+  })
+
+  it('un ejemplar sin cuidados propios llega con la personalización desactivada', async () => {
+    serve()
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="override-toggle"]').attributes('aria-checked')).toBe('false')
+  })
 })

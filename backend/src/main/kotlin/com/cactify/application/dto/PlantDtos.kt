@@ -49,6 +49,10 @@ data class PlantDetailResponse(
   val acquiredOn: LocalDate?,
   val origin: String?,
   val originNote: String?,
+  /** Solo lo que el ejemplar sobrescribe; ausente si hereda toda la pauta de su especie. */
+  val careOverrides: CareOverridesResponse?,
+  /** El perfil que se aplica, ya resuelto, y qué campos se apartan de la especie. */
+  val effectiveCare: EffectiveCareResponse,
 )
 
 data class PlantSummaryResponse(
@@ -93,4 +97,30 @@ data class PlantStatusChangeResponse(
   val toStatus: String,
   val reason: String?,
   val occurredAt: Instant,
+)
+
+/** Los valores que un ejemplar sobrescribe. Todos opcionales: ausente significa «hereda». */
+data class CareOverridesResponse(
+  val minHumidity: Int?,
+  val maxHumidity: Int?,
+  val minTemperature: Int?,
+  val maxTemperature: Int?,
+  val minLightHours: Int?,
+  val maxLightHours: Int?,
+  val wateringGuideline: String?,
+  val soilMixId: String?,
+)
+
+/** El perfil de cuidados que se aplica a un ejemplar y de dónde viene cada valor. */
+data class EffectiveCareResponse(
+  val minHumidity: Int,
+  val maxHumidity: Int,
+  val minTemperature: Int,
+  val maxTemperature: Int,
+  val minLightHours: Int,
+  val maxLightHours: Int,
+  val wateringGuideline: String,
+  val soilMix: SoilMixSummaryResponse,
+  /** Los campos que se apartan de la especie: `minHumidity`, `wateringGuideline`, `soilMix`… */
+  val overridden: List<String>,
 )

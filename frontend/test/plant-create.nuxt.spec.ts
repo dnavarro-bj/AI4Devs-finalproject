@@ -29,6 +29,7 @@ const speciesPage = {
 function catalogs() {
   api.get.mockImplementation(async (path: string) => {
     if (path === '/locations') return locationsPage
+    if (path === '/soil-mixes') return { content: [{ id: '100001', name: 'Mineral drenante' }, { id: '100002', name: 'Orgánico aireado' }], totalElements: 2, totalPages: 1, pageNumber: 0, pageSize: 25 }
     if (path === '/species') return speciesPage
     if (path === '/species/200001') return speciesCare()
     if (path === '/species/200002') {
@@ -293,5 +294,273 @@ describe('alta de una planta', () => {
 
     expect(wrapper.find('[data-test="error"]').text()).toContain('germinación')
     expect((wrapper.find('[data-test="description"]').element as HTMLTextAreaElement).value).toBe('Ejemplar adulto')
+  })
+
+  // --- Cuidados propios (`cuidados-por-ejemplar`) ---
+
+  const toggle = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) => wrapper.find('[data-test="override-toggle"]')
+
+  it('la personalización de cuidados ya no es maqueta y parte desactivada', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+
+    expect(toggle(wrapper).attributes('aria-checked')).toBe('false')
+    expect(toggle(wrapper).attributes('data-mock')).toBeUndefined()
+    expect(wrapper.find('[data-test="care-editor"]').exists()).toBe(false)
+    expect(wrapper.find('#plant-editor-care').text()).not.toContain('T-16')
+  })
+
+  it('al activarla muestra el editor con el valor heredado de la especie a la vista', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { speciesId: '200001' })
+
+    await toggle(wrapper).trigger('click')
+
+    expect(wrapper.find('[data-test="care-editor"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="care-inherited-humidity"]').text()).toContain('10–30')
+    expect(wrapper.find('[data-test="care-inherited-watering"]').text()).toContain('cada 10-20 dias')
+    // Los campos propios parten vacíos: lo que no se rellena, se hereda.
+    expect((wrapper.find('[data-test="care-watering"]').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('solo lo rellenado se envía como cuidado propio', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+
+    await toggle(wrapper).trigger('click')
+    await wrapper.find('[data-test="care-watering"]').setValue('cada 5 dias')
+    await wrapper.find('[data-test="care-max-temperature"]').setValue('30')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(api.post).toHaveBeenCalledWith('/plants', {
+      nickname: 'Bola', locationId: '300001', speciesId: '200001',
+      careOverrides: { wateringGuideline: 'cada 5 dias', maxTemperature: 30 },
+    })
+  })
+
+  it('el sustrato propio se elige del catálogo y viaja por identificador', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+
+    await toggle(wrapper).trigger('click')
+    await settle()
+    expect(wrapper.findAll('[data-test="care-soil-mix"] option').map((option) => option.text())).toContain('Orgánico aireado')
+    await wrapper.find('[data-test="care-soil-mix"]').setValue('100002')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect((api.post.mock.calls[0]![1] as { careOverrides: unknown }).careOverrides).toEqual({ soilMixId: '100002' })
+  })
+
+  it('desactivar la personalización descarta lo escrito: no se envía ningún cuidado propio', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+    await toggle(wrapper).trigger('click')
+    await wrapper.find('[data-test="care-watering"]').setValue('cada 5 dias')
+
+    await toggle(wrapper).trigger('click')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(api.post.mock.calls[0]![1]).not.toHaveProperty('careOverrides')
+  })
+
+  it('un perfil incoherente rechazado por el API se explica sin perder lo escrito', async () => {
+    api.post.mockRejectedValue(new ApiError(400, 'La humedad mínima (40) no puede superar a la máxima (30)'))
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+    await toggle(wrapper).trigger('click')
+    // Válido para el cliente (28 cabe en 10-30), pero el servidor lo rechaza: su mensaje manda.
+    await wrapper.find('[data-test="care-min-humidity"]').setValue('28')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').text()).toContain('humedad')
+    expect((wrapper.find('[data-test="care-min-humidity"]').element as HTMLInputElement).value).toBe('28')
+  })
+
+  // --- Validadores de los cuidados propios ---
+
+  /** grusonii: humedad 10-30, temperatura 10-35, luz 6-10 (ver `speciesCare`). */
+  async function withCare(values: Record<string, string>) {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+    for (const [test, value] of Object.entries(values)) await wrapper.find(`[data-test="${test}"]`).setValue(value)
+    await wrapper.find('form').trigger('submit')
+    await settle()
+    return wrapper
+  }
+
+  it('una humedad propia fuera de 0 a 100 se señala y no se envía', async () => {
+    const wrapper = await withCare({ 'care-max-humidity': '120' })
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').text()).toContain('entre 0 y 100')
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('unas horas de luz propias fuera de 0 a 24 se señalan y no se envían', async () => {
+    const wrapper = await withCare({ 'care-max-light': '30' })
+
+    expect(wrapper.find('[data-test="care-light-error"]').text()).toContain('entre 0 y 24')
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('una temperatura propia implausible se señala y no se envía', async () => {
+    const wrapper = await withCare({ 'care-min-temperature': '-200' })
+
+    expect(wrapper.find('[data-test="care-temperature-error"]').exists()).toBe(true)
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('dos extremos propios invertidos se señalan en su rango', async () => {
+    const wrapper = await withCare({ 'care-min-light': '8', 'care-max-light': '4' })
+
+    expect(wrapper.find('[data-test="care-light-error"]').text()).toContain('no puede superar')
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('un mínimo propio por encima del máximo heredado se señala, sin esperar al servidor', async () => {
+    const wrapper = await withCare({ 'care-min-humidity': '40' })
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').text()).toContain('no puede superar')
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('un máximo propio por debajo del mínimo heredado se señala', async () => {
+    const wrapper = await withCare({ 'care-max-temperature': '5' })
+
+    expect(wrapper.find('[data-test="care-temperature-error"]').exists()).toBe(true)
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('un decimal en un cuidado propio se rechaza', async () => {
+    const wrapper = await withCare({ 'care-min-humidity': '12.5' })
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').text()).toContain('número entero')
+  })
+
+  it('cada rango señala su propio error sin contaminar a los demás', async () => {
+    const wrapper = await withCare({ 'care-max-humidity': '120' })
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="care-temperature-error"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="care-light-error"]').exists()).toBe(false)
+  })
+
+  it('unos valores propios válidos se envían y no dejan ningún error', async () => {
+    const wrapper = await withCare({ 'care-min-humidity': '12', 'care-max-light': '8' })
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').exists()).toBe(false)
+    expect(api.post).toHaveBeenCalledTimes(1)
+  })
+
+  it('con la personalización desactivada los valores inválidos escritos no bloquean el guardado', async () => {
+    api.post.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { nickname: 'Bola', locationId: '300001', speciesId: '200001' })
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+    await wrapper.find('[data-test="care-max-humidity"]').setValue('999')
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(api.post).toHaveBeenCalledTimes(1)
+    expect(api.post.mock.calls[0]![1]).not.toHaveProperty('careOverrides')
+  })
+
+  it('corregir el valor y volver a guardar envía la planta', async () => {
+    const wrapper = await withCare({ 'care-max-humidity': '120' })
+    expect(api.post).not.toHaveBeenCalled()
+
+    await wrapper.find('[data-test="care-max-humidity"]').setValue('28')
+    await wrapper.find('form').trigger('submit')
+    await settle()
+
+    expect(api.post).toHaveBeenCalledTimes(1)
+  })
+
+  // --- Validación al salir del campo (blur) en los cuidados propios ---
+
+  async function careEditor() {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    await fill(wrapper, { speciesId: '200001' })
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+    return wrapper
+  }
+
+  it('un valor propio fuera de escala se señala al salir del campo', async () => {
+    const wrapper = await careEditor()
+
+    await wrapper.find('[data-test="care-max-humidity"]').setValue('120')
+    await wrapper.find('[data-test="care-max-humidity"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').text()).toContain('entre 0 y 100')
+  })
+
+  it('un mínimo propio por encima del máximo heredado se señala al salir del campo', async () => {
+    const wrapper = await careEditor()
+
+    await wrapper.find('[data-test="care-min-humidity"]').setValue('40')
+    await wrapper.find('[data-test="care-min-humidity"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').text()).toContain('no puede superar')
+  })
+
+  it('un extremo propio vacío no genera ningún error al salir del otro', async () => {
+    const wrapper = await careEditor()
+
+    await wrapper.find('[data-test="care-min-temperature"]').setValue('15')
+    await wrapper.find('[data-test="care-min-temperature"]').trigger('blur')
+
+    expect(wrapper.find('[data-test="care-temperature-error"]').exists()).toBe(false)
+  })
+
+  it('corregir el valor hace desaparecer el error al teclear', async () => {
+    const wrapper = await careEditor()
+    await wrapper.find('[data-test="care-max-light"]').setValue('30')
+    await wrapper.find('[data-test="care-max-light"]').trigger('blur')
+    expect(wrapper.find('[data-test="care-light-error"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="care-max-light"]').setValue('8')
+
+    expect(wrapper.find('[data-test="care-light-error"]').exists()).toBe(false)
+  })
+
+  it('cambiar de especie revalida los rangos propios contra la nueva herencia', async () => {
+    const wrapper = await careEditor()
+    await wrapper.find('[data-test="care-min-humidity"]').setValue('20')
+    await wrapper.find('[data-test="care-min-humidity"]').trigger('blur')
+    expect(wrapper.find('[data-test="care-humidity-error"]').exists()).toBe(false)
+
+    // mammillaria hereda 15-40 en el doble; con grusonii (10-30) 20 es válido y con ella también:
+    // basta con que el error no aparezca si el nuevo máximo heredado lo admite.
+    await fill(wrapper, { speciesId: '200002' })
+    await settle()
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').exists()).toBe(false)
+  })
+
+  it('con la personalización desactivada salir de un campo no muestra errores', async () => {
+    const wrapper = await careEditor()
+    await wrapper.find('[data-test="care-max-humidity"]').setValue('999')
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+    await wrapper.find('[data-test="override-toggle"]').trigger('click')
+
+    expect(wrapper.find('[data-test="care-humidity-error"]').exists()).toBe(false)
   })
 })

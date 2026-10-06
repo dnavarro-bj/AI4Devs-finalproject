@@ -241,6 +241,10 @@ erDiagram
 
 `CARE_RECORD` y `AI_RECOMMENDATION` **no cambian**.
 
+## Hecho: cuidados propios del ejemplar (7 oct 2026, `cuidados-por-ejemplar`)
+
+`PLANT_CARE_OVERRIDE` **no se creó como tabla 1-1**: los ocho valores opcionales son columnas de `PLANT` con prefijo `care_` (nulo = hereda). La asociación 1-1 inversa no se carga perezosamente en Hibernate, y cada planta de un listado habría disparado una consulta más; la semántica es la misma. Cambiar la especie **conserva** los valores propios y se revalida el perfil efectivo. Ya está en el [modelo actual](modelo-datos-actual.md).
+
 ## Contraste con el frontend
 
 Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aquí solo se recoge el **qué**; lo que cambia el esquema y no está decidido va a «Pendiente de decidir».

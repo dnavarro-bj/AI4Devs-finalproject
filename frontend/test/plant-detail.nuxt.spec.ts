@@ -105,7 +105,7 @@ describe('ficha de la planta', () => {
     const wrapper = await mountSuspended(PlantDetailPage)
     await settle()
 
-    const ranges = wrapper.find('[data-test="species-ranges"]')
+    const ranges = wrapper.find('[data-test="effective-care"]')
     expect(ranges.exists()).toBe(true)
     const text = ranges.text()
     expect(text).toContain('10')
