@@ -42,6 +42,7 @@ const createError = ref<string | null>(null)
 const COLUMNS = [
   { key: 'name', label: 'Etiqueta', sortable: true },
   { key: 'usage', label: 'Uso en la colección' },
+  { key: 'plants', label: 'Plantas' },
   { key: 'examples', label: 'Ejemplos' },
   { key: 'updated', label: 'Actualizada' },
 ]
@@ -138,31 +139,39 @@ const asTag = (row: unknown) => row as TagListItem
       <!-- «Salud del catálogo» del prototipo: lo real es el tamaño de la colección. -->
       <UiPanel class="health" data-test="catalog-health">
         <div class="health__body">
-          <span class="health__mark" aria-hidden="true">◇</span>
-          <div>
-            <strong>{{ collectionSize }} ejemplares en la colección</strong>
-            <p>
-              {{ page!.totalElements }}
-              {{ page!.totalElements === 1 ? 'etiqueta disponible' : 'etiquetas disponibles' }}
-              para clasificarlos.
-            </p>
+          <div class="health__summary">
+            <span class="health__mark" aria-hidden="true">◇</span>
+            <div>
+              <strong>{{ collectionSize }} ejemplares en la colección</strong>
+              <p>
+                {{ page!.totalElements }}
+                {{ page!.totalElements === 1 ? 'etiqueta disponible' : 'etiquetas disponibles' }}
+                para clasificarlos.
+              </p>
+            </div>
           </div>
           <UiButton variant="secondary" to="/plants">Ver el inventario</UiButton>
+          <button class="duplicate-callout" type="button" disabled data-mock="true" data-test="duplicates">
+            <span class="duplicate-callout__count">—</span>
+            <span><strong>Posibles duplicados</strong><small>Detección pendiente · T-21</small></span>
+            <b aria-hidden="true">›</b>
+          </button>
         </div>
-
-        <p class="pending" data-mock="true" data-test="duplicates">
-          El prototipo señala aquí los <strong>posibles duplicados</strong> —«Semilleros 2021» junto
-          a «Semillero propio»—. Detectarlos necesita un criterio de similitud, no solo la
-          normalización que ya hay: llega con <strong>T-21</strong>. Combinarlas a mano sí funciona,
-          desde la ficha de cada una.
-        </p>
       </UiPanel>
 
-      <div class="bulk" data-mock="true" data-test="bulk">
-        <p class="pending">
-          La selección múltiple y sus acciones —combinar varias, eliminar las que no se usan—
-          llegan con <strong>T-24</strong>.
-        </p>
+      <UiFilterBar :applied="[]" density="compact" data-mock="true" data-test="tag-toolbar">
+        <UiToolbarField label="Buscar etiqueta" type="search" placeholder="Buscar etiqueta · T-21" icon="⌕" disabled />
+        <UiToolbarField label="Filtrar por uso" as="select" placeholder="Uso · T-21" disabled />
+        <UiToolbarField label="Ordenar etiquetas" as="select" placeholder="Más utilizada · T-21" disabled />
+      </UiFilterBar>
+
+      <div class="bulk" data-mock="true" data-test="bulk" aria-live="polite">
+        <strong>0 seleccionadas</strong>
+        <div>
+          <UiButton variant="text" disabled>Combinar etiquetas</UiButton>
+          <UiButton variant="text" disabled>Eliminar sin uso</UiButton>
+        </div>
+        <span>Selección múltiple · T-24</span>
       </div>
 
       <UiTable
@@ -188,10 +197,16 @@ const asTag = (row: unknown) => row as TagListItem
             <UiProgressBar
               :value="asTag(row).plantCount"
               :max="collectionSize || 1"
-              :detail="`${asTag(row).plantCount} · ${shareOf(asTag(row))} % del inventario`"
               :show-value="false"
             />
           </div>
+        </template>
+
+        <template #cell-plants="{ row }">
+          <span class="plant-count">
+            <strong>{{ asTag(row).plantCount }}</strong>
+            <small>{{ shareOf(asTag(row)) }} % del inventario</small>
+          </span>
         </template>
 
         <!-- Los códigos de los ejemplares son T-15: hoy una planta no tiene código estable. -->
@@ -247,12 +262,15 @@ const asTag = (row: unknown) => row as TagListItem
 
 .health__body {
   align-items: center;
-  display: flex;
+  display: grid;
   gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto minmax(210px, auto);
 }
 
-.health__body div {
-  flex: 1;
+.health__summary {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
 }
 
 .health__body strong {
@@ -278,25 +296,81 @@ const asTag = (row: unknown) => row as TagListItem
 }
 
 .bulk {
+  align-items: center;
+  background: var(--color-sidebar);
+  border-radius: var(--radius-sm);
+  color: var(--color-sidebar-text);
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
   margin-bottom: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-1) var(--space-3);
+}
+
+.bulk > div {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.bulk :deep(.button--text) {
+  color: var(--color-sidebar-text);
+}
+
+.bulk > span {
+  color: color-mix(in srgb, var(--color-sidebar-text) 67%, transparent);
+  font-size: var(--font-size-11);
 }
 
 .usage {
-  min-width: 180px;
+  min-width: 120px;
 }
 
-.pending {
-  border-top: 1px solid var(--color-line);
-  color: var(--color-ink-muted);
+.duplicate-callout {
+  align-items: center;
+  background: var(--color-warning-soft);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-line));
+  border-radius: var(--radius-sm);
+  color: var(--color-ink);
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: auto 1fr auto;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+
+.duplicate-callout:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.duplicate-callout__count {
+  align-items: center;
+  background: var(--color-warning);
+  border-radius: 50%;
+  color: var(--color-surface);
+  display: flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.duplicate-callout strong,
+.duplicate-callout small,
+.plant-count strong,
+.plant-count small {
+  display: block;
+}
+
+.duplicate-callout strong,
+.plant-count strong {
   font-size: var(--font-size-12);
-  margin: var(--space-3) 0 0;
-  padding-top: var(--space-3);
 }
 
-.bulk .pending {
-  border-top: 0;
-  margin: 0;
-  padding-top: 0;
+.duplicate-callout small,
+.plant-count small {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-11);
 }
 
 .cell-mock {
@@ -307,5 +381,23 @@ const asTag = (row: unknown) => row as TagListItem
   border: 1px dashed var(--color-line-strong);
   font-size: var(--font-size-11);
   padding: 0 2px;
+}
+
+@media (max-width: 900px) {
+  .health__body {
+    grid-template-columns: 1fr;
+  }
+
+  .duplicate-callout {
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .bulk {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: var(--space-3);
+  }
 }
 </style>

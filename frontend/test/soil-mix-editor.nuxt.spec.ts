@@ -126,6 +126,25 @@ describe('editor de una mezcla de sustrato', () => {
     expect(wrapper.find('[data-test="mismatch"]').exists()).toBe(true)
   })
 
+  it('reproduce la estructura del wireframe con navegación, rueda y secciones pendientes visibles', async () => {
+    const wrapper = await mountSuspended(SoilMixForm)
+
+    expect(wrapper.findAll('.editor-nav button')).toHaveLength(4)
+    expect(wrapper.find('[data-test="wheel-center-split"]').text()).toContain('20/80')
+    expect(wrapper.find('#soil-editor-properties').text()).toContain('Drenaje esperado')
+    expect(wrapper.find('#soil-editor-notes').text()).toContain('Notas de preparación')
+    expect(wrapper.findAll('[data-mock="true"]')).toHaveLength(2)
+  })
+
+  it('incluye cancelar y explica el impacto antes de guardar', async () => {
+    const wrapper = await mountSuspended(SoilMixForm, {
+      props: { cancelTo: '/soil-mixes/12', impact: 'Alcanza a 3 especies.' },
+    })
+
+    expect(wrapper.text()).toContain('Alcanza a 3 especies.')
+    expect(wrapper.find('a[href="/soil-mixes/12"]').text()).toBe('Cancelar')
+  })
+
   it('el error del API se muestra tal cual, sin traducirlo a un mensaje propio', async () => {
     const wrapper = await mountSuspended(SoilMixForm, {
       props: { submitError: 'Los porcentajes de la mezcla deben sumar 100, y suman 70' },

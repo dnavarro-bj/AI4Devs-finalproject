@@ -35,8 +35,8 @@ const removing = ref(false)
 const removeError = ref<string | null>(null)
 
 setBreadcrumbs([
-  { label: 'Mezclas de sustrato', to: '/soil-mixes' },
-  { label: 'Ficha de mezcla' },
+  { label: 'Sustratos', to: '/soil-mixes' },
+  { label: 'Ficha de sustrato' },
 ])
 
 const notFound = computed(() => !loading.value && isNotFound(error.value))
@@ -73,7 +73,7 @@ async function load() {
   }
   mix.value = result.data!
   setBreadcrumbs([
-    { label: 'Mezclas de sustrato', to: '/soil-mixes' },
+    { label: 'Sustratos', to: '/soil-mixes' },
     { label: result.data!.name },
   ])
   useHead({ title: `Cactify · ${result.data!.name}` })
@@ -106,11 +106,11 @@ onMounted(load)
 
 <template>
   <section>
-    <p v-if="loading" data-test="loading" role="status">Cargando la mezcla…</p>
+    <p v-if="loading" data-test="loading" role="status">Cargando el sustrato…</p>
 
     <UiEmptyState
       v-else-if="notFound"
-      title="Esta mezcla no existe"
+      title="Este sustrato no existe"
       data-test="not-found"
       mark="◌"
     >
@@ -138,7 +138,7 @@ onMounted(load)
           </p>
         </template>
         <template #actions>
-          <UiButton :to="`/soil-mixes/${mix.id}/edit`" data-test="edit-soil-mix">Editar mezcla</UiButton>
+          <UiButton :to="`/soil-mixes/${mix.id}/edit`" data-test="edit-soil-mix">Editar sustrato</UiButton>
           <UiButton variant="secondary" data-test="remove-soil-mix" @click="confirming = true">
             Retirar
           </UiButton>
@@ -205,7 +205,7 @@ onMounted(load)
         </div>
 
         <aside class="layout__side">
-          <UiPanel title="Ficha de la mezcla">
+          <UiPanel title="Ficha del sustrato">
             <dl class="facts">
               <div>
                 <dt>Orgánico</dt>
@@ -245,7 +245,7 @@ onMounted(load)
 
       <UiDialog
         :open="confirming"
-        title="Retirar la mezcla del catálogo"
+        title="Retirar el sustrato del catálogo"
         data-test="remove-dialog"
         @close="confirming = false"
       >

@@ -5,10 +5,10 @@ import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
 import SoilMixForm from '@features/soil-mixes/components/SoilMixForm.vue'
 import type { SoilMixInput } from '@features/soil-mixes/types/soilMix.types'
 
-useHead({ title: 'Cactify · Registrar mezcla' })
+useHead({ title: 'Cactify · Nuevo sustrato' })
 useBreadcrumbs().set([
-  { label: 'Mezclas de sustrato', to: '/soil-mixes' },
-  { label: 'Registrar mezcla' },
+  { label: 'Sustratos', to: '/soil-mixes' },
+  { label: 'Nuevo sustrato' },
 ])
 
 const { create } = useSoilMixes()
@@ -35,11 +35,15 @@ async function save(input: SoilMixInput) {
 
 <template>
   <section>
-    <UiPageHeader title="Registrar mezcla" />
+    <UiPageHeader
+      title="Nuevo sustrato"
+      context="Define una receta reutilizable y su rango de pH recomendado."
+    />
     <SoilMixForm
       :submitting="submitting"
       :submit-error="submitError"
-      submit-label="Registrar mezcla"
+      submit-label="Guardar sustrato"
+      impact="El nuevo sustrato estará disponible en el catálogo."
       @submit="save"
     />
   </section>

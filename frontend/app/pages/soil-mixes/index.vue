@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * El catálogo de mezclas de sustrato (historia 0.8), con la composición de la pantalla
+ * El catálogo de sustratos (historia 0.8), con la composición de la pantalla
  * `soil-mixes` del prototipo.
  *
  * Dos cosas que no son adorno y que la primera versión no tenía:
@@ -20,8 +20,8 @@ import { phQuality } from '@features/soil-mixes/composables/phQuality'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import type { PageResponse } from '@shared/types/api.types'
 
-useHead({ title: 'Cactify · Mezclas de sustrato' })
-useBreadcrumbs().set([{ label: 'Mezclas de sustrato' }])
+useHead({ title: 'Cactify · Sustratos' })
+useBreadcrumbs().set([{ label: 'Sustratos' }])
 
 const { list } = useSoilMixes()
 
@@ -30,13 +30,23 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 /** El orden lo resuelve el API: la tabla solo tiene delante una página (ADR-009). */
-const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>(null)
+const sort = ref<{ key: string, direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' })
+const sortChoice = ref('name,asc')
+
+const SORT_OPTIONS = [
+  { value: 'name,asc', label: 'Nombre: A–Z' },
+  { value: 'name,desc', label: 'Nombre: Z–A' },
+  { value: 'mineralPercentage,desc', label: 'Mayor proporción mineral' },
+  { value: 'organicPercentage,desc', label: 'Mayor proporción orgánica' },
+  { value: 'phMin,asc', label: 'pH más bajo' },
+]
 
 const COLUMNS = [
-  { key: 'name', label: 'Mezcla', sortable: true },
+  { key: 'name', label: 'Sustrato', sortable: true },
   { key: 'composition', label: 'Composición' },
   { key: 'ph', label: 'pH recomendado' },
   { key: 'usage', label: 'Uso recomendado' },
+  { key: 'plants', label: 'Plantas' },
 ]
 
 async function load(pageNumber: number) {
@@ -55,7 +65,16 @@ async function load(pageNumber: number) {
 
 function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
   sort.value = next
+  sortChoice.value = `${next.key},${next.direction}`
   load(page.value?.pageNumber ?? 0)
+}
+
+function selectSort(value: string) {
+  const [key, direction] = value.split(',')
+  if (!key || (direction !== 'asc' && direction !== 'desc')) return
+  sortChoice.value = value
+  sort.value = { key, direction }
+  load(0)
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
@@ -75,11 +94,11 @@ const partsOf = (mix: SoilMix) => [
 <template>
   <section>
     <UiPageHeader
-      title="Mezclas de sustrato"
+      title="Sustratos"
       :context="page ? `${page.totalElements} recetas reutilizables para mantener criterios de cultivo consistentes` : undefined"
     >
       <template #actions>
-        <UiButton to="/soil-mixes/new" data-test="new-soil-mix">Añadir mezcla</UiButton>
+        <UiButton to="/soil-mixes/new" data-test="new-soil-mix">Añadir sustrato</UiButton>
       </template>
     </UiPageHeader>
 
@@ -90,7 +109,7 @@ const partsOf = (mix: SoilMix) => [
       class="catalog-notice"
       data-test="coverage"
     >
-      Corregir una mezcla actualiza la recomendación de todas las especies que la usan; las
+      Corregir un sustrato actualiza la recomendación de todas las especies que lo usan; las
       mediciones y los trasplantes ya registrados no cambian.
     </UiNotice>
 
@@ -100,17 +119,32 @@ const partsOf = (mix: SoilMix) => [
 
     <UiEmptyState
       v-else-if="isEmpty"
-      title="Todavía no hay ninguna mezcla registrada"
+      title="Todavía no hay ningún sustrato registrado"
       data-test="empty"
     >
       Una especie necesita una mezcla para darse de alta. Registra la primera para empezar.
       <template #action>
-        <UiButton to="/soil-mixes/new">Registrar la primera mezcla</UiButton>
+        <UiButton to="/soil-mixes/new">Registrar el primer sustrato</UiButton>
       </template>
     </UiEmptyState>
 
+    <div v-if="page?.content.length" class="catalog-toolbar">
+      <span>{{ page.totalElements }} {{ page.totalElements === 1 ? 'sustrato' : 'sustratos' }}</span>
+      <div class="sort-control">
+        <span>Ordenar por</span>
+        <UiToolbarField
+          :model-value="sortChoice"
+          label="Ordenar sustratos"
+          as="select"
+          :options="SORT_OPTIONS"
+          data-test="sort-soil-mixes"
+          @update:model-value="selectSort"
+        />
+      </div>
+    </div>
+
     <UiTable
-      v-else-if="page?.content.length"
+      v-if="page?.content.length"
       data-test="soil-mixes-table"
       :columns="COLUMNS"
       :rows="page.content"
@@ -121,7 +155,13 @@ const partsOf = (mix: SoilMix) => [
       <!-- La celda identificativa del prototipo: marca, nombre y receta. -->
       <template #cell-name="{ row }">
         <NuxtLink class="mix-cell" :to="`/soil-mixes/${asMix(row).id}`" data-test="soil-mix-link">
-          <span class="mix-cell__swatch" aria-hidden="true">◒</span>
+          <UiProportionWheel
+            class="mix-cell__wheel"
+            :parts="partsOf(asMix(row))"
+            size="compact"
+            :show-legend="false"
+            data-test="composition-wheel"
+          />
           <span>
             <strong>{{ asMix(row).name }}</strong>
             <small>{{ asMix(row).description ?? 'Sin receta anotada' }}</small>
@@ -145,7 +185,13 @@ const partsOf = (mix: SoilMix) => [
       <!-- El listado no cuenta las especies por fila: sería un N+1. El dato vive en la ficha. -->
       <template #cell-usage>
         <span data-mock="true" data-test="usage" class="cell-mock">
-          — <small>en su ficha</small>
+          — especies <small>API pendiente</small>
+        </span>
+      </template>
+
+      <template #cell-plants>
+        <span data-mock="true" data-test="plants-count" class="cell-mock">
+          — plantas <small>API pendiente</small>
         </span>
       </template>
     </UiTable>
@@ -154,12 +200,12 @@ const partsOf = (mix: SoilMix) => [
       :page="page?.pageNumber ?? 0"
       :total-pages="page?.totalPages ?? 0"
       :loading="loading"
-      label="Paginación del catálogo de mezclas"
+      label="Paginación del catálogo de sustratos"
       @update:page="load"
     />
 
     <footer v-if="page?.content.length" class="catalog-foot">
-      <span>{{ page.totalElements }} mezclas en el catálogo</span>
+      <span>{{ page.totalElements }} sustratos en el catálogo</span>
       <span class="catalog-foot__legend">
         <i class="is-organic" aria-hidden="true" /> Orgánico
         <i class="is-mineral" aria-hidden="true" /> Mineral
@@ -174,6 +220,36 @@ const partsOf = (mix: SoilMix) => [
   margin-bottom: var(--space-5);
 }
 
+.catalog-toolbar {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.catalog-toolbar > span {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+}
+
+.sort-control {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.sort-control > span {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  white-space: nowrap;
+}
+
+.sort-control :deep(.toolbar-field) {
+  flex: 0 1 250px;
+  width: 250px;
+}
+
 .mix-cell {
   align-items: center;
   color: var(--color-ink);
@@ -182,16 +258,8 @@ const partsOf = (mix: SoilMix) => [
   text-decoration: none;
 }
 
-.mix-cell__swatch {
-  align-items: center;
-  background: var(--color-brand-soft);
-  border-radius: var(--radius-sm);
-  color: var(--color-brand);
-  display: flex;
+.mix-cell__wheel {
   flex-shrink: 0;
-  height: 32px;
-  justify-content: center;
-  width: 32px;
 }
 
 .mix-cell strong {
@@ -227,6 +295,12 @@ const partsOf = (mix: SoilMix) => [
   border: 1px dashed var(--color-line-strong);
   font-size: var(--font-size-11);
   padding: 0 2px;
+}
+
+@media (max-width: 620px) {
+  .catalog-toolbar { align-items: stretch; flex-direction: column; }
+  .sort-control { align-items: stretch; flex-direction: column; }
+  .sort-control :deep(.toolbar-field) { flex-basis: auto; width: 100%; }
 }
 
 .catalog-foot {

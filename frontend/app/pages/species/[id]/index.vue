@@ -290,7 +290,7 @@ onMounted(load)
                 <dd>{{ species.commonName }}</dd>
               </div>
               <div>
-                <dt>Mezcla recomendada</dt>
+                <dt>Sustrato recomendado</dt>
                 <dd>{{ species.soilMix.name }}</dd>
               </div>
               <div>

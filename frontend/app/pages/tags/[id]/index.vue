@@ -184,7 +184,7 @@ const asPlant = (row: unknown) => row as PlantSummary
     <UiInlineError v-else-if="error" data-test="error">{{ error.message }}</UiInlineError>
 
     <template v-else-if="tag">
-      <UiEntityHero :title="tag.name" subtitle="Etiqueta del catálogo" data-test="tag-hero">
+      <UiEntityHero :title="tag.name" data-test="tag-hero">
         <template #visual>
           <span class="hero-mark" aria-hidden="true">◇</span>
         </template>
@@ -198,8 +198,7 @@ const asPlant = (row: unknown) => row as PlantSummary
         </template>
         <template #context>
           <p class="hero-description" data-mock="true" data-test="description">
-            La descripción de la etiqueta —para qué se usa y cuándo aplicarla— llega con
-            <strong>T-17</strong>: hoy el catálogo solo guarda el nombre.
+            Descripción de uso pendiente · <strong>T-17</strong>
           </p>
         </template>
         <template #actions>
@@ -207,10 +206,7 @@ const asPlant = (row: unknown) => row as PlantSummary
             Ver {{ plantCount }} {{ plantCount === 1 ? 'planta' : 'plantas' }}
           </UiButton>
           <UiButton variant="secondary" data-test="rename-tag" @click="openRename">Renombrar</UiButton>
-          <UiButton variant="secondary" data-test="merge-tag" @click="openMerge">Combinar</UiButton>
-          <UiButton variant="secondary" data-test="remove-tag" @click="confirming = true">
-            Retirar
-          </UiButton>
+          <UiButton variant="icon" label="Combinar con otra etiqueta" data-test="merge-tag" @click="openMerge">⇄</UiButton>
         </template>
       </UiEntityHero>
 
@@ -218,7 +214,7 @@ const asPlant = (row: unknown) => row as PlantSummary
         {{ removeError }}
       </UiInlineError>
 
-      <UiDetailLayout>
+      <UiDetailLayout aside-width="narrow">
         <UiPanel data-test="distribution">
           <UiSectionHeader
             title="Distribución en la colección"
@@ -326,7 +322,7 @@ const asPlant = (row: unknown) => row as PlantSummary
                   <small>Unifica duplicados conservando las plantas</small>
                 </span>
               </button>
-              <button type="button" @click="confirming = true">
+              <button type="button" data-test="remove-tag" @click="confirming = true">
                 <span aria-hidden="true">⌫</span>
                 <span>
                   <strong>Retirar etiqueta</strong>
@@ -473,7 +469,7 @@ const asPlant = (row: unknown) => row as PlantSummary
 .metrics {
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: var(--space-4);
 }
 
@@ -522,5 +518,11 @@ const asPlant = (row: unknown) => row as PlantSummary
 .admin small {
   color: var(--color-ink-muted);
   font-size: var(--font-size-11);
+}
+
+@media (max-width: 680px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

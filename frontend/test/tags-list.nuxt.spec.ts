@@ -63,8 +63,9 @@ describe('catálogo de etiquetas', () => {
 
     const cell = wrapper.find('[data-test="usage"]')
     expect(cell.find('.progress').exists(), 'el uso no se ve como proporción').toBe(true)
-    expect(cell.text()).toContain('60')
-    expect(cell.text()).toContain('%')
+    expect(cell.find('[role="progressbar"]').attributes('aria-valuenow')).toBe('60')
+    expect(wrapper.find('tbody tr').text()).toContain('60')
+    expect(wrapper.find('tbody tr').text()).toContain('%')
   })
 
   /** La etiqueta sin uso es justo la que se puede retirar: se muestra, señalada. */

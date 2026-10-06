@@ -23,7 +23,16 @@ const props = withDefaults(defineProps<{
   parts: WheelPart[]
   total?: number
   unit?: string
-}>(), { total: 100, unit: '%' })
+  size?: 'default' | 'compact'
+  showLegend?: boolean
+  center?: 'dominant' | 'split' | 'none'
+}>(), {
+  total: 100,
+  unit: '%',
+  size: 'default',
+  showLegend: true,
+  center: 'dominant',
+})
 
 const TONES: Record<string, string> = {
   neutral: 'var(--color-ink-muted)',
@@ -61,17 +70,26 @@ const gradient = computed(() => {
 </script>
 
 <template>
-  <div class="wheel" role="img" :aria-label="description">
+  <div class="wheel" :class="`is-${size}`" role="img" :aria-label="description">
     <div class="wheel__ring" :style="{ background: gradient }">
       <span class="wheel__hole">
-        <span v-if="dominant" data-test="wheel-center">
+        <span v-if="dominant && size === 'default' && center === 'dominant'" data-test="wheel-center">
           <strong>{{ dominant.value }}<i>{{ unit }}</i></strong>
           <small>{{ dominant.label }}</small>
+        </span>
+        <span
+          v-else-if="size === 'default' && center === 'split'"
+          class="wheel__split"
+          data-test="wheel-center-split"
+        >
+          <strong :class="`is-${parts[0]?.tone ?? 'neutral'}`">{{ parts[0]?.value ?? 0 }}</strong>
+          <i>/</i>
+          <strong :class="`is-${parts[1]?.tone ?? 'neutral'}`">{{ parts[1]?.value ?? 0 }}</strong>
         </span>
       </span>
     </div>
 
-    <ul class="wheel__legend">
+    <ul v-if="showLegend" class="wheel__legend">
       <li
         v-for="part in parts"
         :key="part.label"
@@ -102,6 +120,18 @@ const gradient = computed(() => {
   width: 116px;
 }
 
+.wheel.is-compact { gap: 0; }
+
+.wheel.is-compact .wheel__ring {
+  height: 42px;
+  width: 42px;
+}
+
+.wheel.is-compact .wheel__hole {
+  height: 22px;
+  width: 22px;
+}
+
 .wheel__hole {
   align-items: center;
   background: var(--color-surface);
@@ -128,6 +158,38 @@ const gradient = computed(() => {
   color: var(--color-ink-muted);
   display: block;
   font-size: var(--font-size-11);
+}
+
+.wheel__split {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.wheel__split strong.is-brand {
+  color: var(--color-brand);
+}
+
+.wheel__split strong.is-info {
+  color: var(--color-info);
+}
+
+.wheel__split strong.is-warning {
+  color: var(--color-warning);
+}
+
+.wheel__split strong.is-danger {
+  color: var(--color-danger);
+}
+
+.wheel__split strong.is-neutral {
+  color: var(--color-ink-muted);
+}
+
+.wheel__split i {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-15);
+  font-style: normal;
 }
 
 .wheel__legend {

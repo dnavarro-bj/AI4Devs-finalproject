@@ -64,4 +64,19 @@ describe('UiProportionWheel', () => {
     // Un comentario suelto en el template lo convertiría en fragmento y se tragaría el data-test.
     expect(wheel({}).attributes('role')).toBe('img')
   })
+
+  it('admite una rueda compacta sin leyenda para identificar una fila', () => {
+    const wrapper = wheel({ size: 'compact', showLegend: false })
+
+    expect(wrapper.classes()).toContain('is-compact')
+    expect(wrapper.find('.wheel__legend').exists()).toBe(false)
+    expect(wrapper.attributes('aria-label')).toContain('Mineral 80%')
+  })
+
+  it('puede mostrar dos valores en el centro para una receta', () => {
+    const wrapper = wheel({ center: 'split' })
+
+    expect(wrapper.find('[data-test="wheel-center-split"]').text()).toContain('20/80')
+    expect(wrapper.find('[data-test="wheel-center-split"] strong').classes()).toContain('is-warning')
+  })
 })

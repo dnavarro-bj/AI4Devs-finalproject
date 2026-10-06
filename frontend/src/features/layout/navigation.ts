@@ -48,7 +48,7 @@ export const NAVIGATION: NavigationGroup[] = [
     label: 'Catálogos',
     entries: [
       { label: 'Especies', to: '/species', mark: '❋' },
-      { label: 'Mezclas de sustrato', to: '/soil-mixes', mark: '≡' },
+      { label: 'Sustratos', to: '/soil-mixes', mark: '◒' },
       { label: 'Etiquetas', to: '/tags', mark: '⌗' },
     ],
   },

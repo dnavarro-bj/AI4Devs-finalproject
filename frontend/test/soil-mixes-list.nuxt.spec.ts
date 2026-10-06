@@ -10,7 +10,7 @@ const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
 
 /** Escenarios "Catálogo con mezclas" y "Catálogo vacío" de la requirement «Catálogo de mezclas». */
-describe('catálogo de mezclas de sustrato', () => {
+describe('catálogo de sustratos', () => {
   beforeEach(() => {
     api.get.mockReset()
     api.post.mockReset()
@@ -59,6 +59,16 @@ describe('catálogo de mezclas de sustrato', () => {
     expect(wrapper.find('[data-test="soil-mix-link"]').attributes('href')).toBe('/soil-mixes/100001')
   })
 
+  it('presenta el catálogo con el nombre de producto Sustratos', async () => {
+    api.get.mockResolvedValue(page([mix('100001', 'Sustrato mineral')]))
+
+    const wrapper = await mountSuspended(SoilMixesIndex)
+    await settle()
+
+    expect(wrapper.find('h1').text()).toContain('Sustratos')
+    expect(wrapper.text()).toContain('Añadir sustrato')
+  })
+
   it('el catálogo vacío lo explica y ofrece registrar la primera, sin tabla en blanco', async () => {
     api.get.mockResolvedValue(page([]))
 
@@ -93,6 +103,22 @@ describe('catálogo de mezclas de sustrato', () => {
     expect(api.get).toHaveBeenCalledWith('/soil-mixes', expect.objectContaining({ sort: expect.stringContaining('name') }))
   })
 
+  it('ofrece una ordenación visible por composición además de la cabecera', async () => {
+    api.get.mockResolvedValue(page([mix('100001', 'Sustrato mineral')]))
+
+    const wrapper = await mountSuspended(SoilMixesIndex)
+    await settle()
+    api.get.mockClear()
+
+    await wrapper.find('[data-test="sort-soil-mixes"]').setValue('mineralPercentage,desc')
+    await settle()
+
+    expect(api.get).toHaveBeenCalledWith('/soil-mixes', {
+      page: 0,
+      sort: 'mineralPercentage,desc',
+    })
+  })
+
   /** Escenarios «La composición se ve, no solo se lee» y «El pH se interpreta». */
   it('la composición se ve como proporción, con sus dos cifras legibles', async () => {
     api.get.mockResolvedValue(page([mix('100001', 'Sustrato mineral de drenaje rápido', 20)]))
@@ -113,6 +139,17 @@ describe('catálogo de mezclas de sustrato', () => {
     await settle()
 
     expect(wrapper.find('[data-test="composition"] .proportion').classes()).toContain('is-compact')
+  })
+
+  it('la identidad de cada sustrato incluye el gráfico circular de su composición', async () => {
+    api.get.mockResolvedValue(page([mix('100001', 'Sustrato mineral', 20)]))
+
+    const wrapper = await mountSuspended(SoilMixesIndex)
+    await settle()
+
+    const wheel = wrapper.find('[data-test="composition-wheel"]')
+    expect(wheel.classes()).toContain('is-compact')
+    expect(wheel.attributes('aria-label')).toContain('Mineral 80%')
   })
 
   it('el pH se acompaña de su lectura cualitativa, no solo del número', async () => {
@@ -147,7 +184,19 @@ describe('catálogo de mezclas de sustrato', () => {
 
     const cell = wrapper.find('[data-test="usage"]')
     expect(cell.attributes('data-mock')).toBe('true')
-    expect(cell.text()).toContain('ficha')
+    expect(cell.text()).toContain('API pendiente')
+  })
+
+  it('reserva una columna para el número de plantas que usan cada sustrato', async () => {
+    api.get.mockResolvedValue(page([mix('100001', 'Sustrato mineral')]))
+
+    const wrapper = await mountSuspended(SoilMixesIndex)
+    await settle()
+
+    const cell = wrapper.find('[data-test="plants-count"]')
+    expect(cell.attributes('data-mock')).toBe('true')
+    expect(cell.text()).toContain('plantas')
+    expect(cell.text()).toContain('API pendiente')
   })
 
   it('un fallo al cargar se muestra, y no deja la pantalla en blanco', async () => {

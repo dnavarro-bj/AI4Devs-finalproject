@@ -25,10 +25,10 @@ const loadError = ref<DomainError | null>(null)
 const submitting = ref(false)
 const submitError = ref<string | null>(null)
 
-useHead({ title: 'Cactify · Corregir mezcla' })
+useHead({ title: 'Cactify · Editar sustrato' })
 setBreadcrumbs([
-  { label: 'Mezclas de sustrato', to: '/soil-mixes' },
-  { label: 'Corregir mezcla' },
+  { label: 'Sustratos', to: '/soil-mixes' },
+  { label: 'Editar sustrato' },
 ])
 
 const notFound = computed(() => !loading.value && isNotFound(loadError.value))
@@ -48,8 +48,8 @@ const reach = computed(() => {
   const count = mix.value?.speciesCount ?? 0
   if (count === 0) return 'Ninguna especie la recomienda todavía.'
   return count === 1
-    ? 'Corregirla alcanza a 1 especie que la recomienda.'
-    : `Corregirla alcanza a ${count} especies que la recomiendan.`
+    ? 'Editar este sustrato alcanza a 1 especie que lo recomienda.'
+    : `Editar este sustrato alcanza a ${count} especies que lo recomiendan.`
 })
 
 async function save(input: SoilMixInput) {
@@ -77,18 +77,18 @@ onMounted(async () => {
   }
   mix.value = result.data!
   setBreadcrumbs([
-    { label: 'Mezclas de sustrato', to: '/soil-mixes' },
+    { label: 'Sustratos', to: '/soil-mixes' },
     { label: result.data!.name, to: `/soil-mixes/${id}` },
-    { label: 'Corregir' },
+    { label: 'Editar' },
   ])
 })
 </script>
 
 <template>
   <section>
-    <p v-if="loading" data-test="loading" role="status">Cargando la mezcla…</p>
+    <p v-if="loading" data-test="loading" role="status">Cargando el sustrato…</p>
 
-    <UiEmptyState v-else-if="notFound" title="Esta mezcla no existe" data-test="not-found" mark="◌">
+    <UiEmptyState v-else-if="notFound" title="Este sustrato no existe" data-test="not-found" mark="◌">
       No se puede corregir algo que ya no está en el catálogo.
       <template #action>
         <UiButton to="/soil-mixes">Volver al catálogo</UiButton>
@@ -98,12 +98,17 @@ onMounted(async () => {
     <UiInlineError v-else-if="loadError" data-test="error">{{ loadError.message }}</UiInlineError>
 
     <template v-else-if="mix && initial">
-      <UiPageHeader :title="`Corregir «${mix.name}»`" :context="reach" />
+      <UiPageHeader
+        :title="`Editar «${mix.name}»`"
+        context="Actualiza la receta reutilizable y su rango de pH recomendado."
+      />
       <SoilMixForm
         :initial="initial"
         :submitting="submitting"
         :submit-error="submitError"
         submit-label="Guardar cambios"
+        :cancel-to="`/soil-mixes/${id}`"
+        :impact="reach"
         @submit="save"
       />
     </template>

@@ -158,7 +158,7 @@ function validate(): boolean {
   errors.scientificName = scientificName.value.trim() === '' ? 'El nombre científico es obligatorio.' : ''
   errors.commonName = commonName.value.trim() === '' ? 'El nombre común es obligatorio.' : ''
   errors.watering = wateringGuideline.value.trim() === '' ? 'La pauta de riego es obligatoria.' : ''
-  errors.soilMix = soilMixId.value === '' ? 'Elige una mezcla de sustrato.' : ''
+  errors.soilMix = soilMixId.value === '' ? 'Elige un sustrato.' : ''
   errors.humidity = rangeError(ranges.minHumidity, ranges.maxHumidity, 'valor de humedad')
   errors.temperature = rangeError(ranges.minTemperature, ranges.maxTemperature, 'valor de temperatura')
   errors.light = rangeError(ranges.minLightHours, ranges.maxLightHours, 'número de horas de luz')
@@ -388,20 +388,20 @@ onMounted(async () => {
         id="species-editor-soil"
         standalone
         title="Sustrato"
-        description="La mezcla que la especie recomienda. El catálogo la exige."
+        description="El sustrato que la especie recomienda. El catálogo lo exige."
       >
         <UiField
           v-model="soilMixId"
-          label="Mezcla de sustrato"
+          label="Sustrato recomendado"
           as="select"
-          placeholder="Elige una mezcla"
+          placeholder="Elige un sustrato"
           :options="soilMixOptions"
           :error="errors.soilMix"
           error-test="soil-mix-error"
           data-test="soil-mix"
         />
         <p class="editor__hint">
-          ¿No está la que buscas? <NuxtLink to="/soil-mixes/new">Registra una mezcla nueva</NuxtLink>.
+          ¿No está el que buscas? <NuxtLink to="/soil-mixes/new">Registra un sustrato nuevo</NuxtLink>.
         </p>
       </UiFormSection>
 
