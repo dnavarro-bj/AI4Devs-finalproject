@@ -6,6 +6,7 @@ import com.cactify.domain.repos.SpeciesRepository
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -18,7 +19,8 @@ import org.springframework.stereotype.Repository
 @Repository
 interface JpaSpeciesRepository :
   SpeciesRepository,
-  JpaRepository<Species, SpeciesId> {
+  JpaRepository<Species, SpeciesId>,
+  JpaSpecificationExecutor<Species> {
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select s from Species s where s.id = :id")

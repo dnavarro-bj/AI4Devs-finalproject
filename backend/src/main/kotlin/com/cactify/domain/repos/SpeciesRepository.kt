@@ -4,6 +4,7 @@ import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 
 /**
  * Puerto de acceso a especies (ADR-006): interfaz Kotlin pura, sin más tipos de Spring que
@@ -24,4 +25,7 @@ interface SpeciesRepository {
    */
   fun findOneByIdForUpdate(id: SpeciesId): Species?
   fun findAll(pageable: Pageable): Page<Species>
+
+  /** El catálogo filtrado y paginado. Una especificación nula no filtra. */
+  fun findAll(spec: Specification<Species>?, pageable: Pageable): Page<Species>
 }

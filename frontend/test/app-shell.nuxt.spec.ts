@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import DefaultLayout from '../app/layouts/default.vue'
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { sectionAddresses } from '@features/layout/navigation'
+import { searchApiService } from '@features/search/services/search.api.service'
+import { ok } from '@shared/types/api.types'
 
 /**
  * Escenarios de la requirement "Armazón de la aplicación" (`design-system`) y de "Orientación
@@ -61,19 +63,30 @@ describe('armazón de la aplicación', () => {
   })
 
   it('navega al elegir un resultado de la búsqueda', async () => {
+    // La búsqueda va al API tras una pausa: se sirve un resultado y se espera a que llegue.
+    vi.spyOn(searchApiService, 'search').mockResolvedValue(ok([{
+      kind: 'plant',
+      label: 'Plantas',
+      results: [{ kind: 'plant', label: 'CAT-GRUSS-01', detail: 'Bola verde', to: '/plants/1' }],
+    }]))
     const wrapper = await mountSuspended(DefaultLayout)
     const router = useRouter()
     const pushed: string[] = []
     const push = router.push
     router.push = (async (to: unknown) => { pushed.push(String(to)) }) as typeof router.push
 
-    const input = wrapper.find('input[role="combobox"]')
-    await input.setValue('gruss')
-    await input.trigger('keydown', { key: 'ArrowDown' })
-    await input.trigger('keydown', { key: 'Enter' })
+    try {
+      const input = wrapper.find('input[role="combobox"]')
+      await input.setValue('gruss')
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      await input.trigger('keydown', { key: 'ArrowDown' })
+      await input.trigger('keydown', { key: 'Enter' })
 
-    expect(pushed).toHaveLength(1)
-    router.push = push
+      expect(pushed).toEqual(['/plants/1'])
+    } finally {
+      router.push = push
+      vi.restoreAllMocks()
+    }
   })
 
   it('pinta los breadcrumbs que fija la pantalla', async () => {

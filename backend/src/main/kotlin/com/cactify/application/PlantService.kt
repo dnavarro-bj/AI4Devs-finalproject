@@ -95,10 +95,12 @@ class PlantService(
   fun search(
     locationId: String?,
     tagIds: List<String>,
+    code: String?,
     pageable: Pageable,
   ): PageResponse<PlantSummaryResponse> {
     val spec = PlantSpecs
       .withSpeciesAndLocation()
+      .and(PlantSpecs.byCodeContaining(code))
       .and(PlantSpecs.byLocation(locationId?.let { LocationId.from(it) }))
       .and(PlantSpecs.byAllTags(tagIds.map { TagId.from(it) }.toSet()))
     return PageResponse.of(plantRepository.findAll(spec, pageable)) { it.toSummary() }

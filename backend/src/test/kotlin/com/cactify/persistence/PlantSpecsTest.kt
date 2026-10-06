@@ -141,7 +141,7 @@ class PlantSpecsTest : AbstractIntegrationTest() {
     entityManager.clear()
     statistics.clear()
 
-    val page = plantService.search(locationId = null, tagIds = emptyList(), pageable = PageRequest.of(0, 12, byCreatedAt))
+    val page = plantService.search(locationId = null, tagIds = emptyList(), code = null, pageable = PageRequest.of(0, 12, byCreatedAt))
 
     assertEquals(12, page.content.size)
     // Con un N+1 serían 12 consultas de especie más 12 de localización. El `fetch` las trae en la

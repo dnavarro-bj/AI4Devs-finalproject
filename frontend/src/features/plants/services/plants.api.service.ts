@@ -19,6 +19,8 @@ export interface PlantQuery {
   sort?: string
   tag?: string[]
   location?: string
+  /** Coincidencia parcial sobre el código de inventario, sin distinguir mayúsculas. */
+  code?: string
 }
 
 export const plantsApiService = {
@@ -28,6 +30,8 @@ export const plantsApiService = {
     if (query.sort) params.sort = query.sort
     if (query.tag?.length) params.tag = query.tag
     if (query.location) params.location = query.location
+    // Un texto en blanco no es un filtro: no viaja.
+    if (query.code?.trim()) params.code = query.code.trim()
 
     try {
       return ok(await getApiClient().get<PageResponse<PlantSummary>>('/plants', params))

@@ -71,7 +71,9 @@ class PlantController(private val plantService: PlantService) {
   fun list(
     @RequestParam(required = false) location: String?,
     @RequestParam(name = "tag", required = false) tags: List<String>?,
+    /** Coincidencia parcial sobre el código de inventario, sin distinguir mayúsculas. */
+    @RequestParam(required = false) code: String?,
     @SortDefault(sort = ["createdAt"]) pageable: Pageable,
   ): PageResponse<PlantSummaryResponse> =
-    plantService.search(location, tags.orEmpty(), pageable)
+    plantService.search(location, tags.orEmpty(), code, pageable)
 }

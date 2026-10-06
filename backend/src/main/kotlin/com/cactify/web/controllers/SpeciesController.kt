@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -32,8 +33,12 @@ class SpeciesController(private val speciesService: SpeciesService) {
    * página y taparía el `default-page-size` configurado.
    */
   @GetMapping
-  fun list(@SortDefault(sort = ["scientificName"]) pageable: Pageable): PageResponse<SpeciesSummaryResponse> =
-    speciesService.list(pageable)
+  fun list(
+    /** Coincidencia parcial sobre el código, sin distinguir mayúsculas. */
+    @RequestParam(required = false) code: String?,
+    @SortDefault(sort = ["scientificName"]) pageable: Pageable,
+  ): PageResponse<SpeciesSummaryResponse> =
+    speciesService.list(code, pageable)
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)

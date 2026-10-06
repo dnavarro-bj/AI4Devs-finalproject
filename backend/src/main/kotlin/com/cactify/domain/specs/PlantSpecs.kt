@@ -21,6 +21,20 @@ object PlantSpecs {
     }
 
   /**
+   * Coincidencia parcial sobre el código de inventario, sin distinguir mayúsculas: `gruss` encuentra
+   * `CAT-GRUSS-01`. Un texto en blanco no filtra. El texto se trata como literal (ver [LikePattern]).
+   */
+  fun byCodeContaining(text: String?): Specification<Plant> =
+    Specification { root, _, cb ->
+      val needle = text?.trim().orEmpty()
+      if (needle.isEmpty()) {
+        null
+      } else {
+        cb.like(cb.upper(root.get("code")), LikePattern.contains(needle.uppercase()), LikePattern.ESCAPE)
+      }
+    }
+
+  /**
    * Trae especie y localización en la misma consulta (problema N+1). El `fetch` se omite en la
    * consulta de recuento que Spring Data lanza al paginar: un join fetch cuyo propietario no está
    * en el `SELECT` la hace fallar. `tagSet` no entra aquí: una colección en el fetch obligaría a

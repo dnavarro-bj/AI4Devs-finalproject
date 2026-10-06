@@ -248,7 +248,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
     const wrapper = await mountSuspended(PlantsIndex)
     await settle()
 
-    for (const test of ['filter-search', 'filter-species', 'filter-status']) {
+    for (const test of ['filter-species', 'filter-status']) {
       const field = wrapper.find(`[data-test="${test}"]`)
       expect(field.exists()).toBe(true)
       expect(field.attributes('disabled')).toBeDefined()
@@ -302,5 +302,133 @@ describe('inventario: columnas y filtros del wireframe', () => {
     const picker = wrapper.find('[data-test="columns-picker"]')
     expect(picker.text()).not.toContain('Planta')
     expect(picker.text()).toContain('Especie')
+  })
+})
+
+/** Escenarios de «Búsqueda por código en el inventario» (`busqueda-por-codigo`). */
+describe('inventario: búsqueda por código', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+  })
+
+  const plant = (id: string, nickname: string): PlantSummary => ({
+    id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
+    nickname,
+    createdAt: '2026-09-01T10:00:00Z',
+    location: { id: '300001', name: 'Invernadero 1' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+  })
+
+  const serve = (content: PlantSummary[]) => api.get.mockImplementation(async (path: string) => (
+    path === '/locations'
+      ? { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      : { content, totalElements: content.length, totalPages: content.length ? 1 : 0, pageNumber: 0, pageSize: 25 }))
+
+  /** Más que el retardo de la caja: lo que tarda en llegar la petición tras dejar de escribir. */
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 400))
+
+  const plantCalls = () => api.get.mock.calls.filter(([path]) => path === '/plants')
+
+  it('la caja de búsqueda está activa y dice que apodo y especie llegan con T-21', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const box = wrapper.find('[data-test="filter-search"]')
+    expect(box.attributes('disabled')).toBeUndefined()
+    expect(box.attributes('data-mock')).toBeUndefined()
+    expect(box.attributes('placeholder')).toContain('T-21')
+  })
+
+  it('escribir un código filtra el listado por él y aparece como filtro aplicado', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-search"]').setValue('gruss')
+    await pause()
+
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss', page: 0 }))
+    expect(wrapper.find('.filter-chip').text()).toContain('gruss')
+  })
+
+  it('escribir varias letras seguidas lanza una sola petición, no una por tecla', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+    const before = plantCalls().length
+
+    for (const text of ['g', 'gr', 'gru', 'grus', 'gruss']) {
+      await wrapper.find('[data-test="filter-search"]').setValue(text)
+    }
+    await pause()
+
+    expect(plantCalls().length - before).toBe(1)
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss' }))
+  })
+
+  it('quitar el filtro aplicado devuelve el listado completo y vacía la caja', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+    await wrapper.find('[data-test="filter-search"]').setValue('gruss')
+    await pause()
+
+    await wrapper.find('.filter-chip button').trigger('click')
+    await settle()
+
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ code: expect.anything() }))
+    expect((wrapper.find('[data-test="filter-search"]').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('se combina con el filtro de localización', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-location"]').setValue('300001')
+    await settle()
+    await wrapper.find('[data-test="filter-search"]').setValue('gruss')
+    await pause()
+
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss', location: '300001' }))
+  })
+
+  it('sin coincidencias lo explica con el texto buscado y ofrece quitar la búsqueda', async () => {
+    serve([])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    await wrapper.find('[data-test="filter-search"]').setValue('zzz')
+    await pause()
+
+    const none = wrapper.find('[data-test="no-match"]')
+    expect(none.exists()).toBe(true)
+    expect(none.text()).toContain('zzz')
+    expect(wrapper.find('[data-test="empty"]').exists()).toBe(false)
+
+    await wrapper.find('[data-test="clear-search"]').trigger('click')
+    await settle()
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ code: expect.anything() }))
+  })
+
+  it('el inventario vacío sin búsqueda sigue ofreciendo crear la primera planta', async () => {
+    serve([])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    expect(wrapper.find('[data-test="empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="no-match"]').exists()).toBe(false)
+  })
+
+  it('la caja se alcanza y se usa con el teclado: es un campo de búsqueda con nombre accesible', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex)
+    await settle()
+
+    const box = wrapper.find('[data-test="filter-search"]')
+    expect(box.attributes('type')).toBe('search')
+    expect(box.attributes('aria-label')).toBeTruthy()
   })
 })

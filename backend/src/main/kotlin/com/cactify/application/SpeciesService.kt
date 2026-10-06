@@ -13,6 +13,7 @@ import com.cactify.domain.SpeciesId
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.SoilMixRepository
 import com.cactify.domain.repos.SpeciesRepository
+import com.cactify.domain.specs.SpeciesSpecs
 import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -140,8 +141,8 @@ class SpeciesService(
   }
 
   @Transactional(readOnly = true)
-  fun list(pageable: Pageable): PageResponse<SpeciesSummaryResponse> =
-    PageResponse.of(speciesRepository.findAll(pageable)) { it.toSummary() }
+  fun list(code: String?, pageable: Pageable): PageResponse<SpeciesSummaryResponse> =
+    PageResponse.of(speciesRepository.findAll(SpeciesSpecs.byCodeContaining(code), pageable)) { it.toSummary() }
 
   @Transactional(readOnly = true)
   fun findById(id: String): SpeciesDetailResponse {

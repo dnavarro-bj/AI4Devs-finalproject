@@ -206,4 +206,22 @@ describe('service del catálogo de especies', () => {
 
     expect(result.error!.code).toBe(ErrorCodes.VALIDATION_ERROR)
   })
+
+  // --- Filtro por código (busqueda-por-codigo) ---
+
+  it('el listado envía el código como parámetro cuando hay texto', async () => {
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+
+    await speciesApiService.list(0, undefined, 'mamm')
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0, code: 'mamm' })
+  })
+
+  it('un código vacío o en blanco no viaja', async () => {
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+
+    await speciesApiService.list(0, undefined, '  ')
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0 })
+  })
 })

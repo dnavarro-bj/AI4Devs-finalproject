@@ -466,6 +466,26 @@ servers:
   - url: http://localhost:8080
 paths:
   /plants:
+    get:
+      summary: Listar el inventario (paginado, con filtros combinables)
+      operationId: listPlants
+      parameters:
+        - name: location
+          in: query
+          schema: { type: string, pattern: '^[0-9]+$' }
+        - name: tag
+          in: query
+          description: Repetible; la planta debe tener todos los indicados.
+          schema: { type: array, items: { type: string } }
+        - name: code
+          in: query
+          description: >
+            Coincidencia parcial sobre el código de inventario, sin distinguir mayúsculas
+            (`gruss` encuentra `CAT-GRUSS-01`). Se trata como texto literal; vacío no filtra.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Página de plantas
     post:
       summary: Registrar un ejemplar
       operationId: createPlant

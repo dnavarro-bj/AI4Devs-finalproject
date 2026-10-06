@@ -10,6 +10,7 @@
  * no se confunda una columna de maqueta con un dato.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import { useDebouncedRef } from '@shared/composables/useDebouncedRef'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantSummary } from '@features/plants/types/plant.types'
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
@@ -37,6 +38,13 @@ const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>(null)
 
 const tagFilter = ref('')
 const locationFilter = ref('')
+
+/**
+ * La búsqueda por **código** de inventario. El texto de la caja se aplica tras una pausa, no por
+ * tecla; apodo y especie son T-21. Como los demás filtros, aparece como filtro aplicado y se quita.
+ */
+const searchText = ref('')
+const appliedSearch = useDebouncedRef(searchText, 250)
 const moreFiltersOpen = ref(false)
 
 const selected = ref<string[]>([])
@@ -48,18 +56,25 @@ const locationName = computed(
 const appliedFilters = computed(() => [
   ...(locationFilter.value ? [{ id: 'location', label: `Localización: ${locationName.value}` }] : []),
   ...(tagFilter.value ? [{ id: 'tag', label: `Etiqueta: ${tagFilter.value}` }] : []),
+  ...(appliedSearch.value.trim() ? [{ id: 'code', label: `Código: ${appliedSearch.value.trim()}` }] : []),
 ])
+
+/** Quitar la búsqueda se aplica **al instante**: no tiene sentido esperar la pausa para deshacerla. */
+function clearSearch() {
+  searchText.value = ''
+  appliedSearch.value = ''
+}
 
 function removeFilter(id: string) {
   if (id === 'tag') tagFilter.value = ''
   if (id === 'location') locationFilter.value = ''
-  load(0)
+  if (id === 'code') clearSearch()
 }
 
 function clearFilters() {
   tagFilter.value = ''
   locationFilter.value = ''
-  load(0)
+  clearSearch()
 }
 
 function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
@@ -67,7 +82,7 @@ function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
   load(page.value?.pageNumber ?? 0)
 }
 
-watch([tagFilter, locationFilter], () => load(0))
+watch([tagFilter, locationFilter, appliedSearch], () => load(0))
 
 async function load(pageNumber: number) {
   loading.value = true
@@ -78,6 +93,7 @@ async function load(pageNumber: number) {
     sort: sort.value ? `${sort.value.key},${sort.value.direction}` : undefined,
     tag: tagFilter.value ? [tagFilter.value] : undefined,
     location: locationFilter.value || undefined,
+    code: appliedSearch.value.trim() || undefined,
   })
   loading.value = false
 
@@ -95,7 +111,11 @@ onMounted(async () => {
   if (result.success) locations.value = result.data!.content
 })
 
-const isEmpty = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
+const nothing = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
+const isSearching = computed(() => appliedSearch.value.trim() !== '')
+/** Sin búsqueda activa el inventario está vacío; con ella, simplemente nada coincide. */
+const isEmpty = computed(() => nothing.value && !isSearching.value)
+const noMatch = computed(() => nothing.value && isSearching.value)
 
 const locationOptions = computed(() => locations.value.map((location) => ({
   value: location.id,
@@ -142,12 +162,11 @@ const asPlant = (row: unknown) => row as PlantSummary
       @clear="clearFilters"
     >
       <UiToolbarField
-        label="Buscar"
+        v-model="searchText"
+        label="Buscar por código"
         type="search"
         icon="⌕"
-        placeholder="Código, apodo o especie · T-21"
-        disabled
-        data-mock="true"
+        placeholder="Código de inventario · apodo y especie: T-21"
         data-test="filter-search"
       />
       <UiToolbarField
@@ -212,6 +231,18 @@ const asPlant = (row: unknown) => row as PlantSummary
       Añade la primera para empezar a registrar sus cuidados.
       <template #action>
         <UiButton to="/plants/new">Añadir la primera planta</UiButton>
+      </template>
+    </UiEmptyState>
+
+    <UiEmptyState
+      v-else-if="noMatch"
+      title="Ninguna planta coincide"
+      data-test="no-match"
+      mark="⌕"
+    >
+      Ninguna planta tiene «{{ appliedSearch.trim() }}» en su código de inventario.
+      <template #action>
+        <UiButton variant="secondary" data-test="clear-search" @click="clearSearch">Quitar la búsqueda</UiButton>
       </template>
     </UiEmptyState>
 

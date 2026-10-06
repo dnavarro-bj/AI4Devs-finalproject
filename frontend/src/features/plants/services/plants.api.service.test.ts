@@ -59,3 +59,41 @@ describe('plantsApiService.update', () => {
     expect(result.error!.code).toBe(ErrorCodes.NETWORK_ERROR)
   })
 })
+
+/** El filtro por código viaja solo cuando hay texto: un parámetro vacío no es un filtro. */
+describe('plantsApiService.list con código', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+  })
+
+  it('envía el código como parámetro `code`', async () => {
+    await plantsApiService.list({ code: 'gruss' })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', expect.objectContaining({ code: 'gruss' }))
+  })
+
+  it('recorta los espacios del texto', async () => {
+    await plantsApiService.list({ code: '  gruss  ' })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', expect.objectContaining({ code: 'gruss' }))
+  })
+
+  it('un texto vacío o en blanco no envía el parámetro', async () => {
+    await plantsApiService.list({ code: '   ' })
+    await plantsApiService.list({ code: '' })
+    await plantsApiService.list({})
+
+    for (const [, params] of api.get.mock.calls) {
+      expect(params).not.toHaveProperty('code')
+    }
+  })
+
+  it('se combina con la localización y la etiqueta', async () => {
+    await plantsApiService.list({ code: 'gruss', location: '300001', tag: ['400001'] })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', expect.objectContaining({
+      code: 'gruss', location: '300001', tag: ['400001'],
+    }))
+  })
+})

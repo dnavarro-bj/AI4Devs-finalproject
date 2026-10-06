@@ -9,8 +9,8 @@ import type { SpeciesCare, SpeciesDetail, SpeciesInput, SpeciesSummary } from '.
  * alta de planta ya vive en `useCatalogs`, y duplicarla aquí daría dos fuentes para el mismo dato.
  */
 export function useSpecies() {
-  const list = (page = 0, sort?: string): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> =>
-    speciesApiService.list(page, sort)
+  const list = (page = 0, sort?: string, code?: string): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> =>
+    speciesApiService.list(page, sort, code)
 
   const detail = (id: string): Promise<ServiceResponse<SpeciesDetail>> => speciesApiService.detail(id)
 

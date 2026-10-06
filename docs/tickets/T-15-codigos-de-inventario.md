@@ -27,9 +27,9 @@ Dar a especies y ejemplares una identidad legible, estable e imprimible: `CAT-GR
 ## Se implementa en dos changes
 
 1. **`codigos-de-inventario`** — hecho: esquema (`V7`) con relleno de lo existente, código de especie y de ejemplar, generación segura con bloqueo de fila, inmutabilidad, y los códigos reales en las pantallas.
-2. **`busqueda-por-codigo`** — pendiente, depende del anterior: filtrar `GET /plants` por código y que el buscador global encuentre ejemplares por él.
+2. **`busqueda-por-codigo`** — hecho: `?code=` en `GET /plants` y `GET /species` (coincidencia parcial, sin distinguir mayúsculas, texto literal), la caja de búsqueda del inventario y el buscador global con plantas y especies reales.
 
-Las pantallas ya construidas dejan de usar datos de ejemplo para el código en el primer change; la búsqueda por código es lo que queda para cerrar el ticket.
+**El ticket queda cerrado.** Lo que no cubre —buscar por apodo o nombre, un endpoint de búsqueda unificado, la relevancia y los índices— es de [T-21](T-21-inventario-a-escala.md).
 
 ## Decisiones tomadas
 

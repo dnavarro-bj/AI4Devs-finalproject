@@ -13,10 +13,12 @@ import type { SpeciesCare, SpeciesDetail, SpeciesInput, SpeciesSummary } from '.
  * Como todo service: habla con el API y nada más, y nunca lanza (ADR-015).
  */
 export const speciesApiService = {
-  async list(page = 0, sort?: string): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> {
+  async list(page = 0, sort?: string, code?: string): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> {
     try {
       const query: Record<string, unknown> = { page }
       if (sort) query.sort = sort
+      // Coincidencia parcial sobre el código; un texto en blanco no es un filtro.
+      if (code?.trim()) query.code = code.trim()
       return ok(await getApiClient().get<PageResponse<SpeciesSummary>>('/species', query))
     } catch (cause) {
       return fail(normalizeError(cause))
