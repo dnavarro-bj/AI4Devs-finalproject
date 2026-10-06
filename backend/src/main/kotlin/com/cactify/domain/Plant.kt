@@ -34,8 +34,24 @@ class Plant(
     private set
 
   init {
-    require(nickname.isNotBlank()) { "El nickname de la planta es obligatorio" }
+    requireNickname(nickname)
   }
+
+  /**
+   * Único camino para editar el ejemplar: cambia los tres campos **o ninguno**. Revalida la
+   * invariante del apodo antes de asignar nada, de modo que un fallo no deja la planta a medias.
+   * La identidad —id, fecha de alta, tags— no se toca; los cuidados efectivos salen de la especie,
+   * así que cambiarla los cambia sin recalcular nada.
+   */
+  fun update(nickname: String, location: Location, species: Species) {
+    requireNickname(nickname)
+    this.nickname = nickname
+    this.location = location
+    this.species = species
+  }
+
+  private fun requireNickname(nickname: String) =
+    require(nickname.isNotBlank()) { "El nickname de la planta es obligatorio" }
 
   /**
    * `plant_tag` es una tabla de unión pura (sin columnas propias), así que se mapea como la

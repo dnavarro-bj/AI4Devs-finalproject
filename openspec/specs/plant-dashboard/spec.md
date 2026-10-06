@@ -355,7 +355,7 @@ La especie SHALL elegirse de una lista buscable donde cada opción muestre su no
 
 Cuando la validación falle, la aplicación SHALL **llevar a la sección del campo que falta**: en un formulario de seis secciones, decir que falta un campo sin decir dónde no basta.
 
-Cuando el API no admita persistir alguno de los campos editados, la aplicación SHALL **advertirlo explícitamente** en lugar de simular que el cambio se ha guardado.
+Al editar, la aplicación SHALL **guardar** el apodo, la localización y la especie, y volver a la ficha de la planta, que refleja los cambios. Si el API rechaza la edición, la aplicación SHALL explicar el motivo **sin perder lo que el usuario había escrito**. Un campo que el API no admite guardar todavía SHALL **no ser editable**: se muestra deshabilitado y explicando cuándo llegará, en lugar de admitir un texto que se perdería.
 
 #### Scenario: Alta desde el formulario
 
@@ -367,10 +367,25 @@ Cuando el API no admita persistir alguno de los campos editados, la aplicación 
 - **WHEN** el usuario abre la edición de una planta existente
 - **THEN** el formulario muestra los valores actuales de esa planta
 
+#### Scenario: Edición guardada
+
+- **WHEN** el usuario cambia el apodo, la localización o la especie de una planta y confirma
+- **THEN** los cambios se guardan, la aplicación lleva a la ficha de la planta y esta muestra los valores nuevos
+
+#### Scenario: Edición sin avisos de guardado parcial
+
+- **WHEN** el usuario guarda una edición correcta
+- **THEN** no aparece ningún aviso de que los cambios no se han guardado
+
+#### Scenario: Edición rechazada por el API
+
+- **WHEN** el API rechaza la edición, por ejemplo porque la localización ya no existe
+- **THEN** se explica el motivo, el usuario sigue en el formulario y lo que había escrito no se pierde
+
 #### Scenario: Campo que el API no admite guardar
 
-- **WHEN** el usuario edita un campo que el API todavía no permite modificar y confirma
-- **THEN** se le indica que ese cambio no se ha guardado, y no se le hace creer que sí
+- **WHEN** el usuario intenta editar un campo que el API todavía no permite modificar
+- **THEN** no puede: el campo está deshabilitado, de modo que ningún cambio se pierde en silencio ni se simula que se ha guardado
 
 #### Scenario: Campo sin sitio donde guardarse
 

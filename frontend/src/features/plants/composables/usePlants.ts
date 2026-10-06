@@ -31,5 +31,16 @@ export function usePlants() {
     return result
   }
 
-  return { list, detail, create }
+  async function update(
+    id: string,
+    nickname: string,
+    locationId: string,
+    speciesId: string,
+  ): Promise<ServiceResponse<PlantDetail>> {
+    const result = await plantsApiService.update(id, nickname, locationId, speciesId)
+    if (result.success) store.setOpenPlant(result.data!)
+    return result
+  }
+
+  return { list, detail, create, update }
 }

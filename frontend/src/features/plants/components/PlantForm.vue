@@ -380,8 +380,8 @@ function submit() {
 
       <footer class="editor__actions">
         <span class="editor__impact">
-          Solo se guardan <strong>especie</strong>, <strong>apodo</strong> y
-          <strong>localización</strong>: el resto llega con su ticket.
+          Se guardan <strong>especie</strong>, <strong>apodo</strong> y
+          <strong>localización</strong>; los campos deshabilitados llegan con su ticket.
         </span>
         <div>
           <slot name="secondary-action">

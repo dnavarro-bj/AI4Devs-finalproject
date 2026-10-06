@@ -48,6 +48,20 @@ class PlantService(
     return plant.toDetail()
   }
 
+  /**
+   * Reemplazo completo de apodo, localización y especie. Se resuelve la planta (`404`) y **después**
+   * las referencias (`400`), y solo entonces se muta: una referencia inválida no deja el apodo
+   * aplicado a medias. La planta de la dirección manda sobre el contenido del cuerpo.
+   */
+  @Transactional
+  fun update(id: String, nickname: String, locationId: String, speciesId: String): PlantDetailResponse {
+    val plant = requirePlant(id)
+    val location = requireLocation(locationId)
+    val species = requireSpecies(speciesId)
+    plant.update(nickname.trim(), location, species)
+    return plant.toDetail()
+  }
+
   @Transactional(readOnly = true)
   fun detail(id: String): PlantDetailResponse = requirePlant(id).toDetail()
 

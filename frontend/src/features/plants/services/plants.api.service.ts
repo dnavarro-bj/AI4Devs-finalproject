@@ -51,4 +51,21 @@ export const plantsApiService = {
       return fail(normalizeError(cause))
     }
   },
+
+  /**
+   * Reemplazo completo de lo editable —apodo, localización y especie—, como `PUT /species/{id}`: el
+   * cuerpo es la planta entera, no un parche. Los tags tienen su propio endpoint.
+   */
+  async update(
+    id: string,
+    nickname: string,
+    locationId: string,
+    speciesId: string,
+  ): Promise<ServiceResponse<PlantDetail>> {
+    try {
+      return ok(await getApiClient().put<PlantDetail>(`/plants/${id}`, { nickname, locationId, speciesId }))
+    } catch (cause) {
+      return fail(normalizeError(cause))
+    }
+  },
 }

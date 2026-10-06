@@ -1,22 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
+import { ApiError } from '@shared/services/httpClient'
 import { plantDetail, speciesCare } from './helpers/fixtures'
 import EditPlantPage from '../app/pages/plants/[id]/edit.vue'
 
 const api = createApiDouble()
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 mockNuxtImport('getApiClient', () => () => api)
+mockNuxtImport('navigateTo', () => navigate)
 mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }))
 
 /**
- * Escenarios "Edición prellenada" y "Campo que el API no admite guardar" de la requirement
- * "Alta y edición de una planta con el mismo formulario" (`plant-dashboard`).
+ * Escenarios "Edición prellenada", "Edición guardada", "Edición sin avisos de guardado parcial" y
+ * "Edición rechazada por el API" de la requirement "Alta y edición de una planta con el mismo
+ * formulario" (`plant-dashboard`).
  */
 describe('edición de una planta', () => {
   beforeEach(() => {
     api.get.mockReset()
     api.post.mockReset()
     api.put.mockReset()
+    navigate.mockReset()
     clearNuxtState()
   })
 
@@ -55,9 +60,9 @@ describe('edición de una planta', () => {
     expect(wrapper.find('nav[aria-label="Secciones del formulario"]').exists()).toBe(true)
   })
 
-  it('advierte de que el API todavía no guarda el resto de campos, y no simula que sí', async () => {
+  it('guarda de verdad: envía la planta entera y lleva a su ficha', async () => {
     serve()
-    api.put.mockResolvedValue(plantDetail())
+    api.put.mockResolvedValue(plantDetail({ nickname: 'Otro nombre' }))
     const wrapper = await mountSuspended(EditPlantPage)
     await settle()
 
@@ -65,10 +70,47 @@ describe('edición de una planta', () => {
     await wrapper.find('[data-test="plant-form"]').trigger('submit')
     await settle()
 
-    const warning = wrapper.find('[data-test="partial-save"]')
-    expect(warning.exists()).toBe(true)
-    expect(warning.text().toLowerCase()).toContain('no se ha guardado')
-    // Y no se inventa una petición que el API no expone.
-    expect(api.post).not.toHaveBeenCalled()
+    expect(api.put).toHaveBeenCalledWith('/plants/882687672222443468', {
+      nickname: 'Otro nombre',
+      locationId: '300001',
+      speciesId: '200001',
+    })
+    expect(navigate).toHaveBeenCalledWith('/plants/882687672222443468')
+  })
+
+  it('una edición correcta no lleva ningún aviso de guardado parcial', async () => {
+    serve()
+    api.put.mockResolvedValue(plantDetail())
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    await wrapper.find('[data-test="plant-form"]').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="partial-save"]').exists()).toBe(false)
+    expect(wrapper.text().toLowerCase()).not.toContain('no se han guardado')
+  })
+
+  it('si el API rechaza la edición, explica el motivo y no pierde lo escrito', async () => {
+    serve()
+    api.put.mockRejectedValue(new ApiError(400, "La localización '300001' no existe"))
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    await wrapper.find('[data-test="nickname"]').setValue('Nombre nuevo')
+    await wrapper.find('[data-test="plant-form"]').trigger('submit')
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').text()).toContain('no existe')
+    expect(navigate).not.toHaveBeenCalled()
+    expect((wrapper.find('[data-test="nickname"]').element as HTMLInputElement).value).toBe('Nombre nuevo')
+  })
+
+  it('el pie del formulario ya no excusa un guardado parcial', async () => {
+    serve()
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect(wrapper.find('.editor__impact').text().toLowerCase()).not.toContain('el resto llega')
   })
 })

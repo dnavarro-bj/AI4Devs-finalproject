@@ -16,14 +16,14 @@ El wireframe da la edición por hecha —«Editar planta» está en la cabecera 
 
 * Endpoint de modificación de una planta existente: apodo, localización y especie.
 * Cambiar la especie **no regenera** el código de inventario del ejemplar (§5.4) ni pierde su historial.
-* Una referencia inexistente —localización o especie que no existen— responde `404`, nunca `500`.
+* Una referencia inexistente en el cuerpo —localización o especie que no existen— responde `400`, igual que el alta, y una planta inexistente `404`; nunca `500`. (El ticket decía `404` para las referencias; el contrato transversal reserva el `404` para el recurso de la dirección.)
 * El frontend deja de advertir y guarda de verdad: se retira el aviso de `pages/plants/[id]/edit.vue`.
 
 ## Criterios de aceptación
 
 * Editar el apodo de una planta lo persiste y la ficha lo refleja.
 * Cambiar la especie de una planta conserva su identificador, su historial de lecturas y sus tags.
-* Referenciar una localización o una especie inexistente devuelve `404` con el cuerpo de error uniforme.
+* Referenciar una localización o una especie inexistente devuelve `400` con el cuerpo de error uniforme y deja la planta como estaba.
 * La pantalla de edición guarda sin advertencias.
 
 ## Notas

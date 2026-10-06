@@ -29,6 +29,16 @@ data class CreatePlantRequest(
   val speciesId: String,
 )
 
+/** Reemplazo completo de lo editable: no es un parche, y los tags tienen su propio endpoint. */
+data class UpdatePlantRequest(
+  @field:NotBlank(message = "el nickname es obligatorio")
+  val nickname: String,
+  @field:NotBlank(message = "la localización es obligatoria")
+  val locationId: String,
+  @field:NotBlank(message = "la especie es obligatoria")
+  val speciesId: String,
+)
+
 /** Reemplazo del conjunto completo de tags: semántica PUT, no `PATCH` incremental. */
 data class ReplacePlantTagsRequest(val tagIds: List<String> = emptyList())
 
@@ -43,6 +53,12 @@ class PlantController(private val plantService: PlantService) {
 
   @GetMapping("/{id}")
   fun detail(@PathVariable id: String): PlantDetailResponse = plantService.detail(id)
+
+  @PutMapping("/{id}")
+  fun update(
+    @PathVariable id: String,
+    @Valid @RequestBody request: UpdatePlantRequest,
+  ): PlantDetailResponse = plantService.update(id, request.nickname, request.locationId, request.speciesId)
 
   @PutMapping("/{id}/tags")
   fun replaceTags(

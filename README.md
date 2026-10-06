@@ -486,6 +486,38 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /plants/{plantId}:
+    put:
+      summary: Editar un ejemplar (reemplazo completo de apodo, localización y especie)
+      operationId: updatePlant
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlant'
+            example:
+              nickname: Bola corregida
+              locationId: '300002'
+              speciesId: '200002'
+      responses:
+        '200':
+          description: Ejemplar actualizado. Conserva su identificador, fecha de alta, tags y lecturas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /plants/{plantId}/care-records:
     post:
       summary: Registrar condiciones de cultivo
