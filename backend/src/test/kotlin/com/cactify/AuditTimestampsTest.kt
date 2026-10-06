@@ -72,6 +72,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
   fun `updating a species sheet advances only its update timestamp`() {
     val soilMix = entityManager.find(SoilMix::class.java, SoilMixId.from("100001"))
     val species = Species(
+      code = "TEST-A",
       scientificName = "Auditada al modificar",
       commonName = "Especie auditada",
       minHumidity = 10,
@@ -89,6 +90,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
 
     clock.advanceBy(Duration.ofMinutes(45))
     species.update(
+      code = species.code,
       scientificName = species.scientificName,
       commonName = species.commonName,
       minHumidity = 20,
@@ -128,7 +130,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
   fun `join table rows carry their timestamps even though no entity manages them`() {
     val species = entityManager.find(Species::class.java, SpeciesId.from("200001"))
     val location = entityManager.find(Location::class.java, LocationId.from("300001"))
-    val plant = Plant(nickname = "Bola con tags auditados", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Bola con tags auditados", location = location, species = species)
     entityManager.persist(plant)
     val tag = entityManager.find(Tag::class.java, TagId.from("400001"))
 

@@ -16,7 +16,7 @@ class CatalogInvariantsTest {
     phMin = BigDecimal("5.5"), phMax = BigDecimal("6.5"),
   )
   private val species = Species(
-    scientificName = "Testus plantus", commonName = "Planta de prueba",
+    code = "TEST-A", scientificName = "Testus plantus", commonName = "Planta de prueba",
     minHumidity = 10, maxHumidity = 30, minTemperature = 10, maxTemperature = 35,
     minLightHours = 6, maxLightHours = 10, wateringGuideline = "semanal", soilMix = soilMix,
   )
@@ -36,13 +36,13 @@ class CatalogInvariantsTest {
   @Test
   fun `a plant without a nickname cannot be created`() {
     assertFailsWith<IllegalArgumentException> {
-      Plant(nickname = "  ", location = location, species = species)
+      Plant(code = "TEST-A-01", nickname = "  ", location = location, species = species)
     }
   }
 
   @Test
   fun `an AI recommendation without a text or without an action cannot be created`() {
-    val plant = Plant(nickname = "Bola", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Bola", location = location, species = species)
     val record = CareRecord.record(plant = plant, humidity = 35, recordedAt = null, clock = clock, maxFutureSkew = java.time.Duration.ofMinutes(5))
 
     assertFailsWith<IllegalArgumentException> {
@@ -70,6 +70,6 @@ class CatalogInvariantsTest {
   fun `valid catalog entities are built`() {
     assertEquals("Invernadero 1", Location(name = "Invernadero 1").name)
     assertEquals("globular", Tag(name = "globular").name)
-    assertEquals("Bola", Plant(nickname = "Bola", location = location, species = species).nickname)
+    assertEquals("Bola", Plant(code = "TEST-A-01", nickname = "Bola", location = location, species = species).nickname)
   }
 }

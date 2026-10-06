@@ -19,8 +19,8 @@ const locationsPage = {
 
 const speciesPage = {
   content: [
-    { id: '200001', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
-    { id: '200002', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' },
+    { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+    { id: '200002', code: 'CAT-MAMMI', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' },
   ],
   totalElements: 2, totalPages: 1, pageNumber: 0, pageSize: 25,
 }
@@ -120,6 +120,21 @@ describe('alta de una planta', () => {
     expect(wrapper.find('[data-test="error"]').text()).toContain("La localización '999' no existe")
     expect((wrapper.find('[data-test="nickname"]').element as HTMLInputElement).value).toBe('Bola verde')
     expect(wrapper.find('form').exists()).toBe(true)
+  })
+
+  /** Escenario «Código que llevará la planta en el alta»: el número no existe hasta guardar. */
+  it('al elegir la especie enseña el código que llevará, con el número pendiente de asignar', async () => {
+    const wrapper = await mountSuspended(NewPlantPage)
+    await settle()
+    expect(wrapper.find('[data-test="code-preview"]').text()).not.toContain('CAT-GRUSS')
+
+    await fill(wrapper, { speciesId: '200001' })
+
+    const preview = wrapper.find('[data-test="code-preview"]')
+    expect(preview.text()).toContain('CAT-GRUSS-··')
+    expect(preview.text()).not.toMatch(/CAT-GRUSS-\d/)
+    expect(wrapper.find('[data-test="code-block"]').text().toLowerCase()).toContain('al guardar')
+    expect(wrapper.find('[data-test="code-block"]').attributes('data-mock')).toBeUndefined()
   })
 
   it('muestra los rangos de la especie elegida antes de crear la planta', async () => {

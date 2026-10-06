@@ -118,20 +118,6 @@ const visibleColumns = ref(HIDEABLE.map((column) => column.key))
 const columnsOpen = ref(false)
 
 const asPlant = (row: unknown) => row as PlantSummary
-
-/** Código de ejemplo hasta T-15: el API no expone código de inventario todavía. */
-function mockCode(plant: PlantSummary) {
-  const scientificName = plant.species.scientificName.toLowerCase()
-  const prefix = scientificName.includes('grusonii')
-    ? 'GRUSS'
-    : scientificName.includes('mammillaria')
-      ? 'MAMMI'
-      : scientificName.includes('elegans')
-        ? 'ELEG'
-        : plant.species.scientificName.split(' ')[0]!.slice(0, 5).toUpperCase()
-
-  return `CAT-${prefix}-${plant.id.slice(-2)}`
-}
 </script>
 
 <template>
@@ -251,10 +237,9 @@ function mockCode(plant: PlantSummary) {
       <template #cell-nickname="{ row }">
         <UiEntityCell
           :title="asPlant(row).nickname"
-          :code="mockCode(asPlant(row))"
+          :code="asPlant(row).code"
           :to="`/plants/${asPlant(row).id}`"
           mark="♧"
-          code-mock
           data-test="plant-link"
         />
       </template>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Resumen/listado de ejemplares asociado a una especie. La estructura se comparte entre el
- * resumen y su pestaña; T-15 sustituirá estas filas marcadas por datos reales y recuentos.
+ * resumen y su pestaña; T-21 sustituirá estas filas marcadas por datos reales: necesita el filtro de plantas por especie.
  */
 withDefaults(defineProps<{ standalone?: boolean }>(), { standalone: false })
 </script>
@@ -39,7 +39,7 @@ withDefaults(defineProps<{ standalone?: boolean }>(), { standalone: false })
 
     <p class="specimens-panel__notice">
       El API todavía no permite obtener el inventario filtrado por especie. La conexión llega con
-      <strong>T-15</strong>.
+      <strong>T-21</strong>.
     </p>
 
     <div class="specimens" role="table" aria-label="Ejemplares pendientes de conectar">
@@ -51,7 +51,7 @@ withDefaults(defineProps<{ standalone?: boolean }>(), { standalone: false })
       <div v-for="n in 3" :key="n" class="specimens__row" role="row">
         <span class="specimens__identity" role="cell">
           <i aria-hidden="true">♧</i>
-          <span>— <small>T-15</small></span>
+          <span>— <small>T-21</small></span>
         </span>
         <span role="cell">—</span>
         <span role="cell">—</span>

@@ -4,6 +4,7 @@ import com.cactify.application.SpeciesRequest
 import com.cactify.application.SpeciesService
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.SpeciesCareResponse
+import com.cactify.application.dto.SpeciesDetailResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
@@ -40,7 +41,7 @@ class SpeciesController(private val speciesService: SpeciesService) {
     speciesService.create(request)
 
   @GetMapping("/{id}")
-  fun detail(@PathVariable id: String): SpeciesCareResponse = speciesService.findById(id)
+  fun detail(@PathVariable id: String): SpeciesDetailResponse = speciesService.findById(id)
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)

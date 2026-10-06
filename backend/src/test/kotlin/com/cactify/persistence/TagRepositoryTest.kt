@@ -107,11 +107,12 @@ class TagRepositoryTest : AbstractIntegrationTest() {
   }
 
   private fun plantWith(nickname: String, vararg tags: Tag): Plant {
-    val plant = plantRepository.save(Plant(nickname = nickname, location = location(), species = species()))
+    val plant = plantRepository.save(Plant(code = "TEST-A-${"%02d".format(++plantSeq)}", nickname = nickname, location = location(), species = species()))
     plant.updateTags(tags.toSet())
     return plantRepository.save(plant)
   }
 
+  private var plantSeq = 0
   private var cachedLocation: Location? = null
   private var cachedSpecies: Species? = null
 
@@ -120,6 +121,7 @@ class TagRepositoryTest : AbstractIntegrationTest() {
 
   private fun species(): Species = cachedSpecies ?: speciesRepository.save(
     Species(
+      code = "TEST-A",
       scientificName = "Echinopsis oxygona",
       commonName = "Especie de prueba",
       minHumidity = 10,

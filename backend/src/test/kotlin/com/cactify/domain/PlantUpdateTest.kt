@@ -20,7 +20,8 @@ class PlantUpdateTest {
     phMax = BigDecimal("6.5"),
   )
 
-  private fun species(name: String) = Species(
+  private fun species(name: String, code: String) = Species(
+    code = code,
     scientificName = name,
     commonName = "Común de $name",
     minHumidity = 10,
@@ -35,10 +36,10 @@ class PlantUpdateTest {
 
   private val greenhouse = Location(name = "Invernadero 1")
   private val tray = Location(name = "Bandeja A3")
-  private val grusonii = species("Echinocactus grusonii")
-  private val elongata = species("Mammillaria elongata")
+  private val grusonii = species("Echinocactus grusonii", "TEST-A")
+  private val elongata = species("Mammillaria elongata", "TEST-B")
 
-  private fun plant() = Plant(nickname = "Bola 1", location = greenhouse, species = grusonii)
+  private fun plant() = Plant(code = "TEST-A-01", nickname = "Bola 1", location = greenhouse, species = grusonii)
 
   @Test
   fun `updating changes the three fields`() {

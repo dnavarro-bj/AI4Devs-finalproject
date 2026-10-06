@@ -9,8 +9,9 @@ import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSpecies } from '@features/species/composables/useSpecies'
 import SpeciesForm, { type SpeciesSubmitError } from '@features/species/components/SpeciesForm.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
-import type { SpeciesCare, SpeciesInput } from '@features/species/types/species.types'
-import { ErrorCodes, type DomainError } from '@shared/types/api.types'
+import { speciesSubmitError } from '@features/species/composables/speciesSubmitError'
+import type { SpeciesDetail, SpeciesInput } from '@features/species/types/species.types'
+import type { DomainError } from '@shared/types/api.types'
 
 const route = useRoute()
 const id = String(route.params.id)
@@ -18,7 +19,7 @@ const id = String(route.params.id)
 const { detail, update } = useSpecies()
 const { set: setBreadcrumbs } = useBreadcrumbs()
 
-const species = ref<SpeciesCare | null>(null)
+const species = ref<SpeciesDetail | null>(null)
 const loading = ref(true)
 const loadError = ref<DomainError | null>(null)
 
@@ -36,6 +37,7 @@ const notFound = computed(() => !loading.value && isNotFound(loadError.value))
  */
 const initial = computed<SpeciesInput | undefined>(() => (species.value
   ? {
+      code: species.value.code,
       scientificName: species.value.scientificName,
       commonName: species.value.commonName,
       minHumidity: species.value.minHumidity,
@@ -57,10 +59,7 @@ async function save(input: SpeciesInput) {
   submitting.value = false
 
   if (!result.success) {
-    submitError.value = {
-      field: result.error!.code === ErrorCodes.CONFLICT ? 'scientificName' : null,
-      message: result.error!.message,
-    }
+    submitError.value = speciesSubmitError(result.error!)
     return
   }
 
@@ -104,6 +103,7 @@ onMounted(async () => {
       />
       <SpeciesForm
         :initial="initial"
+        :plant-count="species.plantCount"
         :submitting="submitting"
         :submit-error="submitError"
         submit-label="Guardar cambios"

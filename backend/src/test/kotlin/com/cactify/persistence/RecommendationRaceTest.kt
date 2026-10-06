@@ -39,8 +39,8 @@ class RecommendationRaceTest : AbstractIntegrationTest() {
     val plantId = PlantId.create()
     val recordId = CareRecordId.create()
     jdbcTemplate.update(
-      "INSERT INTO plant (id, nickname, location_id, species_id) VALUES (?, 'Bola en carrera', 300001, 200001)",
-      plantId.id,
+      "INSERT INTO plant (id, code, nickname, location_id, species_id) VALUES (?, ?, 'Bola en carrera', 300001, 200001)",
+      plantId.id, "TEST-${plantId.id}",
     )
     jdbcTemplate.update(
       "INSERT INTO care_record (id, plant_id, humidity, recorded_at) VALUES (?, ?, 20, ?)",

@@ -270,8 +270,8 @@ Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aqu�
 
 1. **Fertilización: ¿insumo o intervención?** Es dosificada como el agua —y con fertirrigación entra por la misma línea—, pero varía el producto, así que sería cantidad más referencia al producto en vez de una columna. Sin resolver.
 2. **`source` en `CARE_RECORD`** (manual / sensor / riego automático) y el detalle de entrega (duración, caudal, circuito). Decidido **no añadirlo ahora**: no hay controlador y no se sabe qué campos reporta. Cuando llegue, se ensancha la fila existente; nunca una entidad `Irrigation` con el escalar duplicado.
-3. **Generación del código de planta.** `SPECIES.nextSequence` con bloqueo de fila cubre el requisito de «segura ante dos altas simultáneas» del §6.2; un `MAX(...)+1` sobre `PLANT` no. Falta confirmarlo.
-4. **¿Puede cambiarse el código de una especie que ya tiene plantas?** El documento recomienda que no (§6.3). Sin decidir.
+3. ~~Generación del código de planta.~~ **Hecha (7 oct 2026, `codigos-de-inventario`):** `SPECIES.nextSequence` con bloqueo de fila; ya está en el [modelo actual](modelo-datos-actual.md).
+4. ~~¿Puede cambiarse el código de una especie que ya tiene plantas?~~ **Resuelta (7 oct 2026): no**, y es **obligatorio al dar de alta**: lo escribe una persona, no se propone. Se puede corregir mientras la especie no tenga ejemplares.
 5. **Estados válidos del ejemplar y sus transiciones** (§24.4). El enum del diagrama es el del documento, sin máquina de estados todavía.
 6. **Fotografías**: formatos, tamaño máximo, miniaturas, EXIF, borrado real o referencia histórica, y dónde vive el binario. Es material de un ADR propio, no de este diagrama.
 7. **Datos parciales.** `germinationMonth` nulo con `germinationYear` informado choca con el estilo de invariantes estrictas de [ADR-011](../adr/ADR-011-invariantes-de-negocio-en-el-dominio.md). Necesita una regla escrita, no una excepción por entidad.

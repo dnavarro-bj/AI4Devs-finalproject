@@ -32,6 +32,7 @@ describe('editor de una especie', () => {
   })
 
   const VALID = {
+    code: 'CAT-GRUSS',
     scientificName: 'Echinocactus grusonii',
     commonName: 'Asiento de suegra',
     'min-humidity': '10',
@@ -63,6 +64,7 @@ describe('editor de una especie', () => {
     await wrapper.find('[data-test="species-form"]').trigger('submit')
 
     expect(wrapper.emitted('submit')?.[0]?.[0]).toEqual({
+      code: 'CAT-GRUSS',
       scientificName: 'Echinocactus grusonii',
       commonName: 'Asiento de suegra',
       minHumidity: 10,
@@ -151,6 +153,7 @@ describe('editor de una especie', () => {
   it('la edición llega prellenada con lo que la especie tenía, mezcla incluida', async () => {
     const wrapper = await mountForm({
       initial: {
+        code: 'CAT-MAMMI',
         scientificName: 'Mammillaria elongata',
         commonName: 'Cactus dedo de dama',
         minHumidity: 15,
@@ -176,6 +179,7 @@ describe('editor de una especie', () => {
   it('corregir sin tocar la mezcla la conserva, no la cambia por otra', async () => {
     const wrapper = await mountForm({
       initial: {
+        code: 'CAT-MAMMI',
         scientificName: 'Mammillaria elongata',
         commonName: 'Cactus dedo de dama',
         minHumidity: 15,
@@ -221,5 +225,157 @@ describe('editor de una especie', () => {
     const wrapper = await mountForm()
 
     expect(wrapper.find('[data-test="catalogs-error"]').exists()).toBe(true)
+  })
+
+  // --- Código de la especie (codigos-de-inventario) ---
+
+  it('el código es obligatorio: sin él no se envía y se señala su campo', async () => {
+    const wrapper = await mountForm()
+
+    await fill(wrapper, { ...VALID, 'soil-mix': '100001' })
+    // El usuario borra la propuesta: el campo es obligatorio y no se envía en blanco.
+    await wrapper.find('[data-test="code"]').setValue('   ')
+    await wrapper.find('[data-test="species-form"]').trigger('submit')
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.find('[data-test="code-error"]').text()).toContain('obligatorio')
+  })
+
+  it('el campo explica qué es el código y da un ejemplo de formato', async () => {
+    const wrapper = await mountForm()
+
+    const help = wrapper.find('[data-test="code"]').attributes('aria-describedby')
+    expect(help).toBeTruthy()
+    expect(wrapper.text()).toContain('CAT-GRUSS')
+  })
+
+  it('la edición llega con el código actual', async () => {
+    const wrapper = await mountForm({
+      initial: {
+        code: 'CAT-MAMMI',
+        scientificName: 'Mammillaria elongata',
+        commonName: 'Cactus dedo de dama',
+        minHumidity: 15, maxHumidity: 40, minTemperature: 12, maxTemperature: 32,
+        minLightHours: 5, maxLightHours: 9, wateringGuideline: 'cada 7-14 dias', soilMixId: '100002',
+      },
+    })
+
+    expect((wrapper.find('[data-test="code"]').element as HTMLInputElement).value).toBe('CAT-MAMMI')
+  })
+
+  it('con ejemplares el código está deshabilitado y explica por qué', async () => {
+    const wrapper = await mountForm({
+      plantCount: 3,
+      initial: {
+        code: 'CAT-MAMMI',
+        scientificName: 'Mammillaria elongata',
+        commonName: 'Cactus dedo de dama',
+        minHumidity: 15, maxHumidity: 40, minTemperature: 12, maxTemperature: 32,
+        minLightHours: 5, maxLightHours: 9, wateringGuideline: 'cada 7-14 dias', soilMixId: '100002',
+      },
+    })
+
+    expect(wrapper.find('[data-test="code"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-test="code-locked"]').text()).toContain('3 ejemplares')
+  })
+
+  it('con el código bloqueado el resto de la ficha se sigue enviando, con su mismo código', async () => {
+    const wrapper = await mountForm({
+      plantCount: 2,
+      initial: {
+        code: 'CAT-MAMMI',
+        scientificName: 'Mammillaria elongata',
+        commonName: 'Cactus dedo de dama',
+        minHumidity: 15, maxHumidity: 40, minTemperature: 12, maxTemperature: 32,
+        minLightHours: 5, maxLightHours: 9, wateringGuideline: 'cada 7-14 dias', soilMixId: '100002',
+      },
+    })
+
+    await fill(wrapper, { commonName: 'Dedo de dama' })
+    await wrapper.find('[data-test="species-form"]').trigger('submit')
+
+    const sent = wrapper.emitted('submit')?.[0]?.[0] as { code: string, commonName: string }
+    expect(sent.code).toBe('CAT-MAMMI')
+    expect(sent.commonName).toBe('Dedo de dama')
+  })
+
+  it('un código ya usado se señala junto a su campo, conservando lo introducido', async () => {
+    const wrapper = await mountForm({
+      submitError: { field: 'code', message: "Ya existe una especie con el código 'CAT-GRUSS'" },
+    })
+
+    expect(wrapper.find('[data-test="code-error"]').text()).toContain('Ya existe')
+    expect(wrapper.find('[data-test="scientific-name-error"]').exists()).toBe(false)
+  })
+
+  // --- Propuesta del código en el formulario ---
+
+  const codeOf = (wrapper: Awaited<ReturnType<typeof mountForm>>) =>
+    (wrapper.find('[data-test="code"]').element as HTMLInputElement).value
+
+  it('en el alta propone el código a medida que se escribe el nombre científico', async () => {
+    const wrapper = await mountForm()
+    expect(codeOf(wrapper)).toBe('')
+
+    await wrapper.find('[data-test="scientificName"]').setValue('Echinocactus grusonii')
+
+    expect(codeOf(wrapper)).toBe('CAT-ECHIN')
+    expect(wrapper.find('[data-test="code-suggested"]').exists()).toBe(true)
+  })
+
+  it('la propuesta sigue al nombre mientras el usuario no toque el código', async () => {
+    const wrapper = await mountForm()
+
+    await wrapper.find('[data-test="scientificName"]').setValue('Echinocactus grusonii')
+    await wrapper.find('[data-test="scientificName"]').setValue('Mammillaria elongata')
+
+    expect(codeOf(wrapper)).toBe('CAT-MAMMI')
+  })
+
+  it('un código escrito a mano ya no lo pisa la propuesta', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="scientificName"]').setValue('Echinocactus grusonii')
+
+    await wrapper.find('[data-test="code"]').setValue('CAT-GRUSS')
+    await wrapper.find('[data-test="scientificName"]').setValue('Mammillaria elongata')
+
+    expect(codeOf(wrapper)).toBe('CAT-GRUSS')
+    expect(wrapper.find('[data-test="code-suggested"]').exists()).toBe(false)
+  })
+
+  it('vaciar el código devuelve el control a la propuesta', async () => {
+    const wrapper = await mountForm()
+    await wrapper.find('[data-test="code"]').setValue('CAT-GRUSS')
+
+    await wrapper.find('[data-test="code"]').setValue('')
+    await wrapper.find('[data-test="scientificName"]').setValue('Mammillaria elongata')
+
+    expect(codeOf(wrapper)).toBe('CAT-MAMMI')
+  })
+
+  it('el código propuesto es el que se envía al guardar, y se puede corregir antes', async () => {
+    const wrapper = await mountForm()
+    await fill(wrapper, { ...Object.fromEntries(Object.entries(VALID).filter(([key]) => key !== 'code')), 'soil-mix': '100001' })
+
+    await wrapper.find('[data-test="species-form"]').trigger('submit')
+
+    expect((wrapper.emitted('submit')?.[0]?.[0] as { code: string }).code).toBe('CAT-ECHIN')
+  })
+
+  it('en la edición el cambio de nombre no toca el código existente', async () => {
+    const wrapper = await mountForm({
+      initial: {
+        code: 'CAT-MAMMI',
+        scientificName: 'Mammillaria elongata',
+        commonName: 'Cactus dedo de dama',
+        minHumidity: 15, maxHumidity: 40, minTemperature: 12, maxTemperature: 32,
+        minLightHours: 5, maxLightHours: 9, wateringGuideline: 'cada 7-14 dias', soilMixId: '100002',
+      },
+    })
+
+    await wrapper.find('[data-test="scientificName"]').setValue('Mammillaria bocasana')
+
+    expect(codeOf(wrapper)).toBe('CAT-MAMMI')
+    expect(wrapper.find('[data-test="code-suggested"]').exists()).toBe(false)
   })
 })

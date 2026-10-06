@@ -74,14 +74,17 @@ class SpeciesRepositoryTest : AbstractIntegrationTest() {
     val planted = speciesRepository.save(species("Echinopsis oxygona"))
     val untouched = speciesRepository.save(species("Gymnocalycium mihanovichii"))
     val location = locationRepository.save(Location(name = "Bandeja de prueba"))
-    plantRepository.save(Plant(nickname = "Pinchitos", location = location, species = planted))
+    plantRepository.save(Plant(code = "TEST-1-01", nickname = "Pinchitos", location = location, species = planted))
     entityManager.flush()
 
     assertTrue(plantRepository.existsBySpeciesId(planted.id))
     assertFalse(plantRepository.existsBySpeciesId(untouched.id))
   }
 
+  private var speciesSeq = 0
+
   private fun species(scientificName: String) = Species(
+    code = "TEST-${++speciesSeq}",
     scientificName = scientificName,
     commonName = "Especie de prueba",
     minHumidity = 10,

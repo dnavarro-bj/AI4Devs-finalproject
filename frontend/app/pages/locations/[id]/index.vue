@@ -171,8 +171,8 @@ const asPlant = (row: unknown) => row as PlantSummary
           <UiStatus :tone="isEmpty ? 'neutral' : 'ok'">
             {{ isEmpty ? 'Vacía' : 'En uso' }}
           </UiStatus>
-          <!-- El código estable del espacio (LOC-I1-BN en el prototipo) es T-15. -->
-          <code class="hero-code" data-mock="true" data-test="space-code">LOC-··· <small>T-15</small></code>
+          <!-- El código del espacio (LOC-I1-BN en el prototipo) no tiene ticket: T-15 cubre especies y ejemplares. -->
+          <code class="hero-code" data-mock="true" data-test="space-code">LOC-··· <small>sin ticket</small></code>
         </template>
         <template #context>
           <p class="hero-path" data-mock="true" data-test="location-path">

@@ -9,7 +9,7 @@
  * para no tener que volver arriba a guardar.
  *
  * **Casi todo el editor es maqueta todavía**, y va marcado y deshabilitado: `POST /plants` acepta
- * exactamente `nickname`, `locationId` y `speciesId`. El código (T-15), el estado, la descripción,
+ * exactamente `nickname`, `locationId` y `speciesId`. El estado, la descripción,
  * el origen y la edad (T-16), las etiquetas al crear, las fotografías (T-19) y los cuidados
  * personalizados (0.7) no tienen dónde guardarse. Un formulario que parece guardar y no guarda es
  * peor que uno que no deja editar.
@@ -48,6 +48,14 @@ const speciesId = ref(props.initial.speciesId)
 const locations = ref<Location[]>([])
 const species = ref<SpeciesSummary[]>([])
 const selectedSpecies = ref<SpeciesCare | null>(null)
+
+/**
+ * El código que lleva —o llevará— el ejemplar. En edición es el real y no cambia; en el alta es el
+ * de la especie elegida con el número **pendiente**, porque ese número no existe hasta guardar:
+ * inventarlo aquí sería enseñar un código que luego puede ser otro.
+ */
+const codeLabel = computed(() => props.lockedCode
+  ?? (selectedSpecies.value ? `${selectedSpecies.value.code}-··` : '····-··'))
 
 const loading = ref(true)
 const loadError = ref<string | null>(null)
@@ -211,24 +219,27 @@ function submit() {
           ejemplares se etiquetan de verdad—, y ver la etiqueta antes de guardar es lo que hace
           entender que el código es permanente.
         -->
-        <div class="code-block" data-mock="true">
+        <div class="code-block" data-test="code-block">
           <div class="code-block__preview">
             <span class="tag-preview">
               <small>CACTIFY · EJEMPLAR</small>
-              <strong>{{ lockedCode ?? 'CAT-····-··' }}</strong>
+              <strong data-test="code-preview">{{ codeLabel }}</strong>
               <em>{{ selectedSpecies?.scientificName ?? 'Elige una especie' }}</em>
             </span>
           </div>
           <div>
             <span class="code-block__label">Código de inventario</span>
-            <p>
-              Se asignará al guardar con el siguiente número disponible de la especie. No volverá a
-              utilizarse aunque la planta se archive.
+            <p v-if="lockedCode">
+              El código de un ejemplar es permanente: no cambia aunque cambies su especie o su
+              localización, porque la etiqueta ya pegada en la maceta tiene que seguir valiendo.
+            </p>
+            <p v-else>
+              Se asigna <strong>al guardar</strong>, con el siguiente número disponible de la
+              especie. No volverá a utilizarse aunque la planta se archive.
             </p>
             <span class="locked-code">
               <span aria-hidden="true">⌑</span>
-              <code>{{ lockedCode ?? 'CAT-····-··' }}</code>
-              <small>Dato de ejemplo hasta T-15</small>
+              <code data-test="locked-code">{{ codeLabel }}</code>
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { getApiClient } from '@shared/services/httpClient'
 import { normalizeError } from '@shared/services/errorNormalizer'
 import { ok, fail, type PageResponse, type ServiceResponse } from '@shared/types/api.types'
-import type { SpeciesCare, SpeciesInput, SpeciesSummary } from '../types/species.types'
+import type { SpeciesCare, SpeciesDetail, SpeciesInput, SpeciesSummary } from '../types/species.types'
 
 /**
  * El API del catálogo de especies, completo.
@@ -23,9 +23,9 @@ export const speciesApiService = {
     }
   },
 
-  async detail(id: string): Promise<ServiceResponse<SpeciesCare>> {
+  async detail(id: string): Promise<ServiceResponse<SpeciesDetail>> {
     try {
-      return ok(await getApiClient().get<SpeciesCare>(`/species/${id}`))
+      return ok(await getApiClient().get<SpeciesDetail>(`/species/${id}`))
     } catch (cause) {
       return fail(normalizeError(cause))
     }

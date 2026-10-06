@@ -7,7 +7,7 @@
  * recurrentes, no de composiciones de un solo uso.
  *
  * **Lo que el API no sirve se marca en la pantalla**, no solo en el código: el código de
- * inventario (T-15), el estado (T-16), el contexto botánico (T-16 y T-17) y la fotografía (T-19)
+ * inventario (T-15, ya real), el estado (T-16), el contexto botánico (T-16 y T-17) y la fotografía (T-19)
  * llevan su marca. Una ficha con esos datos inventados y sin marcar es indistinguible de una que
  * funciona, y eso no es un riesgo técnico sino de criterio: alguien la enseña y la da por hecha.
  *
@@ -15,7 +15,7 @@
  * monta.
  */
 import type { PlantDetail } from '../types/plant.types'
-import { MOCK_CODE, MOCK_CONTEXT, MOCK_PHOTO_COUNT, MOCK_STATUS } from '../mocks/plantDetail.mock'
+import { MOCK_CONTEXT, MOCK_PHOTO_COUNT, MOCK_STATUS } from '../mocks/plantDetail.mock'
 
 defineProps<{ plant: PlantDetail }>()
 
@@ -31,7 +31,7 @@ defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [] }>()
 
     <div class="specimen__identity">
       <div class="specimen__line">
-        <UiIdentityCode data-test="plant-code" data-mock="true" :value="MOCK_CODE" pending />
+        <UiIdentityCode data-test="plant-code" :value="plant.code" />
         <UiStatus :tone="MOCK_STATUS.tone" data-mock="true">{{ MOCK_STATUS.label }}</UiStatus>
       </div>
 

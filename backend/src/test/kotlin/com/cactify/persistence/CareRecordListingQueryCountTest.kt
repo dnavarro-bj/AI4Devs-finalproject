@@ -41,7 +41,7 @@ class CareRecordListingQueryCountTest : AbstractIntegrationTest() {
   fun `the number of queries does not grow with the page size`() {
     val species = entityManager.find(Species::class.java, SpeciesId.from("200001"))
     val location = entityManager.find(Location::class.java, LocationId.from("300001"))
-    val plant = Plant(nickname = "Bola con muchas lecturas", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Bola con muchas lecturas", location = location, species = species)
     entityManager.persist(plant)
     repeat(12) { i ->
       val record = CareRecord.record(

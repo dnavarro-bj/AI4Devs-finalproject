@@ -3,7 +3,7 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import SpeciesDetail from '../app/pages/species/[id]/index.vue'
-import type { SpeciesCare } from '@features/species/types/species.types'
+import type { SpeciesDetail as SpeciesRecord } from '@features/species/types/species.types'
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -18,8 +18,10 @@ describe('ficha de una especie', () => {
     api.delete.mockReset()
   })
 
-  const care = (overrides: Partial<SpeciesCare> = {}): SpeciesCare => ({
+  const care = (overrides: Partial<SpeciesRecord> = {}): SpeciesRecord => ({
     id: '200001',
+    code: 'CAT-GRUSS',
+    plantCount: 3,
     scientificName: 'Echinocactus grusonii',
     commonName: 'Asiento de suegra',
     minHumidity: 10,
@@ -31,6 +33,38 @@ describe('ficha de una especie', () => {
     wateringGuideline: 'cada 10-20 dias en crecimiento',
     soilMix: { id: '100001', name: 'Sustrato mineral de drenaje rápido' },
     ...overrides,
+  })
+
+  /** Escenarios «Código de la especie en el catálogo y en su ficha» y «Recuento real en la ficha». */
+  it('muestra el código real de la especie, en la portada y en la ficha de catálogo', async () => {
+    api.get.mockResolvedValue(care({ code: 'CAT-GRUSS' }))
+
+    const wrapper = await mountSuspended(SpeciesDetail)
+    await settle()
+
+    expect(wrapper.find('[data-test="species-code"]').text()).toContain('CAT-GRUSS')
+    expect(wrapper.find('[data-test="species-code"]').attributes('data-mock')).toBeUndefined()
+    expect(wrapper.find('[data-test="catalog-code"]').text()).toBe('CAT-GRUSS')
+  })
+
+  it('el recuento de ejemplares de la ficha es el real, no una maqueta', async () => {
+    api.get.mockResolvedValue(care({ plantCount: 3 }))
+
+    const wrapper = await mountSuspended(SpeciesDetail)
+    await settle()
+
+    const count = wrapper.find('[data-test="plant-count"]')
+    expect(count.text()).toContain('3')
+    expect(count.attributes('data-mock')).toBeUndefined()
+  })
+
+  it('una especie sin ejemplares dice cero, no un guion', async () => {
+    api.get.mockResolvedValue(care({ plantCount: 0 }))
+
+    const wrapper = await mountSuspended(SpeciesDetail)
+    await settle()
+
+    expect(wrapper.find('[data-test="plant-count"]').text()).toContain('0')
   })
 
   it('muestra los dos nombres de la especie', async () => {
@@ -116,7 +150,7 @@ describe('ficha de una especie', () => {
       ['year-cycle', 'T-17'],
       ['flowering', 'T-17'],
       ['photos', 'T-19'],
-      ['specimens', 'T-15'],
+      ['specimens', 'T-21'],
       ['groups', 'T-21'],
     ] as const) {
       const section = wrapper.find(`[data-test="${test}"]`)

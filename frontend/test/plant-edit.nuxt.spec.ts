@@ -49,6 +49,19 @@ describe('edición de una planta', () => {
     expect(wrapper.find('[data-test="species-200001"]').attributes('aria-checked')).toBe('true')
   })
 
+  /** Escenario «Código real en la ficha y en la edición»: el del API, y de solo lectura. */
+  it('muestra el código real de la planta, de solo lectura', async () => {
+    serve()
+    const wrapper = await mountSuspended(EditPlantPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="code-preview"]').text()).toContain('CAT-GRUSS-01')
+    expect(wrapper.find('[data-test="locked-code"]').text()).toContain('CAT-GRUSS-01')
+    expect(wrapper.find('input[data-test="locked-code"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="code-block"]').attributes('data-mock')).toBeUndefined()
+    expect(wrapper.text()).not.toContain('Dato de ejemplo hasta T-15')
+  })
+
   it('usa el mismo formulario que el alta, por secciones', async () => {
     serve()
     const wrapper = await mountSuspended(EditPlantPage)

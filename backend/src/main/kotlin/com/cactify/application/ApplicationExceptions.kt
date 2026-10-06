@@ -29,6 +29,17 @@ class DuplicateTagNameException(name: String) :
 class DuplicateScientificNameException(scientificName: String) :
   RuntimeException("Ya existe una especie con el nombre científico '$scientificName'")
 
+/** Ya hay otra especie con ese código de inventario: 409. */
+class DuplicateSpeciesCodeException(code: String) :
+  RuntimeException("Ya existe una especie con el código '$code'")
+
+/**
+ * El código de una especie con ejemplares no se puede cambiar: 409. Ya identifica plantas, y hay
+ * etiquetas pegadas en macetas que lo llevan.
+ */
+class SpeciesCodeLockedException(code: String) :
+  RuntimeException("El código '$code' ya identifica ejemplares de la especie y no se puede cambiar")
+
 /**
  * La especie tiene ejemplares y no puede retirarse del catálogo: 409.
  *

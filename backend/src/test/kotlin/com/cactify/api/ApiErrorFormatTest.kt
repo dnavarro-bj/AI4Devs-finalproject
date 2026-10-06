@@ -50,7 +50,7 @@ class ApiErrorFormatTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/species")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("scientificName" to "   ")),
+        .content(json("code" to "TEST-A", "scientificName" to "   ")),
     )
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))
@@ -67,6 +67,7 @@ class ApiErrorFormatTest : AbstractApiIntegrationTest() {
         .contentType(MediaType.APPLICATION_JSON)
         .content(
           json(
+            "code" to "TEST-A",
             "scientificName" to "Echinocactus grusonii",
             "commonName" to "Duplicada",
             "minHumidity" to 10,

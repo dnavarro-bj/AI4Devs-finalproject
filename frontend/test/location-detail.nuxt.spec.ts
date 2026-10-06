@@ -109,7 +109,7 @@ describe('ficha de una localización', () => {
     const hero = wrapper.find('[data-test="location-hero"]')
     expect(hero.exists(), 'falta la portada del espacio').toBe(true)
     expect(hero.text()).toContain('Invernadero 1')
-    expect(hero.find('[data-test="space-code"]').attributes('data-mock'), 'el código del espacio es T-15 y va marcado').toBe('true')
+    expect(hero.find('[data-test="space-code"]').attributes('data-mock'), 'el código del espacio no tiene ticket y va marcado').toBe('true')
     expect(hero.find('[data-test="location-path"]').attributes('data-mock'), 'la ruta es T-18 y va marcada').toBe('true')
   })
 

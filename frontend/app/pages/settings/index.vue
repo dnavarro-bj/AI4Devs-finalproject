@@ -85,7 +85,7 @@ const aiUsages = [{ value: 'on-demand', label: 'Solo bajo petición' }, { value:
           <UiField v-model="values.codes.separator" label="Separador" as="select" :options="separators" data-test="codes-separator" />
           <p>Vista previa <code data-test="code-preview">{{ codePreview }}</code></p>
           <UiNotice severity="info" title="Numeración">
-            Si el siguiente número ya existe, se buscará el primer código libre de la especie. Los códigos reales los fija T-15.
+            Si el siguiente número ya existe, se buscará el primer código libre de la especie. Los códigos de especie los escribe quien da de alta la especie; este ámbito sigue siendo maqueta.
           </UiNotice>
           <UiSectionHeader title="Etiquetas físicas" description="Formato inicial de las hojas PDF generadas desde Importar / exportar." />
           <UiField v-model="values.codes.labelSize" label="Tamaño" as="select" :options="labelSizes" />

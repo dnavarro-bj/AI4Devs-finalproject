@@ -18,8 +18,8 @@ describe('catálogo de especies', () => {
     api.delete.mockReset()
   })
 
-  const species = (id: string, scientificName: string, commonName: string): SpeciesSummary =>
-    ({ id, scientificName, commonName })
+  const species = (id: string, scientificName: string, commonName: string, code = 'CAT-GRUSS'): SpeciesSummary =>
+    ({ id, code, scientificName, commonName })
 
   const page = (content: SpeciesSummary[]): PageResponse<SpeciesSummary> => ({
     content,
@@ -90,9 +90,24 @@ describe('catálogo de especies', () => {
     expect(api.get).toHaveBeenCalledWith('/species', expect.objectContaining({ sort: expect.stringContaining('scientificName') }))
   })
 
+  /** Escenario «Código de la especie en el catálogo y en su ficha»: el código es el del API. */
+  it('cada fila muestra el código real de la especie, sin marca de maqueta', async () => {
+    api.get.mockResolvedValue(page([
+      species('200001', 'Echinocactus grusonii', 'Asiento de suegra', 'CAT-GRUSS'),
+      species('200002', 'Mammillaria elongata', 'Cactus dedo de dama', 'CAT-MAMMI'),
+    ]))
+
+    const wrapper = await mountSuspended(SpeciesIndex)
+    await settle()
+
+    const codes = wrapper.findAll('[data-test="species-code"]')
+    expect(codes.map((code) => code.text())).toEqual(['CAT-GRUSS', 'CAT-MAMMI'])
+    expect(codes.every((code) => code.attributes('data-mock') === undefined)).toBe(true)
+  })
+
   /**
-   * El API no sirve cuántos ejemplares hay de cada especie (T-15). Aparece porque el wireframe lo
-   * pide, pero **marcado**: una columna de maqueta indistinguible de un dato es peor que no tenerla.
+   * El API no sirve cuántos ejemplares hay de cada especie **en el listado** (sería una consulta por
+   * fila): lo alimentará T-21. Aparece porque el wireframe lo pide, pero **marcado**.
    */
   it('el recuento de ejemplares se muestra marcado como maqueta, con su ticket', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
@@ -102,7 +117,7 @@ describe('catálogo de especies', () => {
 
     const cell = wrapper.find('[data-test="specimens-count"]')
     expect(cell.attributes('data-mock')).toBe('true')
-    expect(cell.text()).toContain('T-15')
+    expect(cell.text()).toContain('T-21')
     expect(cell.find('strong').exists(), 'falta el peso visual del recuento').toBe(true)
   })
 

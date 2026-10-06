@@ -62,8 +62,9 @@ class PlantSpecsTest : AbstractIntegrationTest() {
     globular = entityManager.find(Tag::class.java, TagId.from("400001"))
     small = entityManager.find(Tag::class.java, TagId.from("400002"))
 
+    var seq = 0
     fun plant(nickname: String, location: Location, vararg tags: Tag) {
-      val plant = Plant(nickname = nickname, location = location, species = species)
+      val plant = Plant(code = "TEST-A-${"%02d".format(++seq)}", nickname = nickname, location = location, species = species)
       entityManager.persist(plant)
       plant.updateTags(tags.toSet())
     }
@@ -132,7 +133,7 @@ class PlantSpecsTest : AbstractIntegrationTest() {
   @Test
   fun `mapping the listing DTO does not fire one query per plant`() {
     val species = entityManager.find(Species::class.java, SpeciesId.from("200001"))
-    repeat(8) { entityManager.persist(Plant(nickname = "Bola extra $it", location = greenhouse, species = species)) }
+    repeat(8) { entityManager.persist(Plant(code = "TEST-B-${"%02d".format(it + 1)}", nickname = "Bola extra $it", location = greenhouse, species = species)) }
 
     val statistics = entityManager.entityManagerFactory.unwrap(SessionFactory::class.java).statistics
     statistics.isStatisticsEnabled = true

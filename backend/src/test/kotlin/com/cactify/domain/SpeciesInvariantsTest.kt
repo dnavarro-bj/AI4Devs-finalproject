@@ -27,6 +27,7 @@ class SpeciesInvariantsTest {
     maxLightHours: Int = 10,
     wateringGuideline: String = "cada 10-20 dias",
   ) = Species(
+    code = "TEST-A",
     scientificName = scientificName,
     commonName = commonName,
     minHumidity = minHumidity,
@@ -83,6 +84,7 @@ class SpeciesInvariantsTest {
 
     assertFailsWith<IllegalArgumentException> {
       s.update(
+        code = "TEST-A",
         scientificName = "Echinocactus grusonii",
         commonName = "Asiento de suegra",
         minHumidity = 40,
@@ -106,6 +108,7 @@ class SpeciesInvariantsTest {
 
     assertFailsWith<IllegalArgumentException> {
       s.update(
+        code = "TEST-A",
         scientificName = "Echinocactus grusonii",
         commonName = "Asiento de suegra",
         minHumidity = 10,
@@ -127,6 +130,7 @@ class SpeciesInvariantsTest {
     val s = species()
 
     s.update(
+      code = "TEST-A",
       scientificName = "Ferocactus glaucescens",
       commonName = "Biznaga azul",
       minHumidity = 15,

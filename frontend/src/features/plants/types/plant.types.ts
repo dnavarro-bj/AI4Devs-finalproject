@@ -5,6 +5,8 @@ import type { SpeciesCare, SpeciesSummary } from '@features/species/types/specie
 
 export interface PlantSummary {
   id: string
+  /** El código de inventario (`CAT-GRUSS-01`): se asigna al dar de alta y no cambia nunca. */
+  code: string
   nickname: string
   createdAt: string | null
   location: Location
@@ -13,6 +15,7 @@ export interface PlantSummary {
 
 export interface PlantDetail {
   id: string
+  code: string
   nickname: string
   createdAt: string | null
   location: Location

@@ -28,12 +28,12 @@ class RelationshipMappingTest : AbstractIntegrationTest() {
   private fun persistPlant(nickname: String, suffix: String): Plant {
     val soilMix = SoilMix(name = "Test mix $suffix", organicPercentage = 40, mineralPercentage = 60, phMin = BigDecimal("5.5"), phMax = BigDecimal("6.5"))
     val species = Species(
-      scientificName = "Testus $suffix", commonName = "Test plant $suffix",
+      code = "TEST-${suffix.uppercase()}", scientificName = "Testus $suffix", commonName = "Test plant $suffix",
       minHumidity = 10, maxHumidity = 20, minTemperature = 10, maxTemperature = 20,
       minLightHours = 6, maxLightHours = 10, wateringGuideline = "weekly", soilMix = soilMix,
     )
     val location = Location(name = "Test location $suffix")
-    val plant = Plant(nickname = nickname, location = location, species = species)
+    val plant = Plant(code = "TEST-${suffix.uppercase()}-01", nickname = nickname, location = location, species = species)
     entityManager.persist(soilMix)
     entityManager.persist(species)
     entityManager.persist(location)

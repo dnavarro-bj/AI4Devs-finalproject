@@ -20,20 +20,25 @@
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import type { SpeciesInput } from '../types/species.types'
+import type { SpeciesSubmitError } from '../composables/speciesSubmitError'
+import { suggestSpeciesCode } from '../composables/speciesCodeSuggestion'
 
-/** Un fallo del guardado, ya atribuido a un campo cuando se puede. */
-export interface SpeciesSubmitError {
-  field: 'scientificName' | null
-  message: string
-}
+export type { SpeciesSubmitError }
 
 const props = withDefaults(defineProps<{
   initial?: SpeciesInput
+  /**
+   * Cuántos ejemplares tiene la especie. Con alguno, el código **no se puede cambiar**: ya
+   * identifica plantas, y hay etiquetas pegadas en macetas que lo llevan.
+   */
+  plantCount?: number
   submitting?: boolean
   submitLabel?: string
   submitError?: SpeciesSubmitError | null
 }>(), {
+  plantCount: 0,
   initial: () => ({
+    code: '',
     scientificName: '',
     commonName: '',
     minHumidity: 0,
@@ -54,7 +59,26 @@ const emit = defineEmits<{ submit: [SpeciesInput] }>()
 
 const { list: listSoilMixes } = useSoilMixes()
 
+const code = ref(props.initial.code)
+const codeLocked = computed(() => props.plantCount > 0)
 const scientificName = ref(props.initial.scientificName)
+
+/**
+ * En el **alta** el código se propone a partir del nombre científico mientras el usuario no lo haya
+ * tocado; en cuanto lo escribe a mano deja de seguir al nombre, y si lo vacía vuelve a seguirlo. En
+ * la edición ya hay un código —y puede estar en etiquetas—, así que nunca se sugiere ni se pisa.
+ */
+const isCreation = props.initial.code === ''
+const codeIsSuggested = ref(isCreation)
+
+function onCodeInput(value: string) {
+  code.value = value
+  codeIsSuggested.value = isCreation && value.trim() === ''
+}
+
+watch(scientificName, (name) => {
+  if (codeIsSuggested.value) code.value = suggestSpeciesCode(name)
+})
 const commonName = ref(props.initial.commonName)
 const wateringGuideline = ref(props.initial.wateringGuideline)
 const soilMixId = ref(props.initial.soilMixId)
@@ -103,6 +127,7 @@ const soilMixes = ref<SoilMix[]>([])
 const loadError = ref<string | null>(null)
 
 const errors = reactive({
+  code: '',
   scientificName: '',
   commonName: '',
   humidity: '',
@@ -122,7 +147,7 @@ const SECTIONS = [
 const section = ref('identity')
 
 const done = computed(() => [
-  ...(scientificName.value.trim() && commonName.value.trim() ? ['identity'] : []),
+  ...(code.value.trim() && scientificName.value.trim() && commonName.value.trim() ? ['identity'] : []),
   ...(wateringGuideline.value.trim() ? ['care'] : []),
   ...(soilMixId.value ? ['soil'] : []),
 ])
@@ -141,6 +166,10 @@ const num = (raw: string) => {
 const soilMixOptions = computed(() => soilMixes.value.map((mix) => ({ value: mix.id, label: mix.name })))
 
 /** El error del API mandaría sobre el propio: lo escribe quien conoce la regla. */
+const codeError = computed(
+  () => (props.submitError?.field === 'code' ? props.submitError.message : errors.code),
+)
+
 const scientificNameError = computed(
   () => (props.submitError?.field === 'scientificName' ? props.submitError.message : errors.scientificName),
 )
@@ -154,6 +183,7 @@ function rangeError(min: string, max: string, what: string): string {
 }
 
 function validate(): boolean {
+  errors.code = code.value.trim() === '' ? 'El código es obligatorio.' : ''
   errors.scientificName = scientificName.value.trim() === '' ? 'El nombre científico es obligatorio.' : ''
   errors.commonName = commonName.value.trim() === '' ? 'El nombre común es obligatorio.' : ''
   errors.watering = wateringGuideline.value.trim() === '' ? 'La pauta de riego es obligatoria.' : ''
@@ -163,7 +193,7 @@ function validate(): boolean {
   errors.light = rangeError(ranges.minLightHours, ranges.maxLightHours, 'número de horas de luz')
 
   // Llevar a la sección que falla: en un formulario de tres, «falta un campo» no basta.
-  const missing = (errors.scientificName || errors.commonName)
+  const missing = (errors.code || errors.scientificName || errors.commonName)
     ? 'identity'
     : (errors.watering || errors.humidity || errors.temperature || errors.light)
         ? 'care'
@@ -177,6 +207,7 @@ function submit() {
   if (!validate()) return
 
   emit('submit', {
+    code: code.value.trim(),
     scientificName: scientificName.value.trim(),
     commonName: commonName.value.trim(),
     minHumidity: num(ranges.minHumidity),
@@ -220,6 +251,25 @@ onMounted(async () => {
         title="Identificación"
         description="Los nombres con los que se reconoce la especie."
       >
+        <UiField
+          :model-value="code"
+          label="Código"
+          :help="codeLocked
+            ? undefined
+            : 'Prefijo de las etiquetas de sus ejemplares, por ejemplo CAT-GRUSS. Único; mayúsculas, cifras y guiones.'"
+          :error="codeError"
+          :disabled="codeLocked"
+          error-test="code-error"
+          data-test="code"
+          @update:model-value="onCodeInput"
+        />
+        <p v-if="codeIsSuggested && code" class="code-suggested" data-test="code-suggested">
+          Propuesto a partir del nombre científico: puedes cambiarlo.
+        </p>
+        <p v-if="codeLocked" class="code-locked" data-test="code-locked">
+          Ya identifica {{ plantCount }} {{ plantCount === 1 ? 'ejemplar' : 'ejemplares' }}: no se puede
+          cambiar, porque hay etiquetas que lo llevan.
+        </p>
         <UiField
           v-model="scientificName"
           label="Nombre científico"
@@ -541,5 +591,11 @@ onMounted(async () => {
   .year-preview :deep(.year) {
     min-width: 620px;
   }
+}
+.code-suggested,
+.code-locked {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  margin: calc(var(--space-2) * -1) 0 0;
 }
 </style>

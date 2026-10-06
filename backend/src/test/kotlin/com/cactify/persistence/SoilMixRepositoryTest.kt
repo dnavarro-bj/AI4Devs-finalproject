@@ -104,7 +104,10 @@ class SoilMixRepositoryTest : AbstractIntegrationTest() {
     description = "mezcla de prueba",
   )
 
+  private var speciesSeq = 0
+
   private fun species(scientificName: String, soilMix: SoilMix) = Species(
+    code = "TEST-${++speciesSeq}",
     scientificName = scientificName,
     commonName = "Especie de prueba",
     minHumidity = 10,

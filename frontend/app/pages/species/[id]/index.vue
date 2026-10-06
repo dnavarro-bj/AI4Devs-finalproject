@@ -9,7 +9,7 @@
  * lo segundo y el resultado no se parecía al prototipo ni de lejos.
  *
  * Real: los dos nombres, temperatura, humedad, luz, riego y la mezcla de sustrato, más corregir y
- * retirar. Marcado: código y ejemplares (T-15), exposición, entorno, año de cultivo y floración
+ * retirar. Marcado: la lista de ejemplares (T-21), exposición, entorno, año de cultivo y floración
  * (T-17), fotografías (T-19) y grupos de cultivo (T-21).
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
@@ -17,7 +17,7 @@ import { useSpecies } from '@features/species/composables/useSpecies'
 import SpeciesPhotosPanel from '@features/species/components/SpeciesPhotosPanel.vue'
 import SpeciesSpecimensPanel from '@features/species/components/SpeciesSpecimensPanel.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
-import type { SpeciesCare } from '@features/species/types/species.types'
+import type { SpeciesDetail } from '@features/species/types/species.types'
 import type { DomainError } from '@shared/types/api.types'
 
 const route = useRoute()
@@ -26,7 +26,7 @@ const id = String(route.params.id)
 const { detail, remove } = useSpecies()
 const { set: setBreadcrumbs } = useBreadcrumbs()
 
-const species = ref<SpeciesCare | null>(null)
+const species = ref<SpeciesDetail | null>(null)
 const loading = ref(true)
 const error = ref<DomainError | null>(null)
 
@@ -157,7 +157,7 @@ onMounted(load)
         visual-position="end"
       >
         <template #identity>
-          <UiIdentityCode value="CAT · T-15" pending data-mock="true" />
+          <UiIdentityCode :value="species.code" data-test="species-code" />
           <UiStatus tone="ok">Ficha completa</UiStatus>
         </template>
         <template #context>
@@ -279,7 +279,7 @@ onMounted(load)
             <dl class="facts">
               <div>
                 <dt>Código</dt>
-                <dd><code data-mock="true">CAT · T-15</code></dd>
+                <dd><code data-test="catalog-code">{{ species.code }}</code></dd>
               </div>
               <div>
                 <dt>Género</dt>
@@ -295,7 +295,7 @@ onMounted(load)
               </div>
               <div>
                 <dt>Ejemplares</dt>
-                <dd class="is-pending">— <small>T-15</small></dd>
+                <dd data-test="plant-count"><strong>{{ species.plantCount }}</strong></dd>
               </div>
             </dl>
           </UiPanel>

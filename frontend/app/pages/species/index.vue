@@ -199,7 +199,7 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
           <NuxtLink class="species-cell" :to="`/species/${asSpecies(row).id}`" data-test="species-link">
             <span class="species-cell__thumb" aria-hidden="true">✺</span>
             <span>
-              <code data-mock="true">CAT · T-15</code>
+              <code data-test="species-code">{{ asSpecies(row).code }}</code>
               <strong><em>{{ asSpecies(row).scientificName }}</em></strong>
               <small>{{ asSpecies(row).commonName }}</small>
             </span>
@@ -237,7 +237,7 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         <template #cell-specimens>
           <span class="count-link" data-mock="true" data-test="specimens-count">
             <span><strong>—</strong> ejemplares</span>
-            <small>T-15</small>
+            <small>T-21</small>
           </span>
         </template>
       </UiTable>
@@ -431,7 +431,7 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   display: block;
 }
 
-/* El código es de ejemplo hasta T-15: se marca, como en el inventario. */
+/* El código es el real: el que devuelve el API. */
 .species-cell code {
   border: 1px dashed var(--color-line-strong);
   color: var(--color-ink-faint);

@@ -25,6 +25,7 @@ describe('service del catálogo de especies', () => {
 
   const care = {
     id: '200001',
+    code: 'CAT-GRUSS',
     scientificName: 'Echinocactus grusonii',
     commonName: 'Asiento de suegra',
     minHumidity: 10,
@@ -38,6 +39,7 @@ describe('service del catálogo de especies', () => {
   }
 
   const input = {
+    code: 'CAT-GRUSS',
     scientificName: 'Echinocactus grusonii',
     commonName: 'Asiento de suegra',
     minHumidity: 10,
@@ -149,5 +151,59 @@ describe('service del catálogo de especies', () => {
     api.put.mockRejectedValue(new TypeError('algo raro'))
 
     await expect(speciesApiService.update('200001', input)).resolves.toMatchObject({ success: false })
+  })
+
+  // --- Código de la especie (codigos-de-inventario) ---
+
+  it('el alta envía el código, que es obligatorio, junto al resto de la ficha', async () => {
+    api.post.mockResolvedValue(care)
+
+    await speciesApiService.create(input)
+
+    expect(api.post).toHaveBeenCalledWith('/species', expect.objectContaining({ code: 'CAT-GRUSS' }))
+  })
+
+  it('la corrección envía también el código: el PUT es reemplazo completo', async () => {
+    api.put.mockResolvedValue(care)
+
+    await speciesApiService.update('200001', input)
+
+    expect(api.put).toHaveBeenCalledWith('/species/200001', expect.objectContaining({ code: 'CAT-GRUSS' }))
+  })
+
+  it('la ficha trae el código y cuántos ejemplares tiene', async () => {
+    api.get.mockResolvedValue({ ...care, plantCount: 3 })
+
+    const result = await speciesApiService.detail('200001')
+
+    expect(result.data!.code).toBe('CAT-GRUSS')
+    expect(result.data!.plantCount).toBe(3)
+  })
+
+  it('un código ya usado (409) sale como valor con su mensaje', async () => {
+    api.post.mockRejectedValue(new ApiError(409, "Ya existe una especie con el código 'CAT-GRUSS'"))
+
+    const result = await speciesApiService.create(input)
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.CONFLICT)
+    expect(result.error!.message).toContain('código')
+  })
+
+  it('cambiar el código con ejemplares (409) sale como valor, no como excepción', async () => {
+    api.put.mockRejectedValue(new ApiError(409, "El código 'CAT-GRUSS' ya identifica ejemplares de la especie"))
+
+    const result = await speciesApiService.update('200001', { ...input, code: 'CAT-OTRO' })
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.CONFLICT)
+  })
+
+  it('un código ausente o con formato inválido (400) sale como valor', async () => {
+    api.post.mockRejectedValue(new ApiError(400, 'code: el código es obligatorio'))
+
+    const result = await speciesApiService.create({ ...input, code: '' })
+
+    expect(result.error!.code).toBe(ErrorCodes.VALIDATION_ERROR)
   })
 })

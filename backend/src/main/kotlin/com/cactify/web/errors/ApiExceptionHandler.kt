@@ -3,6 +3,8 @@ package com.cactify.web.errors
 import com.cactify.application.AIProviderException
 import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
+import com.cactify.application.DuplicateSpeciesCodeException
+import com.cactify.application.SpeciesCodeLockedException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
 import com.cactify.application.LocationInUseException
@@ -148,6 +150,10 @@ class ApiExceptionHandler {
   fun onSoilMixInUse(ex: SoilMixInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
 
+  @ExceptionHandler(DuplicateSpeciesCodeException::class, SpeciesCodeLockedException::class)
+  fun onSpeciesCodeConflict(ex: RuntimeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El código entra en conflicto", request)
+
   @ExceptionHandler(DuplicateScientificNameException::class)
   fun onDuplicateScientificName(ex: DuplicateScientificNameException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso ya existe", request)
@@ -163,7 +169,12 @@ class ApiExceptionHandler {
    */
   @ExceptionHandler(DataIntegrityViolationException::class)
   fun onIntegrityViolation(ex: DataIntegrityViolationException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
-    if (SPECIES_NAME_CONSTRAINT !in (rootMessage(ex) ?: "")) throw ex
+    val cause = rootMessage(ex) ?: ""
+    if (SPECIES_CODE_CONSTRAINT in cause) {
+      log.warn("Código de especie duplicado detectado por la restricción en {}", request.requestURI)
+      return body(HttpStatus.CONFLICT, "Ya existe una especie con ese código", request)
+    }
+    if (SPECIES_NAME_CONSTRAINT !in cause) throw ex
     log.warn("Nombre científico duplicado detectado por la restricción en {}", request.requestURI)
     return body(HttpStatus.CONFLICT, "Ya existe una especie con ese nombre científico", request)
   }
@@ -184,6 +195,7 @@ class ApiExceptionHandler {
   private companion object {
     val log = LoggerFactory.getLogger(ApiExceptionHandler::class.java)
     const val SPECIES_NAME_CONSTRAINT = "species_scientific_name_unique"
+    const val SPECIES_CODE_CONSTRAINT = "species_code_unique"
   }
 
   private fun rootMessage(ex: Throwable): String? {

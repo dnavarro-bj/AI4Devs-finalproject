@@ -57,8 +57,8 @@ class SchemaMigrationTest : AbstractIntegrationTest() {
 
     assertFailsWith<DataIntegrityViolationException> {
       jdbcTemplate.update(
-        "INSERT INTO plant (id, nickname, location_id, species_id) VALUES (?, ?, ?, ?)",
-        1001L, "Pepito", locationId, 999999L,
+        "INSERT INTO plant (id, code, nickname, location_id, species_id) VALUES (?, ?, ?, ?, ?)",
+        1001L, "TEST-A-01", "Pepito", locationId, 999999L,
       )
     }
   }
@@ -81,9 +81,9 @@ class SchemaMigrationTest : AbstractIntegrationTest() {
       jdbcTemplate.update(
         """
         INSERT INTO species
-          (id, scientific_name, common_name, min_humidity, max_humidity, min_temperature, max_temperature,
+          (id, code, scientific_name, common_name, min_humidity, max_humidity, min_temperature, max_temperature,
            min_light_hours, max_light_hours, watering_guideline, soil_mix_id)
-        VALUES (?, NULL, 'Test', 10, 20, 10, 20, 6, 10, 'weekly', ?)
+        VALUES (?, 'TEST-A', NULL, 'Test', 10, 20, 10, 20, 6, 10, 'weekly', ?)
         """.trimIndent(),
         3001L, soilMixId,
       )
@@ -123,11 +123,11 @@ class SchemaMigrationTest : AbstractIntegrationTest() {
     jdbcTemplate.update(
       """
       INSERT INTO species
-        (id, scientific_name, common_name, min_humidity, max_humidity, min_temperature, max_temperature,
+        (id, code, scientific_name, common_name, min_humidity, max_humidity, min_temperature, max_temperature,
          min_light_hours, max_light_hours, watering_guideline, soil_mix_id)
-      VALUES (?, 'Test species', 'Test', 10, 20, 10, 20, 6, 10, 'weekly', ?)
+      VALUES (?, ?, 'Test species', 'Test', 10, 20, 10, 20, 6, 10, 'weekly', ?)
       """.trimIndent(),
-      id, soilMixId,
+      id, "TEST-${id % 1_000_000_000_000L}", soilMixId,
     )
     return id
   }
@@ -137,8 +137,8 @@ class SchemaMigrationTest : AbstractIntegrationTest() {
     val speciesId = insertSpecies()
     val id = System.nanoTime()
     jdbcTemplate.update(
-      "INSERT INTO plant (id, nickname, location_id, species_id) VALUES (?, 'Pepito', ?, ?)",
-      id, locationId, speciesId,
+      "INSERT INTO plant (id, code, nickname, location_id, species_id) VALUES (?, ?, 'Pepito', ?, ?)",
+      id, "TEST-$id", locationId, speciesId,
     )
     return id
   }

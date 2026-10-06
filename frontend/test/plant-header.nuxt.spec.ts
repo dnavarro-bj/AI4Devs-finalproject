@@ -38,7 +38,7 @@ describe('PlantHeader', () => {
   it('marca como ejemplo lo que el API todavía no sirve', async () => {
     const wrapper = await header()
 
-    // Código, estado, contexto y fotografía son maqueta: la pantalla lo dice, no solo el código.
+    // Estado, contexto y fotografía son maqueta: la pantalla lo dice. El código, no: es el real.
     const marks = wrapper.findAll('[data-mock="true"]')
     expect(marks.length).toBeGreaterThanOrEqual(3)
     expect(wrapper.text().toLowerCase()).toContain('ejemplo')
@@ -48,6 +48,15 @@ describe('PlantHeader', () => {
     const wrapper = await header()
 
     expect(wrapper.find('[data-test="plant-code"]').text()).toBe('CAT-GRUSS-01')
+  })
+
+  /** Escenario «Código real en la ficha y en la edición». */
+  it('el código es el del API, no una constante, y no se marca como ejemplo', async () => {
+    const wrapper = await header({ plant: { ...plantDetail(), code: 'CAT-MAMMI-12' } })
+
+    const code = wrapper.find('[data-test="plant-code"]')
+    expect(code.text()).toBe('CAT-MAMMI-12')
+    expect(code.attributes('data-mock')).toBeUndefined()
   })
 
   it('una planta sin tags no rompe la cabecera', async () => {

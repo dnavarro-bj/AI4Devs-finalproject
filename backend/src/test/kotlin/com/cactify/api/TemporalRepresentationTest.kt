@@ -75,7 +75,7 @@ class TemporalRepresentationTest : AbstractApiIntegrationTest() {
   private fun persistCareRecord(recordedAt: Instant): CareRecord {
     val species = entityManager.find(Species::class.java, SpeciesId.from(seededSpeciesId))
     val location = entityManager.find(Location::class.java, LocationId.from(seededLocationId))
-    val plant = Plant(nickname = "Bola temporal", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Bola temporal", location = location, species = species)
     entityManager.persist(plant)
     val record = CareRecord.record(plant = plant, humidity = 30, recordedAt = recordedAt, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
     entityManager.persist(record)

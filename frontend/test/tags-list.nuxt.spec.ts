@@ -108,7 +108,7 @@ describe('catálogo de etiquetas', () => {
     await settle()
 
     for (const [test, ticket] of [
-      ['col-examples', 'T-15'],
+      ['col-examples', 'T-21'],
       ['col-updated', 'T-20'],
       ['duplicates', 'T-21'],
       ['bulk', 'T-24'],

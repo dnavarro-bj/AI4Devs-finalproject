@@ -3,7 +3,9 @@ package com.cactify.application
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.SoilMixSummaryResponse
 import com.cactify.application.dto.SpeciesCareResponse
+import com.cactify.application.dto.SpeciesDetailResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
+import com.cactify.domain.InventoryCodes
 import com.cactify.domain.SoilMix
 import com.cactify.domain.SoilMixId
 import com.cactify.domain.Species
@@ -30,6 +32,13 @@ import org.springframework.transaction.annotation.Transactional
  * los rangos y su coherencia los defiende `Species` en su `init` (ADR-011), y no se duplican.
  */
 data class SpeciesRequest(
+  /**
+   * El código de inventario (`CAT-GRUSS`): **obligatorio**, lo escribe quien da de alta la especie.
+   * Nullable en el contrato para que su ausencia, igual que su vacío, sea un `400` con el mismo
+   * mensaje: con un tipo no nulo, Jackson rechazaría la ausencia con un texto técnico.
+   */
+  @field:NotBlank(message = "el código es obligatorio")
+  val code: String? = null,
   @field:NotBlank(message = "el nombre científico es obligatorio")
   val scientificName: String,
   @field:NotBlank(message = "el nombre común es obligatorio")
@@ -64,8 +73,11 @@ class SpeciesService(
     if (speciesRepository.findByScientificName(scientificName) != null) {
       throw DuplicateScientificNameException(scientificName)
     }
+    val code = normalizedCode(request)
+    if (speciesRepository.findByCode(code) != null) throw DuplicateSpeciesCodeException(code)
     val soilMix = requireSoilMix(request.soilMixId)
     val species = Species(
+      code = code,
       scientificName = scientificName,
       commonName = request.commonName.trim(),
       minHumidity = request.minHumidity,
@@ -92,7 +104,16 @@ class SpeciesService(
     if (clash != null && clash.id != species.id) {
       throw DuplicateScientificNameException(scientificName)
     }
+    val code = normalizedCode(request)
+    if (code != species.code) {
+      // Ya identifica plantas: hay etiquetas pegadas en macetas que lo llevan. Enviar el mismo
+      // código no es un cambio, y se acepta aunque haya ejemplares.
+      if (plantRepository.existsBySpeciesId(species.id)) throw SpeciesCodeLockedException(species.code)
+      val taken = speciesRepository.findByCode(code)
+      if (taken != null && taken.id != species.id) throw DuplicateSpeciesCodeException(code)
+    }
     species.update(
+      code = code,
       scientificName = scientificName,
       commonName = request.commonName.trim(),
       minHumidity = request.minHumidity,
@@ -123,7 +144,14 @@ class SpeciesService(
     PageResponse.of(speciesRepository.findAll(pageable)) { it.toSummary() }
 
   @Transactional(readOnly = true)
-  fun findById(id: String): SpeciesCareResponse = requireSpecies(id).toCare()
+  fun findById(id: String): SpeciesDetailResponse {
+    val species = requireSpecies(id)
+    return species.toDetail(plantRepository.countBySpeciesId(species.id))
+  }
+
+  /** Mayúsculas y sin espacios en los extremos; la presencia ya la garantiza `@NotBlank`. */
+  private fun normalizedCode(request: SpeciesRequest): String =
+    InventoryCodes.normalize(requireNotNull(request.code) { "el código es obligatorio" })
 
   private fun requireSoilMix(soilMixId: String): SoilMix =
     soilMixRepository.findOneById(SoilMixId.from(soilMixId))
@@ -133,7 +161,7 @@ class SpeciesService(
     speciesRepository.findOneById(SpeciesId.from(id)) ?: throw SpeciesNotFoundException(id)
 
   private fun Species.toSummary() =
-    SpeciesSummaryResponse(id.toString(), scientificName, commonName)
+    SpeciesSummaryResponse(id.toString(), code, scientificName, commonName)
 
   /**
    * Reutiliza el DTO que ya sirve `GET /plants/{id}`, sin duplicarlo.
@@ -143,8 +171,25 @@ class SpeciesService(
    * este. El `N+1` que temía no aplica: este DTO solo aparece en fichas de una entidad —`/species/{id}`
    * y anidado en `/plants/{id}`—; los listados usan `SpeciesSummaryResponse`, que no la lleva.
    */
+  private fun Species.toDetail(plantCount: Long) = SpeciesDetailResponse(
+    id = id.toString(),
+    code = code,
+    scientificName = scientificName,
+    commonName = commonName,
+    minHumidity = minHumidity,
+    maxHumidity = maxHumidity,
+    minTemperature = minTemperature,
+    maxTemperature = maxTemperature,
+    minLightHours = minLightHours,
+    maxLightHours = maxLightHours,
+    wateringGuideline = wateringGuideline,
+    soilMix = SoilMixSummaryResponse(soilMix.id.toString(), soilMix.name),
+    plantCount = plantCount,
+  )
+
   private fun Species.toCare() = SpeciesCareResponse(
     id = id.toString(),
+    code = code,
     scientificName = scientificName,
     commonName = commonName,
     minHumidity = minHumidity,

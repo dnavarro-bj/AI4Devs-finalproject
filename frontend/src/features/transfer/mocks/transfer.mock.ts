@@ -2,8 +2,8 @@
  * DATOS DE EJEMPLO — SIN TICKET QUE LOS SUSTITUYA TODAVÍA.
  *
  * Ningún ticket del backlog recoge la importación CSV, la actividad de transferencias ni la
- * generación de exportaciones: T-21 solo pide exportar el resultado filtrado y T-15 los códigos y
- * el QR de las etiquetas. Hace falta abrir uno; hasta entonces esta maqueta es lo único que hay.
+ * generación de exportaciones: T-21 solo pide exportar el resultado filtrado y T-15 los códigos
+ * (ya hechos), no el QR ni el PDF de las etiquetas. Hace falta abrir uno; hasta entonces esta maqueta es lo único que hay.
  *
  * Nadie más debe importarlo: solo el service de `transfer`.
  */

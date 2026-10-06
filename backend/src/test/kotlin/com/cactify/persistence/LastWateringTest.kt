@@ -48,7 +48,7 @@ class LastWateringTest : AbstractIntegrationTest() {
   private fun setUpPlant() {
     val species = entityManager.find(Species::class.java, SpeciesId.from("200001"))
     val location = entityManager.find(Location::class.java, LocationId.from("300001"))
-    plant = Plant(nickname = "Bola con riegos", location = location, species = species)
+    plant = Plant(code = "TEST-A-01", nickname = "Bola con riegos", location = location, species = species)
     entityManager.persist(plant)
   }
 

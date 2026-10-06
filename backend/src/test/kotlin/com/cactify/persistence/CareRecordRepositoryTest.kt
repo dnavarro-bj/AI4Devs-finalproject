@@ -35,10 +35,12 @@ class CareRecordRepositoryTest : AbstractIntegrationTest() {
   @PersistenceContext
   lateinit var entityManager: EntityManager
 
+  private var plantSeq = 0
+
   private fun plant(nickname: String): Plant {
     val species = entityManager.find(Species::class.java, SpeciesId.from("200001"))
     val location = entityManager.find(Location::class.java, LocationId.from("300001"))
-    return Plant(nickname = nickname, location = location, species = species)
+    return Plant(code = "TEST-A-${"%02d".format(++plantSeq)}", nickname = nickname, location = location, species = species)
       .also { entityManager.persist(it) }
   }
 

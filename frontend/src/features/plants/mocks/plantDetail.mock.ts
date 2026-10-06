@@ -10,9 +10,6 @@
  * programador, la marca en pantalla protege la conversación sobre el producto.
  */
 
-/** Código de inventario — lo sustituye T-15. */
-export const MOCK_CODE = 'CAT-GRUSS-01'
-
 /** Estado del ejemplar — lo sustituye T-16. */
 export const MOCK_STATUS = { label: 'Activa', tone: 'ok' as const }
 

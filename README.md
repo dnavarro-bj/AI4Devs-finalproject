@@ -360,6 +360,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 **Species** (ficha de especie — base de conocimiento determinista de cuidados recomendados)
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
+* `code`: String. **Código de inventario** (`CAT-GRUSS`): único, obligatorio y escrito por quien da de alta la especie. Letras mayúsculas y cifras con guiones entre grupos, hasta 20 caracteres. Prefijo del código de cada uno de sus ejemplares. **Solo se puede corregir mientras la especie no tiene ejemplares.**
+* `nextSequence`: Int. El número que llevará el siguiente ejemplar. Solo crece: un número asignado no se reutiliza. Se toma con la fila bloqueada, de modo que dos altas simultáneas no repiten número.
 * `scientificName`: String. Nombre científico (género + epíteto).
 * `commonName`: String. Nombre común.
 * `minHumidity` / `maxHumidity`: Int. Rango de humedad recomendado (%).
@@ -377,7 +379,8 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 **Plant** (ejemplar de la colección)
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
-* `nickname`: String. Nombre o código identificativo del ejemplar. **Invariante**: no puede quedar en blanco.
+* `code`: String. **Código de inventario** del ejemplar (`CAT-GRUSS-01`): el código de su especie más un número correlativo propio de esa especie, con al menos dos cifras (`-100` pasa con naturalidad). Único, asignado al dar de alta y **inmutable**: no cambia al editar la planta ni al cambiarle la especie.
+* `nickname`: String. Nombre libre del ejemplar. **Invariante**: no puede quedar en blanco.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
 * La personalización de cuidados por ejemplar todavía no forma parte del esquema actual; está diseñada para T-16 en el [borrador de evolución del modelo](docs/diagramas/borrador-modelo-datos-gestion.md), pero no se presenta como implementada.
@@ -587,6 +590,7 @@ components:
   schemas:
     CreatePlant:
       type: object
+      description: El código de inventario no se envía; lo asigna el servidor.
       required: [nickname, locationId, speciesId]
       properties:
         nickname: { type: string, minLength: 1 }
@@ -594,9 +598,10 @@ components:
         speciesId: { type: string, pattern: '^[0-9]+$' }
     PlantDetail:
       type: object
-      required: [id, nickname, location, species, tags]
+      required: [id, code, nickname, location, species, tags]
       properties:
         id: { type: string }
+        code: { type: string, example: CAT-GRUSS-01 }
         nickname: { type: string }
         createdAt: { type: [string, 'null'], format: date-time }
         location: { type: object }

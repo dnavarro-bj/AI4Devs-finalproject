@@ -10,7 +10,7 @@
  *
  * **Híbrida, y marcada.** Real: el nombre, cuántas plantas tienen cada etiqueta —el listado lo
  * trae, resuelto en una sola consulta— y el total del inventario, del que sale el porcentaje.
- * Marcado con su ticket: los ejemplares de muestra (T-15), la fecha de modificación (T-20), la
+ * Marcado con su ticket: los ejemplares de muestra (T-21), la fecha de modificación (T-20), la
  * detección de duplicados (T-21) y las acciones por lote (T-24).
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
@@ -209,10 +209,10 @@ const asTag = (row: unknown) => row as TagListItem
           </span>
         </template>
 
-        <!-- Los códigos de los ejemplares son T-15: hoy una planta no tiene código estable. -->
+        <!-- Los códigos ya existen (T-15), pero las muestras por etiqueta piden una consulta por fila: T-21. -->
         <template #cell-examples>
           <span data-mock="true" data-test="col-examples" class="cell-mock">
-            — <small>T-15</small>
+            — <small>T-21</small>
           </span>
         </template>
 

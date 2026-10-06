@@ -10,7 +10,7 @@
  *
  * **Simulación, y declarada.** No sube, no descarga y no toca el inventario. Ningún ticket del
  * backlog recoge esto, así que se marca «sin ticket»; lo que sí tiene dueño —exportar el filtro
- * (T-21), el código y el QR de las etiquetas (T-15)— lleva el suyo.
+ * (T-21), las etiquetas con QR, que ningún ticket recoge todavía— lleva el suyo.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePendingAction } from '@shared/composables/usePendingAction'
@@ -37,7 +37,7 @@ const currentStep = computed(() => ({ file: 0, review: 1, complete: 2 })[step.va
 const contentOptions = [
   { value: 'full', label: 'Inventario completo', description: 'Todas las plantas y sus relaciones' },
   { value: 'filtered', label: 'Plantas filtradas', description: 'El último filtro guardado · lo habilita T-21' },
-  { value: 'labels', label: 'Etiquetas físicas', description: 'Código y QR para las macetas · lo habilita T-15' },
+  { value: 'labels', label: 'Etiquetas físicas', description: 'Código y QR para las macetas · sin ticket: el código ya existe, el QR y el PDF no' },
 ]
 
 const formatOptions = [

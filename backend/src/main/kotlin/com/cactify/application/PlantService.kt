@@ -41,9 +41,12 @@ class PlantService(
   @Transactional
   fun create(nickname: String, locationId: String, speciesId: String): PlantDetailResponse {
     val location = requireLocation(locationId)
-    val species = requireSpecies(speciesId)
+    // La especie con su fila bloqueada: serializa las altas de la misma especie, y el número se toma
+    // y se guarda en la misma transacción que crea la planta. Se bloquea lo más tarde posible.
+    val species = speciesRepository.findOneByIdForUpdate(SpeciesId.from(speciesId))
+      ?: throw InvalidReferenceException("La especie", speciesId)
     val plant = plantRepository.save(
-      Plant(nickname = nickname.trim(), location = location, species = species),
+      Plant(code = species.nextPlantCode(), nickname = nickname.trim(), location = location, species = species),
     )
     return plant.toDetail()
   }
@@ -114,11 +117,13 @@ class PlantService(
 
   private fun Plant.toDetail() = PlantDetailResponse(
     id = id.toString(),
+    code = code,
     nickname = nickname,
     createdAt = createdAt,
     location = LocationResponse(location.id.toString(), location.name),
     species = SpeciesCareResponse(
       id = species.id.toString(),
+      code = species.code,
       scientificName = species.scientificName,
       commonName = species.commonName,
       minHumidity = species.minHumidity,
@@ -135,9 +140,10 @@ class PlantService(
 
   private fun Plant.toSummary() = PlantSummaryResponse(
     id = id.toString(),
+    code = code,
     nickname = nickname,
     createdAt = createdAt,
     location = LocationResponse(location.id.toString(), location.name),
-    species = SpeciesSummaryResponse(species.id.toString(), species.scientificName, species.commonName),
+    species = SpeciesSummaryResponse(species.id.toString(), species.code, species.scientificName, species.commonName),
   )
 }

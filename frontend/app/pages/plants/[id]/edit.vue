@@ -14,7 +14,6 @@ import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantDetail } from '@features/plants/types/plant.types'
 import type { PlantFormValues } from '@features/plants/components/PlantForm.vue'
-import { MOCK_CODE } from '@features/plants/mocks/plantDetail.mock'
 
 const route = useRoute()
 const plantId = String(route.params.id)
@@ -84,7 +83,7 @@ async function onSubmit(values: PlantFormValues) {
           locationId: plant.location.id,
           speciesId: plant.species.id,
         }"
-        :locked-code="MOCK_CODE"
+        :locked-code="plant.code"
         :submitting="submitting"
         submit-label="Guardar cambios"
         @submit="onSubmit"

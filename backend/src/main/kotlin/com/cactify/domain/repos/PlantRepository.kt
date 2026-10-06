@@ -22,4 +22,7 @@ interface PlantRepository {
    * comprobación el borrado reventaría contra la FK y acabaría en un `500`.
    */
   fun existsBySpeciesId(speciesId: SpeciesId): Boolean
+
+  /** Cuántos ejemplares tiene la especie: decide si su código se puede corregir. */
+  fun countBySpeciesId(speciesId: SpeciesId): Long
 }

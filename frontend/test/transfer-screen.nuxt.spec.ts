@@ -111,7 +111,7 @@ describe('importar y exportar', () => {
 
     const options = wrapper.find('[data-test="export-panel"]').text()
     expect(options).toContain('T-21')
-    expect(options).toContain('T-15')
+    expect(options.toLowerCase()).toContain('sin ticket')
 
     await wrapper.find('[data-test="generate-export"]').trigger('click')
     expect(wrapper.find('[data-test="export-result"]').text()).toContain('.csv')

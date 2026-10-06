@@ -21,7 +21,7 @@ class CareRecordConstraintsTest : AbstractIntegrationTest() {
   private fun insertPlant(): Long {
     val id = System.nanoTime()
     jdbcTemplate.update(
-      "INSERT INTO plant (id, nickname, location_id, species_id) VALUES (?, 'Bola de restricciones', 300001, 200001)",
+      "INSERT INTO plant (id, code, nickname, location_id, species_id) VALUES (?, 'TEST-A-01', 'Bola de restricciones', 300001, 200001)",
       id,
     )
     return id

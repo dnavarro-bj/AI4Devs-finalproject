@@ -21,10 +21,11 @@ describe('listado del inventario', () => {
 
   const plant = (id: string, nickname: string): PlantSummary => ({
     id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
     nickname,
     createdAt: '2026-09-01T10:00:00Z',
     location: { id: '300001', name: 'Invernadero 1' },
-    species: { id: '200001', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
   })
 
   const page = (content: PlantSummary[], overrides: Partial<PageResponse<PlantSummary>> = {}): PageResponse<PlantSummary> => ({
@@ -98,10 +99,11 @@ describe('inventario a escala', () => {
 
   const plant = (id: string, nickname: string): PlantSummary => ({
     id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
     nickname,
     createdAt: '2026-09-01T10:00:00Z',
     location: { id: '300001', name: 'Invernadero 1' },
-    species: { id: '200001', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
   })
 
   const page = (content: PlantSummary[]) => ({
@@ -179,10 +181,11 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   const plant = (id: string, nickname: string): PlantSummary => ({
     id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
     nickname,
     createdAt: '2026-09-01T10:00:00Z',
     location: { id: '300001', name: 'Invernadero 1' },
-    species: { id: '200001', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
   })
 
   function serve(content: PlantSummary[]) {
@@ -275,14 +278,19 @@ describe('inventario: columnas y filtros del wireframe', () => {
     expect(actionsHeader.find('.sr-only').exists()).toBe(true)
   })
 
-  it('el código de ejemplo refleja la especie en vez de repetir el prefijo de Grusonii', async () => {
+  /** Escenario «Código real en el inventario»: el que devuelve el API, sin fabricar nada. */
+  it('cada fila muestra el código real de la planta, sin marca de maqueta', async () => {
     const mammillaria = plant('22', 'Dedo de dama')
-    mammillaria.species.scientificName = 'Mammillaria elongata'
-    serve([mammillaria])
+    mammillaria.code = 'CAT-MAMMI-07'
+    mammillaria.species = { id: '200002', code: 'CAT-MAMMI', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' }
+    serve([mammillaria, plant('1', 'Bola verde')])
     const wrapper = await mountSuspended(PlantsIndex)
     await settle()
 
-    expect(wrapper.find('tbody code').text()).toBe('CAT-MAMMI-22')
+    const codes = wrapper.findAll('tbody code')
+    expect(codes.map((code) => code.text())).toEqual(['CAT-MAMMI-07', 'CAT-GRUSS-01'])
+    expect(wrapper.find('tbody code').attributes('data-mock')).toBeUndefined()
+    expect(wrapper.find('tbody').text()).not.toContain('T-15')
   })
 
   it('las columnas se pueden ocultar, salvo la identificativa', async () => {

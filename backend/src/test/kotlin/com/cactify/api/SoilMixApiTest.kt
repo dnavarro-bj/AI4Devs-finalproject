@@ -145,6 +145,7 @@ class SoilMixApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/species").contentType(MediaType.APPLICATION_JSON).content(
         json(
+          "code" to "TEST-" + scientificName.take(5).uppercase(),
           "scientificName" to scientificName,
           "commonName" to "Especie de prueba",
           "minHumidity" to 10,

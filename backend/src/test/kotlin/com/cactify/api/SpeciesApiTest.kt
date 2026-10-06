@@ -260,7 +260,7 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/species")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(speciesBody(scientificName = "Echinocactus grusonii", commonName = "Otro nombre")),
+        .content(speciesBody(code = "TEST-B", scientificName = "Echinocactus grusonii", commonName = "Otro nombre")),
     )
       .andExpect(status().isConflict)
       .andExpect(jsonPath("$.status").value(409))
@@ -419,7 +419,8 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
       put("/species/$speciesId")
         .contentType(MediaType.APPLICATION_JSON)
         .content(
-          speciesBody(scientificName = "Echinocereus rigidissimus", minHumidity = 20, maxHumidity = 40),
+          // El código no cambia una vez que la especie tiene ejemplares: se reenvía el mismo.
+          speciesBody(code = codeOf(speciesId), scientificName = "Echinocereus rigidissimus", minHumidity = 20, maxHumidity = 40),
         ),
     ).andExpect(status().isOk)
 
@@ -485,6 +486,7 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
   }
 
   private fun speciesBody(
+    code: String = "TEST-A",
     scientificName: String = "Ferocactus glaucescens",
     commonName: String = "Biznaga azul",
     minHumidity: Int = 10,
@@ -496,6 +498,7 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
     wateringGuideline: String = "cada 15 dias en crecimiento",
     soilMixId: String? = seededSoilMixId.toString(),
   ) = json(
+    "code" to code,
     "scientificName" to scientificName,
     "commonName" to commonName,
     "minHumidity" to minHumidity,
@@ -523,6 +526,8 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
    * Siembra por SQL a propósito: estos escenarios son del listado, y no deben depender de que
    * `POST /species` ya exista ni de que siga funcionando.
    */
+  private fun codeOf(id: Long) = "TEST-${id % 1_000_000_000_000L}"
+
   private fun insertSpecies(
     scientificName: String,
     commonName: String = "Especie de prueba",
@@ -538,11 +543,12 @@ class SpeciesApiTest : AbstractApiIntegrationTest() {
     jdbcTemplate.update(
       """
       INSERT INTO species
-          (id, scientific_name, common_name, min_humidity, max_humidity, min_temperature,
+          (id, code, scientific_name, common_name, min_humidity, max_humidity, min_temperature,
            max_temperature, min_light_hours, max_light_hours, watering_guideline, soil_mix_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       """.trimIndent(),
       id,
+      codeOf(id),
       scientificName,
       commonName,
       minHumidity,

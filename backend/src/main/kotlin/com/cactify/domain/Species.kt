@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 class Species(
   @EmbeddedId
   override val id: SpeciesId = SpeciesId.create(),
+  code: String,
   scientificName: String,
   commonName: String,
   minHumidity: Int,
@@ -23,6 +24,18 @@ class Species(
   wateringGuideline: String,
   soilMix: SoilMix,
 ) : AbstractEntity<SpeciesId>() {
+
+  /** El código de inventario (`CAT-GRUSS`): prefijo del de cada uno de sus ejemplares. */
+  var code: String = code
+    private set
+
+  /**
+   * El número que llevará el **siguiente** ejemplar. Solo crece: un número asignado no se reutiliza.
+   * Se toma con [nextPlantCode], que es el único camino, y con la fila bloqueada (ver
+   * `SpeciesRepository.findOneByIdForUpdate`).
+   */
+  var nextSequence: Int = 1
+    private set
 
   var scientificName: String = scientificName
     private set
@@ -57,6 +70,7 @@ class Species(
     private set
 
   init {
+    InventoryCodes.requireValid(code, "de la especie", InventoryCodes.SPECIES_MAX_LENGTH)
     validate(
       scientificName,
       commonName,
@@ -77,6 +91,7 @@ class Species(
    * medio actualizar.
    */
   fun update(
+    code: String,
     scientificName: String,
     commonName: String,
     minHumidity: Int,
@@ -88,6 +103,7 @@ class Species(
     wateringGuideline: String,
     soilMix: SoilMix,
   ) {
+    InventoryCodes.requireValid(code, "de la especie", InventoryCodes.SPECIES_MAX_LENGTH)
     validate(
       scientificName,
       commonName,
@@ -99,6 +115,7 @@ class Species(
       maxLightHours,
       wateringGuideline,
     )
+    this.code = code
     this.scientificName = scientificName
     this.commonName = commonName
     this.minHumidity = minHumidity
@@ -109,6 +126,17 @@ class Species(
     this.maxLightHours = maxLightHours
     this.wateringGuideline = wateringGuideline
     this.soilMix = soilMix
+  }
+
+  /**
+   * El código del siguiente ejemplar: el de la especie y un número correlativo con **al menos dos
+   * cifras** (`CAT-GRUSS-01`), que crece con naturalidad (`-100`). Avanza el contador en el mismo
+   * paso, de modo que no se puede leer un número sin consumirlo.
+   */
+  fun nextPlantCode(): String {
+    val number = nextSequence
+    nextSequence = number + 1
+    return "$code-${number.toString().padStart(2, '0')}"
   }
 
   private companion object {

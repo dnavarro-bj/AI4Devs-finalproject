@@ -20,8 +20,8 @@ class AIRecommendationConstraintsTest : AbstractIntegrationTest() {
   private fun insertCareRecord(): Long {
     val plantId = System.nanoTime()
     jdbcTemplate.update(
-      "INSERT INTO plant (id, nickname, location_id, species_id) VALUES (?, 'Bola', 300001, 200001)",
-      plantId,
+      "INSERT INTO plant (id, code, nickname, location_id, species_id) VALUES (?, ?, 'Bola', 300001, 200001)",
+      plantId, "TEST-$plantId",
     )
     val recordId = System.nanoTime() + 1
     jdbcTemplate.update(

@@ -63,11 +63,12 @@ class DomainConstraintsTest : AbstractIntegrationTest() {
   ) = jdbcTemplate.update(
     """
     INSERT INTO species
-        (id, scientific_name, common_name, min_humidity, max_humidity, min_temperature,
+        (id, code, scientific_name, common_name, min_humidity, max_humidity, min_temperature,
          max_temperature, min_light_hours, max_light_hours, watering_guideline, soil_mix_id)
-    VALUES (?, ?, 'Especie de prueba', ?, ?, ?, ?, ?, ?, 'cada 10 dias', 100001)
+    VALUES (?, ?, ?, 'Especie de prueba', ?, ?, ?, ?, ?, ?, 'cada 10 dias', 100001)
     """.trimIndent(),
     System.nanoTime(),
+    "TEST-${System.nanoTime() % 1_000_000_000_000L}",
     scientificName,
     minHumidity,
     maxHumidity,

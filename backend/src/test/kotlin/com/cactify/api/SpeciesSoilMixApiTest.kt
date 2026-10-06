@@ -54,6 +54,7 @@ class SpeciesSoilMixApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       put("/species/$id").contentType(MediaType.APPLICATION_JSON).content(
         json(
+          "code" to detail.get("code").asText(),
           "scientificName" to detail.get("scientificName").asText(),
           "commonName" to "Nombre común corregido",
           "minHumidity" to detail.get("minHumidity").asInt(),
@@ -87,6 +88,7 @@ class SpeciesSoilMixApiTest : AbstractApiIntegrationTest() {
     val body = mockMvc.perform(
       post("/species").contentType(MediaType.APPLICATION_JSON).content(
         json(
+          "code" to "TEST-" + scientificName.take(5).uppercase(),
           "scientificName" to scientificName,
           "commonName" to "Especie de prueba",
           "minHumidity" to 10,

@@ -24,11 +24,11 @@ class CareRecordInvariantsTest {
     phMin = BigDecimal("5.5"), phMax = BigDecimal("6.5"),
   )
   private val species = Species(
-    scientificName = "Testus plantus", commonName = "Planta de prueba",
+    code = "TEST-A", scientificName = "Testus plantus", commonName = "Planta de prueba",
     minHumidity = 10, maxHumidity = 30, minTemperature = 10, maxTemperature = 35,
     minLightHours = 6, maxLightHours = 10, wateringGuideline = "semanal", soilMix = soilMix,
   )
-  private val plant = Plant(nickname = "Bola", location = Location(name = "Invernadero 1"), species = species)
+  private val plant = Plant(code = "TEST-A-01", nickname = "Bola", location = Location(name = "Invernadero 1"), species = species)
 
   private fun record(
     humidity: Int? = 35,

@@ -15,5 +15,13 @@ interface SpeciesRepository {
   fun delete(species: Species)
   fun findOneById(id: SpeciesId): Species?
   fun findByScientificName(scientificName: String): Species?
+  fun findByCode(code: String): Species?
+
+  /**
+   * La especie con su fila **bloqueada** hasta el final de la transacción. Es lo que serializa las
+   * altas de ejemplares de una misma especie: quien llegue después espera y obtiene el número
+   * siguiente. Un `MAX(...)+1` sobre `plant` no sirve: dos transacciones leerían el mismo máximo.
+   */
+  fun findOneByIdForUpdate(id: SpeciesId): Species?
   fun findAll(pageable: Pageable): Page<Species>
 }

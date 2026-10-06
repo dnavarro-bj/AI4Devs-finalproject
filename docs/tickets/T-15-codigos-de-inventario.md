@@ -10,7 +10,7 @@ Dar a especies y ejemplares una identidad legible, estable e imprimible: `CAT-GR
 
 ## Alcance
 
-* `code` único en `Species`, propuesto a partir del nombre científico y corregible antes de usarse.
+* `code` único en `Species`, **obligatorio al dar de alta y escrito por quien la da de alta** (no se propone), y corregible mientras la especie no tenga ejemplares.
 * `code` inmutable en `Plant`, compuesto por el de su especie y un secuencial propio de esa especie.
 * Generación segura ante dos altas simultáneas: contador en la especie con bloqueo de fila, no `MAX(...)+1`.
 * Un número no se reutiliza aunque el ejemplar se archive; el código crece más allá de dos dígitos con naturalidad.
@@ -24,6 +24,16 @@ Dar a especies y ejemplares una identidad legible, estable e imprimible: `CAT-GR
 * Un código liberado por archivar un ejemplar no se vuelve a asignar.
 * Buscar por código encuentra el ejemplar.
 
-## Pendiente antes de empezar
+## Se implementa en dos changes
 
-Si el código de una especie que ya tiene plantas puede cambiarse (§24.2). La recomendación del documento es que no.
+1. **`codigos-de-inventario`** — hecho: esquema (`V7`) con relleno de lo existente, código de especie y de ejemplar, generación segura con bloqueo de fila, inmutabilidad, y los códigos reales en las pantallas.
+2. **`busqueda-por-codigo`** — pendiente, depende del anterior: filtrar `GET /plants` por código y que el buscador global encuentre ejemplares por él.
+
+Las pantallas ya construidas dejan de usar datos de ejemplo para el código en el primer change; la búsqueda por código es lo que queda para cerrar el ticket.
+
+## Decisiones tomadas
+
+* El código de una especie con ejemplares **no se puede cambiar** (§24.2).
+* El código de especie es **obligatorio y escrito a mano**: no se genera (§24.1).
+* El código del ejemplar es **inmutable** y no se regenera al cambiarle la especie.
+* El código de las **localizaciones** (`LOC-···` del prototipo) queda fuera de este ticket; se hará más adelante.

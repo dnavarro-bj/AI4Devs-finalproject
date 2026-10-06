@@ -49,8 +49,8 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
     clearInventory()
     val used = locationRepository.save(Location(name = "Invernadero en uso"))
     val species = someSpecies()
-    plantRepository.save(Plant(nickname = "Uno", location = used, species = species))
-    plantRepository.save(Plant(nickname = "Dos", location = used, species = species))
+    plantRepository.save(Plant(code = "TEST-A-01", nickname = "Uno", location = used, species = species))
+    plantRepository.save(Plant(code = "TEST-A-02", nickname = "Dos", location = used, species = species))
     entityManager.flush()
 
     assertEquals(2, locationRepository.countPlantsIn(used.id))
@@ -77,9 +77,9 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
     val quiet = locationRepository.save(Location(name = "Bandeja tranquila"))
     val empty = locationRepository.save(Location(name = "Estanteria vacia"))
     val species = someSpecies()
-    plantRepository.save(Plant(nickname = "Uno", location = busy, species = species))
-    plantRepository.save(Plant(nickname = "Dos", location = busy, species = species))
-    plantRepository.save(Plant(nickname = "Tres", location = quiet, species = species))
+    plantRepository.save(Plant(code = "TEST-A-01", nickname = "Uno", location = busy, species = species))
+    plantRepository.save(Plant(code = "TEST-A-02", nickname = "Dos", location = busy, species = species))
+    plantRepository.save(Plant(code = "TEST-A-03", nickname = "Tres", location = quiet, species = species))
     entityManager.flush()
 
     val usage = locationRepository.countPlantsByLocation(listOf(busy.id, quiet.id, empty.id))
@@ -125,6 +125,7 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
     )
     return speciesRepository.save(
       Species(
+        code = "TEST-A",
         scientificName = "Echinopsis oxygona",
         commonName = "Especie de prueba",
         minHumidity = 10,

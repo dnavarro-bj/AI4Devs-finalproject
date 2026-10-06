@@ -34,7 +34,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
 
   private fun newSpecies(soilMix: SoilMix, scientificName: String) =
     Species(
-      scientificName = scientificName, commonName = "Test plant",
+      code = "TEST-A", scientificName = scientificName, commonName = "Test plant",
       minHumidity = 10, maxHumidity = 20, minTemperature = 10, maxTemperature = 20,
       minLightHours = 6, maxLightHours = 10, wateringGuideline = "weekly", soilMix = soilMix,
     )
@@ -102,7 +102,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
     val soilMix = newSoilMix("Typed mix for plant")
     val species = newSpecies(soilMix, "Typedus plantus")
     val location = Location(name = "Typed plant location")
-    val plant = Plant(nickname = "Pepito tipado", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Pepito tipado", location = location, species = species)
     entityManager.persist(soilMix)
     entityManager.persist(species)
     entityManager.persist(location)
@@ -124,7 +124,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
     val soilMix = newSoilMix("Typed mix for care")
     val species = newSpecies(soilMix, "Typedus carus")
     val location = Location(name = "Typed care location")
-    val plant = Plant(nickname = "Juanito tipado", location = location, species = species)
+    val plant = Plant(code = "TEST-A-01", nickname = "Juanito tipado", location = location, species = species)
     val careRecord = CareRecord.record(plant = plant, humidity = 40, temperature = 22, lightHours = 8, recordedAt = null, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
     val recommendation = AIRecommendation(
       careRecord = careRecord,

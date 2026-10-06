@@ -1,5 +1,6 @@
 package com.cactify.domain
 
+import jakarta.persistence.Column
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -15,6 +16,13 @@ import org.hibernate.annotations.BatchSize
 class Plant(
   @EmbeddedId
   override val id: PlantId = PlantId.create(),
+  /**
+   * El código de inventario (`CAT-GRUSS-01`): se asigna al darlo de alta y **no cambia nunca** —ni
+   * al editar la planta ni al cambiarle la especie—, porque una etiqueta ya pegada en la maceta
+   * tiene que seguir siendo válida. `val`, sin setter, y la columna no es actualizable.
+   */
+  @Column(name = "code", nullable = false, updatable = false)
+  val code: String,
   nickname: String,
   location: Location,
   species: Species,
@@ -34,6 +42,7 @@ class Plant(
     private set
 
   init {
+    InventoryCodes.requireValid(code, "del ejemplar", InventoryCodes.PLANT_MAX_LENGTH)
     requireNickname(nickname)
   }
 
