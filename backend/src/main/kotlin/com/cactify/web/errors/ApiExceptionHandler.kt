@@ -1,6 +1,14 @@
 package com.cactify.web.errors
 
 import com.cactify.application.AIProviderException
+import com.cactify.application.InvalidImageException
+import com.cactify.application.InvalidMediaException
+import com.cactify.application.MediaNotFoundException
+import com.cactify.application.MediaTooLargeException
+import com.cactify.domain.GalleryFullException
+import org.springframework.web.multipart.MaxUploadSizeExceededException
+import org.springframework.web.multipart.MultipartException
+import org.springframework.web.multipart.support.MissingServletRequestPartException
 import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
 import com.cactify.application.BatchNotFoundException
@@ -111,6 +119,34 @@ class ApiExceptionHandler {
   @ExceptionHandler(BatchNotFoundException::class)
   fun onBatchNotFound(ex: BatchNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Lote no encontrado", request)
+
+  /** Una subida inválida: sin archivos, demasiados, o con alguno que no es una imagen admitida. */
+  @ExceptionHandler(InvalidMediaException::class, InvalidImageException::class, MissingServletRequestPartException::class)
+  fun onInvalidMedia(ex: Exception, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    badRequest(ex.message ?: "La subida no es válida", request)
+
+  /** Una petición multipart ilegible. `MaxUploadSizeExceededException` es otra cosa y la recoge el siguiente manejador. */
+  @ExceptionHandler(MultipartException::class)
+  fun onMultipart(ex: MultipartException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    if (ex is MaxUploadSizeExceededException) {
+      body(HttpStatus.PAYLOAD_TOO_LARGE, "La subida supera el tamaño máximo permitido", request)
+    } else {
+      badRequest("La petición multipart no es válida: ${rootMessage(ex) ?: ex.message}", request)
+    }
+
+  /** Un archivo mayor que el máximo: la petición es válida, pero no cabe. */
+  @ExceptionHandler(MediaTooLargeException::class)
+  fun onMediaTooLarge(ex: MediaTooLargeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.PAYLOAD_TOO_LARGE, ex.message ?: "El archivo es demasiado grande", request)
+
+  @ExceptionHandler(MediaNotFoundException::class)
+  fun onMediaNotFound(ex: MediaNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  /** Una galería llena depende del estado actual, no del formato: 409. */
+  @ExceptionHandler(GalleryFullException::class)
+  fun onGalleryFull(ex: GalleryFullException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "La galería está llena", request)
 
   @ExceptionHandler(InvalidReferenceException::class)
   fun onInvalidReference(ex: InvalidReferenceException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =

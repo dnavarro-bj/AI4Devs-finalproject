@@ -196,3 +196,14 @@ data class BatchId(@Column(name = "id") override val id: Long) : EntityId<Long> 
 
   override fun toString(): String = id.toString()
 }
+
+@Embeddable
+data class MediaAssetId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): MediaAssetId = MediaAssetId(TSID.fast().toLong())
+    fun from(value: Long): MediaAssetId = MediaAssetId(value)
+    fun from(value: String): MediaAssetId = MediaAssetId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}

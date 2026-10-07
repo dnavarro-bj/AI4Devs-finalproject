@@ -48,6 +48,50 @@ describe('catálogo de especies', () => {
     expect(text).toContain('Mammillaria elongata')
   })
 
+  /** Escenarios de la miniatura (T-19): la portada real, o un marcador que lo dice. */
+  describe('miniatura de cada especie', () => {
+    it('una especie con portada muestra su miniatura real con su texto alternativo', async () => {
+      api.get.mockResolvedValue(page([{
+        ...species('200001', 'Echinocactus grusonii', 'Asiento de suegra'),
+        photoCount: 3,
+        primaryPhoto: {
+          id: '9', altText: 'Echinocactus grusonii adulto',
+          urls: { thumb: '/media/9/thumb', medium: '/media/9/medium', full: '/media/9/full' },
+        },
+      }]))
+
+      const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+      await settle()
+
+      const thumb = wrapper.find('[data-test="species-thumb"]')
+      expect(thumb.attributes('src')).toContain('/media/9/thumb')
+      expect(thumb.attributes('src')).toMatch(/^https?:\/\//)
+      expect(thumb.attributes('alt')).toBe('Echinocactus grusonii adulto')
+    })
+
+    it('sin portada pinta el marcador, que lo dice con su texto alternativo', async () => {
+      api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
+
+      const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+      await settle()
+
+      const mark = wrapper.find('[data-test="species-thumb-empty"]')
+      expect(mark.attributes('aria-label')).toBe('Sin fotografía de Echinocactus grusonii')
+      expect(wrapper.find('[data-test="species-thumb"]').exists()).toBe(false)
+    })
+
+    it('la vista de fotografías sigue marcada y deshabilitada: este change no la construye', async () => {
+      api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
+
+      const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+      await settle()
+
+      const view = wrapper.find('[aria-label="Vista de fotografías"]')
+      expect(view.attributes('disabled')).toBeDefined()
+      expect(view.attributes('data-mock')).toBe('true')
+    })
+  })
+
   it('cada especie navega a su ficha', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 

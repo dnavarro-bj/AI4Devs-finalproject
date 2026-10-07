@@ -161,7 +161,7 @@ describe('alta de una planta', () => {
     const upload = wrapper.find('[data-test="plant-photo-upload"]')
     expect(upload.classes()).toContain('is-inline')
     expect(upload.text()).toContain('Seleccionar archivos')
-    expect(upload.find('input[type="file"]').attributes('disabled')).toBeDefined()
+    expect(upload.find('input[type="file"]').attributes('disabled')).toBeUndefined()
 
     const care = wrapper.find('[data-test="species-ranges"]')
     expect(care.text()).toContain('Hereda de')

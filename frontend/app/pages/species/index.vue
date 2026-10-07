@@ -27,6 +27,7 @@ import { readUrlState, toUrlQuery, type UrlSchema } from '@shared/utils/urlState
 import { useSpecies } from '@features/species/composables/useSpecies'
 import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import type { SpeciesSummary } from '@features/species/types/species.types'
+import { absoluteUrl } from '@features/media/mappers/media.mapper'
 import { useSavedViews } from '@features/views/composables/useSavedViews'
 import { useExport } from '@features/exports/composables/useExport'
 import { groupSymbol, speciesDraft, speciesRouteQuery } from '@features/views/mappers/viewState'
@@ -38,6 +39,10 @@ useHead({ title: 'Cactify · Especies' })
 useBreadcrumbs().set([{ label: 'Especies' }])
 
 const { search } = useSpecies()
+
+/** Las rutas de las imágenes son relativas: se completan con la base del API (ADR-013). */
+const apiBase = useRuntimeConfig().public.apiBaseUrl as string
+const photoSrc = (path: string) => absoluteUrl(apiBase, path)
 
 const page = ref<PageResponse<SpeciesSummary> | null>(null)
 const loading = ref(true)
@@ -446,7 +451,21 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         <!-- La celda identificativa del prototipo: miniatura, código y los dos nombres. -->
         <template #cell-scientificName="{ row }">
           <NuxtLink class="species-cell" :to="`/species/${asSpecies(row).id}`" data-test="species-link">
-            <span class="species-cell__thumb" aria-hidden="true">✺</span>
+            <img
+              v-if="asSpecies(row).primaryPhoto"
+              class="species-cell__thumb is-photo"
+              data-test="species-thumb"
+              :src="photoSrc(asSpecies(row).primaryPhoto!.urls.thumb)"
+              :alt="asSpecies(row).primaryPhoto!.altText"
+              loading="lazy"
+            >
+            <span
+              v-else
+              class="species-cell__thumb"
+              data-test="species-thumb-empty"
+              role="img"
+              :aria-label="`Sin fotografía de ${asSpecies(row).scientificName}`"
+            >✺</span>
             <span>
               <code data-test="species-code">{{ asSpecies(row).code }}</code>
               <strong><em>{{ asSpecies(row).scientificName }}</em></strong>
@@ -583,7 +602,11 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   color: var(--color-danger);
 }
 
-.species-cell__thumb::after {
+.species-cell__thumb.is-photo {
+  object-fit: cover;
+}
+
+.species-cell__thumb:not(.is-photo)::after {
   border: 1px solid color-mix(in srgb, var(--color-surface) 55%, transparent);
   border-radius: 50%;
   content: "";

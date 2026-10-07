@@ -1,5 +1,6 @@
 package com.cactify.application.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import java.time.Instant
 import java.time.LocalDate
 
@@ -24,12 +25,20 @@ data class SpeciesCareResponse(
   val soilMix: SoilMixSummaryResponse,
 )
 
-/** Especie en el listado: sin los rangos de cuidado, que solo interesan en el detalle. */
+/**
+ * Especie en el listado: sin los rangos de cuidado, que solo interesan en el detalle. La portada y el
+ * recuento de fotografías solo los trae el **listado de especies**; anidada en una fila de ejemplares
+ * van ausentes, porque no son lo que esa fila cuenta.
+ */
 data class SpeciesSummaryResponse(
   val id: String,
   val code: String,
   val scientificName: String,
   val commonName: String,
+  @get:JsonInclude(JsonInclude.Include.NON_NULL)
+  val primaryPhoto: PrimaryPhotoResponse? = null,
+  @get:JsonInclude(JsonInclude.Include.NON_NULL)
+  val photoCount: Long? = null,
 )
 
 data class PlantDetailResponse(
@@ -55,6 +64,10 @@ data class PlantDetailResponse(
   val effectiveCare: EffectiveCareResponse,
   /** Sus alertas abiertas, de la más grave a la más leve. */
   val openAlerts: List<AlertResponse> = emptyList(),
+  /** Su portada; ausente si no tiene fotografías. Las de su especie no cuentan. */
+  @get:JsonInclude(JsonInclude.Include.NON_NULL)
+  val primaryPhoto: PrimaryPhotoResponse? = null,
+  val photoCount: Long = 0,
 )
 
 data class PlantSummaryResponse(
@@ -68,6 +81,10 @@ data class PlantSummaryResponse(
   /** La mayor severidad entre sus alertas abiertas: `baja`, `media` o `critica`; ausente si no tiene ninguna. */
   @get:com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
   val attention: String? = null,
+  /** Su portada; ausente si no tiene fotografías. */
+  @get:JsonInclude(JsonInclude.Include.NON_NULL)
+  val primaryPhoto: PrimaryPhotoResponse? = null,
+  val photoCount: Long = 0,
 )
 
 /**
@@ -104,6 +121,10 @@ data class SpeciesDetailResponse(
   val bloomTypicalDuration: String?,
   /** El calendario anual, siempre presente (vacío si no hay periodos), por tipo y mes de inicio. */
   val periods: List<SpeciesPeriodResponse>,
+  /** Su portada; ausente si no tiene fotografías. */
+  @get:JsonInclude(JsonInclude.Include.NON_NULL)
+  val primaryPhoto: PrimaryPhotoResponse? = null,
+  val photoCount: Long = 0,
 )
 
 /** Un periodo del año. Inicio posterior al fin = cruza el fin de año. */

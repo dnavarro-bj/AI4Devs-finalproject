@@ -1,10 +1,15 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
+import { ApiError } from '@shared/services/httpClient'
 import SpeciesForm from '@features/species/components/SpeciesForm.vue'
+import NewSpeciesPage from '../app/pages/species/new.vue'
+import { usePendingUploads } from '@features/media/composables/usePendingUploads'
 
 const api = createApiDouble()
+const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 mockNuxtImport('getApiClient', () => () => api)
+mockNuxtImport('navigateTo', () => navigate)
 
 /**
  * Escenarios de la requirement «Alta y edición de una especie».
@@ -18,6 +23,9 @@ describe('editor de una especie', () => {
     api.post.mockReset()
     api.put.mockReset()
     api.delete.mockReset()
+    api.postForm.mockReset()
+    navigate.mockReset()
+    usePendingUploads().discardAll()
     // El selector de mezclas es real desde `catalogo-sustratos`.
     api.get.mockResolvedValue({
       content: [
@@ -147,13 +155,154 @@ describe('editor de una especie', () => {
     expect(options.map((option) => option.text())).toContain('Sustrato mineral de drenaje rápido')
   })
 
-  it('mantiene en el editor la sección de fotografías del wireframe, marcada con T-19', async () => {
-    const wrapper = await mountForm()
+  describe('fotografías (T-19)', () => {
+    const FILE = (name: string, type = 'image/jpeg') => new File(['x'], name, { type })
+    const choose = async (wrapper: Awaited<ReturnType<typeof mountForm>>, files: File[]) => {
+      wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', files)
+      await settle()
+    }
+    const submit = async (wrapper: Awaited<ReturnType<typeof mountForm>>) => {
+      await fill(wrapper, { ...VALID, 'soil-mix': '100001' })
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+    }
 
-    const photos = wrapper.find('[data-test="species-photos"]')
-    expect(photos.exists()).toBe(true)
-    expect(photos.text()).toContain('T-19')
-    expect(photos.find('[data-test="species-photo-upload"]').exists()).toBe(true)
+    it('la sección de fotografías es real: sin marcas de maqueta ni T-19, con la subida activa', async () => {
+      const wrapper = await mountForm()
+
+      const photos = wrapper.find('[data-test="species-photos"]')
+      expect(photos.text()).not.toContain('T-19')
+      expect(photos.find('[data-mock]').exists()).toBe(false)
+      expect(photos.find('[data-test="species-photo-upload"]').exists()).toBe(true)
+      expect(photos.find('input[type="file"]').attributes('disabled')).toBeUndefined()
+    })
+
+    it('al crear, los archivos elegidos se conservan con su vista previa y la primera es la portada', async () => {
+      const wrapper = await mountForm()
+
+      await choose(wrapper, [FILE('a.jpg'), FILE('b.png', 'image/png')])
+
+      const thumbs = wrapper.findAll('[data-test="photo-previews"] [data-role="thumb"]')
+      expect(thumbs).toHaveLength(2)
+      expect(thumbs[0]!.attributes('data-primary')).toBe('true')
+      expect(thumbs[0]!.text()).toContain('Principal')
+    })
+
+    it('elegir otra portada la pone la primera', async () => {
+      const wrapper = await mountForm()
+      await choose(wrapper, [FILE('a.jpg'), FILE('b.jpg')])
+
+      const second = wrapper.findAll('[data-test="photo-previews"] [data-role="thumb"]')[1]!
+      await second.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Hacer principal')!.trigger('click')
+
+      const alts = wrapper.findAll('[data-test="photo-previews"] img').map((img) => img.attributes('alt'))
+      expect(alts).toEqual(['b.jpg', 'a.jpg'])
+    })
+
+    it('un archivo que no es una imagen admitida se rechaza con su motivo y no entra', async () => {
+      const wrapper = await mountForm()
+
+      await choose(wrapper, [FILE('a.gif', 'image/gif')])
+
+      expect(wrapper.find('[data-test="photo-rejected"]').text()).toContain('JPEG, PNG o WebP')
+      expect(wrapper.find('[data-test="photo-previews"]').exists()).toBe(false)
+    })
+
+    it('al guardar emite las fotografías elegidas junto a la especie', async () => {
+      const wrapper = await mountForm()
+      await choose(wrapper, [FILE('a.jpg')])
+
+      await submit(wrapper)
+
+      const [, files] = wrapper.emitted('submit')![0] as [unknown, File[]]
+      expect(files.map((file) => file.name)).toEqual(['a.jpg'])
+    })
+
+    it('sin fotografías el alta sale como siempre, con la lista vacía', async () => {
+      const wrapper = await mountForm()
+
+      await submit(wrapper)
+
+      expect((wrapper.emitted('submit')![0] as [unknown, File[]])[1]).toEqual([])
+    })
+
+    it('al corregir, la galería se gestiona sobre la marcha con sus peticiones propias', async () => {
+      api.get.mockImplementation(async (path: string) => {
+        if (path === '/species/200001/photos') {
+          return {
+            content: [{
+              id: '1', altText: 'Foto 1', width: 8, height: 6, contentType: 'image/jpeg', capturedAt: null,
+              createdAt: '2026-09-01T10:00:00Z', position: 0, primary: true, credit: null,
+              urls: { thumb: '/media/1/thumb', medium: '/media/1/medium', full: '/media/1/full' },
+            }],
+            totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 50,
+          }
+        }
+        return { content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 }
+      })
+      const wrapper = await mountForm({ speciesId: '200001', speciesName: 'Echinocactus grusonii' })
+
+      expect(wrapper.find('[data-test="photo-gallery"] [data-role="thumb"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="species-photo-upload"]').exists()).toBe(false)
+    })
+  })
+
+  /** La página del alta: guardar y **después** subir; un fallo de imagen no deshace el alta. */
+  describe('alta con fotografías', () => {
+    const FILE = (name: string) => new File(['x'], name, { type: 'image/jpeg' })
+    const create = async () => {
+      api.post.mockResolvedValue({ id: '200009', code: 'CAT-GRUSS' })
+      const wrapper = await mountSuspended(NewSpeciesPage)
+      await settle()
+      for (const [test, value] of Object.entries({ ...VALID, 'soil-mix': '100001' })) {
+        await wrapper.find(`[data-test="${test}"]`).setValue(value)
+      }
+      return wrapper
+    }
+    const choose = async (wrapper: Awaited<ReturnType<typeof create>>, files: File[]) => {
+      wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', files)
+      await settle()
+    }
+
+    it('crea la especie y después sube las fotografías en el orden elegido', async () => {
+      api.postForm.mockResolvedValue([])
+      const wrapper = await create()
+      await choose(wrapper, [FILE('a.jpg'), FILE('b.jpg')])
+
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+      await settle()
+      await settle()
+
+      expect(api.post).toHaveBeenCalledWith('/species', expect.objectContaining({ code: 'CAT-GRUSS' }))
+      const uploaded = api.postForm.mock.calls.map(([path, form]) => [path, ((form as FormData).get('files') as File).name])
+      expect(uploaded).toEqual([['/species/200009/photos', 'a.jpg'], ['/species/200009/photos', 'b.jpg']])
+      expect(api.post.mock.invocationCallOrder[0]).toBeLessThan(api.postForm.mock.invocationCallOrder[0]!)
+      expect(navigate).toHaveBeenCalledWith('/species/200009')
+    })
+
+    it('si la subida falla la especie existe y se llega a su ficha con lo no subido en la cola', async () => {
+      api.postForm.mockRejectedValue(new ApiError(500, 'Error del servidor'))
+      const wrapper = await create()
+      await choose(wrapper, [FILE('a.jpg')])
+
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+      await settle()
+      await settle()
+
+      expect(navigate).toHaveBeenCalledWith('/species/200009')
+      const pending = usePendingUploads().pendingFor({ kind: 'species', id: '200009' })
+      expect(pending.value).toMatchObject([{ name: 'a.jpg', message: 'Error del servidor' }])
+    })
+
+    it('sin fotografías no hace ninguna subida', async () => {
+      const wrapper = await create()
+
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+      await settle()
+
+      expect(api.postForm).not.toHaveBeenCalled()
+      expect(navigate).toHaveBeenCalledWith('/species/200009')
+    })
   })
 
   describe('ficha de cultivo y calendario (T-17)', () => {

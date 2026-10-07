@@ -19,6 +19,7 @@
  */
 import { validateRange, type CareConcept } from '@shared/utils/careRanges'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
+import { useMediaGallery } from '@features/media/composables/useMediaGallery'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import type { Environment, SpeciesInput, SunExposure } from '../types/species.types'
 import {
@@ -42,6 +43,12 @@ const props = withDefaults(defineProps<{
    * identifica plantas, y hay etiquetas pegadas en macetas que lo llevan.
    */
   plantCount?: number
+  /**
+   * La especie que se corrige. Con ella, las fotografías se gestionan **sobre la marcha** (cada
+   * cambio es una petición propia); sin ella —el alta— se eligen y se suben al guardar.
+   */
+  speciesId?: string
+  speciesName?: string
   submitting?: boolean
   submitLabel?: string
   submitError?: SpeciesSubmitError | null
@@ -65,7 +72,12 @@ const props = withDefaults(defineProps<{
   submitError: null,
 })
 
-const emit = defineEmits<{ submit: [SpeciesInput] }>()
+/** El segundo argumento son las fotografías elegidas en el alta, para subirlas cuando la especie exista. */
+const emit = defineEmits<{ submit: [SpeciesInput, File[]] }>()
+
+const photoFiles = shallowRef<File[]>([])
+const gallery = props.speciesId ? useMediaGallery({ kind: 'species', id: props.speciesId }) : null
+onMounted(() => gallery?.load())
 
 const { list: listSoilMixes } = useSoilMixes()
 
@@ -264,7 +276,7 @@ function submit() {
     bloomMaturity: bloomMaturity.value.trim() || null,
     bloomTypicalDuration: bloomTypicalDuration.value.trim() || null,
     periods: levelsToPeriods(levels),
-  })
+  }, photoFiles.value)
 }
 
 // Ya montado, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
@@ -341,7 +353,7 @@ onMounted(async () => {
         />
       </UiFormSection>
 
-      <!-- Fotografías de referencia: la composición queda lista, el almacenamiento llega en T-19. -->
+      <!-- Fotografías de referencia: en el alta se eligen y suben al guardar; al corregir, se gestionan en el acto. -->
       <UiFormSection
         id="species-editor-photos"
         standalone
@@ -349,29 +361,31 @@ onMounted(async () => {
         description="Añade imágenes generales de referencia. Podrás elegir la portada."
         data-test="species-photos"
       >
-        <div data-mock="true">
-          <UiUploadArea
+        <PhotoGalleryPanel
+          v-if="speciesId && gallery"
+          :owner="{ kind: 'species', id: speciesId }"
+          :subject="speciesName ?? scientificName"
+          :gallery="gallery"
+          title="Galería de referencia"
+          description="Los cambios se guardan en el momento: no esperan a «Guardar cambios»."
+        />
+        <template v-else>
+          <LocalPhotoPicker
+            v-model="photoFiles"
             label="Subir fotografías de referencia"
-            accept="image/jpeg,image/png,image/webp"
-            hint="JPG, PNG o WebP · el límite se decidirá antes de T-19"
-            action-label="Seleccionar imágenes"
-            layout="inline"
-            mark="▧"
-            disabled
-            data-test="species-photo-upload"
+            upload-test="species-photo-upload"
           />
-        </div>
+          <p class="editor__hint" data-test="photos-after-save">
+            Se subirán al guardar. La primera será la portada; si alguna falla, la especie queda
+            guardada y podrás reintentarlo desde su ficha.
+          </p>
+        </template>
 
         <ul class="photo-guide">
           <li><span aria-hidden="true">◎</span><strong>Vista general</strong><small>La silueta completa de la especie.</small></li>
           <li><span aria-hidden="true">✺</span><strong>Detalle distintivo</strong><small>Espinas, costillas, hojas o areolas.</small></li>
           <li><span aria-hidden="true">✣</span><strong>Floración</strong><small>Una referencia cuando esté disponible.</small></li>
         </ul>
-
-        <p class="editor__hint">
-          El almacenamiento, la portada y los metadatos llegan con <strong>T-19</strong>, después de
-          decidir su ADR. Esta sección no envía ficheros todavía.
-        </p>
       </UiFormSection>
 
       <UiFormSection

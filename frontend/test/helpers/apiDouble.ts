@@ -31,6 +31,7 @@ export function createApiDouble(options: { savedViews?: boolean } = {}) {
     /** La descarga de archivos: `{ blob, filename }`. */
     getBlob: vi.fn(),
     post: vi.fn(),
+    postForm: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
     savedViews,

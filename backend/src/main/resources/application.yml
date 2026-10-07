@@ -17,6 +17,11 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  servlet:
+    multipart:
+      # Diez archivos de hasta 10 MB por subida (ADR-018): el cuerpo entero puede pasar de 100 MB. Superarlo es 413.
+      max-file-size: ${MEDIA_MAX_FILE_SIZE:10MB}
+      max-request-size: ${MEDIA_MAX_REQUEST_SIZE:110MB}
   data:
     web:
       pageable:
@@ -50,6 +55,23 @@ cactify:
       # El proceso diario de «sin revisar» y «cuidado vencido». Se apaga con false (los tests lo apagan).
       enabled: ${ALERTS_SCHEDULER_ENABLED:true}
       cron: ${ALERTS_SCHEDULER_CRON:0 0 6 * * *}
+  media:
+    # Fotografias (T-19, ADR-018). Los binarios viven en disco, en un volumen que hay que respaldar junto con la base.
+    root: ${MEDIA_ROOT:./data/media}
+    max-file-size: ${MEDIA_MAX_FILE_SIZE:10MB}
+    max-files: ${MEDIA_MAX_FILES:10}
+    max-per-owner: ${MEDIA_MAX_PER_OWNER:50}
+    # Antes de decodificar se rechaza lo que supere estos píxeles: una imagen enorme no tumba el proceso.
+    max-pixels: ${MEDIA_MAX_PIXELS:50000000}
+    thumb-side: ${MEDIA_THUMB_SIDE:320}
+    medium-side: ${MEDIA_MEDIUM_SIDE:1280}
+    max-full-side: ${MEDIA_MAX_FULL_SIDE:4096}
+    quality: ${MEDIA_QUALITY:0.85}
+    orphan-min-age: ${MEDIA_ORPHAN_MIN_AGE:P1D}
+    cleanup:
+      # El barrido semanal de archivos sin fila. Se apaga con false (los tests lo apagan).
+      enabled: ${MEDIA_CLEANUP_ENABLED:true}
+      cron: ${MEDIA_CLEANUP_CRON:0 0 4 * * SUN}
   ai:
     # Vacía por defecto: sin clave el adaptador responde 502 en vez de arrancar roto, y los tests
     # de integración sustituyen el puerto por un doble sin tocar la red (ADR-012).

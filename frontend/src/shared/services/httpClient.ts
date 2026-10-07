@@ -70,6 +70,11 @@ export function createApiClient(baseUrl: string, fetcher: Fetcher, raw?: RawFetc
       request<T>(path, query ? { method: 'GET', query } : { method: 'GET' }),
     post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
     put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
+    /**
+     * Un `multipart/form-data`. El `FormData` viaja tal cual y **no se fija el `Content-Type`**: lo
+     * pone el navegador con su `boundary`, y fijarlo a mano rompería la subida.
+     */
+    postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
     /** Sin cuerpo: el API responde `204` y no devuelve nada que interpretar. */
     delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   }

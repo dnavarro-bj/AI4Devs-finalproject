@@ -1,6 +1,7 @@
 import type { AlertCategory, AlertSeverity, AlertStatus } from '@features/alerts/types/alert.types'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
 import type { PlantStatus } from '@features/plants/types/plant.types'
+import type { TimelinePhoto } from '@features/media/types/media.types'
 
 /**
  * La cronología unificada del ejemplar (T-20). Cada entrada trae `id`, `type`, `occurredAt`, su
@@ -36,6 +37,8 @@ export interface TimelineEntry {
   task?: TimelineTask
   /** Una transición de una alerta del ejemplar: su apertura, su revisión, su resolución o su descarte. */
   alert?: TimelineAlert
+  /** Las fotografías colgadas del evento (T-19); ausente si no tiene. Solo comentario, intervención, floración y tarea. */
+  photos?: TimelinePhoto[]
 }
 
 /** El detalle de un evento `alerta`: de qué alerta es y qué le pasó. Sin `from` es su apertura. */

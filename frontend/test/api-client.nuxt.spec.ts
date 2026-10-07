@@ -175,4 +175,39 @@ describe('cliente del API: descargas', () => {
 
     await expect(api.getBlob('/plants/export')).rejects.toMatchObject({ name: 'ApiError', status: 0 })
   })
+  /**
+   * Un multipart lleva el `FormData` tal cual y **no** fija el `Content-Type`: lo pone el navegador
+   * con el `boundary`, y fijarlo a mano rompería la subida.
+   */
+  describe('postForm', () => {
+    it('envía el FormData sin fijar el Content-Type', async () => {
+      const seen: { url: string, options?: Record<string, unknown> }[] = []
+      const fetcher = vi.fn(async (url: string, options?: Record<string, unknown>) => {
+        seen.push({ url, options })
+        return [{ id: '1' }]
+      })
+      const form = new FormData()
+      form.append('files', new File(['x'], 'a.jpg', { type: 'image/jpeg' }))
+
+      const api = createApiClient(baseUrl, fetcher as never)
+      const result = await api.postForm<{ id: string }[]>('/plants/1/photos', form)
+
+      expect(result).toEqual([{ id: '1' }])
+      expect(seen[0]!.url).toBe(`${baseUrl}/plants/1/photos`)
+      expect(seen[0]!.options!.method).toBe('POST')
+      expect(seen[0]!.options!.body).toBe(form)
+      expect(seen[0]!.options!.headers).toBeUndefined()
+    })
+
+    it('normaliza el error del servidor', async () => {
+      const fetcher = vi.fn(async () => {
+        throw { response: { status: 413 }, data: { status: 413, error: 'Payload Too Large', message: 'El archivo supera 10 MB', path: '/x' } }
+      })
+      const api = createApiClient(baseUrl, fetcher as never)
+
+      await expect(api.postForm('/plants/1/photos', new FormData())).rejects.toMatchObject({
+        name: 'ApiError', status: 413, message: 'El archivo supera 10 MB',
+      })
+    })
+  })
 })

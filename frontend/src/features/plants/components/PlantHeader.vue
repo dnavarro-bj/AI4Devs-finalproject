@@ -7,9 +7,10 @@
  * recurrentes, no de composiciones de un solo uso.
  *
  * **Lo que el API no sirve se marca en la pantalla**, no solo en el código: el código de
- * inventario y el estado son **reales** (T-15, T-16), igual que la germinación; solo el contexto botánico
- * (exposición y entorno, T-17) y la fotografía (T-19) llevan su marca. Una ficha con esos datos inventados y sin marcar es indistinguible de una que
- * funciona, y eso no es un riesgo técnico sino de criterio: alguien la enseña y la da por hecha.
+ * inventario y el estado son **reales** (T-15, T-16), igual que la germinación y la **fotografía**
+ * (T-19); solo el contexto botánico (exposición y entorno, T-17) lleva su marca. Una ficha con esos
+ * datos inventados y sin marcar es indistinguible de una que funciona, y eso no es un riesgo
+ * técnico sino de criterio: alguien la enseña y la da por hecha.
  *
  * No abre el diálogo de lectura: emite la intención. Quien lo abre es la ficha, que es quien lo
  * monta.
@@ -17,11 +18,16 @@
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import type { PlantDetail } from '../types/plant.types'
 import { germinationLabel, isFinalStatus, STATUS_LABELS } from '../mappers/plantProfile'
-import { MOCK_CONTEXT, MOCK_PHOTO_COUNT } from '../mocks/plantDetail.mock'
+import { MOCK_CONTEXT } from '../mocks/plantDetail.mock'
 
-const props = defineProps<{ plant: PlantDetail }>()
+const props = defineProps<{
+  plant: PlantDetail
+  /** Su portada real; sin ella, «Sin fotografía». */
+  cover?: { src: string, alt: string } | null
+  photoCount?: number
+}>()
 
-defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [], 'change-status': [] }>()
+defineEmits<{ 'register-reading': [], 'create-task': [], 'edit-plant': [], 'change-status': [], 'open-photos': [] }>()
 
 const today = useReferenceDate()
 
@@ -42,10 +48,15 @@ const archived = computed(() => isFinalStatus(props.plant.status))
 
 <template>
   <article class="specimen">
-    <div class="specimen__photo" data-mock="true" role="img" aria-label="Sin fotografía todavía">
-      <span aria-hidden="true">✺</span>
-      <small>{{ MOCK_PHOTO_COUNT }} fotos · ejemplo</small>
-    </div>
+    <UiCoverPhoto
+      class="specimen__photo"
+      data-test="plant-cover"
+      :src="cover?.src"
+      :alt="cover?.alt"
+      :count="photoCount ?? 0"
+      count-action
+      @count="$emit('open-photos')"
+    />
 
     <div class="specimen__identity">
       <div class="specimen__line">
@@ -71,8 +82,7 @@ const archived = computed(() => isFinalStatus(props.plant.status))
       </ul>
 
       <p class="specimen__mock-note">
-        El contexto botánico y la fotografía son <strong>datos de ejemplo</strong>: el API todavía
-        no los sirve.
+        El contexto botánico es un <strong>dato de ejemplo</strong>: el API todavía no lo sirve.
       </p>
     </div>
 
@@ -118,22 +128,12 @@ const archived = computed(() => isFinalStatus(props.plant.status))
   padding: var(--space-5);
 }
 
-.specimen__photo {
-  align-items: center;
+/* Más específico que el tamaño del kit: en la ficha la portada es un cuadrado de la columna. */
+.specimen > .specimen__photo.cover.is-lg {
+  align-self: start;
   aspect-ratio: 1;
-  background: var(--color-surface-muted);
-  border: 1px dashed var(--color-line-strong);
-  border-radius: var(--radius-md);
-  color: var(--color-ink-faint);
-  display: flex;
-  flex-direction: column;
-  font-size: var(--font-size-24);
-  gap: var(--space-1);
-  justify-content: center;
-}
-
-.specimen__photo small {
-  font-size: var(--font-size-11);
+  min-height: 0;
+  width: 100%;
 }
 
 .specimen__line {
@@ -175,7 +175,6 @@ const archived = computed(() => isFinalStatus(props.plant.status))
 }
 
 /* La marca de ejemplo se ve además de leerse: borde discontinuo, no solo un texto al pie. */
-.specimen__photo[data-mock="true"],
 .specimen__line > [data-mock="true"],
 .specimen__context li[data-mock="true"] :deep(.tag) {
   border: 1px dashed var(--color-line-strong);

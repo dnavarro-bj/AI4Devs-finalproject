@@ -92,6 +92,8 @@ onMounted(async () => {
       <SpeciesForm
         :initial="initial"
         :plant-count="species.plantCount"
+        :species-id="species.id"
+        :species-name="species.scientificName"
         :submitting="submitting"
         :submit-error="submitError"
         submit-label="Guardar cambios"

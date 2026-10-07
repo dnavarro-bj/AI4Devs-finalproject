@@ -10,8 +10,8 @@
  *
  * **Lo que el API guarda es real; lo que no, va marcado y deshabilitado.** `POST /plants` y
  * `PUT /plants/{id}` aceptan apodo, localización, especie, descripción, germinación, adquisición y
- * procedencia; el estado inicial solo en el alta. Las etiquetas al crear, las fotografías (T-19) y
- * los cuidados personalizados (`cuidados-por-ejemplar`) no tienen dónde guardarse todavía. Un
+ * procedencia; el estado inicial solo en el alta. Las etiquetas al crear no tienen dónde guardarse
+ * todavía. Las fotografías (T-19) se eligen aquí y se suben **después** de crear. Un
  * formulario que parece guardar y no guarda es peor que uno que no deja editar.
  */
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
@@ -20,6 +20,8 @@ import type { LocationSummary } from '@features/locations/types/location.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
 import { validateRange } from '@shared/utils/careRanges'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
+import { useMediaGallery } from '@features/media/composables/useMediaGallery'
+import { PHOTO_PURPOSES, type PhotoPurpose, type PhotoSelection } from '@features/media/types/media.types'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
 import {
   EMPTY_CARE,
@@ -48,14 +50,51 @@ const props = withDefaults(defineProps<{
   submitLabel?: string
   /** En edición el código no se regenera ni se toca. */
   lockedCode?: string
+  /** El ejemplar que se corrige: con él las fotografías se gestionan en el acto; sin él, se eligen y suben al crear. */
+  plantId?: string
 }>(), {
+  plantId: undefined,
   initial: () => ({}),
   submitting: false,
   submitLabel: 'Guardar',
   lockedCode: undefined,
 })
 
-const emit = defineEmits<{ submit: [PlantFormValues] }>()
+/** Cómo sigue el alta: abrir la ficha o volver al formulario vacío para dar de alta otra. */
+export type SaveAfter = 'detail' | 'another'
+
+/**
+ * Además de los valores, las fotografías elegidas —con su propósito, en el orden en que se subirán,
+ * la primera como principal— y qué hacer después. Se suben cuando el ejemplar ya existe.
+ */
+const emit = defineEmits<{ submit: [PlantFormValues, PhotoSelection[], SaveAfter] }>()
+
+/** `shallowRef`: un `File` no debe volverse un proxy reactivo, o dejaría de ser la clave de `purposeOf`. */
+const photoFiles = shallowRef<File[]>([])
+const photoPurpose = ref<PhotoPurpose>('general')
+const purposeOf = new Map<File, PhotoPurpose>()
+const saveAfter = ref<SaveAfter>('detail')
+
+/** Cada archivo nuevo toma el propósito que estaba elegido cuando se añadió. */
+function onPhotos(files: File[]) {
+  for (const file of files) if (!purposeOf.has(file)) purposeOf.set(file, photoPurpose.value)
+  photoFiles.value = files
+}
+
+const PURPOSE_SUGGESTIONS: Record<PhotoPurpose, string> = {
+  general: 'Una foto general',
+  detalle: 'Un detalle reconocible',
+  etiqueta_fisica: 'La etiqueta física, si existe',
+}
+const purposeLabel = (file: File) => PURPOSE_SUGGESTIONS[purposeOf.get(file) ?? 'general']
+
+const photoSort = ref<'date' | 'manual'>('date')
+const editGallery = props.plantId
+  ? useMediaGallery({ kind: 'plants', id: props.plantId }, { sort: () => (photoSort.value === 'manual' ? 'position' : undefined) })
+  : null
+onMounted(() => editGallery?.load())
+watch(photoSort, () => editGallery?.load())
+
 
 const { listSpecies, speciesCare } = useCatalogs()
 const { loadAll: loadLocations } = useLocations()
@@ -300,7 +339,7 @@ function submit() {
     germinationMonth: germinationMonth.value,
     careEnabled: careEnabled.value,
     care: { ...care },
-  })
+  }, photoFiles.value.map((file) => ({ file, purpose: purposeOf.get(file) ?? 'general' })), saveAfter.value)
 }
 </script>
 
@@ -494,29 +533,44 @@ function submit() {
       </UiFormSection>
 
       <!-- 5. Fotografías -->
-      <UiFormSection id="plant-editor-photos" standalone title="Fotografías iniciales" description="Son opcionales. La principal identificará la planta en el inventario.">
-
-        <div data-mock="true">
-          <UiUploadArea
+      <UiFormSection
+        id="plant-editor-photos"
+        standalone
+        :title="creating ? 'Fotografías iniciales' : 'Fotografías'"
+        :description="creating
+          ? 'Son opcionales. La principal será la portada de su ficha.'
+          : 'Los cambios se guardan en el momento: no esperan a «Guardar cambios».'"
+      >
+        <PhotoGalleryPanel
+          v-if="plantId && editGallery"
+          :owner="{ kind: 'plants', id: plantId }"
+          :subject="initial.nickname ?? 'este ejemplar'"
+          :gallery="editGallery"
+          v-model:sort="photoSort"
+          title="Galería del ejemplar"
+          description="La evolución del ejemplar, de la más reciente a la más antigua."
+        />
+        <template v-else>
+          <LocalPhotoPicker
+            :model-value="photoFiles"
             label="Arrastra fotografías o selecciónalas"
-            accept="image/*"
-            hint="JPG, PNG o WebP · hasta 10 MB cada una"
-            action-label="Seleccionar archivos"
-            layout="inline"
-            mark="▧"
-            disabled
-            data-test="plant-photo-upload"
+            upload-test="plant-photo-upload"
+            :caption-of="purposeLabel"
+            @update:model-value="onPhotos"
           />
-        </div>
-        <ul class="photo-purpose">
-          <li>Una foto general</li>
-          <li>Un detalle reconocible</li>
-          <li>La etiqueta física, si existe</li>
-        </ul>
-        <p class="editor__hint">
-          El almacenamiento llega en <strong>T-19</strong>, que necesita antes su propio ADR. Lo que
-          elijas aquí no se guarda.
-        </p>
+          <!-- Las tres sugerencias del prototipo fijan el propósito de lo que se elija a continuación. -->
+          <fieldset class="photo-purpose" data-test="photo-purpose">
+            <legend>Lo que elijas ahora será…</legend>
+            <label v-for="item in PHOTO_PURPOSES" :key="item.value" :class="{ 'is-active': photoPurpose === item.value }">
+              <input v-model="photoPurpose" type="radio" name="photo-purpose" :value="item.value" :data-test="`purpose-${item.value}`">
+              <span>{{ PURPOSE_SUGGESTIONS[item.value] }}</span>
+            </label>
+          </fieldset>
+          <p class="editor__hint" data-test="photos-after-save">
+            Se suben al guardar, con el propósito que les hayas dado. Si alguna falla, la planta queda
+            creada y podrás reintentarlo desde su ficha.
+          </p>
+        </template>
       </UiFormSection>
 
       <!-- 6. Cuidados efectivos -->
@@ -612,7 +666,15 @@ function submit() {
           <slot name="secondary-action">
             <UiButton variant="secondary" to="/plants">Cancelar</UiButton>
           </slot>
-          <UiButton type="submit" :busy="submitting">{{ submitLabel }}</UiButton>
+          <UiButton
+            v-if="creating"
+            variant="secondary"
+            type="submit"
+            :busy="submitting"
+            data-test="save-another"
+            @click="saveAfter = 'another'"
+          >Guardar y añadir otra</UiButton>
+          <UiButton type="submit" :busy="submitting" data-test="save-primary" @click="saveAfter = 'detail'">{{ submitLabel }}</UiButton>
         </div>
       </footer>
     </div>
@@ -869,20 +931,61 @@ function submit() {
 }
 
 .photo-purpose {
-  color: var(--color-ink-faint);
+  border: 0;
   display: flex;
   flex-wrap: wrap;
-  font-size: var(--font-size-12);
-  gap: var(--space-4);
-  list-style: none;
+  gap: var(--space-2);
   margin: var(--space-3) 0 0;
   padding: 0;
 }
 
-.photo-purpose li::before {
+.photo-purpose legend {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  padding: 0;
+}
+
+.photo-purpose label {
+  position: relative;
+}
+
+.photo-purpose input {
+  opacity: 0;
+  position: absolute;
+}
+
+.photo-purpose span {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  display: inline-block;
+  font-size: var(--font-size-12);
+  padding: var(--space-1) var(--space-3);
+}
+
+.photo-purpose span::before {
   color: var(--color-brand);
   content: '○';
   margin-right: var(--space-1);
+}
+
+.photo-purpose label.is-active span {
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand);
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.photo-purpose label.is-active span::before {
+  content: '●';
+}
+
+.photo-purpose input:focus-visible + span {
+  box-shadow: var(--focus-ring);
 }
 
 .care-concept {

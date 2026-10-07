@@ -31,6 +31,8 @@ import com.cactify.domain.repos.AlertQueries
 import com.cactify.domain.repos.AlertRepository
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
+import com.cactify.domain.repos.MediaSummaries
+import com.cactify.domain.repos.PhotoSummary
 import com.cactify.domain.repos.PlantMovementRepository
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.PlantStatusChangeRepository
@@ -67,6 +69,7 @@ class PlantService(
   private val alertRepository: AlertRepository,
   private val alertQueries: AlertQueries,
   private val alertMapper: AlertMapper,
+  private val mediaSummaries: MediaSummaries,
   private val clock: Clock,
 ) {
 
@@ -215,7 +218,9 @@ class PlantService(
     plantRepository.findAll(specification(criteria), PlantSortKeys.translate(pageable)).let { page ->
       // La atención de toda la página con UNA consulta agregada, no una por fila (ADR-009).
       val attention = alertQueries.highestOpenSeverityByPlant(page.content.map { it.id })
-      PageResponse.of(page) { it.toSummary(attention[it.id]) }
+      // Y la portada y el recuento de fotografías, igual: una consulta agregada, no una por fila.
+      val photos = mediaSummaries.byPlant(page.content.map { it.id })
+      PageResponse.of(page) { it.toSummary(attention[it.id], photos[it.id] ?: PhotoSummary.NONE) }
     }
 
   /**
@@ -284,7 +289,10 @@ class PlantService(
     ).content,
   )
 
-  private fun Plant.toDetail() = PlantDetailResponse(
+  private fun Plant.toDetail(): PlantDetailResponse =
+    toDetail(mediaSummaries.byPlant(listOf(id))[id] ?: PhotoSummary.NONE)
+
+  private fun Plant.toDetail(photos: PhotoSummary) = PlantDetailResponse(
     id = id.toString(),
     code = code,
     nickname = nickname,
@@ -338,6 +346,8 @@ class PlantService(
       )
     },
     openAlerts = openAlerts(),
+    primaryPhoto = photos.primary?.toResponse(),
+    photoCount = photos.count,
   )
 
   private fun PlantStatusChange.toResponse() = PlantStatusChangeResponse(
@@ -348,7 +358,7 @@ class PlantService(
     occurredAt = occurredAt,
   )
 
-  private fun Plant.toSummary(attention: AlertSeverity? = null) = PlantSummaryResponse(
+  private fun Plant.toSummary(attention: AlertSeverity? = null, photos: PhotoSummary = PhotoSummary.NONE) = PlantSummaryResponse(
     id = id.toString(),
     code = code,
     status = status.value,
@@ -357,6 +367,8 @@ class PlantService(
     location = LocationResponse(location.id.toString(), location.name),
     species = SpeciesSummaryResponse(species.id.toString(), species.code, species.scientificName, species.commonName),
     attention = attention?.value,
+    primaryPhoto = photos.primary?.toResponse(),
+    photoCount = photos.count,
   )
 
   private companion object {

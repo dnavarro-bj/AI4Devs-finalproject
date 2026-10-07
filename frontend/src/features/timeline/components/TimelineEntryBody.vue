@@ -13,11 +13,42 @@
 import { toTimelineEvents } from '@features/care-records/composables/usePlantHistory'
 import { ALERT_SEVERITY_LABELS } from '@features/alerts/types/alert.types'
 import { TASK_TYPE_LABELS, type TaskType } from '@features/tasks/types/task.types'
+import { toThumbImage } from '@features/media/mappers/media.mapper'
+import { IMAGE_ACCEPT } from '@shared/utils/imageFiles'
+import type { PendingView } from '@features/media/composables/usePendingUploads'
 import { BLOOM_STATUS_LABELS, bloomInterval } from '../mappers/timeline.mapper'
 import type { TimelineEntry } from '../types/timeline.types'
 
-const props = defineProps<{ entry: TimelineEntry, plantId: string }>()
-const emit = defineEmits<{ edit: [TimelineEntry], remove: [TimelineEntry], close: [TimelineEntry] }>()
+const props = defineProps<{
+  entry: TimelineEntry
+  plantId: string
+  /** Fotografías de este evento que no llegaron a subirse: se avisa aquí y se puede reintentar. */
+  pendingPhotos?: PendingView[]
+}>()
+const emit = defineEmits<{
+  'edit': [TimelineEntry]
+  'remove': [TimelineEntry]
+  'close': [TimelineEntry]
+  /** Fotografías elegidas para añadir a este evento: quien lo usa las sube con su `eventId`. */
+  'add-photos': [TimelineEntry, File[]]
+  /** Descolgar una fotografía del evento: sigue en la galería del ejemplar. */
+  'remove-photo': [TimelineEntry, string]
+  'retry-photos': [TimelineEntry]
+}>()
+
+const apiBase = useRuntimeConfig().public.apiBaseUrl as string
+
+/** Solo los eventos de la espina admiten fotografía; las lecturas, estados y movimientos, no. */
+const photoable = computed(() => ['comentario', 'intervencion', 'floracion', 'tarea'].includes(props.entry.type))
+const images = computed(() => (props.entry.photos ?? []).map((photo) => toThumbImage(photo, apiBase)))
+
+const fileInput = ref<HTMLInputElement | null>(null)
+function onPick(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  if (files.length) emit('add-photos', props.entry, files)
+}
 
 const readingValues = computed(() => props.entry.reading
   ? toTimelineEvents([props.entry.reading])[0]!.values.map((value) => ({ label: value.label, value: value.text, absent: value.absent }))
@@ -32,7 +63,7 @@ function editedLabel(at: string): string {
 </script>
 
 <template>
-  <div class="entry-body" :data-test="`entry-${entry.id}`">
+  <div :id="`event-${entry.id}`" class="entry-body" :data-test="`entry-${entry.id}`">
     <template v-if="entry.type === 'lectura' && entry.reading">
       <div :data-test="`reading-${entry.id}`" class="entry-body__reading">
         <UiSummaryGrid density="compact" :items="readingValues" />
@@ -92,10 +123,44 @@ function editedLabel(at: string): string {
       <template v-else>Operación sobre varias plantas</template>
     </small>
 
-    <div v-if="editable" class="entry-body__actions">
-      <UiButton v-if="openBloom" variant="text" data-test="close-entry" @click="emit('close', entry)">Cerrar floración</UiButton>
-      <UiButton variant="text" data-test="edit-entry" @click="emit('edit', entry)">Corregir</UiButton>
-      <UiButton variant="text" data-test="remove-entry" @click="emit('remove', entry)">Retirar</UiButton>
+    <!-- Las fotografías del evento, en su tarjeta. Sin ellas no se reserva hueco. -->
+    <UiMediaGallery
+      v-if="images.length"
+      class="entry-body__photos"
+      manage
+      :editable="false"
+      :reorderable="false"
+      :primaryable="false"
+      remove-label="Quitar del evento"
+      :images="images"
+      :data-test="`event-photos-${entry.id}`"
+      @remove="emit('remove-photo', entry, $event)"
+    />
+
+    <div v-if="pendingPhotos?.length" class="entry-body__pending" role="status" :data-test="`event-pending-${entry.id}`">
+      <span>{{ pendingPhotos.length }} {{ pendingPhotos.length === 1 ? 'fotografía sin subir' : 'fotografías sin subir' }}.</span>
+      <UiButton variant="text" data-test="retry-event-photos" @click="emit('retry-photos', entry)">Reintentar</UiButton>
+    </div>
+
+    <div v-if="editable || photoable" class="entry-body__actions">
+      <template v-if="photoable">
+        <UiButton variant="text" data-test="add-photo" @click="fileInput?.click()">Añadir fotografía</UiButton>
+        <input
+          ref="fileInput"
+          class="sr-only"
+          type="file"
+          multiple
+          :accept="IMAGE_ACCEPT"
+          aria-label="Elegir fotografías para este evento"
+          data-test="add-photo-input"
+          @change="onPick"
+        >
+      </template>
+      <template v-if="editable">
+        <UiButton v-if="openBloom" variant="text" data-test="close-entry" @click="emit('close', entry)">Cerrar floración</UiButton>
+        <UiButton variant="text" data-test="edit-entry" @click="emit('edit', entry)">Corregir</UiButton>
+        <UiButton variant="text" data-test="remove-entry" @click="emit('remove', entry)">Retirar</UiButton>
+      </template>
     </div>
   </div>
 </template>
@@ -139,6 +204,14 @@ function editedLabel(at: string): string {
 .entry-body__facts dd {
   font-size: var(--font-size-13);
   margin: 0;
+}
+
+.entry-body__pending {
+  align-items: center;
+  color: var(--color-warning);
+  display: flex;
+  font-size: var(--font-size-12);
+  gap: var(--space-2);
 }
 
 .entry-body__actions {

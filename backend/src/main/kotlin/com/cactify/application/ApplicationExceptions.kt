@@ -183,3 +183,13 @@ class BatchNotFoundException(id: String) :
  */
 class BatchTooLargeException(val plants: Long, val maxPlants: Int) :
   RuntimeException("$plants plantas superan el máximo de $maxPlants: acota el alcance")
+
+/** La fotografía pedida por la ruta no existe, no cuelga del dueño indicado o la variante no existe: 404. */
+class MediaNotFoundException(id: String) :
+  RuntimeException("La fotografía '$id' no existe")
+
+/** La subida no es válida: sin archivos, demasiados o con alguno que no es una imagen admitida: 400. */
+class InvalidMediaException(message: String) : RuntimeException(message)
+
+/** Un archivo supera el tamaño máximo: 413. La petición es válida, pero no cabe. */
+class MediaTooLargeException(message: String) : RuntimeException(message)

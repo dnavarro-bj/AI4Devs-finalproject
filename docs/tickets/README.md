@@ -56,7 +56,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | [T-16](T-16-ficha-del-ejemplar-ampliada.md) | Ficha del ejemplar ampliada y herencia de cuidados | Backend + Frontend | Archivado |
 | [T-17](T-17-especie-ampliada.md) | Especie ampliada: exposición, entorno, crecimiento y floración | Backend + Frontend | Archivado |
 | [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend | Archivado |
-| [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend | Pendiente |
+| [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend | Hecho |
 | [T-20](T-20-cronologia-unificada.md) | Cronología unificada del ejemplar | Backend + Frontend | Archivado |
 | [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | Archivado |
 

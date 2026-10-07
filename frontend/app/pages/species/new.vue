@@ -5,16 +5,22 @@ import { useSpecies } from '@features/species/composables/useSpecies'
 import SpeciesForm, { type SpeciesSubmitError } from '@features/species/components/SpeciesForm.vue'
 import { speciesSubmitError } from '@features/species/composables/speciesSubmitError'
 import type { SpeciesInput } from '@features/species/types/species.types'
+import { usePendingUploads } from '@features/media/composables/usePendingUploads'
 
 useHead({ title: 'Cactify · Registrar especie' })
 useBreadcrumbs().set([{ label: 'Especies', to: '/species' }, { label: 'Registrar especie' }])
 
 const { create } = useSpecies()
+const { uploadAfterSave } = usePendingUploads()
 
 const submitting = ref(false)
 const submitError = ref<SpeciesSubmitError | null>(null)
 
-async function save(input: SpeciesInput) {
+/**
+ * Guardar y **después** subir: la especie ya existe cuando se sube la primera foto, así que un
+ * fallo de imagen no deshace el alta. Lo que no suba queda en la cola y la ficha lo avisa.
+ */
+async function save(input: SpeciesInput, files: File[] = []) {
   submitting.value = true
   submitError.value = null
 
@@ -27,6 +33,11 @@ async function save(input: SpeciesInput) {
     return
   }
 
+  if (files.length) {
+    submitting.value = true
+    await uploadAfterSave({ kind: 'species', id: result.data!.id }, files)
+    submitting.value = false
+  }
   await navigateTo(`/species/${result.data!.id}`)
 }
 </script>

@@ -9,8 +9,8 @@
  * lo segundo y el resultado no se parecía al prototipo ni de lejos.
  *
  * Real: los dos nombres, la descripción, exposición, entorno, temperatura, humedad, luz, riego y la
- * mezcla de sustrato, el año de cultivo y la floración (T-17), más corregir y retirar. Marcado: la
- * lista de ejemplares (T-21), fotografías (T-19) y grupos de cultivo (T-21).
+ * mezcla de sustrato, el año de cultivo y la floración (T-17), las fotografías (T-19), más corregir y
+ * retirar. Marcado: la lista de ejemplares y los grupos de cultivo (T-21).
  *
  * **Un dato sin definir se dice «Sin definir»**: ni un guion ni un valor inventado. Es una
  * respuesta, no un hueco.
@@ -26,6 +26,9 @@ import {
   yearRows,
 } from '@features/species/mappers/speciesCultivation'
 import SpeciesPhotosPanel from '@features/species/components/SpeciesPhotosPanel.vue'
+import { useMediaGallery } from '@features/media/composables/useMediaGallery'
+import { usePendingUploads } from '@features/media/composables/usePendingUploads'
+import { toThumbImage } from '@features/media/mappers/media.mapper'
 import SpeciesSpecimensPanel from '@features/species/components/SpeciesSpecimensPanel.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
 import type { SpeciesDetail } from '@features/species/types/species.types'
@@ -49,12 +52,35 @@ setBreadcrumbs([{ label: 'Especies', to: '/species' }, { label: 'Ficha de especi
 
 const notFound = computed(() => !loading.value && isNotFound(error.value))
 
-const TABS = [
+/**
+ * La galería la crea la ficha y la comparten la cabecera y la pestaña: subir una foto actualiza la
+ * portada y el recuento sin recargar. Hasta que llega la galería, valen los de la propia ficha.
+ */
+const gallery = useMediaGallery({ kind: 'species', id })
+const galleryLoaded = ref(false)
+/** Lo que se eligió al dar de alta o al corregir y no llegó a subirse: se avisa aquí y se reintenta en la pestaña. */
+const pendingPhotos = usePendingUploads().pendingFor({ kind: 'species', id })
+const apiBase = useRuntimeConfig().public.apiBaseUrl as string
+
+const photoCount = computed(() => galleryLoaded.value ? gallery.total.value : (species.value?.photoCount ?? 0))
+
+/** La portada: la principal de la galería, o la que trae la ficha mientras la galería llega. */
+const cover = computed(() => {
+  const primary = gallery.photos.value.find((photo) => photo.primary)
+  if (galleryLoaded.value) return primary ? toThumbImage(primary, apiBase) : null
+  return species.value?.primaryPhoto ? toThumbImage(species.value.primaryPhoto, apiBase) : null
+})
+
+/** Las dos siguientes, para la tira de la cabecera. */
+const heroThumbs = computed(() => gallery.photos.value
+  .filter((photo) => !photo.primary).slice(0, 2).map((photo) => toThumbImage(photo, apiBase)))
+
+const TABS = computed(() => [
   { value: 'summary', label: 'Resumen' },
   { value: 'cultivation', label: 'Cultivo' },
-  { value: 'photos', label: 'Fotografías' },
+  { value: 'photos', label: 'Fotografías', ...(photoCount.value > 0 ? { count: photoCount.value } : {}) },
   { value: 'specimens', label: 'Ejemplares' },
-]
+])
 const tab = ref('summary')
 
 const UNDEFINED = 'Sin definir'
@@ -121,6 +147,9 @@ async function load() {
   species.value = result.data!
   setBreadcrumbs([{ label: 'Especies', to: '/species' }, { label: result.data!.scientificName }])
   useHead({ title: `Cactify · ${result.data!.scientificName}` })
+
+  await gallery.load()
+  galleryLoaded.value = !gallery.error.value
 }
 
 /**
@@ -180,14 +209,29 @@ onMounted(load)
           <p v-else class="hero__description is-undefined" data-test="description">Sin descripción todavía.</p>
         </template>
         <template #visual>
-          <div class="hero__media" data-mock="true" data-test="photos">
-            <div class="hero__photo" role="img" aria-label="Sin fotografía principal">
-              <span aria-hidden="true">✺</span>
-              <small>Imagen principal · T-19</small>
-            </div>
+          <div class="hero__media" data-test="photos">
+            <UiCoverPhoto
+              class="hero__cover"
+              data-test="cover"
+              :src="cover?.src"
+              :alt="cover?.alt"
+              :count="photoCount"
+              count-action
+              @count="tab = 'photos'"
+            />
             <div class="hero__thumbs">
-              <span v-for="n in 2" :key="n" aria-hidden="true">✺</span>
-              <button type="button" disabled aria-label="Añadir fotografías con T-19">
+              <button
+                v-for="thumb in heroThumbs"
+                :key="thumb.id"
+                type="button"
+                class="hero__thumb"
+                data-test="hero-thumb"
+                :aria-label="`Ver ${thumb.alt}`"
+                @click="tab = 'photos'"
+              >
+                <img :src="thumb.thumbSrc" :alt="thumb.alt">
+              </button>
+              <button type="button" class="hero__add" data-test="hero-add-photo" @click="tab = 'photos'">
                 <b aria-hidden="true">＋</b>
                 <small>Añadir</small>
               </button>
@@ -204,6 +248,17 @@ onMounted(load)
       <UiInlineError v-if="removeError" class="hero-error" data-test="remove-error">
         {{ removeError }}
       </UiInlineError>
+
+      <UiNotice
+        v-if="pendingPhotos.length && tab !== 'photos'"
+        severity="warning"
+        title="Hay fotografías sin subir"
+        data-test="pending-photos"
+      >
+        La especie se guardó, pero {{ pendingPhotos.length }}
+        {{ pendingPhotos.length === 1 ? 'fotografía no se subió' : 'fotografías no se subieron' }}.
+        <UiButton variant="secondary" data-test="review-pending" @click="tab = 'photos'">Revisar</UiButton>
+      </UiNotice>
 
       <UiTabs v-model="tab" :tabs="TABS" />
 
@@ -335,7 +390,12 @@ onMounted(load)
         </aside>
       </div>
 
-      <SpeciesPhotosPanel v-else-if="tab === 'photos'" :species-name="species.scientificName" />
+      <SpeciesPhotosPanel
+        v-else-if="tab === 'photos'"
+        :species-id="species.id"
+        :species-name="species.scientificName"
+        :gallery="gallery"
+      />
       <SpeciesSpecimensPanel v-else-if="tab === 'specimens'" standalone />
 
       <UiDialog
@@ -392,35 +452,8 @@ onMounted(load)
   width: min(380px, 34vw);
 }
 
-.hero__photo {
-  align-items: center;
-  background:
-    radial-gradient(circle at 50% 48%, var(--color-brand-soft) 0 19%, transparent 20% 34%),
-    radial-gradient(circle at 50% 48%, var(--color-brand) 0 34%, var(--color-warning-soft) 35% 100%);
-  border-radius: var(--radius-md);
-  color: color-mix(in srgb, var(--color-surface) 72%, transparent);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  justify-content: center;
-  min-height: 172px;
-  overflow: hidden;
-  position: relative;
-}
-
-.hero__photo span {
-  font-size: var(--font-size-38);
-}
-
-.hero__photo small {
-  background: color-mix(in srgb, var(--color-ink) 80%, transparent);
-  border-radius: var(--radius-sm);
-  bottom: var(--space-2);
-  color: var(--color-surface);
-  font-size: var(--font-size-11);
-  padding: var(--space-1) var(--space-2);
-  position: absolute;
-  right: var(--space-2);
+.hero__cover {
+  width: 100%;
 }
 
 .hero__thumbs {
@@ -429,32 +462,34 @@ onMounted(load)
   grid-template-columns: repeat(3, 1fr);
 }
 
-.hero__thumbs span,
-.hero__thumbs button {
+.hero__thumb,
+.hero__add {
   align-items: center;
-  background: var(--color-brand-soft);
   border: 0;
   border-radius: var(--radius-sm);
-  color: color-mix(in srgb, var(--color-brand) 58%, transparent);
+  cursor: pointer;
   display: flex;
   height: 58px;
   justify-content: center;
+  overflow: hidden;
+  padding: 0;
 }
 
-.hero__thumbs span:nth-child(2) {
-  background: color-mix(in srgb, var(--color-info-soft) 72%, var(--color-brand-soft));
+.hero__thumb img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
-.hero__thumbs button {
+.hero__add {
   background: var(--color-canvas);
   border: 1px dashed var(--color-line-strong);
   color: var(--color-brand);
   flex-direction: column;
-  opacity: 1;
 }
 
-.hero__thumbs button b { font-size: var(--font-size-17); }
-.hero__thumbs button small { font-size: var(--font-size-11); }
+.hero__add b { font-size: var(--font-size-17); }
+.hero__add small { font-size: var(--font-size-11); }
 
 .species-hero { overflow: hidden; }
 

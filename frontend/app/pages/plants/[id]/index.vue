@@ -19,6 +19,7 @@ import { plantGlance } from '@features/plants/composables/plantGlance'
 import { ORIGIN_LABELS, germinationLabel } from '@features/plants/mappers/plantProfile'
 import { useOnVisible } from '@shared/composables/useOnVisible'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
+import { useToast } from '@shared/composables/useToast'
 import { useAlertActions } from '@features/alerts/composables/useAlertActions'
 import type { AlertInput } from '@features/alerts/types/alert.types'
 import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
@@ -30,6 +31,9 @@ import { usePlantBlooms } from '@features/timeline/composables/usePlantBlooms'
 import { TIMELINE_KIT_TYPES, toEvent } from '@features/timeline/mappers/timeline.mapper'
 import type { EventInput, EventResource, TimelineEntry } from '@features/timeline/types/timeline.types'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
+import { useMediaGallery } from '@features/media/composables/useMediaGallery'
+import { usePendingUploads } from '@features/media/composables/usePendingUploads'
+import { toThumbImage } from '@features/media/mappers/media.mapper'
 
 const route = useRoute()
 const plantId = String(route.params.id)
@@ -45,6 +49,26 @@ useOnVisible(moreSentinel, () => {
 const blooms = usePlantBlooms(plantId)
 const { list: listSoilMixes } = useSoilMixes()
 
+/**
+ * La galería la crea la ficha y la comparten la cabecera, la pestaña y la cronología: subir una foto
+ * actualiza el recuento y la portada sin recargar. Por defecto va por fecha de captura —la
+ * evolución—; «Manual» pide el orden que el usuario ha dado. Las fotos de la especie no entran.
+ */
+const photoSort = ref<'date' | 'manual'>('date')
+const gallery = useMediaGallery(
+  { kind: 'plants', id: plantId },
+  {
+    sort: () => (photoSort.value === 'manual' ? 'position' : undefined),
+    eventHref: (eventId) => `/plants/${plantId}?event=${eventId}`,
+  },
+)
+const galleryLoaded = ref(false)
+const apiBase = useRuntimeConfig().public.apiBaseUrl as string
+/** Lo que se eligió en el alta o en un diálogo y no llegó a subirse: se avisa y se reintenta en la pestaña. */
+const pending = usePendingUploads()
+const pendingPhotos = pending.pendingFor({ kind: 'plants', id: plantId })
+const toast = useToast()
+
 const plant = ref<PlantDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -55,6 +79,26 @@ const statusOpen = ref(false)
 /** Se incrementa tras cada cambio de estado: es lo que refresca el historial de la pestaña de datos. */
 const historyVersion = ref(0)
 const today = useReferenceDate()
+
+const photoCount = computed(() => galleryLoaded.value ? gallery.total.value : (plant.value?.photoCount ?? 0))
+
+/** La portada: la principal de la galería, o la que trae la ficha mientras la galería llega. */
+const cover = computed(() => {
+  const primary = gallery.photos.value.find((photo) => photo.primary)
+  const source = galleryLoaded.value ? primary : (plant.value?.primaryPhoto ?? null)
+  if (!source) return null
+  const image = toThumbImage(source, apiBase)
+  return { src: image.src, alt: image.alt }
+})
+
+/** Un enlace «ver el evento» desde una foto: lleva a la cronología y a su tarjeta. */
+async function showEvent(id: string) {
+  tab.value = 'resumen'
+  await nextTick()
+  document.getElementById(`event-${id}`)?.scrollIntoView?.({ block: 'center' })
+}
+watch(() => route.query?.event, (id) => { if (id) showEvent(String(id)) }, { immediate: true })
+watch(photoSort, () => gallery.load())
 
 /** Su próximo trabajo: lo que le afecta —dirigido a ella, a su localización o a un ascendiente—. */
 const work = useRelatedTasks(() => ({ plant: plantId }))
@@ -109,9 +153,12 @@ onMounted(async () => {
   setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: plant.value.nickname }])
   // Ni el historial ni las floraciones bloquean la ficha: si fallan, la planta se ve igual.
   history.load(plantId)
-  timeline.load()
+  timeline.load().then(() => {
+    if (route.query?.event) showEvent(String(route.query.event))
+  })
   blooms.load()
   work.load()
+  gallery.load().then(() => { galleryLoaded.value = !gallery.error.value })
 })
 
 /** La lectura recién registrada entra en la cronología sin recargar. */
@@ -208,21 +255,62 @@ async function afterChange(source: DialogState['source']) {
   else await timeline.reload()
 }
 
-async function submitDialog(resource: EventResource, input: EventInput) {
+/**
+ * Crea o corrige el evento y **después** sube las fotografías adjuntas con su `eventId`: un fallo de
+ * imagen no deshace el evento ni bloquea el guardado. Lo que no sube queda en la cola, la ficha lo
+ * avisa y la tarjeta del evento ofrece reintentarlo.
+ */
+async function submitDialog(resource: EventResource, input: EventInput, files: File[] = []) {
   const current = dialog.value!
   saving.value = true
   dialogError.value = null
   const result = current.source === 'blooms'
     ? await blooms.save(input as never, current.entry?.id)
     : await timeline.save(resource, input, current.entry?.id)
-  saving.value = false
 
   if (!result.success) {
+    saving.value = false
     dialogError.value = result.error!.message
     return
   }
-  await afterChange(current.source)
+
+  const failed = files.length ? (await uploadFor(result.data!.id, files)).failed : 0
+  saving.value = false
+  // Sin fotografías, el evento ya está colocado; con ellas la cronología se vuelve a pedir para traerlas.
+  if (files.length) await refreshAfterPhotos()
+  else await afterChange(current.source)
   closeDialog()
+  if (failed) warnUnsent(failed)
+}
+
+const uploadFor = (eventId: string, files: File[]) =>
+  pending.uploadAfterSave({ kind: 'plants', id: plantId }, files, { eventId })
+
+/** La cronología (con sus fotos), la pestaña de floración y el recuento de la cabecera se ponen al día. */
+async function refreshAfterPhotos() {
+  await Promise.all([timeline.reload(), blooms.load(), gallery.load()])
+}
+
+const warnUnsent = (failed: number) =>
+  toast.show(`${failed} ${failed === 1 ? 'fotografía no se subió' : 'fotografías no se subieron'}: reintenta desde la tarjeta del evento.`)
+
+/** «Añadir fotografía» en la tarjeta de un evento existente. */
+async function addEventPhotos(entry: TimelineEntry, files: File[]) {
+  const { failed } = await uploadFor(entry.id, files)
+  await refreshAfterPhotos()
+  if (failed) warnUnsent(failed)
+}
+
+/** «Quitar»: descuelga la fotografía del evento; sigue en la galería del ejemplar. */
+async function removeEventPhoto(_entry: TimelineEntry, photoId: string) {
+  const result = await gallery.update(photoId, { eventId: null })
+  if (result.success) await timeline.reload()
+}
+
+async function retryEventPhotos() {
+  const { failed } = await pending.retry({ kind: 'plants', id: plantId })
+  await refreshAfterPhotos()
+  if (failed) warnUnsent(failed)
 }
 
 async function confirmRemove() {
@@ -260,7 +348,26 @@ async function confirmRemove() {
     </div>
 
     <template v-else-if="plant">
-      <PlantHeader :plant="plant" @register-reading="readingOpen = true" @create-task="createTaskHere" @change-status="statusOpen = true" />
+      <PlantHeader
+        :plant="plant"
+        :cover="cover"
+        :photo-count="photoCount"
+        @register-reading="readingOpen = true"
+        @create-task="createTaskHere"
+        @change-status="statusOpen = true"
+        @open-photos="tab = 'fotografias'"
+      />
+
+      <UiNotice
+        v-if="pendingPhotos.length && tab !== 'fotografias'"
+        severity="warning"
+        title="Hay fotografías sin subir"
+        data-test="pending-photos"
+      >
+        El ejemplar se guardó, pero {{ pendingPhotos.length }}
+        {{ pendingPhotos.length === 1 ? 'fotografía no se subió' : 'fotografías no se subieron' }}.
+        <UiButton variant="secondary" data-test="review-pending" @click="tab = 'fotografias'">Revisar</UiButton>
+      </UiNotice>
 
       <PlantAlertsNotice :alerts="plant.openAlerts ?? []" :plant-id="plant.id" />
 
@@ -268,7 +375,7 @@ async function confirmRemove() {
         v-model="tab"
         :tabs="[
           { value: 'resumen', label: 'Resumen e historial' },
-          { value: 'fotografias', label: 'Fotografías' },
+          { value: 'fotografias', label: 'Fotografías', count: photoCount > 0 ? photoCount : undefined },
           { value: 'floracion', label: 'Floración', count: blooms.total.value || undefined },
           { value: 'datos', label: 'Datos' },
         ]"
@@ -333,9 +440,13 @@ async function confirmRemove() {
                     v-if="entryById.get(event.id)"
                     :entry="entryById.get(event.id)!"
                     :plant-id="plant.id"
+                    :pending-photos="pendingPhotos.filter((item) => item.eventId === event.id)"
                     @edit="editEntry($event)"
                     @close="editEntry($event, 'timeline', true)"
                     @remove="removeEntry($event)"
+                    @add-photos="addEventPhotos"
+                    @remove-photo="removeEventPhoto"
+                    @retry-photos="retryEventPhotos"
                   />
                 </template>
               </UiTimeline>
@@ -374,9 +485,14 @@ async function confirmRemove() {
         </aside>
       </div>
 
-      <UiEmptyState v-else-if="tab === 'fotografias'" title="Las fotografías llegan en T-19" mark="▧">
-        Esta sección necesita almacenamiento de ficheros, que todavía no existe.
-      </UiEmptyState>
+      <PhotoGalleryPanel
+        v-else-if="tab === 'fotografias'"
+        :owner="{ kind: 'plants', id: plant.id }"
+        :subject="plant.nickname"
+        :gallery="gallery"
+        v-model:sort="photoSort"
+        :description="`La evolución de ${plant.nickname}: de la más reciente a la más antigua, o en el orden que le des.`"
+      />
 
       <PlantBloomPanel
         v-else-if="tab === 'floracion'"
@@ -435,7 +551,7 @@ async function confirmRemove() {
         :entry="dialog?.entry"
         :busy="saving"
         :error="dialogError"
-        @submit="submitDialog('comments', $event)"
+        @submit="(input, files) => submitDialog('comments', input, files)"
         @close="closeDialog"
       />
       <TimelineInterventionDialog
@@ -444,7 +560,7 @@ async function confirmRemove() {
         :soil-mixes="soilMixes"
         :busy="saving"
         :error="dialogError"
-        @submit="submitDialog('interventions', $event)"
+        @submit="(input, files) => submitDialog('interventions', input, files)"
         @close="closeDialog"
       />
       <TimelineBloomDialog
@@ -453,7 +569,7 @@ async function confirmRemove() {
         :closing="dialog?.closing"
         :busy="saving"
         :error="dialogError"
-        @submit="submitDialog('blooms', $event)"
+        @submit="(input, files) => submitDialog('blooms', input, files)"
         @close="closeDialog"
       />
       <TimelineRemoveDialog

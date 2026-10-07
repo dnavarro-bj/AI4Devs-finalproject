@@ -18,7 +18,8 @@ const props = withDefaults(defineProps<{
   error?: string | null
 }>(), { entry: null, closing: false, busy: false, error: null })
 
-const emit = defineEmits<{ submit: [BloomInput], close: [] }>()
+/** El segundo argumento —las fotografías adjuntas— solo viaja si las hay. */
+const emit = defineEmits<{ submit: [BloomInput, File[]?], close: [] }>()
 
 const STATUSES = (Object.keys(BLOOM_STATUS_LABELS) as BloomStatus[])
   .map((value) => ({ value, label: BLOOM_STATUS_LABELS[value] }))
@@ -29,6 +30,7 @@ const status = ref<BloomStatus>('en_flor')
 const flowerCount = ref('')
 const notes = ref('')
 const errors = reactive({ startedOn: '', endedOn: '', flowerCount: '' })
+const photos = shallowRef<File[]>([])
 
 watch(() => [props.open, props.entry, props.closing], () => {
   const current = props.entry?.bloom
@@ -38,6 +40,7 @@ watch(() => [props.open, props.entry, props.closing], () => {
   flowerCount.value = current?.flowerCount != null ? String(current.flowerCount) : ''
   notes.value = current?.notes ?? ''
   Object.assign(errors, { startedOn: '', endedOn: '', flowerCount: '' })
+  photos.value = []
 }, { immediate: true })
 
 const finished = computed(() => status.value === 'finalizada')
@@ -52,13 +55,15 @@ function submit() {
     : ''
   if (errors.startedOn || errors.endedOn || errors.flowerCount) return
 
-  emit('submit', {
+  const input = {
     startedOn: startedOn.value,
     status: status.value,
     endedOn: finished.value ? endedOn.value : undefined,
     flowerCount: flowerCount.value === '' ? undefined : Number(flowerCount.value),
     notes: notes.value.trim() || undefined,
-  })
+  }
+  if (photos.value.length) emit('submit', input, photos.value)
+  else emit('submit', input)
 }
 </script>
 
@@ -100,6 +105,8 @@ function submit() {
         data-test="bloom-flowers"
       />
       <UiField v-model="notes" label="Notas" as="textarea" :rows="3" data-test="bloom-notes" />
+
+      <EventPhotosField v-model="photos" />
 
       <div class="dialog-form__actions">
         <UiButton variant="secondary" data-test="cancel-event" @click="emit('close')">Cancelar</UiButton>

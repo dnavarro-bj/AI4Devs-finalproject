@@ -23,6 +23,12 @@ dependencies {
   implementation(kotlin("reflect"))
   implementation("io.hypersistence:hypersistence-tsid:2.1.4")
 
+  // Fotografías (ADR-018): decodificar JPEG y WebP (el PNG viene en el JDK), leer fecha y orientación del
+  // EXIF antes de descartarlo. Se usan solo desde ImageProcessor.
+  implementation("com.twelvemonkeys.imageio:imageio-jpeg:3.12.0")
+  implementation("com.twelvemonkeys.imageio:imageio-webp:3.12.0")
+  implementation("com.drewnoakes:metadata-extractor:2.19.0")
+
   implementation("org.postgresql:postgresql")
   implementation("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")

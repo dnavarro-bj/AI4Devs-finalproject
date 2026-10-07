@@ -169,8 +169,216 @@ describe('ficha de la planta', () => {
     ])
 
     await tabs[1]!.trigger('click')
-    // Las secciones sin construir lo explican en lugar de aparecer vacías.
-    expect(wrapper.text()).toContain('T-19')
+    expect(wrapper.find('[data-test="photos-view"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('T-19')
+  })
+})
+
+/** Escenarios de «Fotografías del ejemplar en su ficha» (T-19). */
+describe('ficha de la planta: fotografías', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.put.mockReset()
+    api.post.mockReset()
+    api.postForm.mockReset()
+    api.delete.mockReset()
+  })
+
+  const photo = (id: string, extra: Record<string, unknown> = {}) => ({
+    id, altText: `Foto ${id}`, width: 800, height: 600, contentType: 'image/jpeg',
+    capturedAt: `2026-0${id}-10T00:00:00Z`, createdAt: '2026-09-01T10:00:00Z', position: Number(id) - 1,
+    primary: id === '1', purpose: null, eventId: null,
+    urls: { thumb: `/media/${id}/thumb`, medium: `/media/${id}/medium`, full: `/media/${id}/full` },
+    ...extra,
+  })
+
+  /** La ficha normal más `GET /plants/{id}/photos`, que sirve lo que el test deje en `gallery`. */
+  function servePhotos(initial: ReturnType<typeof photo>[], plant = plantDetail()) {
+    const state = { gallery: initial }
+    serve(plant)
+    const base = api.get.getMockImplementation()!
+    api.get.mockImplementation((path: string, params?: Record<string, unknown>) => (
+      path.endsWith('/photos')
+        ? Promise.resolve({ content: state.gallery, totalElements: state.gallery.length, totalPages: 1, pageNumber: 0, pageSize: 50 })
+        : base(path, params)
+    ))
+    return state
+  }
+
+  const photosTab = async (wrapper: Awaited<ReturnType<typeof mountSuspended>>) => {
+    await wrapper.findAll('[role="tab"]')[1]!.trigger('click')
+  }
+
+  it('la cabecera muestra la portada real con su texto alternativo y «8 fotos»', async () => {
+    servePhotos(Array.from({ length: 8 }, (_, i) => photo(String(i + 1))))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    const cover = wrapper.find('[data-test="plant-cover"]')
+    expect(cover.find('img').attributes('src')).toContain('/media/1/medium')
+    expect(cover.find('img').attributes('alt')).toBe('Foto 1')
+    expect(cover.text()).toContain('8 fotos')
+    expect(wrapper.findAll('[role="tab"]')[1]!.text()).toContain('8')
+  })
+
+  it('sin fotografías la cabecera dice «Sin fotografía», sin cifras de ejemplo', async () => {
+    servePhotos([])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="plant-cover"]').text()).toContain('Sin fotografía')
+    expect(wrapper.text()).not.toContain('8 fotos')
+    expect(wrapper.text()).not.toContain('T-19')
+    await photosTab(wrapper)
+    expect(wrapper.find('[data-test="photo-gallery"]').text()).toContain('Todavía no hay fotografías')
+    expect(wrapper.find('[data-test="photo-upload"]').exists()).toBe(true)
+  })
+
+  it('la galería pide por defecto el orden de la evolución y muestra la fecha de captura al ampliar', async () => {
+    servePhotos([photo('3'), photo('2'), photo('1')])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+
+    const first = wrapper.find('[data-test="photo-gallery"] [data-role="thumb"] button')
+    await first.trigger('click')
+
+    expect(wrapper.find('[role="dialog"]').text()).toContain('Tomada el 10 de marzo de 2026')
+    expect(wrapper.find('[role="dialog"]').text()).toContain('Subida el 1 de septiembre de 2026')
+    const photoCalls = api.get.mock.calls.filter(([path]: [string]) => path.endsWith('/photos'))
+    expect(photoCalls[0]![1]).toEqual({ page: 0, size: 50 })
+  })
+
+  it('«Manual» vuelve a pedir la galería con el orden manual y sin fecha obligada', async () => {
+    servePhotos([photo('2'), photo('1')])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+
+    await wrapper.find('[data-test="photo-sort"] input[value="manual"]').setValue(true)
+    await settle()
+
+    const photoCalls = api.get.mock.calls.filter(([path]: [string]) => path.endsWith('/photos'))
+    expect(photoCalls.at(-1)![1]).toEqual({ page: 0, size: 50, sort: 'position' })
+  })
+
+  it('en el orden por fecha no se ofrece mover a mano; en «Manual» sí', async () => {
+    servePhotos([photo('2'), photo('1')])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+
+    await wrapper.find('[data-test="photo-gallery"] .action-menu__trigger').trigger('click')
+    expect(wrapper.findAll('[role="menuitem"]').map((item) => item.text())).not.toContain('Mover antes')
+
+    await wrapper.find('[data-test="photo-sort"] input[value="manual"]').setValue(true)
+    await settle()
+    await wrapper.find('[data-test="photo-gallery"] .action-menu__trigger').trigger('click')
+    expect(wrapper.findAll('[role="menuitem"]').map((item) => item.text())).toContain('Mover antes')
+  })
+
+  it('ampliar una foto colgada de un evento enlaza a él en la cronología', async () => {
+    servePhotos([photo('1', { eventId: '77' })])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+
+    await wrapper.find('[data-test="photo-gallery"] [data-role="thumb"] button').trigger('click')
+
+    expect(wrapper.find('[role="dialog"] a').attributes('href')).toBe('/plants/882687672222443468?event=77')
+  })
+
+  it('subir desde la pestaña actualiza la galería, la portada y el recuento sin recargar', async () => {
+    const state = servePhotos([])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+    api.postForm.mockImplementation(async () => {
+      state.gallery = [photo('1')]
+      return [photo('1')]
+    })
+
+    wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', [new File(['x'], 'a.jpg', { type: 'image/jpeg' })])
+    await settle()
+    await settle()
+
+    expect(api.postForm.mock.calls[0]![0]).toBe('/plants/882687672222443468/photos')
+    expect(wrapper.find('[data-test="plant-cover"]').text()).toContain('1 foto')
+    expect(wrapper.find('[data-test="plant-cover"] img').attributes('src')).toContain('/media/1/medium')
+    expect(wrapper.findAll('[role="tab"]')[1]!.text()).toContain('1')
+  })
+
+  it('el propósito de la subida viaja con los archivos', async () => {
+    servePhotos([])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+    api.postForm.mockResolvedValue([photo('1')])
+
+    await wrapper.find('[data-test="upload-purpose"]').setValue('detalle')
+    wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', [new File(['x'], 'a.jpg', { type: 'image/jpeg' })])
+    await settle()
+
+    expect((api.postForm.mock.calls[0]![1] as FormData).get('purpose')).toBe('detalle')
+  })
+
+  it('corregir la fecha de captura envía la fecha y recarga la galería', async () => {
+    const state = servePhotos([photo('1')])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+    await photosTab(wrapper)
+    api.put.mockImplementation(async () => {
+      state.gallery = [photo('1', { capturedAt: '2026-05-02T00:00:00Z' })]
+      return state.gallery[0]
+    })
+
+    await wrapper.find('[data-test="photo-gallery"] .action-menu__trigger').trigger('click')
+    await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Editar texto y fecha')!.trigger('click')
+    await wrapper.find('[data-test="edit-captured"]').setValue('2026-05-02')
+    await wrapper.find('[data-test="photo-edit-dialog"] form').trigger('submit')
+    await settle()
+
+    expect(api.put).toHaveBeenCalledWith('/plants/882687672222443468/photos/1', { capturedAt: '2026-05-02T00:00:00Z' })
+  })
+
+  it('las fotografías de la especie no aparecen: la galería es la del ejemplar', async () => {
+    servePhotos([], plantDetail({ species: { ...plantDetail().species, primaryPhoto: { id: '99', altText: 'De la especie', urls: { thumb: '/m/99/thumb', medium: '/m/99/medium', full: '/m/99/full' } }, photoCount: 6 } }))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    expect(wrapper.find('[data-test="plant-cover"]').text()).toContain('Sin fotografía')
+    expect(wrapper.html()).not.toContain('/media/99')
+    expect(api.get.mock.calls.some(([path]: [string]) => path.startsWith('/species') && path.endsWith('/photos'))).toBe(false)
+  })
+
+  it('si la galería no llega, la portada y el recuento de la propia ficha siguen valiendo', async () => {
+    serve(plantDetail({ photoCount: 5, primaryPhoto: { id: '4', altText: 'Portada del detalle', urls: { thumb: '/media/4/thumb', medium: '/media/4/medium', full: '/media/4/full' } } }))
+    const base = api.get.getMockImplementation()!
+    api.get.mockImplementation((path: string, params?: Record<string, unknown>) => (
+      path.endsWith('/photos') ? Promise.reject(new ApiError(500, 'Error del servidor')) : base(path, params)
+    ))
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    const cover = wrapper.find('[data-test="plant-cover"]')
+    expect(cover.find('img').attributes('alt')).toBe('Portada del detalle')
+    expect(cover.text()).toContain('5 fotos')
+  })
+
+  it('avisa de lo que no llegó a subirse tras el alta y lleva a reintentarlo', async () => {
+    servePhotos([])
+    api.postForm.mockRejectedValue(new ApiError(500, 'Error del servidor'))
+    const { usePendingUploads } = await import('@features/media/composables/usePendingUploads')
+    const pending = usePendingUploads()
+    await pending.uploadAfterSave({ kind: 'plants', id: '882687672222443468' }, [new File(['x'], 'a.jpg', { type: 'image/jpeg' })])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    const notice = wrapper.find('[data-test="pending-photos"]')
+    expect(notice.text()).toContain('1 fotografía no se subió')
+    await notice.find('[data-test="review-pending"]').trigger('click')
+    expect(wrapper.find('[data-test="photo-pending"]').text()).toContain('a.jpg')
+    pending.discardAll()
   })
 })
 

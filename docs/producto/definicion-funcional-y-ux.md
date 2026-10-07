@@ -969,7 +969,7 @@ Estas preguntas no bloquean seguir descubriendo pantallas, pero deberán resolve
 9. ¿Qué tipos de cuidado entran en la primera versión?
 10. ¿Qué eventos deben generar alertas automáticamente? **Resuelta**: medición fuera de rango y recomendación de IA al escribir la lectura; planta sin revisar y cuidado vencido con un proceso programado diario; además la incidencia manual.
 11. ¿Se necesitan grupos manuales además de filtros dinámicos?
-12. ¿Cuántas fotografías y qué tamaños debe admitir el sistema?
+12. ~~¿Cuántas fotografías y qué tamaños debe admitir el sistema?~~ **Resuelta (7 oct 2026, [ADR-018](../adr/ADR-018-almacenamiento-de-fotografias.md)):** JPEG, PNG y WebP de hasta 10 MB, 10 por subida y 50 por especie o ejemplar; se re-codifican sin EXIF en tres variantes (320, 1280 y 4096 px).
 13. ¿El QR contendrá solo el código o una URL directa a la ficha?
 14. ¿Las tareas se programan para un día exacto, para un periodo, o deben admitir ambas opciones desde el principio?
 15. ¿Una tarea sobre una localización afecta a las plantas presentes al crearla o al completarla?

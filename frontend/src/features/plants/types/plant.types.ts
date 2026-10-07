@@ -3,6 +3,7 @@ import type { Tag } from '@features/catalogs/types/catalog.types'
 import type { Location } from '@features/locations/types/location.types'
 import type { SoilMixSummary } from '@features/soil-mixes/types/soilMix.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
+import type { PhotoSummary } from '@features/media/types/media.types'
 
 /** El inventario. Todo identificador es `string`: son TSID por encima de `2^53` (ADR-008). */
 
@@ -68,6 +69,9 @@ export interface PlantSummary {
   species: SpeciesSummary
   /** La mayor severidad entre sus alertas abiertas; ausente si no tiene ninguna. */
   attention?: AlertSeverity
+  /** Su portada —no la de su especie—, ausente si no tiene fotografías (T-19). */
+  primaryPhoto?: PhotoSummary
+  photoCount?: number
 }
 
 export interface PlantDetail extends PlantProfile {
@@ -83,6 +87,8 @@ export interface PlantDetail extends PlantProfile {
   effectiveCare: EffectiveCare
   /** Sus alertas abiertas, de la más grave a la más leve. */
   openAlerts?: AlertSummary[]
+  primaryPhoto?: PhotoSummary
+  photoCount?: number
 }
 
 /** Un cambio de estado del historial, del más reciente al más antiguo. */

@@ -28,16 +28,16 @@ Plataforma web para la gestión de colecciones de cactus y pequeños viveros. Pe
 ### **0.4. URL del proyecto:**
 
 La aplicación no tiene todavía un despliegue público. Una vez levantado el entorno local completo,
-se accede al frontend en [http://localhost:3005](http://localhost:3005) y al API en
-[http://localhost:8080](http://localhost:8080).
+se accede al frontend en [http://localhost:3500](http://localhost:3500) y al API en
+[http://localhost:8091](http://localhost:8091).
 
 ### 0.5. URL o archivo comprimido del repositorio
 
 [Repositorio de Cactify en GitHub](https://github.com/dnavarro-bj/AI4Devs-finalproject)
 
-La rama de esta entrega es `feature-entrega2-DNA`.
+La rama de esta entrega es `finalproject-DNA`.
 
-El registro del uso de IA está en [prompts.md](prompts.md) —un prompt clave por área, con la nota de
+El registro del uso de IA está en [prompts.md](prompts.md) —un prompt clave por área más uno complementario de octubre, con la nota de
 cómo se guio al asistente y qué se corrigió a mano— y las conversaciones completas, día a día, en
 [chats/](chats/).
 
@@ -90,12 +90,18 @@ Funcionalidades construidas y utilizables en esta entrega:
 * **Alertas con ciclo de vida (T-23)**: detección por rango efectivo, por tiempo sin revisar y por cuidado vencido, con bandeja, escalada sin duplicados y tarea desde la alerta.
 * **Dashboard operativo (T-24)**: cuatro cifras de trabajo que abren su listado filtrado, carga por zona con plantas, tareas y alertas, **actividad reciente** (cada lote es una línea) y acciones rápidas, incluida la del cuidado por lote.
 * **Trabajo por lote (T-24)**: registrar una lectura (riego), una intervención o un comentario en todas las plantas seleccionadas, de una localización o del resultado de un filtro, con el **número exacto de plantas declarado antes de guardar** y la operación visible en la cronología de cada ficha.
+* **Códigos de inventario (T-15)**: cada especie tiene un código escrito a mano (`CAT-GRUSS`) y cada ejemplar uno correlativo e inmutable (`CAT-GRUSS-01`), nunca reutilizado.
+* **Ficha del ejemplar y cuidados propios (T-16)**: estado y ciclo de vida (en curso y finales, con historial y motivo), germinación, adquisición y procedencia, y cuidados personalizables por ejemplar que heredan de la especie lo que no se sobrescribe.
+* **Especie ampliada (T-17)**: exposición solar, entorno, floración esperada y calendario anual de crecimiento, reposo, floración y riego.
+* **Cronología unificada del ejemplar (T-20)**: lecturas, cambios de estado, movimientos, comentarios, intervenciones, floraciones observadas, tareas y alertas en una sola línea de tiempo paginada, filtrable en el servidor.
+* **Fotografías (T-19)**: galería por especie y por ejemplar con foto principal, subida múltiple, tres variantes re-codificadas sin EXIF y fotos colgadas de comentarios, intervenciones, floraciones o tareas ([ADR-018](docs/adr/ADR-018-almacenamiento-de-fotografias.md)).
 * **Sistema de diseño propio**: más de 50 componentes públicos reutilizables, documentados en la galería viva `/ui-kit`, incluidos tabla, filtros, paginación, árbol, cronología, agenda, calendario, diálogo y patrones multimedia (`UiTreeNode` es una pieza interna del árbol y no se cuenta aparte).
 
 La visión completa del producto —incluidos personalización por ejemplar, fotografías, tareas,
 alertas con ciclo de vida, localizaciones jerárquicas e inventario a escala— está documentada en
 [la definición funcional y de UX](docs/producto/definicion-funcional-y-ux.md). Buena parte ya está
-construida (ver arriba); **siguen pendientes** las fotografías (T-19) y la importación y la configuración (T-29), y no se presentan como
+construida (ver arriba); **siguen pendientes** la importación y la configuración (T-29), el movimiento y
+el etiquetado por lote, completar varias tareas a la vez y la vista de fotografías del listado de especies, y no se presentan como
 implementados.
 
 **Explícitamente fuera del alcance del MVP** (quedan documentadas como evolución futura del producto, no como parte de esta entrega):
@@ -127,23 +133,28 @@ Recorrido recomendado para evaluar la entrega local:
 
 #### Capturas del sistema funcionando
 
-Capturas tomadas del entorno local (`docker compose up --build`) el 9 de septiembre de 2026, contra
-el API real y la base de datos con las migraciones y las semillas aplicadas. Los bloques marcados
-como *maqueta* o con un ticket (`T-15`, `T-20`, `T-23`…) son composición del wireframe que su ticket
-todavía no alimenta: se muestran señalados a propósito, nunca rellenos con datos inventados.
+Capturas actualizadas el **7 de octubre de 2026**, tomadas del frontend de desarrollo en
+`http://localhost:3000`, conectado al API local y con los datos existentes de la colección de pruebas.
+Se conservan las marcas de ejemplo, los campos pendientes y los estados «Sin fotografía» o
+«Sin definir» que muestra la interfaz. La galería del sistema de diseño utiliza datos de muestra.
 
-**Inventario** — listado paginado con filtros por localización y etiqueta, columnas configurables y
-las columnas pendientes marcadas con su ticket:
+**Dashboard operativo** — resumen del trabajo, agenda próxima, alertas abiertas, carga por zona y
+actividad reciente:
+
+![Dashboard operativo](docs/capturas/10-dashboard.png)
+
+**Inventario** — búsqueda por código, apodo o especie, filtros combinables, ordenación, vistas,
+exportación y nivel de atención de cada ejemplar:
 
 ![Inventario de plantas](docs/capturas/01-inventario.png)
 
-**Ficha del ejemplar** — el corazón del flujo E2E: cuidados heredados de la especie, cronología del
-historial con las lecturas reales registradas y la acción para pedir el análisis de IA de cada una:
+**Ficha del ejemplar** — estado, cuidados efectivos propios o heredados, próximo trabajo y cronología
+con lecturas, alertas y la acción para pedir el análisis de IA de una lectura:
 
 ![Ficha de un ejemplar con su historial](docs/capturas/02-ficha-planta.png)
 
-**Alta de planta** — selección de especie desde el catálogo, con los cuidados que la planta heredará
-a la vista antes de guardar:
+**Alta de planta** — selección de especie, código asignado al guardar, identificación, localización,
+origen, fotografías opcionales y cuidados heredados que se pueden personalizar:
 
 ![Alta de una planta nueva](docs/capturas/03-alta-planta.png)
 
@@ -154,8 +165,8 @@ razona después:
 
 ![Ficha de una especie](docs/capturas/05-ficha-especie.png)
 
-**Catálogos de apoyo** — mezclas de sustrato con su proporción orgánico/mineral, mapa de
-localizaciones con el recuento de ejemplares por sitio, y etiquetas con su uso en la colección:
+**Catálogos de apoyo** — mezclas de sustrato con su proporción orgánico/mineral, mapa jerárquico de
+localizaciones con ejemplares, tareas y alertas, y etiquetas con su uso en la colección:
 
 ![Catálogo de mezclas de sustrato](docs/capturas/06-mezclas-sustrato.png)
 
@@ -163,14 +174,20 @@ localizaciones con el recuento de ejemplares por sitio, y etiquetas con su uso e
 
 ![Catálogo de etiquetas](docs/capturas/08-etiquetas.png)
 
+**Trabajo diario** — agenda de tareas y bandeja de alertas con filtros, severidad, estado y acciones
+para revisar, resolver, descartar o crear una tarea:
+
+![Agenda de tareas](docs/capturas/11-tareas.png)
+
+![Bandeja de alertas](docs/capturas/12-alertas.png)
+
 **Sistema de diseño** — la galería viva en `/ui-kit` monta los componentes reales de la aplicación:
 
 ![Galería del sistema de diseño](docs/capturas/09-ui-kit.png)
 
 > **Análisis de IA:** la generación de recomendaciones exige `OPENAI_API_KEY` en el entorno. El
-> entorno con el que se tomaron estas capturas corre sin clave, así que no se incluye captura del
-> resultado del análisis: el sistema responde entonces `502` con el cuerpo de error uniforme, que es
-> el comportamiento probado en la suite. El flujo completo —generación, persistencia, idempotencia y
+> resultado del análisis no se incluye en este recorrido: durante la toma de capturas no se han
+> solicitado nuevas recomendaciones. El flujo completo —generación, persistencia, idempotencia y
 > traducción del fallo del proveedor— está cubierto por tests de integración con el proveedor
 > sustituido por un doble.
 
@@ -184,9 +201,10 @@ cp .env.example .env   # ajusta las variables si hace falta
 docker compose up --build
 ```
 
-Levanta PostgreSQL (puerto de host `25432`), el backend en `:8080` y el frontend en `:3005`.
-Incluye inventario, alta y ficha de planta, registro e historial de lecturas, análisis de IA y los
-catálogos de especies, sustratos, localizaciones y etiquetas. Al arrancar, el backend aplica las
+Levanta PostgreSQL (puerto de host `25432`), el backend en `:8091` y el frontend en `:3500`.
+Incluye inventario, alta y ficha de planta, cronología, fotografías, tareas, alertas, trabajo por lote,
+Dashboard, registro de lecturas, análisis de IA y los catálogos de especies, sustratos, localizaciones y
+etiquetas. Al arrancar, el backend aplica las
 migraciones de Flyway y carga los datos semilla, así que la API queda usable sin ningún paso manual.
 La clave `OPENAI_API_KEY` es opcional para navegar y usar el resto del sistema; sin ella solo falla la
 generación de recomendaciones. Detalle y variables en [iac/local/README.md](iac/local/README.md).
@@ -281,8 +299,8 @@ Las dos reglas que sostienen la estructura: los controllers solo conocen `applic
 
 ```mermaid
 flowchart LR
-    B[Navegador<br/>localhost:3005] --> FE[Contenedor frontend<br/>Nuxt · puerto 3000]
-    B --> BE[Contenedor backend<br/>Spring Boot · puerto 8080]
+    B[Navegador<br/>localhost:3500] --> FE[Contenedor frontend<br/>Nuxt · puerto 3000]
+    B --> BE[Contenedor backend<br/>Spring Boot · puerto 8091 en el host]
     FE -->|API base pública| BE
     BE --> PG[(Contenedor PostgreSQL 16<br/>host 25432 · red 5432)]
     BE -->|si hay API key| OA[OpenAI API]
@@ -292,7 +310,7 @@ El despliegue disponible en esta entrega es local y reproducible mediante
 [`iac/local/docker-compose.yml`](iac/local/docker-compose.yml). `docker compose up --build` construye
 imágenes multi-stage para frontend y backend, espera al *healthcheck* de PostgreSQL y después arranca
 los servicios. Flyway versiona el esquema y carga las semillas durante el arranque del backend. Los
-datos sobreviven en el volumen `cactify_pgdata`; secretos y credenciales entran por variables de
+datos sobreviven en el volumen `cactify_pgdata` y las fotografías en `cactify_media`; secretos y credenciales entran por variables de
 entorno documentadas en `.env.example`. No se afirma un despliegue cloud que todavía no existe.
 
 ### **2.5. Seguridad**
@@ -311,10 +329,10 @@ control de acceso, HTTPS y una política de secretos para producción.
 
 Desarrollo dirigido por tests ([ADR-005](docs/adr/ADR-005-tdd.md)): los escenarios WHEN/THEN de cada spec se escriben como test antes que el código. Los tests de integración corren contra **PostgreSQL real con Testcontainers**, nunca H2 ([ADR-004](docs/adr/ADR-004-testcontainers-para-tests-de-integracion.md)).
 
-Validación ejecutada el 9 de septiembre de 2026:
+Validación ejecutada el 7 de octubre de 2026:
 
-* **Backend:** `./gradlew test --rerun-tasks --console=plain` — **307 tests en verde** sobre PostgreSQL real con Testcontainers.
-* **Frontend:** `yarn test` — **531 tests en verde repartidos en 71 ficheros**.
+* **Backend:** `./gradlew test --rerun-tasks --console=plain` — **1.558 tests en verde** sobre PostgreSQL real con Testcontainers.
+* **Frontend:** `yarn test` — **1.755 tests en verde repartidos en 164 ficheros**.
 * **Build e infraestructura:** `docker compose up -d --build` — imágenes de backend y frontend construidas y los tres servicios arrancados correctamente.
 
 La suite cubre, entre otros, estos grupos:
@@ -345,6 +363,12 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
                                     Location (1) ────< (N) ┘
                                        Plant (N) ──── (N) Tag   (tabla de unión plant_tag)
 ```
+
+Sobre ese núcleo, el modelo actual añade: `Location` jerárquica (`parentId`) y `PlantMovement`;
+`plant_status_change`; la cronología (`plant_event` con `plant_comment`, `plant_intervention` y
+`plant_bloom`); `Task` (con `task_plant` y `plant_task_event`); `Alert` (con `alert_transition`);
+`Batch`; `SavedView`; `species_period` (calendario de la especie); y `media_asset` con `species_media`
+y `plant_media`. Las migraciones `V1`–`V18` lo construyen por orden.
 
 ### **3.2. Descripción de entidades principales:**
 
@@ -415,6 +439,13 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `action` (`lectura`, `intervencion`, `comentario`), `scopeKind` (`plantas`, `localizacion`, `consulta`), `plantCount` —el número **real** de plantas— y `occurredAt`. No guarda los ids de las plantas: cada planta afectada tiene su registro con el mismo `batch_id`.
 * `POST /batches/preview` devuelve cuántas plantas afectaría un alcance; `POST /batches` aplica **una** de `reading`, `intervention` o `comment` en una sola transacción a una lista de plantas, a una localización o a **una consulta del inventario**, con exclusiones opcionales. Solo cuentan las plantas en curso y por encima de `BATCH_MAX_PLANTS` (2.000) responde `422`: nunca trunca. La lectura de un lote abre alertas como cualquier otra. La cronología trae `batchId` y `batchSize`.
 
+**Media** (fotografías de especies y ejemplares; [ADR-018](docs/adr/ADR-018-almacenamiento-de-fotografias.md))
+
+* `media_asset` (archivo: dimensiones, tipo, texto alternativo, fecha de captura) con dos satélites, `species_media` (orden, principal, autoría) y `plant_media` (orden, principal, `purpose` `general|detalle|etiqueta_fisica`, `eventId` opcional).
+* `POST /species/{id}/photos` y `POST /plants/{id}/photos` (`multipart/form-data`: `files` de 1 a 10 y `altText`, `capturedAt`, `credit`, `purpose`, `eventId` para toda la subida), `GET` paginado (`?sort=position`, `purpose` y `event` en el ejemplar), `PUT …/{mediaId}` (corregir, `primary: true`, colgar o descolgar de un evento), `PUT …/order` con `{ids}` y `DELETE …/{mediaId}` (borrado real). `GET /media/{id}/{thumb|medium|full}` sirve el binario con caché inmutable.
+* Límites (`cactify.media.*`): JPEG, PNG o WebP decididos por contenido, 10 MB por archivo, 10 por subida, 50 por dueño; variantes de 320, 1280 y 4096 px, nunca ampliadas, re-codificadas **sin EXIF**. `413` por tamaño, `409` al llenar la galería.
+* Respuestas con `primaryPhoto` y `photoCount` en especies y ejemplares, y `photos` en las entradas de la cronología. Los binarios viven en el volumen `cactify_media` (`MEDIA_ROOT`), que **debe respaldarse junto con la base**: sin él las filas apuntan a nada. Un barrido semanal retira archivos huérfanos de más de un día.
+
 **SavedView** (consulta guardada con nombre: vista del inventario o grupo de especies)
 
 * `scope` (`plants`, `species`), `name` (único por ámbito, sin distinguir mayúsculas), `query` —la *query string* del listado en forma canónica— y, solo en `plants`, `columns`. `POST/GET /saved-views`, `GET/PUT/DELETE /saved-views/{id}`.
@@ -441,7 +472,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * `origin` / `originNote`: Enum opcional (`vivero`, `intercambio`, `germinacion_propia`, `compra`, `regalo`, `otro`) y una nota libre con el detalle.
 * `locationId`: TSID. Clave foránea → `Location.id`.
 * `speciesId`: TSID. Clave foránea → `Species.id`.
-* La personalización de cuidados por ejemplar todavía no forma parte del esquema actual; está diseñada para T-16 en el [borrador de evolución del modelo](docs/diagramas/borrador-modelo-datos-gestion.md), pero no se presenta como implementada.
+* `primaryPhoto` y `photoCount`: la foto principal y el número de fotografías del ejemplar (ver **Media**).
 
 **Tag** (catálogo de etiquetas de búsqueda)
 
@@ -529,7 +560,7 @@ info:
   title: Cactify API
   version: 0.0.1
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8091
 paths:
   /plants:
     get:
@@ -901,8 +932,8 @@ los tests de componentes se ejecutan sin acceder a la red. [Ticket completo](doc
 
 Todavía no se han abierto las Pull Requests de estas unidades, por lo que no se presentan rangos de
 commits como si fueran PR reales. El trabajo sí está separado en commits revisables y changes de
-OpenSpec. Estas son las tres unidades que se convertirán en PR y cuyos enlaces se incorporarán antes
-de cerrar la entrega:
+OpenSpec. Estas son las seis unidades que se convertirán en PR (rama `finalproject-DNA`) y cuyos
+enlaces se incorporarán antes de cerrar la entrega:
 
 ### Unidad de PR 1 — MVP vertical: persistencia, API, IA y frontend
 
@@ -938,7 +969,49 @@ segura de etiquetas; pantallas de catálogo y detalle; y patrones visuales extra
 **Validación:** recuentos agregados sin N+1, conflictos `409` de retirada, combinación de etiquetas
 con colisiones en `plant_tag`, tests de API y pantallas, y contraste bloque a bloque con el wireframe.
 
-> **Pendiente de la entrega final:** abrir las PR reales (incluida `feature-entrega2-DNA → main`) y
+### Unidad de PR 4 — Alineación con los wireframes, esqueleto de trabajo y edición de planta
+
+**Commits:** de [`3ebfb6c`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/3ebfb6c) a [`cce81ff`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/cce81ff).
+
+**Contenido:** documentación de la entrega 2, pantallas de administración alineadas con los
+wireframes (sustratos y etiquetas refinados), las cinco pantallas de trabajo como maquetas marcadas
+(T-14), puertos locales a 8091 y 3500, contraste de los borradores del modelo con el frontend y
+`PUT /plants/{id}` (T-26).
+
+**Validación:** tests de API de la edición (referencia inexistente `400`, sin guardado parcial) y de
+las pantallas; los changes `esqueleto-trabajo` y `catalogo-etiquetas` archivados.
+
+### Unidad de PR 5 — Ficha, catálogos ampliados e inventario a escala (T-15 a T-21)
+
+**Commits:** de [`b91a7a9`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/b91a7a9) a [`fb6242a`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/fb6242a).
+
+**Contenido:** códigos de inventario y su búsqueda (T-15); ficha ampliada, estado con historial y
+cuidados propios por ejemplar (T-16); especie ampliada con calendario anual (T-17); localizaciones
+jerárquicas con movimientos (T-18); cronología unificada del ejemplar (T-20); y filtros y orden por
+claves públicas, vistas guardadas, grupos de especies, buscador global y exportación a CSV (T-21).
+Migraciones `V7` a `V14`.
+
+**Validación:** tests de integración sobre PostgreSQL real de cada migración y endpoint, vectores de
+prueba compartidos entre Kotlin y Vitest para la consulta canónica, y recuentos agregados sin N+1.
+
+### Unidad de PR 6 — Trabajo: tareas, alertas, lotes y Dashboard (T-22 a T-24)
+
+**Commits:** de [`2d99f5b`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/2d99f5b) a [`c97cdbd`](https://github.com/dnavarro-bj/AI4Devs-finalproject/commit/c97cdbd).
+
+**Contenido:** tareas con agenda, calendario y completar con el alcance a la vista (T-22); alertas con
+ciclo de vida, detección y escalada sin duplicados (T-23); trabajo por lote con el número exacto de
+plantas declarado antes de guardar y Dashboard operativo con actividad reciente (T-24). Migraciones
+`V15` a `V17`.
+
+**Validación:** tests de integración de la transacción de completar y de lote, serialización de
+detecciones simultáneas con bloqueo consultivo, y medición con 2.000 plantas.
+
+> **Sin commitear todavía:** las fotografías (T-19, migración `V18`, ADR-018) están implementadas y con
+> tests en verde, pero siguen en el árbol de trabajo y fuera de cualquier rango; su change
+> `fotografias` no está archivado (falta la comprobación manual contra Docker). Formarán una séptima
+> unidad en cuanto se commiteen.
+
+> **Pendiente de la entrega final:** abrir las PR reales (incluida `finalproject-DNA → main`) y
 > sustituir los rangos de commits anteriores por sus enlaces, con descripción, decisiones de revisión
 > y resultado de CI. El trabajo ya está segmentado en unidades revisables —cada change de OpenSpec
 > conserva proposal, design, specs y tasks— pero el repositorio remoto todavía no tiene PR abiertas.

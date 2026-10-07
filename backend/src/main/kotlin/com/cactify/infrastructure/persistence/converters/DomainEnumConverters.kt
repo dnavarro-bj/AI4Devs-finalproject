@@ -175,3 +175,10 @@ class BatchScopeKindConverter : AttributeConverter<com.cactify.domain.BatchScope
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.BatchScopeKind? =
     dbData?.let { com.cactify.domain.BatchScopeKind(it) }
 }
+
+@Converter(autoApply = true)
+class MediaPurposeConverter : AttributeConverter<com.cactify.domain.MediaPurpose, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.MediaPurpose?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.MediaPurpose? =
+    dbData?.let { com.cactify.domain.MediaPurpose(it) }
+}

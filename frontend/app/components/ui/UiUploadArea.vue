@@ -3,9 +3,8 @@
  * Zona para elegir ficheros: por selector o soltándolos encima.
  *
  * **No sube nada.** Emite los ficheros elegidos y ahí termina su trabajo. Subir exige saber a
- * dónde, en qué formato y con qué límites, y eso es T-19 —que además necesita un ADR previo sobre
- * almacenamiento, miniaturas y metadatos EXIF—. Un componente que hoy inventara una subida habría
- * que rehacerlo entonces.
+ * dónde, en qué formato y con qué límites, y eso es de quien la usa (`useMediaGallery`, ADR-018):
+ * un componente del kit que inventara una subida acoplaría el kit a un API.
  *
  * El control real es un `input` de fichero con su etiqueta: es alcanzable y activable con el
  * teclado por sí mismo, y ninguna zona de arrastre construida a mano lo iguala. La zona de soltar

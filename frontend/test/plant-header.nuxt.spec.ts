@@ -35,13 +35,43 @@ describe('PlantHeader', () => {
     expect(wrapper.emitted('register-reading')).toHaveLength(1)
   })
 
-  it('marca como ejemplo lo que el API todavía no sirve', async () => {
+  it('marca como ejemplo solo lo que el API todavía no sirve: el contexto botánico, no la fotografía', async () => {
     const wrapper = await header()
 
-    // Contexto y fotografía son maqueta: la pantalla lo dice. El código y el estado, no: son reales.
     const marks = wrapper.findAll('[data-mock="true"]')
-    expect(marks.length).toBeGreaterThanOrEqual(3)
+    expect(marks.length).toBeGreaterThanOrEqual(2)
     expect(wrapper.text().toLowerCase()).toContain('ejemplo')
+    expect(wrapper.find('[data-test="plant-cover"]').attributes('data-mock')).toBeUndefined()
+    expect(wrapper.find('.specimen__mock-note').text()).not.toContain('fotograf')
+  })
+
+  describe('portada (T-19)', () => {
+    it('con fotografía pinta la portada real con su texto alternativo y el recuento', async () => {
+      const wrapper = await header({ cover: { src: 'http://api/media/9/medium', alt: 'Bola verde en flor' }, photoCount: 8 })
+
+      const cover = wrapper.find('[data-test="plant-cover"]')
+      expect(cover.find('img').attributes('src')).toBe('http://api/media/9/medium')
+      expect(cover.find('img').attributes('alt')).toBe('Bola verde en flor')
+      expect(cover.text()).toContain('8 fotos')
+    })
+
+    it('el recuento pide abrir la pestaña de fotografías', async () => {
+      const wrapper = await header({ cover: { src: '/x', alt: 'x' }, photoCount: 3 })
+
+      await wrapper.find('[data-test="plant-cover"] button').trigger('click')
+
+      expect(wrapper.emitted('open-photos')).toHaveLength(1)
+    })
+
+    it('sin fotografía dice «Sin fotografía», sin cifras de ejemplo ni marca de maqueta', async () => {
+      const wrapper = await header({ cover: null, photoCount: 0 })
+
+      const cover = wrapper.find('[data-test="plant-cover"]')
+      expect(cover.text()).toContain('Sin fotografía')
+      expect(cover.find('img').exists()).toBe(false)
+      expect(cover.text()).not.toMatch(/\d+ fotos?/)
+      expect(wrapper.text()).not.toContain('8 fotos')
+    })
   })
 
   it('el código de inventario no se trunca', async () => {

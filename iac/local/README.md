@@ -34,5 +34,6 @@ los catálogos administrativos y la galería del sistema de diseño en `/ui-kit`
 |---|---|---|
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | `cactify` | Credenciales de PostgreSQL, compartidas por `db` y `backend` |
 | `OPENAI_API_KEY` | *(vacía)* | Clave de la API de OpenAI. Sin ella el resto del API funciona y solo las recomendaciones responden `502` |
+| `MEDIA_ROOT` | `/data/media` | Directorio de las fotografías dentro del backend, montado en el volumen `cactify_media`. Hay que respaldarlo junto con la base de datos |
 | `PAGE_SIZE_DEFAULT` | `25` | Tamaño de página que se aplica cuando la petición no indica `size` |
 | `PAGE_SIZE_MAX` | `500` | Tope de `size`; una petición por encima se sirve con este valor |

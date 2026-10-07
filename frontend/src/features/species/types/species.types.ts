@@ -1,6 +1,7 @@
 /** El catálogo de especies. */
 
 import type { SoilMixSummary } from '@features/soil-mixes/types/soilMix.types'
+import type { PhotoSummary } from '@features/media/types/media.types'
 
 /** Lo que devuelve `GET /species`: sin rangos. */
 export interface SpeciesSummary {
@@ -9,6 +10,9 @@ export interface SpeciesSummary {
   code: string
   scientificName: string
   commonName: string
+  /** La portada, ausente si la especie no tiene fotografías (T-19). */
+  primaryPhoto?: PhotoSummary
+  photoCount?: number
 }
 
 /**

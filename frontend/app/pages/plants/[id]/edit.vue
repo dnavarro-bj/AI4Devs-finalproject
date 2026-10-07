@@ -53,6 +53,7 @@ onMounted(async () => {
   ])
 })
 
+// El segundo y el tercer argumento (fotografías y «qué hacer después») son del alta: aquí las fotos se gestionan en el acto.
 async function onSubmit(values: PlantFormValues) {
   saveError.value = null
   submitting.value = true
@@ -101,6 +102,7 @@ async function onSubmit(values: PlantFormValues) {
           care: careFieldsOf(plant),
         }"
         :locked-code="plant.code"
+        :plant-id="plantId"
         :submitting="submitting"
         submit-label="Guardar cambios"
         @submit="onSubmit"

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
+import { usePendingUploads } from '@features/media/composables/usePendingUploads'
 import SpeciesDetail from '../app/pages/species/[id]/index.vue'
 import type { SpeciesDetail as SpeciesRecord } from '@features/species/types/species.types'
 
@@ -16,6 +17,7 @@ describe('ficha de una especie', () => {
     api.post.mockReset()
     api.put.mockReset()
     api.delete.mockReset()
+    api.postForm.mockReset()
   })
 
   const care = (overrides: Partial<SpeciesRecord> = {}): SpeciesRecord => ({
@@ -137,7 +139,7 @@ describe('ficha de una especie', () => {
     expect(wrapper.find('[data-test="specimens"]').exists()).toBe(false)
 
     await tabs[2]!.trigger('click')
-    expect(wrapper.find('[data-test="photos-view"]').text()).toContain('T-19')
+    expect(wrapper.find('[data-test="photos-view"]').exists()).toBe(true)
 
     await tabs[3]!.trigger('click')
     expect(wrapper.find('[data-test="specimens"]').exists()).toBe(true)
@@ -155,7 +157,6 @@ describe('ficha de una especie', () => {
     await settle()
 
     for (const [test, ticket] of [
-      ['photos', 'T-19'],
       ['specimens', 'T-21'],
       ['groups', 'T-21'],
     ] as const) {
@@ -351,5 +352,257 @@ describe('ficha de una especie', () => {
 
     expect(wrapper.find('[data-test="not-found"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="error"]').exists()).toBe(true)
+  })
+
+  /** Escenarios de fotografías de la especie (T-19): portada, pestaña, subida y gestión. */
+  describe('fotografías de la especie', () => {
+    const photo = (id: string, extra: Record<string, unknown> = {}) => ({
+      id, altText: `Foto ${id}`, width: 800, height: 600, contentType: 'image/jpeg',
+      capturedAt: null, createdAt: '2026-09-01T10:00:00Z', position: Number(id) - 1, primary: id === '1', credit: null,
+      urls: { thumb: `/media/${id}/thumb`, medium: `/media/${id}/medium`, full: `/media/${id}/full` },
+      ...extra,
+    })
+    const pageOf = (content: unknown[]) => ({
+      content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 50,
+    })
+
+    /** Sirve la ficha y, aparte, la galería: la misma `get` doblada atiende las dos rutas. */
+    const open = async (photos: ReturnType<typeof photo>[] = [], overrides: Partial<SpeciesRecord> = {}) => {
+      let gallery = photos
+      api.get.mockImplementation(async (path: string) => (
+        path.endsWith('/photos') ? pageOf(gallery) : care(overrides)
+      ))
+      const wrapper = await mountSuspended(SpeciesDetail)
+      await settle()
+      return { wrapper, setGallery: (next: typeof photos) => { gallery = next } }
+    }
+
+    const goToPhotos = async (wrapper: Awaited<ReturnType<typeof open>>['wrapper']) => {
+      await wrapper.findAll('[role="tab"]')[2]!.trigger('click')
+    }
+
+    const FILE = (name = 'a.jpg', type = 'image/jpeg') => new File(['x'], name, { type })
+
+    it('la cabecera muestra la portada real con su texto alternativo y el recuento', async () => {
+      const { wrapper } = await open([photo('1'), photo('2'), photo('3')])
+
+      const img = wrapper.find('[data-test="cover"] img')
+      expect(img.attributes('src')).toContain('/media/1/medium')
+      expect(img.attributes('alt')).toBe('Foto 1')
+      expect(wrapper.find('[data-test="cover"]').text()).toContain('3 fotos')
+      expect(wrapper.find('[data-test="photos"]').attributes('data-mock')).toBeUndefined()
+      expect(wrapper.text()).not.toContain('T-19')
+    })
+
+    it('ofrece miniaturas de las siguientes y el botón de añadir lleva a la pestaña', async () => {
+      const { wrapper } = await open([photo('1'), photo('2'), photo('3')])
+
+      expect(wrapper.findAll('[data-test="hero-thumb"]')).toHaveLength(2)
+      await wrapper.find('[data-test="hero-add-photo"]').trigger('click')
+      expect(wrapper.find('[data-test="photos-view"]').exists()).toBe(true)
+    })
+
+    it('el recuento de la cabecera es un botón que abre la pestaña de fotografías', async () => {
+      const { wrapper } = await open([photo('1')])
+
+      await wrapper.find('[data-test="cover"] button').trigger('click')
+
+      expect(wrapper.find('[data-test="photos-view"]').exists()).toBe(true)
+    })
+
+    it('sin fotografías dice «Sin fotografía» y no inventa un recuento', async () => {
+      const { wrapper } = await open([])
+
+      expect(wrapper.find('[data-test="cover"]').text()).toContain('Sin fotografía')
+      expect(wrapper.find('[data-test="cover"] img').exists()).toBe(false)
+      expect(wrapper.find('[data-test="cover"]').text()).not.toMatch(/\d+ fotos?/)
+      expect(wrapper.text()).not.toContain('T-19')
+    })
+
+    it('la pestaña lista la galería con la principal marcada y el recuento en la pestaña', async () => {
+      const { wrapper } = await open([photo('1'), photo('2')])
+
+      expect(wrapper.findAll('[role="tab"]')[2]!.text()).toContain('2')
+      await goToPhotos(wrapper)
+
+      const thumbs = wrapper.findAll('[data-test="photo-gallery"] [data-role="thumb"]')
+      expect(thumbs).toHaveLength(2)
+      expect(thumbs[0]!.attributes('data-primary')).toBe('true')
+      expect(thumbs[0]!.text()).toContain('Principal')
+    })
+
+    it('una galería vacía lo dice', async () => {
+      const { wrapper } = await open([])
+      await goToPhotos(wrapper)
+
+      expect(wrapper.find('[data-test="photo-gallery"]').text()).toContain('Todavía no hay fotografías')
+    })
+
+    it('subir sube cada archivo y actualiza portada y recuento sin recargar', async () => {
+      const { wrapper, setGallery } = await open([])
+      await goToPhotos(wrapper)
+      api.postForm.mockImplementation(async () => {
+        setGallery([photo('1')])
+        return [photo('1')]
+      })
+
+      wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', [FILE()])
+      await settle()
+      await settle()
+
+      const [path, form] = api.postForm.mock.calls[0] as [string, FormData]
+      expect(path).toBe('/species/200001/photos')
+      expect((form.get('files') as File).name).toBe('a.jpg')
+      expect(wrapper.find('[data-test="cover"] img').attributes('src')).toContain('/media/1/medium')
+      expect(wrapper.find('[data-test="photo-count"]').text()).toContain('1 fotografía')
+    })
+
+    it('rechaza antes de enviar un archivo que no es una imagen admitida y dice el motivo', async () => {
+      const { wrapper } = await open([])
+      await goToPhotos(wrapper)
+
+      wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', [FILE('a.gif', 'image/gif')])
+      await settle()
+
+      expect(api.postForm).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-test="photo-gallery"]').text()).toContain('JPEG, PNG o WebP')
+    })
+
+    it('la autoría de la subida viaja con los archivos', async () => {
+      const { wrapper } = await open([])
+      await goToPhotos(wrapper)
+      api.postForm.mockResolvedValue([photo('1')])
+
+      await wrapper.find('[data-test="upload-credit"]').setValue('Colección propia')
+      wrapper.findComponent({ name: 'UiUploadArea' }).vm.$emit('files', [FILE()])
+      await settle()
+
+      const form = api.postForm.mock.calls[0]![1] as FormData
+      expect(form.get('credit')).toBe('Colección propia')
+    })
+
+    it('elegir la portada llama al API con primary: true y recarga', async () => {
+      const { wrapper, setGallery } = await open([photo('1'), photo('2')])
+      await goToPhotos(wrapper)
+      api.put.mockImplementation(async () => {
+        setGallery([photo('1', { primary: false }), photo('2', { primary: true })])
+        return photo('2', { primary: true })
+      })
+
+      const second = wrapper.findAll('[data-role="thumb"]')[1]!
+      await second.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Hacer principal')!.trigger('click')
+      await settle()
+
+      expect(api.put).toHaveBeenCalledWith('/species/200001/photos/2', { primary: true })
+      expect(wrapper.find('[data-test="cover"] img').attributes('src')).toContain('/media/2/medium')
+    })
+
+    it('corrige el texto alternativo y la autoría', async () => {
+      const { wrapper } = await open([photo('1')])
+      await goToPhotos(wrapper)
+      api.put.mockResolvedValue(photo('1'))
+
+      await wrapper.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Editar texto y fecha')!.trigger('click')
+      await wrapper.find('[data-test="edit-alt"]').setValue('Flor amarilla de mayo')
+      await wrapper.find('[data-test="edit-credit"]').setValue('Colección propia')
+      await wrapper.find('[data-test="photo-edit-dialog"] form').trigger('submit')
+      await settle()
+
+      expect(api.put).toHaveBeenCalledWith('/species/200001/photos/1', {
+        altText: 'Flor amarilla de mayo', credit: 'Colección propia',
+      })
+    })
+
+    it('no deja guardar un texto alternativo vacío', async () => {
+      const { wrapper } = await open([photo('1')])
+      await goToPhotos(wrapper)
+
+      await wrapper.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Editar texto y fecha')!.trigger('click')
+      await wrapper.find('[data-test="edit-alt"]').setValue('   ')
+      await wrapper.find('[data-test="photo-edit-dialog"] form').trigger('submit')
+
+      expect(api.put).not.toHaveBeenCalled()
+      expect(wrapper.find('[data-test="photo-edit-error"]').exists()).toBe(true)
+    })
+
+    it('borrar pide confirmación, dice qué pasa con la portada y recuenta', async () => {
+      const { wrapper, setGallery } = await open([photo('1'), photo('2')])
+      await goToPhotos(wrapper)
+      api.delete.mockImplementation(async () => {
+        setGallery([photo('2', { primary: true })])
+      })
+
+      await wrapper.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Borrar')!.trigger('click')
+
+      const dialog = wrapper.find('[data-test="photo-remove-dialog"]')
+      expect(dialog.text()).toContain('La siguiente en el orden pasará a ser la principal')
+      expect(api.delete).not.toHaveBeenCalled()
+
+      await wrapper.find('[data-test="confirm-photo-remove"]').trigger('click')
+      await settle()
+
+      expect(api.delete).toHaveBeenCalledWith('/species/200001/photos/1')
+      expect(wrapper.find('[data-test="photo-count"]').text()).toContain('1 fotografía')
+      expect(wrapper.find('[data-test="cover"] img').attributes('src')).toContain('/media/2/medium')
+    })
+
+    it('reordenar envía la lista entera de identificadores', async () => {
+      const { wrapper } = await open([photo('1'), photo('2'), photo('3')])
+      await goToPhotos(wrapper)
+      api.put.mockResolvedValue([])
+
+      const third = wrapper.findAll('[data-role="thumb"]')[2]!
+      await third.find('.action-menu__trigger').trigger('click')
+      await wrapper.findAll('[role="menuitem"]').find((item) => item.text() === 'Mover antes')!.trigger('click')
+      await settle()
+
+      expect(api.put).toHaveBeenCalledWith('/species/200001/photos/order', { ids: ['1', '3', '2'] })
+    })
+
+    it('avisa de lo que no llegó a subirse tras el alta y lleva a reintentarlo', async () => {
+      api.postForm.mockRejectedValue(new ApiError(500, 'Error del servidor'))
+      const { uploadAfterSave, discardAll } = usePendingUploads()
+      await uploadAfterSave({ kind: 'species', id: '200001' }, [FILE()])
+      const { wrapper } = await open([])
+
+      const notice = wrapper.find('[data-test="pending-photos"]')
+      expect(notice.text()).toContain('1 fotografía no se subió')
+      await notice.find('[data-test="review-pending"]').trigger('click')
+      expect(wrapper.find('[data-test="photo-pending"]').text()).toContain('a.jpg')
+
+      api.postForm.mockResolvedValue([photo('1')])
+      await wrapper.find('[data-test="retry-uploads"]').trigger('click')
+      await settle()
+      expect(wrapper.find('[data-test="photo-pending"]').exists()).toBe(false)
+      discardAll()
+    })
+
+    it('un fallo al cargar la galería se dice con reintento y la ficha sigue en pie', async () => {
+      let failing = true
+      api.get.mockImplementation(async (path: string) => {
+        if (path.endsWith('/photos')) {
+          if (failing) throw new ApiError(500, 'Error del servidor')
+          return pageOf([photo('1')])
+        }
+        return care()
+      })
+      const wrapper = await mountSuspended(SpeciesDetail)
+      await settle()
+      await goToPhotos(wrapper)
+
+      expect(wrapper.find('[data-test="photos-error"]').text()).toContain('Error del servidor')
+      expect(wrapper.text()).toContain('Echinocactus grusonii')
+
+      failing = false
+      await wrapper.find('[data-test="photos-retry"]').trigger('click')
+      await settle()
+
+      expect(wrapper.find('[data-test="photos-error"]').exists()).toBe(false)
+      expect(wrapper.findAll('[data-role="thumb"]')).toHaveLength(1)
+    })
   })
 })

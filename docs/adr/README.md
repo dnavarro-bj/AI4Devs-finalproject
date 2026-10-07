@@ -30,3 +30,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-015](ADR-015-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Aceptado (enmendado en T-10) |
 | [ADR-016](ADR-016-filtros-y-orden-en-los-listados.md) | Filtros y orden en los listados | Aceptado |
 | [ADR-017](ADR-017-exportacion-a-csv.md) | Exportación a CSV | Aceptado |
+| [ADR-018](ADR-018-almacenamiento-de-fotografias.md) | Almacenamiento y tratamiento de fotografías | Aceptado |

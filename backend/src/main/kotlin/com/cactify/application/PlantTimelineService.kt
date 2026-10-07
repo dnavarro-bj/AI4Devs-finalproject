@@ -13,6 +13,7 @@ import com.cactify.domain.repos.AIRecommendationRepository
 import com.cactify.domain.repos.AlertTransitionRepository
 import com.cactify.domain.repos.CareRecordRepository
 import com.cactify.domain.repos.PlantEventRepository
+import com.cactify.domain.repos.PlantMediaRepository
 import com.cactify.domain.repos.PlantMovementRepository
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.PlantStatusChangeRepository
@@ -37,6 +38,7 @@ class PlantTimelineService(
   private val movementRepository: PlantMovementRepository,
   private val eventRepository: PlantEventRepository,
   private val alertTransitionRepository: AlertTransitionRepository,
+  private val plantMediaRepository: PlantMediaRepository,
 ) {
 
   @Transactional(readOnly = true)
@@ -67,8 +69,13 @@ class PlantTimelineService(
     val eventTypes = listOf(TimelineType.Comment, TimelineType.Intervention, TimelineType.Bloom, TimelineType.Task)
     val eventIds = eventTypes.flatMap { byType[it].orEmpty() }
     if (eventIds.isNotEmpty()) {
-      eventRepository.findAllByIdIn(eventIds.map { PlantEventId.from(it) }).forEach {
-        val entry = it.toEntry()
+      // Los eventos primero: la consulta de fotografías trae referencias perezosas a ellos, y si
+      // llegaran antes serían proxies de la clase abstracta que no se distinguen por tipo.
+      val events = eventRepository.findAllByIdIn(eventIds.map { PlantEventId.from(it) })
+      // Las fotografías de **toda la página** con una consulta, no una por evento.
+      val photos = plantMediaRepository.findAllByEventIdIn(events.map { it.id }).groupBy { it.event!!.id }
+      events.forEach {
+        val entry = it.toEntry(photos[it.id].orEmpty())
         entries[TimelineType(entry.type) to it.id.id] = entry
       }
     }

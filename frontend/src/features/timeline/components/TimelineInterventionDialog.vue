@@ -21,11 +21,13 @@ const props = withDefaults(defineProps<{
   error?: string | null
 }>(), { entry: null, soilMixes: () => [], busy: false, error: null })
 
-const emit = defineEmits<{ submit: [InterventionInput], close: [] }>()
+/** El segundo argumento —las fotografías adjuntas— solo viaja si las hay. */
+const emit = defineEmits<{ submit: [InterventionInput, File[]?], close: [] }>()
 
 const values = ref<InterventionValues>(emptyInterventionValues())
 const occurredAt = ref('')
 const mixError = ref('')
+const photos = shallowRef<File[]>([])
 
 watch(() => [props.open, props.entry], () => {
   const current = props.entry?.intervention
@@ -38,13 +40,16 @@ watch(() => [props.open, props.entry], () => {
   }
   occurredAt.value = toLocalInput(props.entry?.occurredAt)
   mixError.value = ''
+  photos.value = []
 }, { immediate: true })
 
 function submit() {
   mixError.value = interventionError(values.value)
   if (mixError.value) return
 
-  emit('submit', { ...interventionPayload(values.value), occurredAt: fromLocalInput(occurredAt.value) })
+  const input = { ...interventionPayload(values.value), occurredAt: fromLocalInput(occurredAt.value) }
+  if (photos.value.length) emit('submit', input, photos.value)
+  else emit('submit', input)
 }
 </script>
 
@@ -65,6 +70,8 @@ function submit() {
         help="Opcional. Si la dejas vacía, se anota ahora."
         data-test="intervention-date"
       />
+
+      <EventPhotosField v-model="photos" />
 
       <div class="dialog-form__actions">
         <UiButton variant="secondary" data-test="cancel-event" @click="emit('close')">Cancelar</UiButton>

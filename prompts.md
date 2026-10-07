@@ -1,7 +1,8 @@
 # Prompts principales utilizados en Cactify
 
 Esta selección recoge un prompt especialmente relevante para cada una de las tres áreas solicitadas
-en la entrega: modelo de datos, frontend y backend. Las conversaciones completas se conservan en
+en la entrega: modelo de datos, frontend y backend, y un segundo prompt de octubre, más corto, que
+muestra cómo se siguió trabajando sobre cada una. Las conversaciones completas se conservan en
 [chats/](chats/) y los textos citados mantienen la redacción original.
 
 ## 1. Modelo de datos — definición del alcance funcional
@@ -53,6 +54,21 @@ tablas. También se corrigieron propuestas posteriores de la IA, como dividir `C
 se mantuvo junto a las mediciones porque será un dato observable cuando se automatice y porque se
 quiere correlacionar con el estrés de las plantas.
 
+### Segundo prompt: tareas sobre varias plantas
+
+Fuente: [conversación del 6 de octubre de 2026](chats/2026-10-06.md), 23:07.
+
+> ah vale, son para hacer acciones en bulk, es la opción A, no se guarda ningúna selección en BBDD
+> realmente, en el front se seleccionarán y luego se dará a crear tarea que arrastrará la selección a
+> la modal de tarea, en el modelo obviamente tiene que permitir un N:M entre tareas y catus con tabla
+> intermedia
+
+Respondía a una duda de la IA al preparar T-22 sobre qué significaba «seleccionar plantas». Una
+respuesta de dos líneas cerró la decisión: la selección vive solo en el frontend y el modelo guarda
+la relación N:M. Dio lugar a la tabla `task_plant`, al destino exclusivo de una tarea (una localización
+**o** de 1 a 500 plantas) y a «Crear tarea» desde la selección del inventario. Que una tarea no es un
+cuidado ya estaba decidido; aquí se fijó cómo se asocia a los ejemplares.
+
 ## 2. Frontend — arquitectura orientada a features
 
 Fuente: [conversación del 6 de septiembre de 2026](chats/2026-09-06.md), 05:48.
@@ -91,6 +107,22 @@ También se fijaron estas reglas:
 La propuesta de la IA se revisó antes de aplicarla: se conservaron el CSS propio y los diálogos de
 Cactify, y no se copiaron elementos del proyecto de referencia que no encajaban, como Tailwind,
 multi-tenant o internacionalización por feature.
+
+### Segundo prompt: pantallas fieles al wireframe
+
+Fuente: [conversación del 6 de octubre de 2026](chats/2026-10-06.md), 21:13 y 21:18.
+
+> tenemos los wireframes en [index.html](docs/wireframes/cactify-admin/index.html) y quiero que las
+> pantallas que hay actualmente se ajusten a él. Tienes la app arrancada en localhost:3001
+
+> vale pero qquiero revisar el diseño de las pantallas, una a una, para que qeuden más parecidos al
+> wireframe, creando los componentes necesarios para que se puedan reutilizar
+
+El primer intento ajustó los datos pero no la composición, y el segundo mensaje cambió el método:
+pantalla a pantalla, comparando con el prototipo en el navegador y extrayendo cada patrón repetido a
+un componente del kit. Salieron la revisión de Dashboard, plantas, localizaciones, alertas, especies y
+sustratos, y la regla que ahora rige el proyecto: una pantalla construida reproduce la composición de
+su `data-screen` del wireframe y lo que aún no existe va marcado con su ticket, no omitido.
 
 ## 3. Backend — generación de recomendaciones con IA
 
@@ -166,9 +198,26 @@ riego debía ignorar registros posteriores a la lectura analizada. El resultado 
 la capability de recomendaciones, el código del backend y
 [los prompts que Cactify envía a la IA en ejecución](docs/prompts-ia.md).
 
+### Segundo prompt: cronología paginada
+
+Fuente: [conversación del 7 de octubre de 2026](chats/2026-10-07.md), 10:27.
+
+> genial, una cosa más, quiero paginar el timeline (con page + offset me vale), no sé si está
+> paginado o no pero no quiero que se cargue entero. Solo los 10 ultimos y cuando se vaya haciendo
+> scroll que siga cargando más
+
+Es una petición breve con una consecuencia de diseño grande, porque la cronología une lecturas,
+cambios de estado, movimientos, comentarios, intervenciones y floraciones, que viven en tablas
+distintas. El resultado fue `GET /plants/{id}/timeline`: un `UNION ALL` nativo paginado, con el filtro
+por tipo aplicado en el servidor **antes** de paginar y una consulta de detalle por tipo, más el
+scroll infinito de 10 en 10 en la ficha. Se mantuvo la regla de [ADR-009](docs/adr/ADR-009-paginacion-obligatoria.md):
+no existe un listado sin límite.
+
 ## Conclusión
 
 Los tres prompts muestran usos distintos de la IA durante el proyecto: descubrir las necesidades
 que dan forma al modelo, adaptar una arquitectura frontend ya conocida y diseñar una integración de
 backend compleja mediante decisiones contrastadas. En los tres casos, la salida fue revisada y
-corregida antes de incorporarse al proyecto.
+corregida antes de incorporarse al proyecto. Los segundos prompts de cada área, más cortos, muestran
+el otro modo de trabajo: decisiones de una frase que fijan un modelo, un método de revisión o un
+requisito de rendimiento que la IA convierte después en cambios completos.

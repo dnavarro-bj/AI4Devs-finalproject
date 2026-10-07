@@ -16,25 +16,30 @@ const props = withDefaults(defineProps<{
   error?: string | null
 }>(), { entry: null, busy: false, error: null })
 
-const emit = defineEmits<{ submit: [CommentInput], close: [] }>()
+/** El segundo argumento —las fotografías adjuntas— solo viaja si las hay. */
+const emit = defineEmits<{ submit: [CommentInput, File[]?], close: [] }>()
 
 const text = ref('')
 const occurredAt = ref('')
 const textError = ref('')
+const photos = shallowRef<File[]>([])
 
 // Al abrir, se parte de cero o de lo que se corrige: lo escrito era de otro comentario.
 watch(() => [props.open, props.entry], () => {
   text.value = props.entry?.comment?.text ?? ''
   occurredAt.value = ''
   textError.value = ''
+  photos.value = []
 }, { immediate: true })
 
 function submit() {
   textError.value = text.value.trim() === '' ? 'El comentario no puede estar vacío.' : ''
   if (textError.value) return
-  emit('submit', props.entry
+  const input = props.entry
     ? { text: text.value.trim() }
-    : { text: text.value.trim(), occurredAt: fromLocalInput(occurredAt.value) })
+    : { text: text.value.trim(), occurredAt: fromLocalInput(occurredAt.value) }
+  if (photos.value.length) emit('submit', input, photos.value)
+  else emit('submit', input)
 }
 </script>
 
@@ -56,6 +61,8 @@ function submit() {
         help="Opcional. Si la dejas vacía, se anota ahora."
         data-test="comment-date"
       />
+
+      <EventPhotosField v-model="photos" />
 
       <div class="dialog-form__actions">
         <UiButton variant="secondary" data-test="cancel-event" @click="emit('close')">Cancelar</UiButton>

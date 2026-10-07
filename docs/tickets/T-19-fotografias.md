@@ -1,8 +1,9 @@
 # T-19 - Fotografías de especies y ejemplares
 
 **Área:** Backend + Frontend
-**Historia relacionada:** — (sin escribir; §8 del documento de producto)
+**Historias relacionadas:** [1.7](../user-stories/1.7-fotografias-de-una-especie.md) y [1.8](../user-stories/1.8-galeria-fotografica-de-un-ejemplar.md)
 **Bloque:** 1 — gestión de plantas
+**Estado:** Hecho (change `fotografias`, [ADR-018](../adr/ADR-018-almacenamiento-de-fotografias.md))
 
 ## Descripción
 
@@ -22,6 +23,6 @@ Primera vez que el sistema guarda binarios. Fotografía de portada y galería de
 * La galería ordena por fecha y permite ampliar cada imagen.
 * Cada imagen tiene texto alternativo y la principal es identificable.
 
-## Pendiente antes de empezar
+## Decisión previa
 
-**Necesita un ADR previo**: formatos, tamaño máximo, miniaturas, metadatos EXIF y privacidad, almacenamiento local o servicio de objetos, y si el borrado es real o conserva referencia histórica (§8.3, §24.12).
+Resuelta en [ADR-018](../adr/ADR-018-almacenamiento-de-fotografias.md):: formatos, tamaño máximo, miniaturas, metadatos EXIF y privacidad, almacenamiento local o servicio de objetos, y si el borrado es real o conserva referencia histórica (§8.3, §24.12).

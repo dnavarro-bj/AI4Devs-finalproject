@@ -17,7 +17,10 @@ import com.cactify.domain.SoilMix
 import com.cactify.domain.SoilMixId
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
+import com.cactify.domain.repos.MediaSummaries
+import com.cactify.domain.repos.PhotoSummary
 import com.cactify.domain.repos.PlantRepository
+import com.cactify.domain.repos.SpeciesMediaRepository
 import com.cactify.domain.repos.SoilMixRepository
 import com.cactify.domain.repos.SpeciesRepository
 import com.cactify.domain.specs.SpeciesSortKeys
@@ -99,6 +102,9 @@ class SpeciesService(
   private val speciesRepository: SpeciesRepository,
   private val soilMixRepository: SoilMixRepository,
   private val plantRepository: PlantRepository,
+  private val mediaSummaries: MediaSummaries,
+  private val speciesMediaRepository: SpeciesMediaRepository,
+  private val mediaService: MediaService,
 ) {
 
   @Transactional
@@ -174,18 +180,31 @@ class SpeciesService(
   fun delete(id: String) {
     val species = requireSpecies(id)
     if (plantRepository.existsBySpeciesId(species.id)) throw SpeciesInUseException(id)
+    // Sus fotografías se retiran con ella: las filas ahora y los archivos, solo si se confirma.
+    speciesMediaRepository.findAllBySpeciesIdOrderByPositionAsc(species.id).forEach {
+      speciesMediaRepository.delete(it)
+      mediaService.delete(it.asset)
+    }
+    speciesMediaRepository.flush()
     speciesRepository.delete(species)
   }
 
   @Transactional(readOnly = true)
   fun list(criteria: SpeciesCriteria, pageable: Pageable): PageResponse<SpeciesSummaryResponse> =
     // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
-    PageResponse.of(speciesRepository.findAll(criteria.toSpecification(), SpeciesSortKeys.translate(pageable))) { it.toSummary() }
+    speciesRepository.findAll(criteria.toSpecification(), SpeciesSortKeys.translate(pageable)).let { page ->
+      // Portada y recuento de toda la página con UNA consulta agregada, no una por fila (ADR-009).
+      val photos = mediaSummaries.bySpecies(page.content.map { it.id })
+      PageResponse.of(page) { it.toSummary(photos[it.id] ?: PhotoSummary.NONE) }
+    }
 
   @Transactional(readOnly = true)
   fun findById(id: String): SpeciesDetailResponse {
     val species = requireSpecies(id)
-    return species.toDetail(plantRepository.countBySpeciesId(species.id))
+    return species.toDetail(
+      plantRepository.countBySpeciesId(species.id),
+      mediaSummaries.bySpecies(listOf(species.id))[species.id] ?: PhotoSummary.NONE,
+    )
   }
 
   private fun SpeciesRequest.toProfile() = CultivationProfile(
@@ -220,8 +239,8 @@ class SpeciesService(
   private fun requireSpecies(id: String): Species =
     speciesRepository.findOneById(SpeciesId.from(id)) ?: throw SpeciesNotFoundException(id)
 
-  private fun Species.toSummary() =
-    SpeciesSummaryResponse(id.toString(), code, scientificName, commonName)
+  private fun Species.toSummary(photos: PhotoSummary) =
+    SpeciesSummaryResponse(id.toString(), code, scientificName, commonName, photos.primary?.toResponse(), photos.count)
 
   /**
    * Reutiliza el DTO que ya sirve `GET /plants/{id}`, sin duplicarlo.
@@ -231,7 +250,7 @@ class SpeciesService(
    * este. El `N+1` que temía no aplica: este DTO solo aparece en fichas de una entidad —`/species/{id}`
    * y anidado en `/plants/{id}`—; los listados usan `SpeciesSummaryResponse`, que no la lleva.
    */
-  private fun Species.toDetail(plantCount: Long) = SpeciesDetailResponse(
+  private fun Species.toDetail(plantCount: Long, photos: PhotoSummary) = SpeciesDetailResponse(
     id = id.toString(),
     code = code,
     scientificName = scientificName,
@@ -255,6 +274,8 @@ class SpeciesService(
     periods = periods.map {
       SpeciesPeriodResponse(it.id.toString(), it.type.value, it.startMonth, it.endMonth, it.intensity?.value, it.notes)
     },
+    primaryPhoto = photos.primary?.toResponse(),
+    photoCount = photos.count,
   )
 
   private fun Species.toCare() = SpeciesCareResponse(

@@ -20,7 +20,7 @@ describe('UiUploadArea', () => {
 
     const emitted = wrapper.emitted('files')?.[0]?.[0] as File[]
     expect(emitted.map((file) => file.name)).toEqual(['a.jpg', 'b.jpg'])
-    // Subir es T-19: aquí el componente termina su trabajo al comunicar los ficheros.
+    // Subir es de quien la usa (ADR-018): aquí el componente termina su trabajo al comunicar los ficheros.
     expect(fetchSpy).not.toHaveBeenCalled()
     fetchSpy.mockRestore()
   })

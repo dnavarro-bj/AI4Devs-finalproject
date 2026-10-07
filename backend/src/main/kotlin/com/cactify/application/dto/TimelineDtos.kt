@@ -25,6 +25,8 @@ data class TimelineEntryResponse(
   val bloom: TimelineBloomResponse? = null,
   val alert: TimelineAlertResponse? = null,
   val task: TimelineTaskResponse? = null,
+  /** Las fotografías que cuelgan de este evento, por fecha de captura; ausente si no tiene ninguna. */
+  val photos: List<TimelinePhotoResponse>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

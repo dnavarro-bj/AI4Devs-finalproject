@@ -13,6 +13,7 @@ import com.cactify.domain.PlantIntervention
 import com.cactify.domain.SoilMix
 import com.cactify.domain.SoilMixId
 import com.cactify.domain.repos.PlantEventRepository
+import com.cactify.domain.repos.PlantMediaRepository
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.SoilMixRepository
 import org.springframework.beans.factory.annotation.Value
@@ -34,6 +35,7 @@ class PlantEventService(
   private val plantRepository: PlantRepository,
   private val eventRepository: PlantEventRepository,
   private val soilMixRepository: SoilMixRepository,
+  private val plantMediaRepository: PlantMediaRepository,
   private val clock: Clock,
   @Value("\${cactify.care-records.max-future-skew}") private val maxFutureSkew: Duration,
 ) {
@@ -69,7 +71,7 @@ class PlantEventService(
   fun editComment(plantId: String, commentId: String, text: String): TimelineEntryResponse {
     val comment = requireEvent<PlantComment>(plantId, commentId, "El comentario")
     comment.edit(text, clock)
-    return comment.toEntry()
+    return comment.toEntry(photosOf(comment))
   }
 
   @Transactional
@@ -95,7 +97,7 @@ class PlantEventService(
       InterventionType(command.type), command.product, command.potSize, resolveMix(command.soilMixId),
       command.notes, command.occurredAt, clock, maxFutureSkew,
     )
-    return intervention.toEntry()
+    return intervention.toEntry(photosOf(intervention))
   }
 
   @Transactional
@@ -117,7 +119,7 @@ class PlantEventService(
   fun replaceBloom(plantId: String, bloomId: String, command: BloomCommand): TimelineEntryResponse {
     val bloom = requireEvent<PlantBloom>(plantId, bloomId, "La floración")
     bloom.replace(command.startedOn, command.endedOn, BloomStatus(command.status), command.flowerCount, command.notes, clock)
-    return bloom.toEntry()
+    return bloom.toEntry(photosOf(bloom))
   }
 
   @Transactional
@@ -125,6 +127,9 @@ class PlantEventService(
     eventRepository.delete(requireEvent<PlantBloom>(plantId, bloomId, "La floración"))
 
   // ---- Soporte ----
+
+  /** Las fotografías que cuelgan del evento: corregirlo no las pierde. Un evento recién creado no tiene ninguna. */
+  private fun photosOf(event: PlantEvent) = plantMediaRepository.findAllByEventIdIn(listOf(event.id))
 
   private fun requirePlant(plantId: String): Plant =
     plantRepository.findOneById(PlantId.from(plantId)) ?: throw PlantNotFoundException(plantId)

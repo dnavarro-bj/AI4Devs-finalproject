@@ -118,6 +118,18 @@ const GALLERY_IMAGES = [
   { id: '3', src: swatch('%23c9d6bf'), alt: 'Raíces' },
 ]
 
+// El modo de gestión: la lista vive aquí para que reordenar, elegir portada y borrar se vean funcionar.
+const managedImages = ref(GALLERY_IMAGES.map((image) => ({ ...image })))
+const makePrimary = (id: string) => {
+  managedImages.value = managedImages.value.map((image) => ({ ...image, primary: image.id === id }))
+}
+const reorderImages = (ids: string[]) => {
+  managedImages.value = ids.map((id) => managedImages.value.find((image) => image.id === id)!)
+}
+const removeImage = (id: string) => {
+  managedImages.value = managedImages.value.filter((image) => image.id !== id)
+}
+
 const appliedFilters = ref([
   { id: 'location', label: 'Localización: Invernadero 1' },
   { id: 'status', label: 'Estado: Revisar' },
@@ -521,8 +533,22 @@ const SEARCH_GROUPS = [
       <h2>Multimedia y formularios largos</h2>
       <UiMediaGallery :images="GALLERY_IMAGES" />
       <UiMediaGallery :images="[]" />
-      <!-- La subida real —formatos, tamaño, miniaturas y almacenamiento— llega en T-19. -->
+      <!-- El modo de gestión: menú por imagen, portada y orden por teclado. -->
+      <UiMediaGallery
+        manage
+        :images="[...managedImages, { id: 'up', src: swatch('%23dfe6da'), alt: 'Subiendo', status: 'uploading', statusText: 'Subiendo…' }]"
+        @primary="makePrimary"
+        @reorder="reorderImages"
+        @remove="removeImage"
+        @edit="show(`Editar ${$event}`)"
+      />
+      <!-- La subida la hace quien usa la zona: ella solo emite los ficheros. -->
       <UiUploadArea label="Añadir fotografías" accept="image/*" hint="JPG o PNG" @files="show(`${$event.length} fichero(s)`)" />
+      <div class="gallery__covers">
+        <UiCoverPhoto :src="GALLERY_IMAGES[0]!.src" alt="Ápice del ejemplar" :count="8" count-action @count="show('Ir a las fotografías')" />
+        <UiCoverPhoto :src="GALLERY_IMAGES[1]!.src" alt="Vista lateral" :count="1" size="sm" />
+        <UiCoverPhoto />
+      </div>
 
       <UiUploadArea
         label="Arrastra fotografías o selecciónalas"
@@ -901,6 +927,13 @@ const SEARCH_GROUPS = [
 .gallery__lead {
   color: var(--color-ink-muted);
   max-width: 60ch;
+}
+
+.gallery__covers {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
 }
 
 .gallery__section {

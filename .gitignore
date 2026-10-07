@@ -11,6 +11,8 @@ backend/build/
 backend/.gradle/
 backend/out/
 backend/HELP.md
+# Fotografías en local (cactify.media.root por defecto): el binario no se versiona.
+backend/data/
 !backend/gradle/wrapper/gradle-wrapper.jar
 .kotlin/
 

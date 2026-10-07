@@ -19,6 +19,7 @@ import com.cactify.domain.PlantBloom
 import com.cactify.domain.PlantComment
 import com.cactify.domain.PlantEvent
 import com.cactify.domain.PlantIntervention
+import com.cactify.domain.PlantMedia
 import com.cactify.domain.PlantMovement
 import com.cactify.domain.PlantStatusChange
 import com.cactify.domain.PlantTaskEvent
@@ -29,13 +30,14 @@ import com.cactify.domain.TimelineType
  * cronología y el de eventos, de modo que lo que devuelve un `POST` es **exactamente** lo que
  * después devuelve el listado.
  */
-internal fun PlantEvent.toEntry(): TimelineEntryResponse {
+internal fun PlantEvent.toEntry(photos: List<PlantMedia> = emptyList()): TimelineEntryResponse {
   val base = TimelineEntryResponse(
     id = id.toString(),
     type = "",
     occurredAt = occurredAt,
     batchId = batch?.id?.toString(),
     batchSize = batch?.plantCount,
+    photos = photos.takeIf { it.isNotEmpty() }?.sortedForEvent()?.map { it.toTimelinePhoto() },
   )
   return when (this) {
     is PlantComment -> base.copy(
@@ -125,3 +127,7 @@ internal fun PlantMovement.toEntry() = TimelineEntryResponse(
     to = MovementLocationResponse(toLocation.id.toString(), toLocation.name),
   ),
 )
+
+/** Las fotografías de un evento por fecha de captura —y, sin ella, por la de subida—, la más antigua primero. */
+internal fun List<PlantMedia>.sortedForEvent(): List<PlantMedia> =
+  sortedWith(compareBy({ it.asset.capturedAt ?: it.asset.createdAt }, { it.mediaId.id }))
