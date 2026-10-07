@@ -16,23 +16,144 @@
  * arreglan de formas distintas.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
+import { useSearchText } from '@shared/composables/useSearchText'
+import { useUrlState } from '@shared/composables/useUrlState'
+import type { UrlSchema } from '@shared/utils/urlState'
 import { useSpecies } from '@features/species/composables/useSpecies'
+import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import type { SpeciesSummary } from '@features/species/types/species.types'
 import type { PageResponse } from '@shared/types/api.types'
 
 useHead({ title: 'Cactify · Especies' })
 useBreadcrumbs().set([{ label: 'Especies' }])
 
-const { list } = useSpecies()
+const { search } = useSpecies()
 
 const page = ref<PageResponse<SpeciesSummary> | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-/** El orden lo resuelve el API: la tabla solo tiene delante una página (ADR-009). */
-const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>(null)
+/**
+ * Las claves públicas de orden del catálogo (ADR-016). La tabla solo ordena por la celda
+ * identificativa; el resto se admite para que una URL o una vista guardada con otro orden valga.
+ */
+const SORT_KEYS = ['code', 'scientificName', 'commonName', 'exposure']
 
-const query = ref('')
+/**
+ * **El estado de la pantalla es la URL.** Los extremos de temperatura y los meses viajan tal cual
+ * los entiende el API; los desplegables de «Temperatura» y «Crecimiento» son atajos con nombre sobre
+ * ellos, de modo que un enlace con otros valores también se reproduce.
+ */
+const URL_SCHEMA = {
+  q: { kind: 'text' },
+  exposure: { kind: 'enum', values: SUN_EXPOSURE.map((option) => option.value) },
+  minTemperatureFrom: { kind: 'text' },
+  minTemperatureTo: { kind: 'text' },
+  growthMonth: { kind: 'list', values: Array.from({ length: 12 }, (_, month) => String(month + 1)) },
+  sort: { kind: 'enum', values: SORT_KEYS.flatMap((key) => [`${key},asc`, `${key},desc`]) },
+} as const satisfies UrlSchema
+
+const { state } = useUrlState(URL_SCHEMA)
+
+/** El orden lo resuelve el API: la tabla solo tiene delante una página (ADR-009). */
+const sort = computed(() => {
+  if (!state.sort) return null
+  const [key, direction] = state.sort.split(',')
+  return { key: key!, direction: direction as 'asc' | 'desc' }
+})
+
+/** La caja de texto se aplica tras una pausa y se sincroniza con la URL en los dos sentidos. */
+const { text: searchText, clear: clearSearch } = useSearchText(state)
+
+/** Atajos de temperatura mínima soportada: «sensibles al frío» es el grupo del prototipo. */
+const TEMPERATURE_PRESETS = [
+  { key: 'cold-sensitive', label: 'Sensibles al frío · mínima de 9 °C o más', from: '9', to: '' },
+  { key: 'moderate', label: 'Mínima de 5 a 8 °C', from: '5', to: '8' },
+  { key: 'hardy', label: 'Resistentes al frío · mínima de 4 °C o menos', from: '', to: '4' },
+]
+
+/** Atajos de época de crecimiento: la especie crece en **todos** los meses del atajo. */
+const GROWTH_PRESETS = [
+  { key: 'spring', label: 'Primavera · mar–may', months: [3, 4, 5] },
+  { key: 'summer', label: 'Verano · jun–ago', months: [6, 7, 8] },
+  { key: 'autumn', label: 'Otoño · sep–nov', months: [9, 10, 11] },
+  { key: 'winter', label: 'Invierno · dic–feb', months: [12, 1, 2] },
+]
+
+const temperaturePreset = computed(
+  () => TEMPERATURE_PRESETS.find((preset) => preset.from === state.minTemperatureFrom && preset.to === state.minTemperatureTo),
+)
+const growthPreset = computed(() => {
+  const months = state.growthMonth.map(Number).sort((a, b) => a - b).join()
+  return GROWTH_PRESETS.find((preset) => [...preset.months].sort((a, b) => a - b).join() === months)
+})
+
+const temperatureValue = computed({
+  get: () => temperaturePreset.value?.key ?? '',
+  set: (key: string) => {
+    const preset = TEMPERATURE_PRESETS.find((option) => option.key === key)
+    state.minTemperatureFrom = preset?.from ?? ''
+    state.minTemperatureTo = preset?.to ?? ''
+  },
+})
+const growthValue = computed({
+  get: () => growthPreset.value?.key ?? '',
+  set: (key: string) => {
+    state.growthMonth = (GROWTH_PRESETS.find((option) => option.key === key)?.months ?? []).map(String)
+  },
+})
+
+const exposureOptions = SUN_EXPOSURE.map(({ value, label }) => ({ value, label }))
+
+/** Un extremo que no es un entero se ignora: una URL escrita a mano no pide lo que el API rechazaría. */
+const asInteger = (value: string) => (/^-?\d+$/.test(value) ? Number(value) : undefined)
+
+const temperatureLabel = computed(() => {
+  if (temperaturePreset.value) return temperaturePreset.value.label.split(' · ')[0]
+  const from = asInteger(state.minTemperatureFrom)
+  const to = asInteger(state.minTemperatureTo)
+  if (from !== undefined && to !== undefined) return `mínima de ${from} a ${to} °C`
+  if (from !== undefined) return `mínima de ${from} °C o más`
+  if (to !== undefined) return `mínima de ${to} °C o menos`
+  return ''
+})
+
+const appliedFilters = computed(() => [
+  ...(state.q ? [{ id: 'q', label: `Búsqueda: ${state.q}` }] : []),
+  ...(state.exposure
+    ? [{ id: 'exposure', label: `Exposición: ${SUN_EXPOSURE.find((option) => option.value === state.exposure)?.label}` }]
+    : []),
+  ...(temperatureLabel.value ? [{ id: 'temperature', label: `Temperatura: ${temperatureLabel.value}` }] : []),
+  ...(state.growthMonth.length
+    ? [{ id: 'growth', label: `Crecimiento: ${growthPreset.value ? growthPreset.value.label.split(' · ')[0]!.toLowerCase() : `meses ${state.growthMonth.join(', ')}`}` }]
+    : []),
+])
+
+function removeFilter(id: string) {
+  if (id === 'q') clearSearch()
+  if (id === 'exposure') state.exposure = ''
+  if (id === 'temperature') temperatureValue.value = ''
+  if (id === 'growth') state.growthMonth = []
+}
+
+function clearFilters() {
+  clearSearch()
+  state.exposure = ''
+  temperatureValue.value = ''
+  state.growthMonth = []
+}
+
+/** Lo que cambia la petición. */
+const request = computed(() => ({
+  sort: state.sort || undefined,
+  q: state.q || undefined,
+  exposure: state.exposure ? [state.exposure] : undefined,
+  minTemperatureFrom: asInteger(state.minTemperatureFrom),
+  minTemperatureTo: asInteger(state.minTemperatureTo),
+  growthMonth: state.growthMonth.length ? state.growthMonth.map(Number) : undefined,
+}))
+
+watch(() => JSON.stringify(request.value), () => load(0))
 
 const COLUMNS = [
   { key: 'scientificName', label: 'Especie', sortable: true },
@@ -70,7 +191,7 @@ async function load(pageNumber: number) {
   loading.value = true
   error.value = null
 
-  const result = await list(pageNumber, sort.value ? `${sort.value.key},${sort.value.direction}` : undefined)
+  const result = await search({ page: pageNumber, ...request.value })
   loading.value = false
 
   if (!result.success) {
@@ -81,14 +202,16 @@ async function load(pageNumber: number) {
 }
 
 function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
-  sort.value = next
-  load(page.value?.pageNumber ?? 0)
+  state.sort = `${next.key},${next.direction}`
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
 onMounted(() => load(0))
 
-const isEmpty = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
+const nothing = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
+/** Sin ningún criterio el catálogo está vacío; con alguno, simplemente nada coincide. */
+const isEmpty = computed(() => nothing.value && appliedFilters.value.length === 0)
+const noMatch = computed(() => nothing.value && appliedFilters.value.length > 0)
 
 const asSpecies = (row: unknown) => row as SpeciesSummary
 </script>
@@ -107,7 +230,7 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
       </template>
     </UiPageHeader>
 
-    <!-- Las tarjetas de grupo del prototipo. Filtran con T-21; «Todas» ya es real. -->
+    <!-- Las tarjetas de grupo del prototipo. Las levanta el change `vistas-guardadas-y-grupos-de-especies` (T-21); «Todas» ya es real. -->
     <nav class="groups" data-mock="true" data-test="groups" aria-label="Grupos de cultivo">
       <span class="groups__card is-selected" data-test="group-all">
         <span class="groups__symbol" aria-hidden="true">⌘</span>
@@ -128,39 +251,59 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         <span class="groups__symbol" aria-hidden="true">{{ group.mark }}</span>
         <span>
           <strong>{{ group.label }}</strong>
-          <small><i>T-21</i> · recuento pendiente</small>
+          <small><i>T-21 · vistas guardadas</i> · recuento pendiente</small>
         </span>
       </span>
     </nav>
 
-    <UiFilterBar :applied="[]" label="Filtros del catálogo de especies" density="compact">
+    <UiFilterBar
+      :applied="appliedFilters"
+      label="Filtros del catálogo de especies"
+      density="compact"
+      @remove="removeFilter"
+      @clear="clearFilters"
+    >
       <UiToolbarField
-        v-model="query"
+        v-model="searchText"
         label="Buscar especies"
         type="search"
         icon="⌕"
-        placeholder="Nombre científico, común o código · T-21"
-        disabled
-        data-mock="true"
+        placeholder="Nombre científico, común o código"
         data-test="filter-search"
       />
       <UiToolbarField
-        label="Exposición · T-17"
+        v-model="state.exposure"
+        label="Exposición"
         as="select"
-        :options="[]"
-        disabled
-        data-mock="true"
+        placeholder="Exposición"
+        :options="exposureOptions"
         data-test="filter-exposure"
       />
       <UiToolbarField
-        label="Temperatura · T-21"
+        v-model="temperatureValue"
+        label="Temperatura"
+        as="select"
+        placeholder="Temperatura"
+        :options="TEMPERATURE_PRESETS.map(({ key, label }) => ({ value: key, label }))"
+        data-test="filter-temperature"
+      />
+      <!-- El riego orientativo es texto libre: un filtro sobre él sería una coincidencia de texto presentada como categoría. -->
+      <UiToolbarField
+        label="Riego · texto libre"
         as="select"
         :options="[]"
         disabled
         data-mock="true"
-        data-test="filter-temperature"
+        data-test="filter-watering"
       />
-      <UiToolbarField label="Riego · T-21" as="select" :options="[]" disabled data-mock="true" />
+      <UiToolbarField
+        v-model="growthValue"
+        label="Crecimiento"
+        as="select"
+        placeholder="Crecimiento"
+        :options="GROWTH_PRESETS.map(({ key, label }) => ({ value: key, label }))"
+        data-test="filter-growth"
+      />
       <span class="toolbar-spacer" />
       <UiButton variant="icon" label="Vista de tabla" class="view-button is-selected">☷</UiButton>
       <UiButton variant="icon" label="Vista de fotografías" disabled data-mock="true">▦</UiButton>
@@ -178,6 +321,18 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
       Una planta necesita una especie para darse de alta. Registra la primera para empezar.
       <template #action>
         <UiButton to="/species/new">Registrar la primera especie</UiButton>
+      </template>
+    </UiEmptyState>
+
+    <UiEmptyState
+      v-else-if="noMatch"
+      title="Ninguna especie coincide"
+      data-test="no-match"
+      mark="⌕"
+    >
+      Ninguna especie cumple los filtros aplicados.
+      <template #action>
+        <UiButton variant="secondary" data-test="clear-all" @click="clearFilters">Limpiar filtros</UiButton>
       </template>
     </UiEmptyState>
 

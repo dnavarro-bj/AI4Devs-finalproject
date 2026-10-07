@@ -1,10 +1,17 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import PlantsIndex from '../app/pages/plants/index.vue'
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import type { PlantSummary } from '@features/plants/types/plant.types'
 import type { PageResponse } from '@shared/types/api.types'
+
+/**
+ * La URL es estado compartido entre tests: una página que siguiera montada reaccionaría a los
+ * cambios de la siguiente. Cada test desmonta lo suyo.
+ */
+enableAutoUnmount(afterEach)
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -30,7 +37,7 @@ describe('orientación del inventario', () => {
 
   it('el inventario vacío ofrece una única acción, y lleva al alta', async () => {
     api.get.mockResolvedValue(emptyPage)
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const empty = wrapper.find('[data-test="empty"]')
@@ -43,7 +50,7 @@ describe('orientación del inventario', () => {
 
   it('declara sus breadcrumbs y se marca como la pantalla actual', async () => {
     api.get.mockResolvedValue(emptyPage)
-    await mountSuspended(PlantsIndex)
+    await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     expect(useBreadcrumbs().breadcrumbs.value).toEqual([{ label: 'Inventario' }])

@@ -28,4 +28,22 @@ describe('UiToolbarField', () => {
     expect(wrapper.find('[data-test="location"]').element.tagName).toBe('SELECT')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['a3'])
   })
+
+  /** Una opción que todavía no existe se ve —con su ticket— pero no se puede elegir. */
+  it('una opción puede ir deshabilitada: se ve y no se elige', () => {
+    const wrapper = mount(UiToolbarField, {
+      props: {
+        label: 'Ordenar por',
+        as: 'select',
+        options: [
+          { value: 'code,asc', label: 'Código' },
+          { value: 'lastReview,asc', label: 'Última revisión · T-20', disabled: true },
+        ],
+      },
+    })
+
+    const options = wrapper.findAll('option')
+    expect(options.find((option) => option.attributes('value') === 'lastReview,asc')!.attributes('disabled')).toBeDefined()
+    expect(options.find((option) => option.attributes('value') === 'code,asc')!.attributes('disabled')).toBeUndefined()
+  })
 })

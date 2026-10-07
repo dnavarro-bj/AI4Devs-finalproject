@@ -1,9 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import PlantsIndex from '../app/pages/plants/index.vue'
 import type { PlantSummary } from '@features/plants/types/plant.types'
 import type { PageResponse } from '@shared/types/api.types'
+
+/**
+ * La URL es estado compartido entre tests: una página que siguiera montada reaccionaría a los
+ * cambios de la siguiente. Cada test desmonta lo suyo.
+ */
+enableAutoUnmount(afterEach)
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -39,7 +46,7 @@ describe('listado del inventario', () => {
 
   it('muestra una fila por planta con nickname, especie y localización', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Bola verde'), plant('2', 'Pinchitos')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const text = wrapper.text()
@@ -54,7 +61,7 @@ describe('listado del inventario', () => {
 
   it('avisa de que el inventario está vacío en lugar de pintar una tabla en blanco', async () => {
     api.get.mockResolvedValue(page([]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     expect(wrapper.text().toLowerCase()).toContain('no hay ninguna planta')
@@ -63,7 +70,7 @@ describe('listado del inventario', () => {
 
   it('ofrece avanzar y retroceder cuando hay más de una página', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Bola verde')], { totalElements: 30, totalPages: 2 }))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const next = wrapper.find('[data-test="next-page"]')
@@ -79,7 +86,7 @@ describe('listado del inventario', () => {
 
   it('enlaza al detalle de cada planta', async () => {
     api.get.mockResolvedValue(page([plant('882687672222443468', 'Bola verde')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const link = wrapper.find('[data-test="plant-link"]')
@@ -116,7 +123,7 @@ describe('inventario a escala', () => {
 
   it('ordenar vuelve a pedir al API con ese criterio, y no reordena solo la página visible', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Zeta'), plant('2', 'Alfa')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     api.get.mockClear()
@@ -128,7 +135,7 @@ describe('inventario a escala', () => {
 
   it('invertir el sentido vuelve a pedirlo', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Zeta')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.findAll('th button')[0]!.trigger('click')
@@ -142,7 +149,7 @@ describe('inventario a escala', () => {
 
   it('muestra los criterios de filtrado aplicados y permite retirarlos', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Zeta')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     // Sin filtros no se ofrece limpiar.
@@ -157,7 +164,7 @@ describe('inventario a escala', () => {
 
   it('retirar un criterio lo vuelve a pedir sin él', async () => {
     api.get.mockResolvedValue(page([plant('1', 'Zeta')]))
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-tag"]').setValue('globular')
@@ -196,7 +203,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('muestra las columnas de la pantalla, con el estado real', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     // Las ordenables llevan su indicador de sentido; aquí interesa el nombre de la columna.
@@ -211,7 +218,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('marca como maqueta las columnas que el API no sirve', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     // Último riego, atención y acciones: se ven, pero no se confunden con un dato.
@@ -220,7 +227,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('permite seleccionar filas y ofrece las acciones masivas', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     expect(wrapper.find('[data-role="bulk-actions"]').exists()).toBe(false)
@@ -234,7 +241,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('el filtro de localización sí filtra: el API lo admite desde T-02', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-location"]').setValue('300001')
@@ -244,21 +251,9 @@ describe('inventario: columnas y filtros del wireframe', () => {
     expect(wrapper.find('.filter-chip').text()).toContain('Invernadero 1')
   })
 
-  it('los filtros que el API no admite están deshabilitados, no rotos', async () => {
-    serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
-    await settle()
-
-    for (const test of ['filter-species']) {
-      const field = wrapper.find(`[data-test="${test}"]`)
-      expect(field.exists()).toBe(true)
-      expect(field.attributes('disabled')).toBeDefined()
-    }
-  })
-
   it('reserva los filtros secundarios hasta que se piden', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const tag = wrapper.find('[data-test="filter-tag"]')
@@ -271,7 +266,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('oculta visualmente el encabezado de acciones, pero conserva su nombre accesible', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const actionsHeader = wrapper.findAll('thead th').at(-1)!
@@ -285,7 +280,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
     mammillaria.code = 'CAT-MAMMI-07'
     mammillaria.species = { id: '200002', code: 'CAT-MAMMI', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' }
     serve([mammillaria, plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const codes = wrapper.findAll('tbody code')
@@ -296,7 +291,7 @@ describe('inventario: columnas y filtros del wireframe', () => {
 
   it('las columnas se pueden ocultar, salvo la identificativa', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="configure-columns"]').trigger('click')
@@ -306,8 +301,8 @@ describe('inventario: columnas y filtros del wireframe', () => {
   })
 })
 
-/** Escenarios de «Búsqueda por código en el inventario» (`busqueda-por-codigo`). */
-describe('inventario: búsqueda por código', () => {
+/** Escenarios de «Búsqueda por código en el inventario» (`busqueda-por-codigo`), ampliados a apodo y especie por `filtros-y-orden-del-inventario`. */
+describe('inventario: búsqueda de texto', () => {
   beforeEach(() => {
     api.get.mockReset()
   })
@@ -331,32 +326,33 @@ describe('inventario: búsqueda por código', () => {
 
   const plantCalls = () => api.get.mock.calls.filter(([path]) => path === '/plants')
 
-  it('la caja de búsqueda está activa y dice que apodo y especie llegan con T-21', async () => {
+  it('la caja de búsqueda está activa y dice que busca por código, apodo o especie', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const box = wrapper.find('[data-test="filter-search"]')
     expect(box.attributes('disabled')).toBeUndefined()
     expect(box.attributes('data-mock')).toBeUndefined()
-    expect(box.attributes('placeholder')).toContain('T-21')
+    expect(box.attributes('placeholder')).toBe('Código, apodo o especie')
+    expect(box.attributes('placeholder')).not.toContain('T-21')
   })
 
-  it('escribir un código filtra el listado por él y aparece como filtro aplicado', async () => {
+  it('escribir un texto filtra el listado por él y aparece como filtro aplicado', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-search"]').setValue('gruss')
     await pause()
 
-    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss', page: 0 }))
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ q: 'gruss', page: 0 }))
     expect(wrapper.find('.filter-chip').text()).toContain('gruss')
   })
 
   it('escribir varias letras seguidas lanza una sola petición, no una por tecla', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
     const before = plantCalls().length
 
@@ -366,12 +362,12 @@ describe('inventario: búsqueda por código', () => {
     await pause()
 
     expect(plantCalls().length - before).toBe(1)
-    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss' }))
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ q: 'gruss' }))
   })
 
   it('quitar el filtro aplicado devuelve el listado completo y vacía la caja', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
     await wrapper.find('[data-test="filter-search"]').setValue('gruss')
     await pause()
@@ -379,13 +375,13 @@ describe('inventario: búsqueda por código', () => {
     await wrapper.find('.filter-chip button').trigger('click')
     await settle()
 
-    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ code: expect.anything() }))
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ q: expect.anything() }))
     expect((wrapper.find('[data-test="filter-search"]').element as HTMLInputElement).value).toBe('')
   })
 
   it('se combina con el filtro de localización', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-location"]').setValue('300001')
@@ -393,12 +389,12 @@ describe('inventario: búsqueda por código', () => {
     await wrapper.find('[data-test="filter-search"]').setValue('gruss')
     await pause()
 
-    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ code: 'gruss', location: '300001' }))
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.objectContaining({ q: 'gruss', location: '300001' }))
   })
 
   it('sin coincidencias lo explica con el texto buscado y ofrece quitar la búsqueda', async () => {
     serve([])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-search"]').setValue('zzz')
@@ -411,12 +407,12 @@ describe('inventario: búsqueda por código', () => {
 
     await wrapper.find('[data-test="clear-search"]').trigger('click')
     await settle()
-    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ code: expect.anything() }))
+    expect(api.get).toHaveBeenLastCalledWith('/plants', expect.not.objectContaining({ q: expect.anything() }))
   })
 
   it('el inventario vacío sin búsqueda sigue ofreciendo crear la primera planta', async () => {
     serve([])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     expect(wrapper.find('[data-test="empty"]').exists()).toBe(true)
@@ -425,7 +421,7 @@ describe('inventario: búsqueda por código', () => {
 
   it('la caja se alcanza y se usa con el teclado: es un campo de búsqueda con nombre accesible', async () => {
     serve([plant('1', 'Bola verde')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const box = wrapper.find('[data-test="filter-search"]')
@@ -459,7 +455,7 @@ describe('inventario: estado', () => {
 
   it('por defecto no pide ningún estado: el API devuelve solo lo que está en curso', async () => {
     serve([plant('1')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     expect(lastPlantsCall()).not.toHaveProperty('status')
@@ -469,7 +465,7 @@ describe('inventario: estado', () => {
 
   it('el filtro ofrece los siete estados y una opción visible para incluir las archivadas', async () => {
     serve([plant('1')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const options = wrapper.findAll('[data-test="filter-status"] option').map((option) => option.attributes('value'))
@@ -479,7 +475,7 @@ describe('inventario: estado', () => {
 
   it('filtrar por un estado lo pide al API y aparece como filtro aplicado', async () => {
     serve([plant('1', 'vendida')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-status"]').setValue('vendida')
@@ -491,7 +487,7 @@ describe('inventario: estado', () => {
 
   it('incluir las archivadas pide los siete estados', async () => {
     serve([plant('1')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-status"]').setValue('all')
@@ -502,7 +498,7 @@ describe('inventario: estado', () => {
 
   it('quitar el filtro de estado vuelve al comportamiento por defecto', async () => {
     serve([plant('1', 'vendida')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
     await wrapper.find('[data-test="filter-status"]').setValue('vendida')
     await settle()
@@ -515,7 +511,7 @@ describe('inventario: estado', () => {
 
   it('cada fila muestra el estado real del ejemplar', async () => {
     serve([plant('1'), plant('2', 'cuarentena'), plant('3', 'muerta')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     const statuses = wrapper.findAll('[data-test="row-status"]').map((cell) => cell.text())
@@ -524,7 +520,7 @@ describe('inventario: estado', () => {
 
   it('se combina con la búsqueda por código y con la localización', async () => {
     serve([plant('1', 'vendida')])
-    const wrapper = await mountSuspended(PlantsIndex)
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
     await wrapper.find('[data-test="filter-location"]').setValue('300001')
@@ -532,5 +528,188 @@ describe('inventario: estado', () => {
     await settle()
 
     expect(lastPlantsCall()).toMatchObject({ location: '300001', status: ['vendida'] })
+  })
+})
+
+/**
+ * Escenarios de `filtros-y-orden-del-inventario`: especie y características de cultivo como filtros
+ * reales, orden por clave pública y lo que todavía no existe, marcado con su ticket.
+ */
+describe('inventario: filtros de especie y de cultivo, y orden', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+  })
+
+  const plant = (id: string, nickname: string): PlantSummary => ({
+    id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
+    nickname,
+    createdAt: '2026-09-01T10:00:00Z',
+    location: { id: '300001', name: 'Invernadero 1' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+  })
+
+  const speciesPage = {
+    content: [
+      { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+      { id: '200002', code: 'CAT-MAMMI', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' },
+    ],
+    totalElements: 2,
+    totalPages: 1,
+    pageNumber: 0,
+    pageSize: 500,
+  }
+
+  function serve(content: PlantSummary[], species = speciesPage) {
+    api.get.mockImplementation(async (path: string) => {
+      if (path === '/locations') {
+        return { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      }
+      if (path === '/species') return species
+      return { content, totalElements: content.length, totalPages: content.length ? 1 : 0, pageNumber: 0, pageSize: 25 }
+    })
+  }
+
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 400))
+  const plantsCalls = () => api.get.mock.calls.filter(([path]) => path === '/plants')
+  const lastPlantsCall = () => plantsCalls().at(-1)![1] as Record<string, unknown>
+
+  it('el desplegable de especie ofrece las especies reales y deja de ser maqueta', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    const field = wrapper.find('[data-test="filter-species"]')
+    expect(field.attributes('disabled')).toBeUndefined()
+    expect(field.attributes('data-mock')).toBeUndefined()
+    expect(field.findAll('option').map((option) => option.text())).toEqual(
+      expect.arrayContaining(['Echinocactus grusonii', 'Mammillaria elongata']),
+    )
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0, size: 500, sort: 'scientificName,asc' })
+  })
+
+  it('filtrar por especie la pide al API y aparece como criterio con su nombre', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-species"]').setValue('200002')
+    await settle()
+
+    expect(lastPlantsCall()).toMatchObject({ species: ['200002'], page: 0 })
+    expect(wrapper.find('.filter-chip').text()).toContain('Especie: Mammillaria elongata')
+  })
+
+  it('avisa si hay más especies de las que caben en el desplegable', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    serve([plant('1', 'Bola verde')], { ...speciesPage, totalElements: 740 })
+    await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('740'))
+    warn.mockRestore()
+  })
+
+  it('«Más filtros» trae exposición y entorno de la especie, además de la etiqueta', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+    await wrapper.find('[data-test="more-filters"]').trigger('click')
+
+    await wrapper.find('[data-test="filter-exposure"]').setValue('pleno_sol')
+    await wrapper.find('[data-test="filter-environment"]').setValue('interior')
+    await settle()
+
+    expect(lastPlantsCall()).toMatchObject({ exposure: ['pleno_sol'], environment: ['interior'] })
+    const chips = wrapper.findAll('.filter-chip').map((chip) => chip.text())
+    expect(chips.some((text) => text.includes('Exposición: Pleno sol'))).toBe(true)
+    expect(chips.some((text) => text.includes('Entorno: Interior'))).toBe(true)
+  })
+
+  it('buscar por apodo o por especie envía el texto como q', async () => {
+    serve([plant('1', 'Asiento de suegra')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-search"]').setValue('suegra')
+    await pause()
+
+    expect(lastPlantsCall()).toMatchObject({ q: 'suegra', page: 0 })
+    expect(wrapper.find('.filter-chip').text()).toContain('Búsqueda: suegra')
+  })
+
+  it('retirar un criterio conserva los demás', async () => {
+    serve([plant('1', 'Bola verde')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+    await wrapper.find('[data-test="filter-species"]').setValue('200001')
+    await wrapper.find('[data-test="filter-status"]').setValue('cuarentena')
+    await settle()
+
+    const species = wrapper.findAll('.filter-chip').find((chip) => chip.text().includes('Especie'))!
+    await species.find('button').trigger('click')
+    await settle()
+
+    expect(lastPlantsCall()).not.toHaveProperty('species')
+    expect(lastPlantsCall()).toMatchObject({ status: ['cuarentena'] })
+  })
+
+  it('nada coincide: lo explica con los filtros y ofrece limpiarlos, sin confundirlo con un inventario vacío', async () => {
+    serve([])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-species"]').setValue('200002')
+    await settle()
+
+    expect(wrapper.find('[data-test="empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="no-match"]').text()).toContain('filtros')
+
+    await wrapper.find('[data-test="clear-all"]').trigger('click')
+    await settle()
+    expect(lastPlantsCall()).not.toHaveProperty('species')
+  })
+
+  it('ordenar por especie y por localización pide la clave pública al API, sin reordenar en el cliente', async () => {
+    serve([plant('1', 'Zeta'), plant('2', 'Alfa')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    const header = (name: string) => wrapper.findAll('th button').find((button) => button.text().includes(name))!
+    await header('Especie').trigger('click')
+    await settle()
+    expect(lastPlantsCall()).toMatchObject({ sort: 'species,asc' })
+
+    await header('Especie').trigger('click')
+    await settle()
+    expect(lastPlantsCall()).toMatchObject({ sort: 'species,desc' })
+
+    await header('Localización').trigger('click')
+    await settle()
+    expect(lastPlantsCall()).toMatchObject({ sort: 'location,asc' })
+
+    // Se pinta lo que el API devuelve, en su orden.
+    expect(wrapper.findAll('tbody [data-test="plant-link"]').map((link) => link.text())).toEqual(
+      expect.arrayContaining([expect.stringContaining('Zeta')]),
+    )
+    expect(wrapper.findAll('tbody tr')[0]!.text()).toContain('Zeta')
+  })
+
+  it('el selector de orden ofrece las claves públicas y deja ver, sin poder elegir, las que llegan con otro ticket', async () => {
+    serve([plant('1', 'Zeta')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    const select = wrapper.find('[data-test="sort-select"]')
+    await select.setValue('code,desc')
+    await settle()
+    expect(lastPlantsCall()).toMatchObject({ sort: 'code,desc' })
+
+    const review = select.findAll('option').find((option) => option.text().includes('Última revisión'))!
+    expect(review.text()).toContain('T-20')
+    expect(review.attributes('disabled')).toBeDefined()
+    const attention = select.findAll('option').find((option) => option.text().includes('atención'))!
+    expect(attention.text()).toContain('T-23')
+    expect(attention.attributes('disabled')).toBeDefined()
   })
 })

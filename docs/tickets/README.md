@@ -58,7 +58,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend | Archivado |
 | [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend | Pendiente |
 | [T-20](T-20-cronologia-unificada.md) | Cronología unificada del ejemplar | Backend + Frontend | Archivado |
-| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | Pendiente |
+| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | En curso (1 de 3) |
 
 ## Bloque 2 — organización del trabajo
 

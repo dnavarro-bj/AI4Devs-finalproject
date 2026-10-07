@@ -1,26 +1,34 @@
 <script setup lang="ts">
 /**
  * El inventario, con la composición del wireframe: barra de filtros, tabla con selección y
- * acciones masivas, y las seis columnas de la pantalla `plants`.
+ * acciones masivas, y las columnas de la pantalla `plants`.
  *
- * **Híbrida.** Lo real es lo que el API sirve: el listado paginado, el filtro por localización y
- * por etiqueta (T-02), la ordenación y las columnas visibles. Lo que no existe —el código del
- * ejemplar (T-15), el último riego (el listado no trae lecturas), el nivel de atención (T-23), el
- * filtro por especie y por estado, y las acciones masivas (T-22, T-24)— va **marcado**, para que
- * no se confunda una columna de maqueta con un dato.
+ * **Híbrida.** Lo real es lo que el API sirve: el listado paginado y sus filtros —localización,
+ * etiqueta, estado, texto sobre código, apodo y especie, especie y características de cultivo de la
+ * especie—, la ordenación por clave pública y las columnas visibles. Lo que no existe —el último
+ * riego (el listado no trae lecturas), el nivel de atención (T-23), el orden por última revisión
+ * (T-20) y las acciones masivas (T-22, T-24)— va **marcado**, para que no se confunda una maqueta
+ * con un dato.
+ *
+ * **El estado de la pantalla es la URL** (`useUrlState`): filtros, orden y columnas ocultas. Recargar
+ * o compartir el enlace la reproduce, y es lo que una vista guardada guardará.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
-import { useDebouncedRef } from '@shared/composables/useDebouncedRef'
+import { useSearchText } from '@shared/composables/useSearchText'
+import { useUrlState } from '@shared/composables/useUrlState'
+import type { UrlSchema } from '@shared/utils/urlState'
 import { usePlants } from '@features/plants/composables/usePlants'
 import { PLANT_STATUSES, STATUS_LABELS } from '@features/plants/mappers/plantProfile'
 import type { PlantSummary } from '@features/plants/types/plant.types'
 import { useLocations } from '@features/locations/composables/useLocations'
 import type { LocationSummary } from '@features/locations/types/location.types'
+import { useSpecies } from '@features/species/composables/useSpecies'
+import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import type { PageResponse } from '@shared/types/api.types'
 
 const { list } = usePlants()
 const { loadAll: loadLocations } = useLocations()
-const route = useRoute()
+const { search: searchSpecies } = useSpecies()
 const { set: setBreadcrumbs } = useBreadcrumbs()
 
 setBreadcrumbs([{ label: 'Inventario' }])
@@ -31,100 +39,163 @@ const error = ref<string | null>(null)
 
 const locations = ref<LocationSummary[]>([])
 
+/** Las seis columnas del wireframe más el estado. Las dos últimas de datos son maqueta hasta su ticket. */
+const COLUMNS = [
+  { key: 'nickname', label: 'Planta', sortable: true },
+  { key: 'species', label: 'Especie', sortable: true },
+  { key: 'location', label: 'Localización', sortable: true },
+  { key: 'status', label: 'Estado' },
+  { key: 'lastWatering', label: 'Último riego' },
+  { key: 'attention', label: 'Atención' },
+  { key: 'actions', label: 'Acciones', visuallyHidden: true },
+]
+
+/** La identificativa no se puede ocultar, así que no aparece entre las configurables. */
+const HIDEABLE = COLUMNS.slice(1)
+
+/**
+ * Las claves públicas de orden del inventario (ADR-016). `species` y `location` ordenan por
+ * **nombre**, no por identificador: lo resuelve el API.
+ */
+const SORT_KEYS = ['code', 'nickname', 'species', 'location', 'createdAt']
+
+const URL_SCHEMA = {
+  q: { kind: 'text' },
+  location: { kind: 'text' },
+  includeDescendants: { kind: 'flag' },
+  tag: { kind: 'text' },
+  status: { kind: 'enum', values: [...PLANT_STATUSES, 'all'] },
+  species: { kind: 'text' },
+  exposure: { kind: 'enum', values: SUN_EXPOSURE.map((option) => option.value) },
+  environment: { kind: 'enum', values: ENVIRONMENTS.map((option) => option.value) },
+  sort: { kind: 'enum', values: SORT_KEYS.flatMap((key) => [`${key},asc`, `${key},desc`]) },
+  hide: { kind: 'list', values: HIDEABLE.map((column) => column.key) },
+} as const satisfies UrlSchema
+
+/** La ficha de una localización enlaza aquí con `?location=` (y `includeDescendants`): el filtro nace de la URL. */
+const { state } = useUrlState(URL_SCHEMA)
+
 /**
  * El orden lo resuelve el API, no la tabla: todo listado va paginado (ADR-009), así que la tabla
  * solo tiene delante una página. Reordenar esa página en el cliente daría un resultado plausible y
  * equivocado.
  */
-const sort = ref<{ key: string, direction: 'asc' | 'desc' } | null>(null)
+const sort = computed(() => {
+  if (!state.sort) return null
+  const [key, direction] = state.sort.split(',')
+  return { key: key!, direction: direction as 'asc' | 'desc' }
+})
 
-const tagFilter = ref('')
-/** La ficha de una localización enlaza aquí con `?location=` (y `includeDescendants`): el filtro nace de la URL. */
-const queryLocation = route.query.location
-const locationFilter = ref(typeof queryLocation === 'string' ? queryLocation : '')
-const includeDescendants = ref(route.query.includeDescendants === 'true')
+const SORT_OPTIONS = [
+  { value: 'code,asc', label: 'Código (A–Z)' },
+  { value: 'code,desc', label: 'Código (Z–A)' },
+  { value: 'nickname,asc', label: 'Planta (A–Z)' },
+  { value: 'nickname,desc', label: 'Planta (Z–A)' },
+  { value: 'species,asc', label: 'Especie (A–Z)' },
+  { value: 'species,desc', label: 'Especie (Z–A)' },
+  { value: 'location,asc', label: 'Localización (A–Z)' },
+  { value: 'location,desc', label: 'Localización (Z–A)' },
+  // No existen todavía: dependen de la cronología (T-20) y de las alertas (T-23). Se ven, no se eligen.
+  { value: 'lastReview', label: 'Última revisión · T-20', disabled: true },
+  { value: 'attention', label: 'Nivel de atención · T-23', disabled: true },
+]
 
-/**
- * La búsqueda por **código** de inventario. El texto de la caja se aplica tras una pausa, no por
- * tecla; apodo y especie son T-21. Como los demás filtros, aparece como filtro aplicado y se quita.
- */
 /**
  * El estado: **por defecto no se pide ninguno** y el API devuelve solo lo que está en curso —lo
  * archivado no se mezcla con lo activo—. Elegir uno pide ese; `all` incluye las archivadas.
  */
-const statusFilter = ref('')
 const statusOptions = [
   ...PLANT_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] })),
   { value: 'all', label: 'Todas, incluidas las archivadas' },
 ]
 const statusQuery = computed(() => {
-  if (statusFilter.value === 'all') return PLANT_STATUSES
-  return statusFilter.value ? [statusFilter.value] : undefined
+  if (state.status === 'all') return PLANT_STATUSES
+  return state.status ? [state.status] : undefined
 })
 
-const searchText = ref('')
-const appliedSearch = useDebouncedRef(searchText, 250)
-const moreFiltersOpen = ref(false)
+/**
+ * La búsqueda de texto —código, apodo y especie— se aplica tras una pausa, no por tecla. Como los
+ * demás filtros, aparece como filtro aplicado y se quita. La caja y la URL se sincronizan en los dos
+ * sentidos: un enlace que llega con otro `?q=` (la búsqueda global) cambia lo escrito.
+ */
+const { text: searchText, clear: clearSearch } = useSearchText(state)
 
+const moreFiltersOpen = ref(false)
 const selected = ref<string[]>([])
 
 const locationName = computed(
-  () => locations.value.find((location) => location.id === locationFilter.value)?.name ?? '',
+  () => locations.value.find((location) => location.id === state.location)?.name ?? '',
 )
 
+/** Todas las especies, hasta el máximo de página del API; si hubiera más, el selector las truncaría y se avisa. */
+const speciesOptions = ref<{ value: string, label: string }[]>([])
+const speciesName = computed(
+  () => speciesOptions.value.find((option) => option.value === state.species)?.label ?? 'seleccionada',
+)
+
+const exposureLabel = (value: string) => SUN_EXPOSURE.find((option) => option.value === value)?.label ?? value
+const environmentLabel = (value: string) => ENVIRONMENTS.find((option) => option.value === value)?.label ?? value
+
 const appliedFilters = computed(() => [
-  ...(locationFilter.value ? [{ id: 'location', label: `Localización: ${locationName.value}${includeDescendants.value ? ' y sublocalizaciones' : ''}` }] : []),
-  ...(tagFilter.value ? [{ id: 'tag', label: `Etiqueta: ${tagFilter.value}` }] : []),
-  ...(appliedSearch.value.trim() ? [{ id: 'code', label: `Código: ${appliedSearch.value.trim()}` }] : []),
-  ...(statusFilter.value
-    ? [{ id: 'status', label: `Estado: ${statusOptions.find((option) => option.value === statusFilter.value)?.label}` }]
+  ...(state.location ? [{ id: 'location', label: `Localización: ${locationName.value}${state.includeDescendants ? ' y sublocalizaciones' : ''}` }] : []),
+  ...(state.species ? [{ id: 'species', label: `Especie: ${speciesName.value}` }] : []),
+  ...(state.exposure ? [{ id: 'exposure', label: `Exposición: ${exposureLabel(state.exposure)}` }] : []),
+  ...(state.environment ? [{ id: 'environment', label: `Entorno: ${environmentLabel(state.environment)}` }] : []),
+  ...(state.tag ? [{ id: 'tag', label: `Etiqueta: ${state.tag}` }] : []),
+  ...(state.q ? [{ id: 'q', label: `Búsqueda: ${state.q}` }] : []),
+  ...(state.status
+    ? [{ id: 'status', label: `Estado: ${statusOptions.find((option) => option.value === state.status)?.label}` }]
     : []),
 ])
 
-/** Quitar la búsqueda se aplica **al instante**: no tiene sentido esperar la pausa para deshacerla. */
-function clearSearch() {
-  searchText.value = ''
-  appliedSearch.value = ''
-}
-
 function removeFilter(id: string) {
-  if (id === 'tag') tagFilter.value = ''
+  if (id === 'tag') state.tag = ''
   if (id === 'location') {
-    locationFilter.value = ''
-    includeDescendants.value = false
+    state.location = ''
+    state.includeDescendants = false
   }
-  if (id === 'code') clearSearch()
-  if (id === 'status') statusFilter.value = ''
+  if (id === 'q') clearSearch()
+  if (id === 'status') state.status = ''
+  if (id === 'species') state.species = ''
+  if (id === 'exposure') state.exposure = ''
+  if (id === 'environment') state.environment = ''
 }
 
 function clearFilters() {
-  tagFilter.value = ''
-  locationFilter.value = ''
-  includeDescendants.value = false
-  statusFilter.value = ''
+  state.tag = ''
+  state.location = ''
+  state.includeDescendants = false
+  state.status = ''
+  state.species = ''
+  state.exposure = ''
+  state.environment = ''
   clearSearch()
 }
 
 function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
-  sort.value = next
-  load(page.value?.pageNumber ?? 0)
+  state.sort = `${next.key},${next.direction}`
 }
 
-watch([tagFilter, locationFilter, appliedSearch, statusFilter], () => load(0))
+/** Lo que cambia la petición. Las columnas visibles no: son presentación. */
+const request = computed(() => ({
+  sort: state.sort || undefined,
+  tag: state.tag ? [state.tag] : undefined,
+  location: state.location || undefined,
+  includeDescendants: state.location && state.includeDescendants ? true : undefined,
+  q: state.q || undefined,
+  status: statusQuery.value,
+  species: state.species ? [state.species] : undefined,
+  exposure: state.exposure ? [state.exposure] : undefined,
+  environment: state.environment ? [state.environment] : undefined,
+}))
+
+watch(() => JSON.stringify(request.value), () => load(0))
 
 async function load(pageNumber: number) {
   loading.value = true
   error.value = null
 
-  const result = await list({
-    page: pageNumber,
-    sort: sort.value ? `${sort.value.key},${sort.value.direction}` : undefined,
-    tag: tagFilter.value ? [tagFilter.value] : undefined,
-    location: locationFilter.value || undefined,
-    includeDescendants: locationFilter.value && includeDescendants.value ? true : undefined,
-    code: appliedSearch.value.trim() || undefined,
-    status: statusQuery.value,
-  })
+  const result = await list({ page: pageNumber, ...request.value })
   loading.value = false
 
   if (!result.success) {
@@ -139,33 +210,39 @@ onMounted(async () => {
   load(0)
   const result = await loadLocations()
   if (result.success) locations.value = result.data!
+
+  const found = await searchSpecies({ size: 500, sort: 'scientificName,asc' })
+  if (found.success) {
+    const { content, totalElements } = found.data!
+    speciesOptions.value = content
+      .filter((species) => species.scientificName)
+      .map((species) => ({ value: species.id, label: species.scientificName }))
+    // Más especies que una página: el desplegable las truncaría **sin decirlo**. Se avisa; el
+    // siguiente paso sería un selector con búsqueda, no subir el máximo del servidor.
+    if (totalElements > content.length) {
+      console.warn(`El desplegable de especies muestra ${content.length} de ${totalElements}.`)
+    }
+  }
 })
 
 const nothing = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
-const isSearching = computed(() => appliedSearch.value.trim() !== '')
-/** Sin búsqueda activa el inventario está vacío; con ella, simplemente nada coincide. */
-const isEmpty = computed(() => nothing.value && !isSearching.value)
-const noMatch = computed(() => nothing.value && isSearching.value)
+/** Sin ningún criterio el inventario está vacío; con alguno, simplemente nada coincide. */
+const isEmpty = computed(() => nothing.value && appliedFilters.value.length === 0)
+const noMatch = computed(() => nothing.value && appliedFilters.value.length > 0)
+const onlySearch = computed(() => appliedFilters.value.length === 1 && Boolean(state.q))
 
 const locationOptions = computed(() => locations.value.map((location) => ({
   value: location.id,
   label: location.path || location.name,
 })))
 
-/** Las seis columnas del wireframe. Las tres últimas son maqueta hasta su ticket. */
-const COLUMNS = [
-  { key: 'nickname', label: 'Planta', sortable: true },
-  { key: 'species', label: 'Especie', sortable: true },
-  { key: 'location', label: 'Localización', sortable: true },
-  { key: 'status', label: 'Estado' },
-  { key: 'lastWatering', label: 'Último riego' },
-  { key: 'attention', label: 'Atención' },
-  { key: 'actions', label: 'Acciones', visuallyHidden: true },
-]
+const exposureOptions = SUN_EXPOSURE.map(({ value, label }) => ({ value, label }))
+const environmentOptions = ENVIRONMENTS.map(({ value, label }) => ({ value, label }))
 
-/** La identificativa no se puede ocultar, así que no aparece entre las configurables. */
-const HIDEABLE = COLUMNS.slice(1)
-const visibleColumns = ref(HIDEABLE.map((column) => column.key))
+const visibleColumns = computed({
+  get: () => HIDEABLE.map((column) => column.key).filter((key) => !state.hide.includes(key)),
+  set: (visible: string[]) => { state.hide = HIDEABLE.map((column) => column.key).filter((key) => !visible.includes(key)) },
+})
 const columnsOpen = ref(false)
 
 const asPlant = (row: unknown) => row as PlantSummary
@@ -194,14 +271,14 @@ const asPlant = (row: unknown) => row as PlantSummary
     >
       <UiToolbarField
         v-model="searchText"
-        label="Buscar por código"
+        label="Buscar por código, apodo o especie"
         type="search"
         icon="⌕"
-        placeholder="Código de inventario · apodo y especie: T-21"
+        placeholder="Código, apodo o especie"
         data-test="filter-search"
       />
       <UiToolbarField
-        v-model="locationFilter"
+        v-model="state.location"
         label="Localización"
         as="select"
         placeholder="Localización"
@@ -209,21 +286,28 @@ const asPlant = (row: unknown) => row as PlantSummary
         data-test="filter-location"
       />
       <UiToolbarField
+        v-model="state.species"
         label="Especie"
         as="select"
-        placeholder="Especie · T-21"
-        :options="[]"
-        disabled
-        data-mock="true"
+        placeholder="Especie"
+        :options="speciesOptions"
         data-test="filter-species"
       />
       <UiToolbarField
-        v-model="statusFilter"
+        v-model="state.status"
         label="Estado"
         as="select"
         placeholder="Estado: en curso"
         :options="statusOptions"
         data-test="filter-status"
+      />
+      <UiToolbarField
+        v-model="state.sort"
+        label="Ordenar por"
+        as="select"
+        placeholder="Orden: fecha de alta"
+        :options="SORT_OPTIONS"
+        data-test="sort-select"
       />
       <UiButton variant="secondary" data-test="more-filters" @click="moreFiltersOpen = !moreFiltersOpen">
         {{ moreFiltersOpen ? 'Menos filtros' : 'Más filtros' }} <span aria-hidden="true">{{ moreFiltersOpen ? '−' : '＋' }}</span>
@@ -237,8 +321,24 @@ const asPlant = (row: unknown) => row as PlantSummary
         ☷
       </UiButton>
 
-      <div v-show="moreFiltersOpen || tagFilter" class="more-filters">
-        <UiToolbarField v-model="tagFilter" label="Etiqueta" placeholder="Etiqueta" data-test="filter-tag" />
+      <div v-show="moreFiltersOpen || state.tag || state.exposure || state.environment" class="more-filters">
+        <UiToolbarField
+          v-model="state.exposure"
+          label="Exposición de la especie"
+          as="select"
+          placeholder="Exposición de la especie"
+          :options="exposureOptions"
+          data-test="filter-exposure"
+        />
+        <UiToolbarField
+          v-model="state.environment"
+          label="Entorno de la especie"
+          as="select"
+          placeholder="Entorno de la especie"
+          :options="environmentOptions"
+          data-test="filter-environment"
+        />
+        <UiToolbarField v-model="state.tag" label="Etiqueta" placeholder="Etiqueta" data-test="filter-tag" />
       </div>
     </UiFilterBar>
 
@@ -270,9 +370,11 @@ const asPlant = (row: unknown) => row as PlantSummary
       data-test="no-match"
       mark="⌕"
     >
-      Ninguna planta tiene «{{ appliedSearch.trim() }}» en su código de inventario.
+      <template v-if="onlySearch">Ninguna planta tiene «{{ state.q }}» en su código, apodo ni especie.</template>
+      <template v-else>Ninguna planta cumple los filtros aplicados<template v-if="state.q"> —ni tiene «{{ state.q }}»—</template>.</template>
       <template #action>
-        <UiButton variant="secondary" data-test="clear-search" @click="clearSearch">Quitar la búsqueda</UiButton>
+        <UiButton v-if="onlySearch" variant="secondary" data-test="clear-search" @click="clearSearch">Quitar la búsqueda</UiButton>
+        <UiButton v-else variant="secondary" data-test="clear-all" @click="clearFilters">Limpiar filtros</UiButton>
       </template>
     </UiEmptyState>
 

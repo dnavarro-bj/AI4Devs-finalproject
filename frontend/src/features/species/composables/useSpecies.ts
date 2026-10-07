@@ -1,5 +1,5 @@
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
-import { speciesApiService } from '../services/species.api.service'
+import { speciesApiService, type SpeciesQuery } from '../services/species.api.service'
 import type { SpeciesCare, SpeciesDetail, SpeciesInput, SpeciesSummary } from '../types/species.types'
 
 /**
@@ -12,6 +12,9 @@ export function useSpecies() {
   const list = (page = 0, sort?: string, code?: string): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> =>
     speciesApiService.list(page, sort, code)
 
+  const search = (query: SpeciesQuery = {}): Promise<ServiceResponse<PageResponse<SpeciesSummary>>> =>
+    speciesApiService.search(query)
+
   const detail = (id: string): Promise<ServiceResponse<SpeciesDetail>> => speciesApiService.detail(id)
 
   const create = (input: SpeciesInput): Promise<ServiceResponse<SpeciesCare>> => speciesApiService.create(input)
@@ -21,5 +24,5 @@ export function useSpecies() {
 
   const remove = (id: string): Promise<ServiceResponse<null>> => speciesApiService.remove(id)
 
-  return { list, detail, create, update, remove }
+  return { list, search, detail, create, update, remove }
 }

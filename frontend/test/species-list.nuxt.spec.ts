@@ -1,10 +1,14 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { enableAutoUnmount } from '@vue/test-utils'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import SpeciesIndex from '../app/pages/species/index.vue'
 import type { SpeciesSummary } from '@features/species/types/species.types'
 import type { PageResponse } from '@shared/types/api.types'
+
+/** La URL es estado compartido entre tests: cada uno desmonta lo suyo. */
+enableAutoUnmount(afterEach)
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -35,7 +39,7 @@ describe('catálogo de especies', () => {
       species('200002', 'Mammillaria elongata', 'Cactus dedo de dama'),
     ]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const text = wrapper.text()
@@ -47,7 +51,7 @@ describe('catálogo de especies', () => {
   it('cada especie navega a su ficha', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     expect(wrapper.find('[data-test="species-link"]').attributes('href')).toBe('/species/200001')
@@ -56,7 +60,7 @@ describe('catálogo de especies', () => {
   it('el catálogo vacío lo explica y ofrece registrar la primera, sin tabla en blanco', async () => {
     api.get.mockResolvedValue(page([]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     expect(wrapper.find('[data-test="empty"]').exists()).toBe(true)
@@ -67,7 +71,7 @@ describe('catálogo de especies', () => {
   it('ofrece registrar una especie desde la cabecera', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     expect(wrapper.find('[data-test="new-species"]').attributes('href')).toBe('/species/new')
@@ -80,7 +84,7 @@ describe('catálogo de especies', () => {
       species('200002', 'Mammillaria elongata', 'Cactus dedo de dama'),
     ]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
     api.get.mockClear()
 
@@ -97,7 +101,7 @@ describe('catálogo de especies', () => {
       species('200002', 'Mammillaria elongata', 'Cactus dedo de dama', 'CAT-MAMMI'),
     ]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const codes = wrapper.findAll('[data-test="species-code"]')
@@ -112,7 +116,7 @@ describe('catálogo de especies', () => {
   it('el recuento de ejemplares se muestra marcado como maqueta, con su ticket', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const cell = wrapper.find('[data-test="specimens-count"]')
@@ -125,7 +129,7 @@ describe('catálogo de especies', () => {
   it('el nombre científico y el común van juntos en la misma celda', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const cell = wrapper.find('[data-test="species-link"]')
@@ -142,7 +146,7 @@ describe('catálogo de especies', () => {
   it('las columnas que el listado no trae dicen dónde está el dato de verdad', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     for (const test of ['temperature', 'watering', 'soil-mix'] as const) {
@@ -156,7 +160,7 @@ describe('catálogo de especies', () => {
   it('lo que de verdad no existe se marca con su ticket, no con «en la ficha»', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     // La exposición no está en ningún endpoint: llega con T-17.
@@ -176,7 +180,7 @@ describe('catálogo de especies', () => {
       species('200002', 'Mammillaria elongata', 'Cactus dedo de dama'),
     ]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const all = wrapper.find('[data-test="group-all"]')
@@ -187,7 +191,7 @@ describe('catálogo de especies', () => {
   it('los grupos de cultivo aparecen marcados, porque no existen todavía', async () => {
     api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     const groups = wrapper.find('[data-test="groups"]')
@@ -201,7 +205,7 @@ describe('catálogo de especies', () => {
       species('200002', 'Mammillaria elongata', 'Cactus dedo de dama'),
     ]))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     expect(wrapper.find('[data-test="result-count"]').text()).toContain('2')
@@ -210,10 +214,184 @@ describe('catálogo de especies', () => {
   it('un fallo al cargar se muestra, y no deja la pantalla en blanco', async () => {
     api.get.mockRejectedValue(new ApiError(500, 'No se ha podido completar la operación.'))
 
-    const wrapper = await mountSuspended(SpeciesIndex)
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
     await settle()
 
     expect(wrapper.find('[data-test="error"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="species-table"]').exists()).toBe(false)
+  })
+})
+
+/**
+ * Escenarios de «El catálogo de especies filtra y ordena como el prototipo»
+ * (`filtros-y-orden-del-inventario`): búsqueda, exposición, temperatura y crecimiento, criterios
+ * retirables, orden por columna y estado en la URL. Lo que no existe sigue marcado.
+ */
+describe('catálogo de especies: filtros y orden', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.get.mockResolvedValue({
+      content: [
+        { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+        { id: '200002', code: 'CAT-MAMMI', scientificName: 'Mammillaria elongata', commonName: 'Dedo de dama' },
+      ],
+      totalElements: 74,
+      totalPages: 3,
+      pageNumber: 0,
+      pageSize: 25,
+    })
+  })
+
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 400))
+  const lastCall = () => api.get.mock.calls.at(-1)![1] as Record<string, unknown>
+  const currentQuery = () => useRouter().currentRoute.value.query
+
+  it('buscar por nombre o código envía q tras una pausa y aparece como criterio', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    const box = wrapper.find('[data-test="filter-search"]')
+    expect(box.attributes('disabled')).toBeUndefined()
+    expect(box.attributes('placeholder')).toBe('Nombre científico, común o código')
+    for (const text of ['s', 'su', 'sue']) await box.setValue(text)
+    await pause()
+
+    expect(lastCall()).toMatchObject({ q: 'sue', page: 0 })
+    expect(api.get.mock.calls.filter(([, params]) => (params as Record<string, unknown>).q).length).toBe(1)
+    expect(wrapper.find('.filter-chip').text()).toContain('Búsqueda: sue')
+  })
+
+  it('filtrar por exposición lo pide al API y dice cuántas se muestran de cuántas', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-exposure"]').setValue('semisombra')
+    await settle()
+
+    expect(lastCall()).toMatchObject({ exposure: ['semisombra'] })
+    expect(wrapper.find('.filter-chip').text()).toContain('Exposición: Semisombra')
+    expect(wrapper.find('[data-test="result-count"]').text()).toContain('Mostrando 2 de 74 especies')
+  })
+
+  it('«sensibles al frío» pide la temperatura mínima por extremos', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-temperature"]').setValue('cold-sensitive')
+    await settle()
+
+    expect(lastCall()).toMatchObject({ minTemperatureFrom: 9 })
+    expect(lastCall()).not.toHaveProperty('minTemperatureTo')
+    expect(wrapper.find('.filter-chip').text()).toContain('Temperatura: Sensibles al frío')
+  })
+
+  it('un intervalo de temperatura pide los dos extremos', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-temperature"]').setValue('moderate')
+    await settle()
+
+    expect(lastCall()).toMatchObject({ minTemperatureFrom: 5, minTemperatureTo: 8 })
+  })
+
+  it('el crecimiento pide los meses del atajo, repetidos', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    await wrapper.find('[data-test="filter-growth"]').setValue('winter')
+    await settle()
+
+    expect(lastCall()).toMatchObject({ growthMonth: [12, 1, 2] })
+    expect(wrapper.find('.filter-chip').text()).toContain('Crecimiento: invierno')
+  })
+
+  it('cada criterio se retira por separado y «Limpiar filtros» los quita todos', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+    await wrapper.find('[data-test="filter-exposure"]').setValue('semisombra')
+    await wrapper.find('[data-test="filter-growth"]').setValue('winter')
+    await settle()
+
+    await wrapper.findAll('.filter-chip').find((chip) => chip.text().includes('Exposición'))!.find('button').trigger('click')
+    await settle()
+    expect(lastCall()).not.toHaveProperty('exposure')
+    expect(lastCall()).toMatchObject({ growthMonth: [12, 1, 2] })
+
+    await wrapper.find('[data-test="clear-filters"]').trigger('click')
+    await settle()
+    expect(lastCall()).toEqual({ page: 0 })
+  })
+
+  it('ordenar por el nombre científico pide la clave pública', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    await wrapper.find('th[aria-sort] button').trigger('click')
+    await settle()
+    expect(lastCall()).toMatchObject({ sort: 'scientificName,asc' })
+
+    await wrapper.find('th[aria-sort] button').trigger('click')
+    await settle()
+    expect(lastCall()).toMatchObject({ sort: 'scientificName,desc' })
+  })
+
+  it('ninguna especie coincide: lo explica y ofrece limpiar, sin confundirlo con un catálogo vacío', async () => {
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species?exposure=sombra' })
+    await settle()
+
+    expect(wrapper.find('[data-test="empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="no-match"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="clear-all"]').trigger('click')
+    await settle()
+    expect(lastCall()).toEqual({ page: 0 })
+  })
+
+  it('el riego figura como no disponible: es texto libre', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    const watering = wrapper.find('[data-test="filter-watering"]')
+    expect(watering.attributes('disabled')).toBeDefined()
+    expect(watering.attributes('aria-label')).toContain('texto libre')
+  })
+
+  it('la fila de grupos sigue marcada con el change que la levanta, y no simula especies agrupadas', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
+    await settle()
+
+    const groups = wrapper.find('[data-test="groups"]')
+    expect(groups.attributes('data-mock')).toBe('true')
+    expect(groups.text()).toContain('T-21')
+    expect(groups.text()).toContain('vistas guardadas')
+  })
+
+  it('el estado vive en la URL: un enlace llega filtrado y ordenado, y cambiar un criterio la escribe', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, {
+      route: '/species?exposure=pleno_sol&minTemperatureFrom=9&growthMonth=12&growthMonth=1&growthMonth=2&sort=scientificName,desc',
+    })
+    await settle()
+
+    expect(api.get).toHaveBeenCalledWith('/species', {
+      page: 0, sort: 'scientificName,desc', exposure: ['pleno_sol'], minTemperatureFrom: 9, growthMonth: [12, 1, 2],
+    })
+    const chips = wrapper.findAll('.filter-chip').map((chip) => chip.text())
+    expect(chips).toHaveLength(3)
+
+    await wrapper.find('[data-test="filter-exposure"]').setValue('sombra')
+    await settle()
+    await vi.waitFor(() => expect(currentQuery()).toMatchObject({ exposure: 'sombra', minTemperatureFrom: '9' }))
+  })
+
+  it('un parámetro inválido o desconocido de la URL se ignora, sin error', async () => {
+    const wrapper = await mountSuspended(SpeciesIndex, {
+      route: '/species?exposure=playa&minTemperatureFrom=frio&growthMonth=13&sort=password,asc&colour=red',
+    })
+    await settle()
+
+    expect(wrapper.find('[data-test="error"]').exists()).toBe(false)
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0 })
   })
 })

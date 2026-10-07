@@ -12,7 +12,12 @@ import type { PlantDetail, PlantProfile, PlantStatus, PlantStatusChange, PlantSu
  *
  * Ningún método lanza: el fallo sale en el `ServiceResponse` (ADR-015).
  */
-/** Los filtros combinables que el API admite (T-02): `tag` repetible con semántica AND. */
+/**
+ * Los filtros combinables que el API admite: `tag` repetible con semántica AND y, desde
+ * `filtros-y-orden-del-inventario`, el resto con la convención de ADR-016 —repetible es «cualquiera
+ * de los valores»—. `sort` es una clave pública (`code`, `nickname`, `species`, `location`,
+ * `createdAt`), no una propiedad de la entidad.
+ */
 export interface PlantQuery {
   page?: number
   /** `campo,asc` o `campo,desc`, tal como lo espera Spring Data. */
@@ -28,6 +33,19 @@ export interface PlantQuery {
    * lo archivado no se mezcla con lo activo.
    */
   status?: string[]
+  /**
+   * Búsqueda de texto sobre código, apodo y nombre —científico y común— de la especie, parcial y
+   * sin distinguir mayúsculas.
+   */
+  q?: string
+  /** Identificadores de especie, repetibles: encaja el ejemplar de cualquiera de ellas. */
+  species?: string[]
+  /** Exposición solar **de la especie** del ejemplar, repetible. */
+  exposure?: string[]
+  /** Entorno **de la especie** del ejemplar, repetible. */
+  environment?: string[]
+  /** Solo para quien necesita más de una página (el selector de especie); por defecto, el del servidor. */
+  size?: number
 }
 
 export const plantsApiService = {
@@ -41,6 +59,11 @@ export const plantsApiService = {
     // Un texto en blanco no es un filtro: no viaja.
     if (query.code?.trim()) params.code = query.code.trim()
     if (query.status?.length) params.status = query.status
+    if (query.q?.trim()) params.q = query.q.trim()
+    if (query.species?.length) params.species = query.species
+    if (query.exposure?.length) params.exposure = query.exposure
+    if (query.environment?.length) params.environment = query.environment
+    if (query.size) params.size = query.size
 
     try {
       return ok(await getApiClient().get<PageResponse<PlantSummary>>('/plants', params))

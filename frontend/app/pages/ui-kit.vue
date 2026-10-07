@@ -292,7 +292,7 @@ const SEARCH_GROUPS = [
       <UiFilterBar label="Barra compacta del inventario" :applied="[]" density="compact">
         <UiToolbarField label="Buscar" type="search" icon="⌕" placeholder="Código, apodo o especie" />
         <UiToolbarField v-model="filterLocation" label="Localización" as="select" placeholder="Localización" :options="[]" />
-        <UiToolbarField label="Estado" as="select" placeholder="Estado" :options="[]" />
+        <UiToolbarField label="Ordenar por" as="select" placeholder="Ordenar por" :options="[{ value: 'code,asc', label: 'Código (A–Z)' }, { value: 'lastReview', label: 'Última revisión · T-20', disabled: true }]" />
         <UiButton variant="secondary">Más filtros ＋</UiButton>
         <UiButton variant="icon" label="Configurar columnas">☷</UiButton>
       </UiFilterBar>

@@ -28,3 +28,4 @@ Cada ADR es un archivo `ADR-NNN-titulo-corto.md` creado a partir de [template.md
 | [ADR-013](ADR-013-acceso-del-navegador-al-api.md) | Acceso del navegador al API | Aceptado |
 | [ADR-014](ADR-014-sistema-de-diseno-del-frontend.md) | Sistema de diseño del frontend | Aceptado |
 | [ADR-015](ADR-015-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Aceptado (enmendado en T-10) |
+| [ADR-016](ADR-016-filtros-y-orden-en-los-listados.md) | Filtros y orden en los listados | Aceptado |

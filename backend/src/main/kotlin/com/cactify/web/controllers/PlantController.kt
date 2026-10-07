@@ -153,7 +153,17 @@ class PlantController(
     @RequestParam(name = "status", required = false) statuses: List<String>?,
     /** Con `location`, añade las plantas de todas sus sublocalizaciones. */
     @RequestParam(required = false, defaultValue = "false") includeDescendants: Boolean,
+    /** Texto libre sobre código, apodo y nombres de la especie: parcial, sin distinguir mayúsculas. */
+    @RequestParam(name = "q", required = false) text: String?,
+    /** Repetible: los ejemplares de cualquiera de esas especies. */
+    @RequestParam(name = "species", required = false) speciesIds: List<String>?,
+    /** Repetibles: la exposición y el entorno **de la especie** del ejemplar. */
+    @RequestParam(name = "exposure", required = false) exposures: List<String>?,
+    @RequestParam(name = "environment", required = false) environments: List<String>?,
     @SortDefault(sort = ["createdAt"]) pageable: Pageable,
   ): PageResponse<PlantSummaryResponse> =
-    plantService.search(location, tags.orEmpty(), code, pageable, statuses.orEmpty(), includeDescendants)
+    plantService.search(
+      location, tags.orEmpty(), code, pageable, statuses.orEmpty(), includeDescendants,
+      text, speciesIds.orEmpty(), exposures.orEmpty(), environments.orEmpty(),
+    )
 }

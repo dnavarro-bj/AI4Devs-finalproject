@@ -220,3 +220,69 @@ describe('plantsApiService: cuidados propios', () => {
     expect(result.error!.message).toContain('humedad')
   })
 })
+
+/**
+ * El lenguaje de filtros y orden del inventario (`filtros-y-orden-del-inventario`, ADR-016): cada
+ * criterio viaja con su nombre, los repetibles como parámetros repetidos y los ausentes **no
+ * viajan** —un `sort` vacío, por ejemplo, taparía el orden por defecto del servidor—.
+ */
+describe('plantsApiService.list: filtros y orden', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+  })
+
+  it('sin criterios solo pide la página', async () => {
+    await plantsApiService.list()
+
+    expect(api.get).toHaveBeenCalledWith('/plants', { page: 0 })
+  })
+
+  it('envía la búsqueda de texto como q, recortada', async () => {
+    await plantsApiService.list({ q: '  suegra ' })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', { page: 0, q: 'suegra' })
+  })
+
+  it('un texto en blanco no es un filtro', async () => {
+    await plantsApiService.list({ q: '   ' })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', { page: 0 })
+  })
+
+  it('envía especie, exposición y entorno como parámetros repetidos', async () => {
+    await plantsApiService.list({
+      species: ['200001', '200002'],
+      exposure: ['soleado', 'pleno_sol'],
+      environment: ['interior'],
+    })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', {
+      page: 0,
+      species: ['200001', '200002'],
+      exposure: ['soleado', 'pleno_sol'],
+      environment: ['interior'],
+    })
+  })
+
+  it('las listas vacías no viajan', async () => {
+    await plantsApiService.list({ species: [], exposure: [], environment: [] })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', { page: 0 })
+  })
+
+  it('envía el orden por clave pública, y el tamaño solo si se pide', async () => {
+    await plantsApiService.list({ sort: 'species,asc', size: 500 })
+
+    expect(api.get).toHaveBeenCalledWith('/plants', { page: 0, sort: 'species,asc', size: 500 })
+  })
+
+  it('un 400 por un criterio no admitido sale como valor', async () => {
+    api.get.mockRejectedValue(new ApiError(400, "'playa' no es un entorno válido"))
+
+    const result = await plantsApiService.list({ environment: ['playa'] })
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.VALIDATION_ERROR)
+  })
+})

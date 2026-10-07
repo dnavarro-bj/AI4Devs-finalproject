@@ -36,9 +36,24 @@ class SpeciesController(private val speciesService: SpeciesService) {
   fun list(
     /** Coincidencia parcial sobre el código, sin distinguir mayúsculas. */
     @RequestParam(required = false) code: String?,
+    /** Texto libre sobre nombre científico, nombre común y código: parcial, sin distinguir mayúsculas. */
+    @RequestParam(name = "q", required = false) text: String?,
+    /** Repetibles: encaja la especie con cualquiera de los valores. */
+    @RequestParam(name = "exposure", required = false) exposures: List<String>?,
+    @RequestParam(name = "environment", required = false) environments: List<String>?,
+    @RequestParam(name = "soilMix", required = false) soilMixIds: List<String>?,
+    /** La temperatura mínima soportada está entre ambos, incluidos. */
+    @RequestParam(required = false) minTemperatureFrom: Int?,
+    @RequestParam(required = false) minTemperatureTo: Int?,
+    /** Repetibles (1–12), AND: un periodo de crecimiento —o de floración— que cubra **todos** los meses. */
+    @RequestParam(name = "growthMonth", required = false) growthMonths: List<Int>?,
+    @RequestParam(name = "bloomMonth", required = false) bloomMonths: List<Int>?,
     @SortDefault(sort = ["scientificName"]) pageable: Pageable,
   ): PageResponse<SpeciesSummaryResponse> =
-    speciesService.list(code, pageable)
+    speciesService.list(
+      code, pageable, text, exposures.orEmpty(), environments.orEmpty(), soilMixIds.orEmpty(),
+      minTemperatureFrom, minTemperatureTo, growthMonths.orEmpty(), bloomMonths.orEmpty(),
+    )
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)

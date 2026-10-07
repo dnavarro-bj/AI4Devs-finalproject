@@ -225,3 +225,80 @@ describe('service del catálogo de especies', () => {
     expect(api.get).toHaveBeenCalledWith('/species', { page: 0 })
   })
 })
+
+/**
+ * El lenguaje de filtros y orden del catálogo (`filtros-y-orden-del-inventario`, ADR-016): los
+ * criterios ausentes no viajan y los repetibles lo hacen como parámetros repetidos.
+ */
+describe('speciesApiService.search: filtros y orden', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 })
+  })
+
+  it('sin criterios solo pide la página', async () => {
+    await speciesApiService.search()
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0 })
+  })
+
+  it('envía el texto como q, recortado, y uno en blanco no viaja', async () => {
+    await speciesApiService.search({ q: ' suegra ' })
+    expect(api.get).toHaveBeenLastCalledWith('/species', { page: 0, q: 'suegra' })
+
+    await speciesApiService.search({ q: '  ' })
+    expect(api.get).toHaveBeenLastCalledWith('/species', { page: 0 })
+  })
+
+  it('envía exposición, entorno, mezcla y meses como parámetros repetidos', async () => {
+    await speciesApiService.search({
+      exposure: ['semisombra'],
+      environment: ['interior', 'ambos'],
+      soilMix: ['100001'],
+      growthMonth: [12, 1, 2],
+      bloomMonth: [5],
+    })
+
+    expect(api.get).toHaveBeenCalledWith('/species', {
+      page: 0,
+      exposure: ['semisombra'],
+      environment: ['interior', 'ambos'],
+      soilMix: ['100001'],
+      growthMonth: [12, 1, 2],
+      bloomMonth: [5],
+    })
+  })
+
+  it('envía la temperatura mínima por extremos, y el cero es un valor', async () => {
+    await speciesApiService.search({ minTemperatureFrom: 0, minTemperatureTo: 8 })
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0, minTemperatureFrom: 0, minTemperatureTo: 8 })
+  })
+
+  it('un extremo ausente no viaja', async () => {
+    await speciesApiService.search({ minTemperatureFrom: 9 })
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 0, minTemperatureFrom: 9 })
+  })
+
+  it('envía orden, tamaño y página', async () => {
+    await speciesApiService.search({ page: 2, size: 500, sort: 'scientificName,desc' })
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 2, size: 500, sort: 'scientificName,desc' })
+  })
+
+  it('un 400 sale como valor', async () => {
+    api.get.mockRejectedValue(new ApiError(400, 'growthMonth fuera de rango'))
+
+    const result = await speciesApiService.search({ growthMonth: [13] })
+
+    expect(result.success).toBe(false)
+    expect(result.error!.code).toBe(ErrorCodes.VALIDATION_ERROR)
+  })
+
+  it('list sigue funcionando con su firma de siempre', async () => {
+    await speciesApiService.list(1, 'code,asc', 'mamm')
+
+    expect(api.get).toHaveBeenCalledWith('/species', { page: 1, sort: 'code,asc', code: 'mamm' })
+  })
+})

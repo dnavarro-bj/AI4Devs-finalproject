@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
   as?: 'input' | 'select'
   type?: 'text' | 'search'
   placeholder?: string
-  options?: { value: string, label: string }[]
+  options?: { value: string, label: string, disabled?: boolean }[]
   disabled?: boolean
   icon?: string
 }>(), {
@@ -37,7 +37,7 @@ defineEmits<{ 'update:modelValue': [string] }>()
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <option value="">{{ placeholder ?? label }}</option>
-      <option v-for="option in options" :key="option.value" :value="option.value">{{ option.label }}</option>
+      <option v-for="option in options" :key="option.value" :value="option.value" :disabled="option.disabled">{{ option.label }}</option>
     </select>
     <input
       v-else

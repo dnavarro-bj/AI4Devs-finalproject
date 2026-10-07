@@ -33,6 +33,8 @@ El prototipo (`plants`, `species`) y el kit se consultaron antes de decidir: la 
 
 **7. Los índices se miden, no se anticipan.** Con 2.000 ejemplares y un `LIKE '%…%'` sobre cuatro columnas la exploración secuencial es del orden de milisegundos. Una tarea siembra 2.000 ejemplares en un test de integración y anota en este documento el tiempo de `q` y de la ordenación por especie. Solo si superan lo razonable se añade una migración con índices (`pg_trgm`); hasta entonces no hay migración, y por eso este change **no reserva número de versión**.
 
+*Medición hecha (`InventoryAtScaleTest`, PostgreSQL 16 en Testcontainers, 2.000 ejemplares y 500 especies, mediana de cinco ejecuciones tras una de calentamiento, primera página de 25):* `q` sobre ejemplares, 6 ms; `sort=species`, 5 ms; `species` repetida, 2 ms; `exposure`+`environment`, 22 ms; `q` sobre especies, 6 ms; `growthMonth` ×3 (tres `EXISTS`), 11 ms; rasgos + temperatura, 4 ms. Todo muy por debajo de lo razonable: **no hace falta índice ni migración**, y el test queda como humo de escala con una cota holgada de 1 s.
+
 ## Riesgos / compromisos
 
 * **`sort` por ruta anidada con *fetch join*.** Si Hibernate emitiese un segundo join o rompiese la paginación, el orden por especie y por localización fallaría; lo cubre el test de orden estable entre páginas (escenario del spec).

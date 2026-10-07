@@ -87,6 +87,11 @@ context: |
     componente y se verifica con tests en lo que `happy-dom` observa —marcado, ARIA y foco— y a ojo
     en la galería en lo puramente visual
 
+  - ADR-016: los filtros de un listado son parámetros planos (repetible = cualquiera de los valores,
+    salvo `tag`, que es AND; varios parámetros = AND; sin valor no filtra; un valor ininterpretable
+    es `400` y un id bien formado pero inexistente da un resultado vacío); el orden es
+    `sort=<clave>,<asc|desc>` con **claves públicas por recurso** (`SortKeys`) traducidas a la ruta
+    de la entidad, `400` ante una clave desconocida y el identificador como desempate final
 rules:
   proposal:
     - Referenciar siempre el ticket (T-XX) y las historias de usuario (0.x) que originan el change

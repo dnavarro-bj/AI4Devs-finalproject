@@ -1,10 +1,13 @@
 package com.cactify.domain.specs
 
+import com.cactify.domain.Environment
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
 import com.cactify.domain.PlantStatus
 import com.cactify.domain.Species
+import com.cactify.domain.SpeciesId
+import com.cactify.domain.SunExposure
 import com.cactify.domain.Tag
 import com.cactify.domain.TagId
 import org.springframework.data.jpa.domain.Specification
@@ -52,6 +55,57 @@ object PlantSpecs {
         null
       } else {
         cb.like(cb.upper(root.get("code")), LikePattern.contains(needle.uppercase()), LikePattern.ESCAPE)
+      }
+    }
+
+  /**
+   * Texto libre: el ejemplar encaja si **cualquiera** de su código, su apodo y el nombre científico
+   * o común de su especie contiene el texto, sin distinguir mayúsculas y con `%` y `_` como texto
+   * (ver [LikePattern]). Un texto en blanco no filtra.
+   *
+   * La especie se alcanza con un `join` **propio** y no con el `fetch` de
+   * [withSpeciesAndLocation]: la consulta de recuento de Spring Data omite ese `fetch`, y un
+   * predicado que dependiera de él haría que el total no fuera el del filtro.
+   */
+  fun byText(text: String?): Specification<Plant> =
+    Specification { root, _, cb ->
+      val needle = text?.trim().orEmpty()
+      if (needle.isEmpty()) {
+        null
+      } else {
+        val pattern = LikePattern.contains(needle.uppercase())
+        val species = root.join<Plant, Species>("species")
+        cb.or(
+          cb.like(cb.upper(root.get("code")), pattern, LikePattern.ESCAPE),
+          cb.like(cb.upper(root.get("nickname")), pattern, LikePattern.ESCAPE),
+          cb.like(cb.upper(species.get("scientificName")), pattern, LikePattern.ESCAPE),
+          cb.like(cb.upper(species.get("commonName")), pattern, LikePattern.ESCAPE),
+        )
+      }
+    }
+
+  /** Los ejemplares de **cualquiera** de esas especies. Un conjunto vacío no filtra. */
+  fun bySpecies(speciesIds: Set<SpeciesId>): Specification<Plant> =
+    Specification { root, _, _ ->
+      if (speciesIds.isEmpty()) null else root.get<Species>("species").get<SpeciesId>("id").`in`(speciesIds)
+    }
+
+  /**
+   * Por la exposición y el entorno **de la especie** del ejemplar: encaja si los de su especie son
+   * cualquiera de los indicados. Una especie sin definir (`NULL`) no encaja en ningún valor
+   * concreto. Un conjunto vacío no filtra.
+   */
+  fun bySpeciesTraits(exposures: Set<SunExposure>, environments: Set<Environment>): Specification<Plant> =
+    Specification { root, _, cb ->
+      if (exposures.isEmpty() && environments.isEmpty()) {
+        null
+      } else {
+        val species = root.join<Plant, Species>("species")
+        val conditions = buildList {
+          if (exposures.isNotEmpty()) add(species.get<SunExposure>("sunExposure").`in`(exposures))
+          if (environments.isNotEmpty()) add(species.get<Environment>("environment").`in`(environments))
+        }
+        cb.and(*conditions.toTypedArray())
       }
     }
 

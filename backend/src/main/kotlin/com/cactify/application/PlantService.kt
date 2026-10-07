@@ -12,6 +12,7 @@ import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import com.cactify.application.dto.TagResponse
 import com.cactify.domain.CareOverrides
+import com.cactify.domain.Environment
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
@@ -20,6 +21,7 @@ import com.cactify.domain.PlantOrigin
 import com.cactify.domain.PlantStatus
 import com.cactify.domain.PlantStatusChange
 import com.cactify.domain.Species
+import com.cactify.domain.SunExposure
 import com.cactify.domain.SoilMixId
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.Tag
@@ -32,6 +34,7 @@ import com.cactify.domain.repos.PlantStatusChangeRepository
 import com.cactify.domain.repos.SoilMixRepository
 import com.cactify.domain.repos.SpeciesRepository
 import com.cactify.domain.repos.TagRepository
+import com.cactify.domain.specs.PlantSortKeys
 import com.cactify.domain.specs.PlantSpecs
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -204,6 +207,10 @@ class PlantService(
     pageable: Pageable,
     statuses: List<String> = emptyList(),
     includeDescendants: Boolean = false,
+    text: String? = null,
+    speciesIds: List<String> = emptyList(),
+    exposures: List<String> = emptyList(),
+    environments: List<String> = emptyList(),
   ): PageResponse<PlantSummaryResponse> {
     // Lo archivado no se mezcla con lo que está en curso: sin filtro, solo lo que está en curso.
     val wanted = if (statuses.isEmpty()) PlantStatus.inProgress else statuses.map { PlantStatus(it) }.toSet()
@@ -211,9 +218,13 @@ class PlantService(
       .withSpeciesAndLocation()
       .and(PlantSpecs.byStatuses(wanted))
       .and(PlantSpecs.byCodeContaining(code))
+      .and(PlantSpecs.byText(text))
       .and(byLocation(locationId, includeDescendants))
       .and(PlantSpecs.byAllTags(tagIds.map { TagId.from(it) }.toSet()))
-    return PageResponse.of(plantRepository.findAll(spec, pageable)) { it.toSummary() }
+      .and(PlantSpecs.bySpecies(speciesIds.map { SpeciesId.from(it) }.toSet()))
+      .and(PlantSpecs.bySpeciesTraits(exposures.map { SunExposure(it) }.toSet(), environments.map { Environment(it) }.toSet()))
+    // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
+    return PageResponse.of(plantRepository.findAll(spec, PlantSortKeys.translate(pageable))) { it.toSummary() }
   }
 
   /**
