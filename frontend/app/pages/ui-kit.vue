@@ -7,6 +7,7 @@
  * Los datos de ejemplar —código permanente, estado, última lectura— son **de muestra**: el API no
  * los expone todavía, y ninguna pantalla de producto los pinta.
  */
+
 import { useToast } from '@shared/composables/useToast'
 import { NAVIGATION as APP_NAVIGATION } from '@features/layout/navigation'
 
@@ -15,6 +16,11 @@ definePageMeta({ layout: 'blank' })
 useHead({ title: 'Cactify · UI kit' })
 
 const { show } = useToast()
+
+const editableYear = ref([
+  { id: 'growth', label: 'Crecimiento', tone: 'brand' as const, max: 2, levels: [0, 0, 1, 1, 2, 2, 1, 1, 0, 0, 0, 0] },
+  { id: 'water', label: 'Riego', tone: 'info' as const, max: 3, levels: [1, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1, 1] },
+])
 
 const filters = ref(['Pleno sol', 'Revisar'])
 const dialogOpen = ref(false)
@@ -190,6 +196,11 @@ const SEARCH_GROUPS = [
         <UiField v-model="ph" label="pH del sustrato" unit="pH" type="number" error="Introduce un valor entre 0 y 14." />
         <UiField label="Observación" as="textarea" model-value="Coloración uniforme después del último riego." help="Describe solo lo observado." />
         <UiField label="Especie" model-value="Echinocactus grusonii" readonly help="Se hereda del catálogo." />
+      </div>
+      <div class="range-samples">
+        <UiRangeField label="Temperatura recomendada" min-value="8" max-value="35" unit="°C" />
+        <UiRangeField label="Humedad recomendada" min-value="20" max-value="40" unit="%" />
+        <UiRangeField label="Horas de luz" min-label="Mínimas" max-label="Máximas" min-value="8" max-value="12" unit="h" />
       </div>
     </section>
 
@@ -554,6 +565,24 @@ const SEARCH_GROUPS = [
           </p>
         </UiPanel>
 
+        <UiPanel title="Pauta anual editable">
+          <UiYearGrid
+            :rows="editableYear"
+            :legend="[
+              { tone: 'brand', label: 'Crecimiento · más intenso, el de mayor crecimiento' },
+              { tone: 'info', label: 'Riego · más intenso, más abundante' },
+            ]"
+            editable
+            data-test="editable-year"
+            @cycle="(row, month, next) => (editableYear.find((r) => r.id === row)!.levels[month - 1] = next)"
+          />
+          <p class="note">
+            Con <code>editable</code> cada mes es un botón que cicla su nivel: apagado, 1, 2… hasta el
+            máximo de la fila (<code>max</code>) y vuelta a apagado. La rejilla emite
+            <code>cycle</code> y no guarda nada; quien la usa decide qué hacer con el nivel.
+          </p>
+        </UiPanel>
+
         <UiPanel title="Pauta anual sin actividad">
           <UiYearGrid
             :rows="[
@@ -845,6 +874,12 @@ const SEARCH_GROUPS = [
   display: grid;
   gap: var(--space-5);
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.range-samples {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .note {

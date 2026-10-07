@@ -103,3 +103,14 @@ data class PlantStatusChangeId(@Column(name = "id") override val id: Long) : Ent
 
   override fun toString(): String = id.toString()
 }
+
+@Embeddable
+data class SpeciesPeriodId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): SpeciesPeriodId = SpeciesPeriodId(TSID.fast().toLong())
+    fun from(value: Long): SpeciesPeriodId = SpeciesPeriodId(value)
+    fun from(value: String): SpeciesPeriodId = SpeciesPeriodId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}

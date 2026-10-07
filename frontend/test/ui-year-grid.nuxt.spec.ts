@@ -129,4 +129,62 @@ describe('UiYearGrid', () => {
   it('tiene un solo elemento raíz, así que hereda los atributos del punto de uso', () => {
     expect(grid().attributes('role')).toBe('table')
   })
+
+  describe('editable', () => {
+    const editable = () => grid({
+      editable: true,
+      rows: [
+        { id: 'growth', label: 'Crecimiento', levels: [0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], tone: 'brand', max: 2 },
+        { id: 'flower', label: 'Floración', levels: Array(12).fill(0), tone: 'warning', max: 1 },
+      ],
+    })
+
+    it('por defecto no es interactiva: ningún mes es un botón', () => {
+      expect(grid().findAll('button')).toHaveLength(0)
+    })
+
+    it('cada mes pasa a ser un botón con nombre accesible y estado', () => {
+      const buttons = editable().findAll('button')
+
+      expect(buttons).toHaveLength(24)
+      expect(buttons[0]!.attributes('aria-label')).toBe('Crecimiento, enero: sin marcar')
+      expect(buttons[0]!.attributes('aria-pressed')).toBe('false')
+      expect(buttons[2]!.attributes('aria-label')).toBe('Crecimiento, marzo: nivel 2 de 2')
+      expect(buttons[2]!.attributes('aria-pressed')).toBe('true')
+    })
+
+    it('pulsar emite el nivel siguiente de esa fila, con su identificador', async () => {
+      const wrapper = editable()
+      const buttons = wrapper.findAll('button')
+
+      await buttons[0]!.trigger('click')
+      await buttons[1]!.trigger('click')
+      await buttons[2]!.trigger('click')
+      await buttons[12]!.trigger('click')
+
+      expect(wrapper.emitted('cycle')).toEqual([
+        ['growth', 1, 1],
+        ['growth', 2, 2],
+        ['growth', 3, 0],
+        ['flower', 1, 1],
+      ])
+    })
+
+    it('no guarda nada: sin quien la actualice, el nivel sigue siendo el que recibe', async () => {
+      const wrapper = editable()
+
+      await wrapper.findAll('button')[0]!.trigger('click')
+
+      expect(wrapper.findAll('[data-role="year-row"]')[0]!.findAll('[data-role="month"]')[0]!.attributes('data-level')).toBe('0')
+    })
+
+    it('una fila de presencia se pinta con toda la fuerza, no con la del nivel más bajo', () => {
+      const rows = mount(UiYearGrid, {
+        props: { rows: [{ label: 'Floración', levels: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], max: 1 }] },
+      }).findAll('[data-role="month"]')
+
+      expect(rows[0]!.attributes('data-level')).toBe('1')
+      expect(rows[0]!.find('i').attributes('data-level')).toBe('3')
+    })
+  })
 })

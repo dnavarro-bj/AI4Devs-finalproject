@@ -8,7 +8,7 @@ El [banco de componentes aislados](cactify-ui-kit/components.html) permite revis
 |---|---|
 | Acciones y campos | `UiButton`, `UiField`, `UiFieldAction`, `UiStatus`, `UiPriority`, `UiFilterChip`, `UiFilterBar` |
 | Navegación | `UiBreadcrumbs`, `UiNavGroup`, `UiTabs`, `UiPageHeader`, `UiGlobalSearch`, `UiEditorNav`, `UiPagination` |
-| Datos | `UiTable`, `UiSummaryGrid`, `UiStatTile`, `UiTree`, `UiProportionBar`, `UiProportionWheel`, `UiScale`, `UiMonthRange`, `UiYearGrid` |
+| Datos | `UiTable`, `UiSummaryGrid`, `UiStatTile`, `UiTree`, `UiProportionBar`, `UiProportionWheel`, `UiScale`, `UiMonthRange`, `UiYearGrid` (también editable: cada mes es un botón que cicla su intensidad) |
 | Trabajo e historial | `UiTimeline`, `UiAgendaList`, `UiCalendarMonth` |
 | Estructura y medios | `UiPanel`, `UiFormSection`, `UiMediaGallery`, `UiUploadArea`, `UiSpecimenLabel` |
 | Patrones de aplicación | `UiIdentityCode`, `UiEntityHero`, `UiEntityCell`, `UiTag`, `UiDefinitionList`, `UiDetailLayout`, `UiSectionHeader`, `UiLoadingState`, `UiOverflowMenu`, `UiStickyActionBar`, `UiSegmentedControl`, `UiSwitch`, `UiChoiceCards`, `UiStepper`, `UiProgressBar`, `UiEntityPicker`, `UiFileItem` |

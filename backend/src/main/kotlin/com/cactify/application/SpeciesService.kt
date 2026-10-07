@@ -4,8 +4,15 @@ import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.SoilMixSummaryResponse
 import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesDetailResponse
+import com.cactify.application.dto.SpeciesPeriodResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
+import com.cactify.domain.CultivationProfile
+import com.cactify.domain.Environment
 import com.cactify.domain.InventoryCodes
+import com.cactify.domain.PeriodSpec
+import com.cactify.domain.PeriodType
+import com.cactify.domain.SunExposure
+import com.cactify.domain.WateringIntensity
 import com.cactify.domain.SoilMix
 import com.cactify.domain.SoilMixId
 import com.cactify.domain.Species
@@ -54,6 +61,31 @@ data class SpeciesRequest(
   val wateringGuideline: String,
   @field:NotBlank(message = "la mezcla de tierra es obligatoria")
   val soilMixId: String,
+  val description: String? = null,
+  /** `sombra`, `semisombra`, `soleado` o `pleno_sol`. Un valor desconocido es un `400`. */
+  val sunExposure: String? = null,
+  /** `interior`, `exterior` o `ambos`. */
+  val environment: String? = null,
+  val bloomDescription: String? = null,
+  val bloomColor: String? = null,
+  val bloomMaturity: String? = null,
+  val bloomTypicalDuration: String? = null,
+  /**
+   * El calendario completo: **reemplaza** al guardado. Omitirlo deja la especie sin calendario,
+   * como cualquier otro campo de un reemplazo completo.
+   */
+  val periods: List<PeriodRequest>? = null,
+)
+
+/** Un periodo del año tal y como entra. Inicio posterior al fin = cruza el fin de año. */
+data class PeriodRequest(
+  /** `crecimiento`, `reposo`, `floracion` o `riego`. */
+  val type: String,
+  val startMonth: Int,
+  val endMonth: Int,
+  /** Solo para `riego`: `escaso`, `moderado` o `abundante`. */
+  val intensity: String? = null,
+  val notes: String? = null,
 )
 
 /**
@@ -89,6 +121,8 @@ class SpeciesService(
       maxLightHours = request.maxLightHours,
       wateringGuideline = request.wateringGuideline.trim(),
       soilMix = soilMix,
+      profile = request.toProfile(),
+      periods = request.toPeriods(),
     )
     return speciesRepository.save(species).toCare()
   }
@@ -125,6 +159,8 @@ class SpeciesService(
       maxLightHours = request.maxLightHours,
       wateringGuideline = request.wateringGuideline.trim(),
       soilMix = requireSoilMix(request.soilMixId),
+      profile = request.toProfile(),
+      periods = request.toPeriods(),
     )
     return species.toCare()
   }
@@ -148,6 +184,27 @@ class SpeciesService(
   fun findById(id: String): SpeciesDetailResponse {
     val species = requireSpecies(id)
     return species.toDetail(plantRepository.countBySpeciesId(species.id))
+  }
+
+  private fun SpeciesRequest.toProfile() = CultivationProfile(
+    description = description,
+    sunExposure = sunExposure?.let { SunExposure(it) },
+    environment = environment?.let { Environment(it) },
+    bloomDescription = bloomDescription,
+    bloomColor = bloomColor,
+    bloomMaturity = bloomMaturity,
+    bloomTypicalDuration = bloomTypicalDuration,
+  )
+
+  /** Un tipo, una intensidad o un mes inválidos son `IllegalArgumentException`, es decir, `400`. */
+  private fun SpeciesRequest.toPeriods() = (periods ?: emptyList()).map {
+    PeriodSpec(
+      type = PeriodType(it.type),
+      startMonth = it.startMonth,
+      endMonth = it.endMonth,
+      intensity = it.intensity?.let { value -> WateringIntensity(value) },
+      notes = it.notes,
+    )
   }
 
   /** Mayúsculas y sin espacios en los extremos; la presencia ya la garantiza `@NotBlank`. */
@@ -186,6 +243,16 @@ class SpeciesService(
     wateringGuideline = wateringGuideline,
     soilMix = SoilMixSummaryResponse(soilMix.id.toString(), soilMix.name),
     plantCount = plantCount,
+    description = description,
+    sunExposure = sunExposure?.value,
+    environment = environment?.value,
+    bloomDescription = bloomDescription,
+    bloomColor = bloomColor,
+    bloomMaturity = bloomMaturity,
+    bloomTypicalDuration = bloomTypicalDuration,
+    periods = periods.map {
+      SpeciesPeriodResponse(it.id.toString(), it.type.value, it.startMonth, it.endMonth, it.intensity?.value, it.notes)
+    },
   )
 
   private fun Species.toCare() = SpeciesCareResponse(

@@ -26,12 +26,46 @@ export interface SpeciesCare extends SpeciesSummary {
   soilMix: SoilMixSummary
 }
 
+/** Cómo recibe la luz la especie. La definición funcional de cada valor está en `speciesCultivation`. */
+export type SunExposure = 'sombra' | 'semisombra' | 'soleado' | 'pleno_sol'
+
+/** Dónde se cultiva. La estacionalidad la dice el calendario, no un cuarto valor. */
+export type Environment = 'interior' | 'exterior' | 'ambos'
+
+/** `crecimiento_maximo` se superpone al crecimiento —cuándo más crece— y cae siempre dentro de él. */
+export type PeriodType = 'crecimiento' | 'crecimiento_maximo' | 'reposo' | 'floracion' | 'riego'
+
+/** Solo el riego la lleva. */
+export type WateringIntensity = 'escaso' | 'moderado' | 'abundante'
+
+/** Un periodo del año. Un inicio posterior al fin cruza el fin de año (noviembre–febrero = 11→2). */
+export interface SpeciesPeriod {
+  id: string
+  type: PeriodType
+  startMonth: number
+  endMonth: number
+  intensity: WateringIntensity | null
+  notes: string | null
+}
+
+/** El periodo tal y como se envía: sin identidad. */
+export type SpeciesPeriodInput = Omit<SpeciesPeriod, 'id'>
+
 /**
  * Lo que devuelve `GET /species/{id}`: la ficha más **cuántos ejemplares tiene**, que decide si el
  * código se puede corregir. No viaja dentro de `GET /plants/{id}`, donde no tendría sentido.
  */
 export interface SpeciesDetail extends SpeciesCare {
   plantCount: number
+  description: string | null
+  sunExposure: SunExposure | null
+  environment: Environment | null
+  bloomDescription: string | null
+  bloomColor: string | null
+  bloomMaturity: string | null
+  bloomTypicalDuration: string | null
+  /** Siempre presente; vacía si la especie no tiene calendario. */
+  periods: SpeciesPeriod[]
 }
 
 /**
@@ -51,4 +85,13 @@ export interface SpeciesInput {
   maxLightHours: number
   wateringGuideline: string
   soilMixId: string
+  description?: string | null
+  sunExposure?: SunExposure | null
+  environment?: Environment | null
+  bloomDescription?: string | null
+  bloomColor?: string | null
+  bloomMaturity?: string | null
+  bloomTypicalDuration?: string | null
+  /** Reemplaza el calendario guardado: omitirlo lo vacía. */
+  periods?: SpeciesPeriodInput[]
 }

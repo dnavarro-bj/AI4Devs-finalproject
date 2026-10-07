@@ -20,7 +20,16 @@
 import { validateRange, type CareConcept } from '@shared/utils/careRanges'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
 import type { SoilMix } from '@features/soil-mixes/types/soilMix.types'
-import type { SpeciesInput } from '../types/species.types'
+import type { Environment, SpeciesInput, SunExposure } from '../types/species.types'
+import {
+  ENVIRONMENTS,
+  SUN_EXPOSURE,
+  YEAR_LEGEND,
+  levelRows,
+  levelsToPeriods,
+  periodsToLevels,
+  type CalendarRowId,
+} from '../mappers/speciesCultivation'
 import type { SpeciesSubmitError } from '../composables/speciesSubmitError'
 import { suggestSpeciesCode } from '../composables/speciesCodeSuggestion'
 
@@ -84,32 +93,29 @@ const commonName = ref(props.initial.commonName)
 const wateringGuideline = ref(props.initial.wateringGuideline)
 const soilMixId = ref(props.initial.soilMixId)
 
-/** Previsualizaciones de T-17: se pueden explorar, pero no forman parte del cuerpo enviado. */
-const exposurePreview = ref('')
-const environmentPreview = ref('')
+const description = ref(props.initial.description ?? '')
+const sunExposure = ref<string>(props.initial.sunExposure ?? '')
+const environment = ref<string>(props.initial.environment ?? '')
+const bloomColor = ref(props.initial.bloomColor ?? '')
+const bloomMaturity = ref(props.initial.bloomMaturity ?? '')
+const bloomTypicalDuration = ref(props.initial.bloomTypicalDuration ?? '')
+const bloomDescription = ref(props.initial.bloomDescription ?? '')
 
-const EXPOSURE_OPTIONS = [
-  { value: 'shade', label: 'Sombra', description: 'Sin sol directo', mark: '◑' },
-  { value: 'partial', label: 'Semisombra', description: 'Sol limitado', mark: '◐' },
-  { value: 'sunny', label: 'Soleado', description: 'Varias horas', mark: '◒' },
-  { value: 'full-sun', label: 'Pleno sol', description: 'Exposición prolongada', mark: '☼' },
-]
+const EXPOSURE_OPTIONS = SUN_EXPOSURE
+const ENVIRONMENT_OPTIONS = ENVIRONMENTS
 
-const ENVIRONMENT_OPTIONS = [
-  { value: 'inside', label: 'Interior' },
-  { value: 'outside', label: 'Exterior' },
-  { value: 'both', label: 'Ambos' },
-]
+/**
+ * El calendario como **doce niveles por pauta**, que es lo que la rejilla pinta y lo que se pulsa:
+ * un mes tiene un solo nivel por pauta, así que dos periodos de un tipo no pueden solaparse, y el
+ * crecimiento máximo (nivel 2) está siempre dentro del crecimiento. Al enviar, los tramos
+ * consecutivos se agrupan en periodos; diciembre y enero seguidos son uno que cruza el año.
+ */
+const levels = reactive(periodsToLevels(props.initial.periods))
+const yearGrid = computed(() => levelRows(levels))
 
-const YEAR_ROWS = [
-  { label: 'Crecimiento', levels: Array(12).fill(0), tone: 'brand' as const },
-  { label: 'Floración', levels: Array(12).fill(0), tone: 'warning' as const },
-]
-
-const YEAR_LEGEND = [
-  { tone: 'brand' as const, label: 'Crecimiento' },
-  { tone: 'warning' as const, label: 'Floración habitual' },
-]
+function cycleMonth(row: string, month: number, next: number) {
+  levels[row as CalendarRowId][month - 1] = next
+}
 
 /**
  * Los rangos viven como texto: un `input` vacío es cadena vacía, y convertirlo a `0` demasiado
@@ -250,6 +256,14 @@ function submit() {
     maxLightHours: num(ranges.maxLightHours),
     wateringGuideline: wateringGuideline.value.trim(),
     soilMixId: soilMixId.value,
+    description: description.value.trim() || null,
+    sunExposure: (sunExposure.value || null) as SunExposure | null,
+    environment: (environment.value || null) as Environment | null,
+    bloomDescription: bloomDescription.value.trim() || null,
+    bloomColor: bloomColor.value.trim() || null,
+    bloomMaturity: bloomMaturity.value.trim() || null,
+    bloomTypicalDuration: bloomTypicalDuration.value.trim() || null,
+    periods: levelsToPeriods(levels),
   })
 }
 
@@ -317,6 +331,14 @@ onMounted(async () => {
           error-test="common-name-error"
           data-test="commonName"
         />
+        <UiField
+          v-model="description"
+          label="Descripción"
+          as="textarea"
+          :rows="4"
+          help="Cómo es la especie y qué la hace reconocible."
+          data-test="description"
+        />
       </UiFormSection>
 
       <!-- Fotografías de referencia: la composición queda lista, el almacenamiento llega en T-19. -->
@@ -358,62 +380,66 @@ onMounted(async () => {
         title="Condiciones de cultivo"
         description="La pauta que heredarán todos los ejemplares de la especie."
       >
-        <div class="pending-care" data-mock="true">
+        <div class="cultivation-choices">
           <UiChoiceCards
-            v-model="exposurePreview"
-            label="Exposición solar · T-17"
+            v-model="sunExposure"
+            label="Exposición solar"
             :options="EXPOSURE_OPTIONS"
             :columns="4"
             data-test="species-exposure"
           />
+          <p class="editor__hint">
+            Describe cómo llega la luz, no cuánta: las horas de luz de abajo son un dato aparte.
+          </p>
           <UiSegmentedControl
-            v-model="environmentPreview"
-            label="Entorno recomendado · T-17"
+            v-model="environment"
+            label="Entorno recomendado"
             :options="ENVIRONMENT_OPTIONS"
             data-test="species-environment"
           />
-          <p class="editor__hint">
-            Estas elecciones permiten revisar el diseño, pero no se guardan hasta que T-17 amplíe
-            el contrato de especie.
-          </p>
         </div>
 
-        <div class="range">
-          <UiField v-model="ranges.minHumidity" @blur="blurRange('humidity')" label="Humedad mínima" unit="%" type="number" data-test="min-humidity" />
-          <UiField
-            v-model="ranges.maxHumidity" @blur="blurRange('humidity')"
-            label="Humedad máxima"
-            unit="%"
-            type="number"
-            :error="errors.humidity"
-            error-test="humidity-error"
-            data-test="max-humidity"
-          />
-        </div>
-
-        <div class="range">
-          <UiField v-model="ranges.minTemperature" @blur="blurRange('temperature')" label="Temperatura mínima" unit="°C" type="number" data-test="min-temperature" />
-          <UiField
-            v-model="ranges.maxTemperature" @blur="blurRange('temperature')"
-            label="Temperatura máxima"
+        <div class="range-grid">
+          <UiRangeField
+            v-model:min-value="ranges.minTemperature"
+            v-model:max-value="ranges.maxTemperature"
+            label="Temperatura recomendada"
             unit="°C"
-            type="number"
+            min-test="min-temperature"
+            max-test="max-temperature"
             :error="errors.temperature"
             error-test="temperature-error"
-            data-test="max-temperature"
+            data-test="temperature-range"
+            @blur="blurRange('temperature')"
           />
-        </div>
-
-        <div class="range">
-          <UiField v-model="ranges.minLightHours" @blur="blurRange('light')" label="Horas de luz mínimas" unit="h" type="number" data-test="min-light" />
-          <UiField
-            v-model="ranges.maxLightHours" @blur="blurRange('light')"
-            label="Horas de luz máximas"
+          <UiRangeField
+            v-model:min-value="ranges.minHumidity"
+            v-model:max-value="ranges.maxHumidity"
+            label="Humedad recomendada"
+            unit="%"
+            min-test="min-humidity"
+            max-test="max-humidity"
+            :error="errors.humidity"
+            error-test="humidity-error"
+            data-test="humidity-range"
+            @blur="blurRange('humidity')"
+          />
+          <UiRangeField
+            v-model:min-value="ranges.minLightHours"
+            v-model:max-value="ranges.maxLightHours"
+            label="Horas de luz"
+            min-label="Mínimas"
+            max-label="Máximas"
             unit="h"
-            type="number"
+            :min="0"
+            :max="24"
+            step="0.5"
+            min-test="min-light"
+            max-test="max-light"
             :error="errors.light"
             error-test="light-error"
-            data-test="max-light"
+            data-test="light-range"
+            @blur="blurRange('light')"
           />
         </div>
 
@@ -429,7 +455,6 @@ onMounted(async () => {
         />
       </UiFormSection>
 
-      <!-- La forma final del calendario, todavía vacío para no inventar meses de la especie. -->
       <UiFormSection
         id="species-editor-seasons"
         standalone
@@ -437,29 +462,32 @@ onMounted(async () => {
         description="Referencia anual orientativa para el clima en el que se cultiva la colección."
         data-test="species-seasons"
       >
-        <div class="year-preview" data-mock="true">
+        <div class="year-editor">
           <UiYearGrid
-            :rows="YEAR_ROWS"
+            :rows="yearGrid"
             :legend="YEAR_LEGEND"
+            editable
             data-test="species-year-grid"
+            @cycle="cycleMonth"
           />
-          <p>
-            Ningún mes está seleccionado: los periodos, incluido uno que cruce diciembre, llegan
-            con <strong>T-17</strong>.
+          <p class="editor__hint" data-test="year-help">
+            Pulsa un mes para marcarlo y vuelve a pulsarlo para intensificarlo: en el crecimiento,
+            el segundo nivel indica cuándo más crece; en el riego, de escaso a abundante. Una
+            tercera pulsación lo quita. Diciembre y enero marcados seguidos son un solo periodo.
           </p>
         </div>
 
-        <div class="flowering-fields" data-mock="true">
-          <UiField label="Color de la flor" placeholder="Disponible con T-17" disabled />
-          <UiField label="Madurez aproximada" placeholder="Disponible con T-17" disabled />
-          <UiField label="Duración habitual" placeholder="Disponible con T-17" disabled />
+        <div class="flowering-fields">
+          <UiField v-model="bloomColor" label="Color de la flor" data-test="bloom-color" />
+          <UiField v-model="bloomMaturity" label="Madurez aproximada" data-test="bloom-maturity" />
+          <UiField v-model="bloomTypicalDuration" label="Duración habitual" data-test="bloom-duration" />
           <div class="flowering-fields__wide">
             <UiField
+              v-model="bloomDescription"
               label="Condiciones y notas"
               as="textarea"
               :rows="3"
-              placeholder="Disponible con T-17"
-              disabled
+              data-test="bloom-notes"
             />
           </div>
         </div>
@@ -508,13 +536,14 @@ onMounted(async () => {
   gap: var(--space-4);
 }
 
-.range {
+.range-grid {
   display: grid;
-  gap: var(--space-3);
-  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: var(--space-5);
 }
 
-.pending-care {
+.cultivation-choices {
   display: grid;
   gap: var(--space-5);
   margin-bottom: var(--space-6);
@@ -566,14 +595,10 @@ onMounted(async () => {
   font-size: var(--font-size-11);
 }
 
-.year-preview {
+.year-editor {
+  display: grid;
+  gap: var(--space-2);
   overflow-x: auto;
-}
-
-.year-preview > p {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  margin: var(--space-2) 0 0;
 }
 
 .flowering-fields {
@@ -612,7 +637,7 @@ onMounted(async () => {
 @media (max-width: 680px) {
   .photo-guide,
   .flowering-fields,
-  .range {
+  .range-grid {
     grid-template-columns: 1fr;
   }
 
@@ -620,7 +645,7 @@ onMounted(async () => {
     grid-column: auto;
   }
 
-  .year-preview :deep(.year) {
+  .year-editor :deep(.year) {
     min-width: 620px;
   }
 }

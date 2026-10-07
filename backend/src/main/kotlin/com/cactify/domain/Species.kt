@@ -1,11 +1,40 @@
 package com.cactify.domain
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+
+/**
+ * La ficha de cultivo de una especie: lo que la describe más allá de cuánto aguanta. Todo opcional
+ * —una especie recién dada de alta no tiene por qué saberlo—, y los textos en blanco son ausentes.
+ *
+ * La exposición y las horas de luz son **independientes**: una dice cómo llega la luz, la otra
+ * cuánta; ninguna se deduce ni se valida contra la otra.
+ */
+data class CultivationProfile(
+  val description: String? = null,
+  val sunExposure: SunExposure? = null,
+  val environment: Environment? = null,
+  val bloomDescription: String? = null,
+  val bloomColor: String? = null,
+  val bloomMaturity: String? = null,
+  val bloomTypicalDuration: String? = null,
+) {
+  fun normalized() = copy(
+    description = description.blankToNull(),
+    bloomDescription = bloomDescription.blankToNull(),
+    bloomColor = bloomColor.blankToNull(),
+    bloomMaturity = bloomMaturity.blankToNull(),
+    bloomTypicalDuration = bloomTypicalDuration.blankToNull(),
+  )
+
+  private fun String?.blankToNull() = this?.trim()?.takeIf { it.isNotEmpty() }
+}
 
 @Entity
 @Table(name = "species")
@@ -23,6 +52,8 @@ class Species(
   maxLightHours: Int,
   wateringGuideline: String,
   soilMix: SoilMix,
+  profile: CultivationProfile = CultivationProfile(),
+  periods: List<PeriodSpec> = emptyList(),
 ) : AbstractEntity<SpeciesId>() {
 
   /** El código de inventario (`CAT-GRUSS`): prefijo del de cada uno de sus ejemplares. */
@@ -69,6 +100,34 @@ class Species(
   var soilMix: SoilMix = soilMix
     private set
 
+  var description: String? = null
+    private set
+
+  var sunExposure: SunExposure? = null
+    private set
+
+  var environment: Environment? = null
+    private set
+
+  var bloomDescription: String? = null
+    private set
+
+  var bloomColor: String? = null
+    private set
+
+  var bloomMaturity: String? = null
+    private set
+
+  var bloomTypicalDuration: String? = null
+    private set
+
+  @OneToMany(mappedBy = "species", cascade = [CascadeType.ALL], orphanRemoval = true)
+  private val periodRows: MutableList<SpeciesPeriod> = mutableListOf()
+
+  /** El calendario anual, ordenado por tipo y por mes de inicio. */
+  val periods: List<SpeciesPeriod>
+    get() = periodRows.sortedWith(compareBy({ it.type.ordinal }, { it.startMonth }))
+
   init {
     InventoryCodes.requireValid(code, "de la especie", InventoryCodes.SPECIES_MAX_LENGTH)
     validate(
@@ -82,6 +141,9 @@ class Species(
       maxLightHours,
       wateringGuideline,
     )
+    SpeciesCalendar.requireCoherent(periods)
+    applyProfile(profile)
+    replacePeriods(periods)
   }
 
   /**
@@ -102,6 +164,8 @@ class Species(
     maxLightHours: Int,
     wateringGuideline: String,
     soilMix: SoilMix,
+    profile: CultivationProfile = CultivationProfile(),
+    periods: List<PeriodSpec> = emptyList(),
   ) {
     InventoryCodes.requireValid(code, "de la especie", InventoryCodes.SPECIES_MAX_LENGTH)
     validate(
@@ -115,6 +179,7 @@ class Species(
       maxLightHours,
       wateringGuideline,
     )
+    SpeciesCalendar.requireCoherent(periods)
     this.code = code
     this.scientificName = scientificName
     this.commonName = commonName
@@ -126,6 +191,34 @@ class Species(
     this.maxLightHours = maxLightHours
     this.wateringGuideline = wateringGuideline
     this.soilMix = soilMix
+    applyProfile(profile)
+    replacePeriods(periods)
+  }
+
+  private fun applyProfile(profile: CultivationProfile) {
+    val clean = profile.normalized()
+    description = clean.description
+    sunExposure = clean.sunExposure
+    environment = clean.environment
+    bloomDescription = clean.bloomDescription
+    bloomColor = clean.bloomColor
+    bloomMaturity = clean.bloomMaturity
+    bloomTypicalDuration = clean.bloomTypicalDuration
+  }
+
+  /** El calendario enviado **sustituye** al guardado; ya validado, así que no queda a medias. */
+  private fun replacePeriods(specs: List<PeriodSpec>) {
+    periodRows.clear()
+    specs.map { it.normalized() }.forEach {
+      periodRows += SpeciesPeriod(
+        species = this,
+        type = it.type,
+        startMonth = it.startMonth,
+        endMonth = it.endMonth,
+        intensity = it.intensity,
+        notes = it.notes,
+      )
+    }
   }
 
   /**

@@ -16,16 +16,42 @@
 export type YearTone = 'brand' | 'warning' | 'info' | 'danger' | 'neutral'
 
 export interface YearRow {
+  /** Identifica la fila en el evento `cycle`; sin él, se usa la etiqueta. */
+  id?: string
   label: string
   /** Un valor por mes: `0` es sin actividad, `1`–`3` la intensidad. Se recorta o rellena a doce. */
   levels: number[]
   tone?: YearTone
+  /**
+   * La intensidad máxima de esta fila (1–3, por defecto 3). Una fila de presencia es `1`; una de
+   * dos fuerzas, `2`. La rejilla reparte esos niveles por **toda la escala del color**, de modo
+   * que un «sí» no se pinte con la fuerza de un «poco» solo porque la fila no tiene más.
+   */
+  max?: number
 }
 
 const props = withDefaults(defineProps<{
   rows: YearRow[]
   legend?: { tone: YearTone, label: string }[]
-}>(), { legend: undefined })
+  /**
+   * Cada mes se convierte en un botón que **cicla** su nivel —apagado, 1, 2…, hasta el máximo de la
+   * fila y vuelta a apagado—. La rejilla no guarda nada: emite `cycle` con el nivel siguiente y
+   * quien la usa decide qué hacer con él.
+   */
+  editable?: boolean
+}>(), { legend: undefined, editable: false })
+
+const emit = defineEmits<{ cycle: [row: string, month: number, next: number] }>()
+
+const maxOf = (row: YearRow) => Math.min(3, Math.max(1, row.max ?? 3))
+
+/** El nivel pintado: el lógico, repartido por la escala completa del color. */
+const shown = (row: YearRow, level: number) => (level > 0 ? Math.min(3, level + (3 - maxOf(row))) : 0)
+
+function cycle(row: YearRow, index: number) {
+  const level = levelsOf(row)[index]!
+  emit('cycle', row.id ?? row.label, index + 1, level >= maxOf(row) ? 0 : level + 1)
+}
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const FULL = [
@@ -77,7 +103,17 @@ function describe(row: YearRow): string {
         data-role="month"
         :data-level="level"
       >
-        <i :data-level="level" />
+        <button
+          v-if="editable"
+          type="button"
+          class="year__cell"
+          :aria-pressed="level > 0"
+          :aria-label="`${row.label}, ${FULL[index]}: ${level === 0 ? 'sin marcar' : `nivel ${level} de ${maxOf(row)}`}`"
+          @click="cycle(row, index)"
+        >
+          <i :data-level="shown(row, level)" />
+        </button>
+        <i v-else :data-level="shown(row, level)" />
       </span>
     </div>
 
@@ -139,6 +175,28 @@ function describe(row: YearRow): string {
   font-size: var(--font-size-12);
   justify-content: flex-start;
   padding-left: var(--space-3);
+}
+
+/* En modo editable la casilla es un botón que llena la celda. */
+.year__cell {
+  align-items: stretch;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  min-height: 32px;
+  padding: 0;
+  width: 100%;
+}
+
+.year__cell:focus-visible {
+  box-shadow: var(--focus-ring);
+  position: relative;
+  z-index: 1;
+}
+
+.year__cell:hover i[data-level='0'] {
+  background: var(--color-surface-muted);
 }
 
 /* El bloque va **dentro** de la celda, con aire alrededor: así el mes se lee como una casilla. */

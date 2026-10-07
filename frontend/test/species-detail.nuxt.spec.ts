@@ -32,6 +32,14 @@ describe('ficha de una especie', () => {
     maxLightHours: 10,
     wateringGuideline: 'cada 10-20 dias en crecimiento',
     soilMix: { id: '100001', name: 'Sustrato mineral de drenaje rápido' },
+    description: null,
+    sunExposure: null,
+    environment: null,
+    bloomDescription: null,
+    bloomColor: null,
+    bloomMaturity: null,
+    bloomTypicalDuration: null,
+    periods: [],
     ...overrides,
   })
 
@@ -147,8 +155,6 @@ describe('ficha de una especie', () => {
     await settle()
 
     for (const [test, ticket] of [
-      ['year-cycle', 'T-17'],
-      ['flowering', 'T-17'],
       ['photos', 'T-19'],
       ['specimens', 'T-21'],
       ['groups', 'T-21'],
@@ -185,23 +191,121 @@ describe('ficha de una especie', () => {
     expect(text).toContain('6–10 h')
   })
 
-  /**
-   * Lo que no existe **conserva su fila** y marca su valor, en vez de desaparecer de la lectura:
-   * una condición ausente y una condición pendiente no son lo mismo.
-   */
-  it('las condiciones que no existen ocupan su fila con el valor marcado', async () => {
-    api.get.mockResolvedValue(care())
-
-    const wrapper = await mountSuspended(SpeciesDetail)
-    await settle()
-
-    for (const test of ['exposure', 'environment'] as const) {
-      const row = wrapper.find(`[data-test="${test}"]`)
-      expect(row.exists(), `falta la fila ${test}`).toBe(true)
-      expect(row.attributes('data-role')).toBe('condition')
-      expect(row.attributes('data-mock')).toBe('true')
-      expect(row.text()).toContain('T-17')
+  describe('ficha de cultivo y calendario (T-17)', () => {
+    const open = async (overrides: Partial<SpeciesRecord> = {}) => {
+      api.get.mockResolvedValue(care(overrides))
+      const wrapper = await mountSuspended(SpeciesDetail)
+      await settle()
+      return wrapper
     }
+
+    it('exposición y entorno reales, con la definición de la exposición, y ya no marcados', async () => {
+      const wrapper = await open({ sunExposure: 'pleno_sol', environment: 'exterior' })
+
+      const exposure = wrapper.find('[data-test="exposure"]')
+      expect(exposure.text()).toContain('Pleno sol')
+      expect(exposure.text()).toContain('Exposición directa prolongada')
+      expect(exposure.attributes('data-mock')).toBeUndefined()
+      expect(wrapper.find('[data-test="environment"]').text()).toContain('Exterior')
+      expect(wrapper.find('[data-test="environment"]').attributes('data-mock')).toBeUndefined()
+    })
+
+    it('lo que no está definido se dice «Sin definir», conserva su fila y no cita ningún ticket', async () => {
+      const wrapper = await open()
+
+      for (const test of ['exposure', 'environment'] as const) {
+        const row = wrapper.find(`[data-test="${test}"]`)
+        expect(row.attributes('data-role')).toBe('condition')
+        expect(row.text()).toContain('Sin definir')
+        expect(row.text()).not.toContain('T-17')
+      }
+    })
+
+    it('la descripción de la portada es la real, o dice que no la hay', async () => {
+      const withText = await open({ description: 'Cactus globular de crecimiento lento' })
+      expect(withText.find('[data-test="description"]').text()).toContain('Cactus globular de crecimiento lento')
+      expect(withText.find('[data-test="description"]').attributes('data-mock')).toBeUndefined()
+
+      const without = await open()
+      expect(without.find('[data-test="description"]').text()).toContain('Sin descripción')
+    })
+
+    it('el año de cultivo pinta cuatro filas y un reposo de noviembre a febrero cruza diciembre', async () => {
+      const wrapper = await open({
+        periods: [
+          { id: '1', type: 'crecimiento', startMonth: 3, endMonth: 10, intensity: null, notes: null },
+          { id: '2', type: 'reposo', startMonth: 11, endMonth: 2, intensity: null, notes: null },
+        ],
+      })
+
+      const cycle = wrapper.find('[data-test="year-cycle"]')
+      expect(cycle.attributes('data-mock')).toBeUndefined()
+      const rows = cycle.findAll('[data-role="year-row"]')
+      expect(rows).toHaveLength(4)
+
+      const lit = (row: (typeof rows)[number]) => row.findAll('[data-role="month"]')
+        .map((cell, index) => (cell.attributes('data-level') !== '0' ? index + 1 : 0)).filter(Boolean)
+      expect(lit(rows[0]!)).toEqual([3, 4, 5, 6, 7, 8, 9, 10])
+      expect(lit(rows[1]!)).toEqual([1, 2, 11, 12])
+      expect(cycle.find('[data-test="no-calendar"]').exists()).toBe(false)
+    })
+
+    it('el crecimiento máximo se pinta sobre el crecimiento con más fuerza', async () => {
+      const wrapper = await open({
+        periods: [
+          { id: '1', type: 'crecimiento', startMonth: 3, endMonth: 6, intensity: null, notes: null },
+          { id: '2', type: 'crecimiento_maximo', startMonth: 4, endMonth: 5, intensity: null, notes: null },
+        ],
+      })
+
+      const growth = wrapper.find('[data-test="year-cycle"]').findAll('[data-role="year-row"]')[0]!
+      const levels = growth.findAll('[data-role="month"]').map((cell) => cell.attributes('data-level'))
+      expect(levels.slice(2, 6)).toEqual(['1', '2', '2', '1'])
+    })
+
+    it('el riego se pinta con su intensidad', async () => {
+      const wrapper = await open({
+        periods: [
+          { id: '1', type: 'riego', startMonth: 3, endMonth: 4, intensity: 'moderado', notes: null },
+          { id: '2', type: 'riego', startMonth: 5, endMonth: 5, intensity: 'abundante', notes: null },
+        ],
+      })
+
+      const watering = wrapper.find('[data-test="year-cycle"]').findAll('[data-role="year-row"]')[3]!
+      const levels = watering.findAll('[data-role="month"]').map((cell) => cell.attributes('data-level'))
+      expect(levels.slice(2, 5)).toEqual(['2', '2', '3'])
+    })
+
+    it('una especie sin calendario muestra la rejilla vacía y lo dice', async () => {
+      const wrapper = await open()
+
+      const cycle = wrapper.find('[data-test="year-cycle"]')
+      expect(cycle.findAll('[data-role="year-row"]')).toHaveLength(4)
+      expect(cycle.find('[data-test="no-calendar"]').text()).toContain('no está definido')
+    })
+
+    it('la floración muestra periodo, color, madurez, duración y notas reales', async () => {
+      const wrapper = await open({
+        bloomColor: 'Amarillo intenso',
+        bloomMaturity: 'A partir de 15 años',
+        bloomTypicalDuration: '3–5 días por flor',
+        bloomDescription: 'Mejora tras un reposo seco',
+        periods: [{ id: '3', type: 'floracion', startMonth: 5, endMonth: 7, intensity: null, notes: null }],
+      })
+
+      const flowering = wrapper.find('[data-test="flowering"]')
+      expect(flowering.attributes('data-mock')).toBeUndefined()
+      for (const text of ['Mayo–julio', 'Amarillo intenso', 'A partir de 15 años', '3–5 días por flor', 'Mejora tras un reposo seco']) {
+        expect(flowering.text()).toContain(text)
+      }
+    })
+
+    it('una floración sin datos dice «Sin definir» en cada uno', async () => {
+      const wrapper = await open()
+
+      const text = wrapper.find('[data-test="flowering"]').text()
+      expect(text.match(/Sin definir/g)).toHaveLength(4)
+    })
   })
 
   /**

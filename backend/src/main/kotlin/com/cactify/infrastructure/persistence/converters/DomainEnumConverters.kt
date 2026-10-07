@@ -35,3 +35,31 @@ class PlantOriginConverter : AttributeConverter<PlantOrigin, String> {
   override fun convertToDatabaseColumn(attribute: PlantOrigin?): String? = attribute?.value
   override fun convertToEntityAttribute(dbData: String?): PlantOrigin? = dbData?.let { PlantOrigin(it) }
 }
+
+@Converter(autoApply = true)
+class SunExposureConverter : AttributeConverter<com.cactify.domain.SunExposure, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.SunExposure?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.SunExposure? =
+    dbData?.let { com.cactify.domain.SunExposure(it) }
+}
+
+@Converter(autoApply = true)
+class EnvironmentConverter : AttributeConverter<com.cactify.domain.Environment, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.Environment?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.Environment? =
+    dbData?.let { com.cactify.domain.Environment(it) }
+}
+
+@Converter(autoApply = true)
+class PeriodTypeConverter : AttributeConverter<com.cactify.domain.PeriodType, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.PeriodType?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.PeriodType? =
+    dbData?.let { com.cactify.domain.PeriodType(it) }
+}
+
+@Converter(autoApply = true)
+class WateringIntensityConverter : AttributeConverter<com.cactify.domain.WateringIntensity, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.WateringIntensity?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.WateringIntensity? =
+    dbData?.let { com.cactify.domain.WateringIntensity(it) }
+}

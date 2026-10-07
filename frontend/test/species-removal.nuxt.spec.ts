@@ -35,6 +35,14 @@ describe('retirada de una especie', () => {
     maxLightHours: 10,
     wateringGuideline: 'cada 10-20 dias',
     soilMix: { id: '100001', name: 'Sustrato mineral de drenaje rápido' },
+    description: null,
+    sunExposure: null,
+    environment: null,
+    bloomDescription: null,
+    bloomColor: null,
+    bloomMaturity: null,
+    bloomTypicalDuration: null,
+    periods: [],
   }
 
   const openDialog = async () => {

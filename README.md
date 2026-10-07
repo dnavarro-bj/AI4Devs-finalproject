@@ -370,6 +370,11 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * **Invariantes**: en los tres rangos, el mínimo no puede superar al máximo; los nombres y la pauta de riego no pueden quedar en blanco.
 * `wateringGuideline`: String. Frecuencia orientativa de riego (p. ej. "cada 10-20 días").
 * `soilMixId`: TSID. Clave foránea → `SoilMix.id`. Mezcla de tierra recomendada para la especie.
+* `description`: String, opcional. Descripción de la especie.
+* `sunExposure`: opcional, `sombra` · `semisombra` · `soleado` · `pleno_sol`. **Cómo** llega la luz, no cuánta: es independiente de las horas de luz y ninguna se valida contra la otra. No hay umbral numérico; la interfaz muestra la definición funcional de cada valor.
+* `environment`: opcional, `interior` · `exterior` · `ambos`. La estacionalidad la dice el calendario, no un cuarto valor.
+* `bloomDescription` / `bloomColor` / `bloomMaturity` / `bloomTypicalDuration`: String, opcionales. La floración **esperada** de la especie (orientativa; no son las floraciones observadas en cada ejemplar).
+* `periods`: el calendario anual, una lista de **periodos** `{type, startMonth, endMonth, intensity, notes}`. `type` es `crecimiento`, `crecimiento_maximo`, `reposo`, `floracion` o `riego`; los meses van de 1 a 12 y **un inicio posterior al fin cruza el fin de año** (noviembre–febrero = `11`→`2`, un solo periodo). Dentro de un tipo los periodos no se solapan; **`crecimiento_maximo`** —cuándo más crece— se superpone al crecimiento y debe caer **dentro** de él; `intensity` (`escaso`·`moderado`·`abundante`) es obligatoria en el riego y está prohibida en el resto. **`PUT /species/{id}` es reemplazo completo**: la lista enviada sustituye a la guardada y omitirla deja la especie sin calendario. `GET /species/{id}` devuelve todo esto con `periods` siempre presente; `GET /species` no.
 
 **Location** (catálogo de localizaciones)
 

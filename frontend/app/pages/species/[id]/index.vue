@@ -8,12 +8,23 @@
  * además enseña la forma de la pantalla; un párrafo en su lugar la borra. La primera versión hizo
  * lo segundo y el resultado no se parecía al prototipo ni de lejos.
  *
- * Real: los dos nombres, temperatura, humedad, luz, riego y la mezcla de sustrato, más corregir y
- * retirar. Marcado: la lista de ejemplares (T-21), exposición, entorno, año de cultivo y floración
- * (T-17), fotografías (T-19) y grupos de cultivo (T-21).
+ * Real: los dos nombres, la descripción, exposición, entorno, temperatura, humedad, luz, riego y la
+ * mezcla de sustrato, el año de cultivo y la floración (T-17), más corregir y retirar. Marcado: la
+ * lista de ejemplares (T-21), fotografías (T-19) y grupos de cultivo (T-21).
+ *
+ * **Un dato sin definir se dice «Sin definir»**: ni un guion ni un valor inventado. Es una
+ * respuesta, no un hueco.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSpecies } from '@features/species/composables/useSpecies'
+import {
+  YEAR_LEGEND,
+  SUN_EXPOSURE,
+  environmentLabel,
+  periodSpan,
+  sunExposureLabel,
+  yearRows,
+} from '@features/species/mappers/speciesCultivation'
 import SpeciesPhotosPanel from '@features/species/components/SpeciesPhotosPanel.vue'
 import SpeciesSpecimensPanel from '@features/species/components/SpeciesSpecimensPanel.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
@@ -46,20 +57,23 @@ const TABS = [
 ]
 const tab = ref('summary')
 
-/**
- * La pauta como una sola lectura: es lo que se consulta de una especie. Las dos primeras filas no
- * existen todavía y llevan su marca; las cinco siguientes son reales.
- */
-const conditions = computed(() => (species.value
-  ? [
-      { mark: '☼', label: 'Exposición', value: null, hint: 'Pleno sol, semisombra…', ticket: 'T-17', test: 'exposure' },
-      { mark: '⌂', label: 'Entorno', value: null, hint: 'Interior o exterior', ticket: 'T-17', test: 'environment' },
-      { mark: '↕', label: 'Temperatura', value: `${species.value.minTemperature}–${species.value.maxTemperature} °C`, hint: 'Rango que tolera en cultivo' },
-      { mark: '◌', label: 'Humedad', value: `${species.value.minHumidity}–${species.value.maxHumidity} %`, hint: 'Evitar humedad persistente' },
-      { mark: '☀', label: 'Luz', value: `${species.value.minLightHours}–${species.value.maxLightHours} h`, hint: 'Horas de luz al día' },
-      { mark: '◇', label: 'Riego', value: species.value.wateringGuideline, hint: 'Orientativo: depende del ejemplar' },
-    ]
-  : []))
+const UNDEFINED = 'Sin definir'
+
+/** La pauta como una sola lectura: es lo que se consulta de una especie. */
+const conditions = computed(() => {
+  const current = species.value
+  if (!current) return []
+  const exposure = SUN_EXPOSURE.find((option) => option.value === current.sunExposure)
+
+  return [
+    { mark: '☼', label: 'Exposición', value: sunExposureLabel(current.sunExposure) ?? UNDEFINED, hint: exposure?.description ?? 'Cómo recibe la luz, no cuánta', test: 'exposure', pending: !exposure },
+    { mark: '⌂', label: 'Entorno', value: environmentLabel(current.environment) ?? UNDEFINED, hint: 'Dónde se cultiva', test: 'environment', pending: !current.environment },
+    { mark: '↕', label: 'Temperatura', value: `${current.minTemperature}–${current.maxTemperature} °C`, hint: 'Rango que tolera en cultivo' },
+    { mark: '◌', label: 'Humedad', value: `${current.minHumidity}–${current.maxHumidity} %`, hint: 'Evitar humedad persistente' },
+    { mark: '☀', label: 'Luz', value: `${current.minLightHours}–${current.maxLightHours} h`, hint: 'Horas de luz al día' },
+    { mark: '◇', label: 'Riego', value: current.wateringGuideline, hint: 'Orientativo: depende del ejemplar' },
+  ]
+})
 
 /**
  * El género es la primera palabra del binomio. **No es un dato inventado**, así que no se marca:
@@ -67,25 +81,24 @@ const conditions = computed(() => (species.value
  */
 const genus = computed(() => species.value?.scientificName.trim().split(/\s+/)[0] ?? '')
 
-/**
- * Las tres pautas anuales del prototipo, **sin actividad**: los periodos los trae T-17. La rejilla
- * se muestra igual, que es justo para lo que `UiYearGrid` admite filas vacías —ocultarla
- * convertiría «todavía no lo sé» en «esto no existe»—.
- */
-const YEAR_ROWS = [
-  { label: 'Crecimiento', levels: Array(12).fill(0), tone: 'brand' as const },
-  { label: 'Floración', levels: Array(12).fill(0), tone: 'warning' as const },
-  { label: 'Riego', levels: Array(12).fill(0), tone: 'info' as const },
-]
+/** Las cuatro filas del año, con los meses de cada periodo; un periodo que cruza diciembre se pinta seguido. */
+const yearGrid = computed(() => yearRows(species.value?.periods ?? []))
+const hasCalendar = computed(() => (species.value?.periods ?? []).length > 0)
 
-const YEAR_LEGEND = [
-  { tone: 'brand' as const, label: 'Crecimiento' },
-  { tone: 'warning' as const, label: 'Floración habitual' },
-  { tone: 'info' as const, label: 'Intensidad orientativa de riego' },
-]
+/** Los meses de floración como texto, «Mayo–julio», o los varios periodos separados. */
+const floweringSpan = computed(() => {
+  const spans = (species.value?.periods ?? [])
+    .filter((period) => period.type === 'floracion')
+    .map((period) => periodSpan(period.startMonth, period.endMonth))
+  return spans.length ? spans.join(' · ') : UNDEFINED
+})
 
-/** Los cuatro datos de floración del prototipo. Ninguno existe todavía. */
-const FLOWERING = ['Periodo', 'Color', 'Madurez', 'Duración']
+const floweringFacts = computed(() => [
+  { label: 'Periodo', value: floweringSpan.value },
+  { label: 'Color', value: species.value?.bloomColor ?? UNDEFINED },
+  { label: 'Madurez', value: species.value?.bloomMaturity ?? UNDEFINED },
+  { label: 'Duración', value: species.value?.bloomTypicalDuration ?? UNDEFINED },
+])
 
 /** Los grupos dinámicos del prototipo. Llegan con T-21. */
 const GROUPS = [
@@ -161,10 +174,10 @@ onMounted(load)
           <UiStatus tone="ok">Ficha completa</UiStatus>
         </template>
         <template #context>
-          <p class="hero__description" data-mock="true" data-test="description">
-            La descripción botánica completará esta portada con rasgos, origen y comportamiento.
-            <span>T-17</span>
+          <p v-if="species.description" class="hero__description" data-test="description">
+            {{ species.description }}
           </p>
+          <p v-else class="hero__description is-undefined" data-test="description">Sin descripción todavía.</p>
         </template>
         <template #visual>
           <div class="hero__media" data-mock="true" data-test="photos">
@@ -196,8 +209,7 @@ onMounted(load)
 
       <div v-if="tab === 'summary' || tab === 'cultivation'" class="species" data-test="cultivation-view">
         <div class="species__main">
-          <!-- La rejilla anual del prototipo, con su forma aunque no tenga periodos. -->
-          <section class="detail-section" data-mock="true" data-test="year-cycle">
+          <section class="detail-section" data-test="year-cycle">
             <UiSectionHeader
               title="Año de cultivo"
               description="Referencia para clima mediterráneo y cultivo exterior."
@@ -205,12 +217,13 @@ onMounted(load)
               <template #actions><NuxtLink :to="`/species/${species.id}/edit#species-editor-seasons`">Editar periodos</NuxtLink></template>
             </UiSectionHeader>
             <div class="year-card">
-              <UiYearGrid :rows="YEAR_ROWS" :legend="YEAR_LEGEND" />
-              <p class="section-ticket">Los periodos se incorporarán con <strong>T-17</strong>.</p>
+              <UiYearGrid :rows="yearGrid" :legend="YEAR_LEGEND" />
+              <p v-if="!hasCalendar" class="section-ticket" data-test="no-calendar">
+                El calendario de esta especie no está definido.
+              </p>
             </div>
           </section>
 
-          <!-- Real salvo las dos primeras filas, que llevan su marca en la propia fila. -->
           <section class="detail-section" data-test="conditions">
             <UiSectionHeader
               title="Condiciones recomendadas"
@@ -223,15 +236,13 @@ onMounted(load)
                 v-for="item in conditions"
                 :key="item.label"
                 data-role="condition"
-                :data-mock="item.ticket ? 'true' : undefined"
                 :data-test="item.test"
               >
                 <dt>
                   <span class="conditions__mark" aria-hidden="true">{{ item.mark }}</span>
                   {{ item.label }}
                 </dt>
-                <dd v-if="item.value">{{ item.value }}</dd>
-                <dd v-else class="is-pending">— <small>{{ item.ticket }}</small></dd>
+                <dd :class="{ 'is-pending': item.pending }">{{ item.value }}</dd>
                 <small>{{ item.hint }}</small>
               </div>
 
@@ -250,8 +261,7 @@ onMounted(load)
             </dl>
           </section>
 
-          <!-- La floración del prototipo: su forma, con los cuatro valores marcados. -->
-          <section class="detail-section" data-mock="true" data-test="flowering">
+          <section class="detail-section" data-test="flowering">
             <UiSectionHeader title="Floración" description="Comportamiento habitual de la especie.">
               <template #actions><NuxtLink :to="`/species/${species.id}/edit#species-editor-seasons`">Editar</NuxtLink></template>
             </UiSectionHeader>
@@ -260,13 +270,13 @@ onMounted(load)
                 <span aria-hidden="true">✣</span>
               </div>
               <dl class="flowering__facts">
-                <div v-for="fact in FLOWERING" :key="fact">
-                  <dt>{{ fact }}</dt>
-                  <dd>— <small>T-17</small></dd>
+                <div v-for="fact in floweringFacts" :key="fact.label">
+                  <dt>{{ fact.label }}</dt>
+                  <dd :class="{ 'is-pending': fact.value === UNDEFINED }">{{ fact.value }}</dd>
                 </div>
               </dl>
-              <p class="flowering__note">
-                Las condiciones, el color y la duración se documentarán con <strong>T-17</strong>.
+              <p v-if="species.bloomDescription" class="flowering__note" data-test="bloom-notes">
+                {{ species.bloomDescription }}
               </p>
             </div>
           </section>
@@ -358,6 +368,11 @@ onMounted(load)
   line-height: 1.65;
   margin: var(--space-3) 0 0;
   max-width: 58ch;
+}
+
+.hero__description.is-undefined {
+  color: var(--color-ink-muted);
+  font-style: italic;
 }
 
 .hero__description span,

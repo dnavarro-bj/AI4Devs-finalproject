@@ -22,6 +22,13 @@ Completar el catálogo de especies con las características de cultivo que el pr
 * La exposición y las horas de luz son campos independientes y ninguno deriva del otro.
 * La ficha de especie muestra la pauta anual y el número de ejemplares asociados.
 
-## Pendiente antes de empezar
+## Resolución
 
-Cómo se distingue objetivamente «soleado» de «pleno sol» (§24.6), y si hace falta el valor «estacional» en el entorno (§9.3).
+**Cerrado** con el change `especie-ampliada` (migración `V10`). Dos decisiones resolvieron lo que estaba pendiente:
+
+* **«Soleado» frente a «pleno sol» (§24.6):** sin umbral. Se mantienen los cuatro valores y la interfaz muestra la definición funcional de cada uno; un umbral de horas acoplaría exposición y luz.
+* **«Estacional» (§9.3):** no. El entorno tiene tres valores (interior, exterior, ambos); la estacionalidad la dicen los periodos del calendario.
+
+Dos correcciones al alcance original, por el [borrador de gestión](../diagramas/borrador-modelo-datos-gestion.md): el tipo de periodo **`transicion` no existe** (nadie lo pide) y el calendario es **una sola tabla** con `crecimiento`, `reposo`, `floracion` y `riego` —este último con intensidad—. La floración esperada, por tanto, son columnas descriptivas más sus periodos.
+
+Fuera, anotado: las «notas de cultivo» del editor del prototipo (sin campo en el modelo) y el «Estacional» que el wireframe dibuja.

@@ -412,9 +412,7 @@ Valores propuestos:
 - Interior.
 - Exterior.
 - Interior o exterior.
-- Estacional, si se necesita indicar que cambia según la época del año.
-
-La decisión sobre incluir «estacional» dependerá de cómo se modele el calendario de cultivo.
+- ~~Estacional~~: **descartado (7 oct 2026).** La estacionalidad la expresan los periodos del calendario de cultivo (§9.4); el entorno queda en tres valores.
 
 ### 9.4. Épocas de crecimiento
 
@@ -965,7 +963,7 @@ Estas preguntas no bloquean seguir descubriendo pantallas, pero deberán resolve
 3. ¿Se exige fotografía durante el alta o es opcional?
 4. ¿Qué estados exactos puede tener una planta y qué transiciones son válidas?
 5. ¿Una planta puede estar simultáneamente en interior/exterior de forma estacional?
-6. ¿Cómo se define de forma objetiva la diferencia entre «soleado» y «pleno sol»?
+6. ~~¿Cómo se define de forma objetiva la diferencia entre «soleado» y «pleno sol»?~~ **Resuelta (7 oct 2026):** sin umbral numérico; la interfaz muestra la definición funcional de cada valor y la exposición es independiente de las horas de luz.
 7. ¿Se necesita registrar propagación por esqueje, hijuelo o injerto además de germinación?
 8. ¿Los comentarios pueden editarse y eliminarse, o solo corregirse conservando historial?
 9. ¿Qué tipos de cuidado entran en la primera versión?

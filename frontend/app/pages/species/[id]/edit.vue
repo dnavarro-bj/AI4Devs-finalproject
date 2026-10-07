@@ -9,6 +9,7 @@ import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSpecies } from '@features/species/composables/useSpecies'
 import SpeciesForm, { type SpeciesSubmitError } from '@features/species/components/SpeciesForm.vue'
 import { isNotFound } from '@shared/services/errorNormalizer'
+import { speciesToInput } from '@features/species/mappers/speciesCultivation'
 import { speciesSubmitError } from '@features/species/composables/speciesSubmitError'
 import type { SpeciesDetail, SpeciesInput } from '@features/species/types/species.types'
 import type { DomainError } from '@shared/types/api.types'
@@ -33,23 +34,10 @@ const notFound = computed(() => !loading.value && isNotFound(loadError.value))
 
 /**
  * La ficha se convierte en cuerpo de la corrección tal cual, **mezcla incluida**: el `PUT` es
- * reemplazo completo, así que omitirla la cambiaría. Por eso el API la devuelve.
+ * reemplazo completo, así que omitirla la cambiaría. Por eso el API la devuelve. Lo mismo vale para la
+ * ficha de cultivo y el calendario: `speciesToInput` parte de todo lo guardado.
  */
-const initial = computed<SpeciesInput | undefined>(() => (species.value
-  ? {
-      code: species.value.code,
-      scientificName: species.value.scientificName,
-      commonName: species.value.commonName,
-      minHumidity: species.value.minHumidity,
-      maxHumidity: species.value.maxHumidity,
-      minTemperature: species.value.minTemperature,
-      maxTemperature: species.value.maxTemperature,
-      minLightHours: species.value.minLightHours,
-      maxLightHours: species.value.maxLightHours,
-      wateringGuideline: species.value.wateringGuideline,
-      soilMixId: species.value.soilMix.id,
-    }
-  : undefined))
+const initial = computed<SpeciesInput | undefined>(() => (species.value ? speciesToInput(species.value) : undefined))
 
 async function save(input: SpeciesInput) {
   submitting.value = true

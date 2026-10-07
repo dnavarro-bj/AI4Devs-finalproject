@@ -88,6 +88,28 @@ data class SpeciesDetailResponse(
   val wateringGuideline: String,
   val soilMix: SoilMixSummaryResponse,
   val plantCount: Long,
+  val description: String?,
+  /** `sombra`, `semisombra`, `soleado` o `pleno_sol`; ausente si no está definida. */
+  val sunExposure: String?,
+  /** `interior`, `exterior` o `ambos`; ausente si no está definido. */
+  val environment: String?,
+  val bloomDescription: String?,
+  val bloomColor: String?,
+  val bloomMaturity: String?,
+  val bloomTypicalDuration: String?,
+  /** El calendario anual, siempre presente (vacío si no hay periodos), por tipo y mes de inicio. */
+  val periods: List<SpeciesPeriodResponse>,
+)
+
+/** Un periodo del año. Inicio posterior al fin = cruza el fin de año. */
+data class SpeciesPeriodResponse(
+  val id: String,
+  val type: String,
+  val startMonth: Int,
+  val endMonth: Int,
+  /** Solo en el riego: `escaso`, `moderado` o `abundante`. */
+  val intensity: String?,
+  val notes: String?,
 )
 
 /** Un cambio de estado del historial de un ejemplar. */

@@ -57,6 +57,19 @@ describe('editor de una especie', () => {
     return wrapper
   }
 
+  it('agrupa cada pareja de límites como en el wireframe', async () => {
+    const wrapper = await mountForm()
+    const ranges = wrapper.findAll('[data-test$="-range"]')
+
+    expect(ranges).toHaveLength(3)
+    expect(ranges.map((range) => range.find('legend').text())).toEqual([
+      'Temperatura recomendada',
+      'Humedad recomendada',
+      'Horas de luz',
+    ])
+    expect(ranges.every((range) => range.findAll('input').length === 2)).toBe(true)
+  })
+
   it('envía la ficha completa, con la mezcla por identificador', async () => {
     const wrapper = await mountForm()
 
@@ -75,6 +88,14 @@ describe('editor de una especie', () => {
       maxLightHours: 10,
       wateringGuideline: 'cada 10-20 dias',
       soilMixId: '100001',
+      description: null,
+      sunExposure: null,
+      environment: null,
+      bloomDescription: null,
+      bloomColor: null,
+      bloomMaturity: null,
+      bloomTypicalDuration: null,
+      periods: [],
     })
   })
 
@@ -135,19 +156,181 @@ describe('editor de una especie', () => {
     expect(photos.find('[data-test="species-photo-upload"]').exists()).toBe(true)
   })
 
-  it('prepara exposición, entorno y calendario anual sin fingir que se persisten', async () => {
-    const wrapper = await mountForm()
+  describe('ficha de cultivo y calendario (T-17)', () => {
+    const submit = async (wrapper: Awaited<ReturnType<typeof mountForm>>) => {
+      await fill(wrapper, { ...VALID, 'soil-mix': '100001' })
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+      return wrapper.emitted('submit')?.[0]?.[0] as Record<string, unknown> | undefined
+    }
 
-    expect(wrapper.find('[data-test="species-exposure"]').text()).toContain('Pleno sol')
-    expect(wrapper.find('[data-test="species-environment"]').text()).toContain('Exterior')
-    // La estacionalidad la dice el calendario anual: un cuarto valor duplicaría el dato.
-    expect(wrapper.find('[data-test="species-environment"]').text()).not.toContain('Estacional')
+    /** Pulsa el mes `month` (1–12) de una pauta de la rejilla, `times` veces. */
+    const press = async (wrapper: Awaited<ReturnType<typeof mountForm>>, row: number, month: number, times = 1) => {
+      const cell = wrapper.findAll('[data-test="species-year-grid"] [data-role="year-row"]')[row]!
+        .findAll('[data-role="month"]')[month - 1]!
+      for (let i = 0; i < times; i++) await cell.find('button').trigger('click')
+    }
 
-    const seasons = wrapper.find('[data-test="species-seasons"]')
-    expect(seasons.attributes('data-mock')).toBeUndefined()
-    expect(seasons.text()).toContain('T-17')
-    expect(seasons.findAll('[data-role="month-head"]')).toHaveLength(12)
-    expect(seasons.findAll('[data-role="year-row"]')).toHaveLength(2)
+    const ROW = { growth: 0, rest: 1, flowering: 2, watering: 3 }
+
+    it('cada exposición muestra su definición y ninguna pide horas', async () => {
+      const wrapper = await mountForm()
+
+      const exposure = wrapper.find('[data-test="species-exposure"]')
+      for (const label of ['Sombra', 'Semisombra', 'Soleado', 'Pleno sol']) expect(exposure.text()).toContain(label)
+      expect(exposure.text()).toContain('Varias horas de sol directo')
+      expect(exposure.text()).toContain('Exposición directa prolongada')
+      expect(exposure.text()).not.toMatch(/\d/)
+    })
+
+    it('el entorno ofrece interior, exterior y ambos, y no «estacional»', async () => {
+      const wrapper = await mountForm()
+
+      const environment = wrapper.find('[data-test="species-environment"]')
+      expect(environment.findAll('input[type="radio"]')).toHaveLength(3)
+      expect(environment.text()).toContain('Interior')
+      expect(environment.text()).toContain('Exterior')
+      expect(environment.text()).toContain('Ambos')
+      expect(environment.text()).not.toContain('Estacional')
+    })
+
+    it('la sección de crecimiento y floración ya no es una maqueta: una rejilla pulsable de cuatro pautas', async () => {
+      const wrapper = await mountForm()
+
+      const seasons = wrapper.find('[data-test="species-seasons"]')
+      expect(seasons.attributes('data-mock')).toBeUndefined()
+      expect(seasons.text()).not.toContain('T-17')
+      expect(seasons.findAll('[data-role="month-head"]')).toHaveLength(12)
+      expect(seasons.findAll('[data-role="year-row"]')).toHaveLength(4)
+      expect(seasons.findAll('[data-role="month"] button')).toHaveLength(48)
+      expect(seasons.find('select[data-test="period-type"]').exists()).toBe(false)
+    })
+
+    it('envía la exposición, el entorno, la descripción y la floración', async () => {
+      const wrapper = await mountForm()
+      await wrapper.find('[data-test="species-exposure"] input[value="pleno_sol"]').setValue(true)
+      await wrapper.find('[data-test="species-environment"] input[value="exterior"]').setValue(true)
+      await fill(wrapper, {
+        description: 'Cactus globular',
+        'bloom-color': 'Amarillo intenso',
+        'bloom-maturity': '15-20 años',
+        'bloom-duration': '3-5 días',
+        'bloom-notes': 'Mejora tras un reposo seco',
+      })
+
+      const body = await submit(wrapper)
+
+      expect(body).toMatchObject({
+        description: 'Cactus globular',
+        sunExposure: 'pleno_sol',
+        environment: 'exterior',
+        bloomColor: 'Amarillo intenso',
+        bloomMaturity: '15-20 años',
+        bloomTypicalDuration: '3-5 días',
+        bloomDescription: 'Mejora tras un reposo seco',
+      })
+    })
+
+    it('pulsar un mes de floración lo marca, y otra vez lo quita', async () => {
+      const wrapper = await mountForm()
+
+      await press(wrapper, ROW.flowering, 5)
+      await press(wrapper, ROW.flowering, 6)
+      await press(wrapper, ROW.flowering, 7)
+      expect((await submit(wrapper))!.periods).toEqual([
+        { type: 'floracion', startMonth: 5, endMonth: 7, intensity: null, notes: null },
+      ])
+
+      await press(wrapper, ROW.flowering, 6)
+      wrapper.emitted('submit')!.length = 0
+      expect((await submit(wrapper))!.periods).toEqual([
+        { type: 'floracion', startMonth: 5, endMonth: 5, intensity: null, notes: null },
+        { type: 'floracion', startMonth: 7, endMonth: 7, intensity: null, notes: null },
+      ])
+    })
+
+    it('la segunda pulsación del crecimiento marca el crecimiento máximo, dentro del crecimiento', async () => {
+      const wrapper = await mountForm()
+
+      for (const month of [3, 4, 5, 6]) await press(wrapper, ROW.growth, month)
+      await press(wrapper, ROW.growth, 4, 1)
+      await press(wrapper, ROW.growth, 5, 1)
+
+      const cells = wrapper.findAll('[data-test="species-year-grid"] [data-role="year-row"]')[ROW.growth]!
+        .findAll('[data-role="month"]').map((cell) => cell.attributes('data-level'))
+      expect(cells.slice(2, 6)).toEqual(['1', '2', '2', '1'])
+
+      expect((await submit(wrapper))!.periods).toEqual([
+        { type: 'crecimiento', startMonth: 3, endMonth: 6, intensity: null, notes: null },
+        { type: 'crecimiento_maximo', startMonth: 4, endMonth: 5, intensity: null, notes: null },
+      ])
+    })
+
+    it('una tercera pulsación del crecimiento lo quita del todo, también del máximo', async () => {
+      const wrapper = await mountForm()
+
+      await press(wrapper, ROW.growth, 6, 3)
+
+      expect((await submit(wrapper))!.periods).toEqual([])
+    })
+
+    it('el riego sube de escaso a abundante con cada pulsación', async () => {
+      const wrapper = await mountForm()
+
+      await press(wrapper, ROW.watering, 3, 1)
+      await press(wrapper, ROW.watering, 4, 2)
+      await press(wrapper, ROW.watering, 5, 3)
+
+      const levels = wrapper.findAll('[data-test="species-year-grid"] [data-role="year-row"]')[ROW.watering]!
+        .findAll('[data-role="month"]').map((cell) => cell.attributes('data-level'))
+      expect(levels.slice(2, 5)).toEqual(['1', '2', '3'])
+      expect((await submit(wrapper))!.periods).toEqual([
+        { type: 'riego', startMonth: 3, endMonth: 3, intensity: 'escaso', notes: null },
+        { type: 'riego', startMonth: 4, endMonth: 4, intensity: 'moderado', notes: null },
+        { type: 'riego', startMonth: 5, endMonth: 5, intensity: 'abundante', notes: null },
+      ])
+    })
+
+    it('diciembre y enero marcados seguidos se envían como un solo reposo que cruza el año', async () => {
+      const wrapper = await mountForm()
+
+      for (const month of [11, 12, 1, 2]) await press(wrapper, ROW.rest, month)
+
+      expect((await submit(wrapper))!.periods).toEqual([
+        { type: 'reposo', startMonth: 11, endMonth: 2, intensity: null, notes: null },
+      ])
+    })
+
+    it('explica cómo se usa la rejilla', async () => {
+      const wrapper = await mountForm()
+
+      expect(wrapper.find('[data-test="year-help"]').text()).toContain('vuelve a pulsarlo')
+    })
+
+    it('la edición precarga la ficha de cultivo y el calendario', async () => {
+      const wrapper = await mountForm({
+        initial: {
+          code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra',
+          minHumidity: 10, maxHumidity: 30, minTemperature: 10, maxTemperature: 35, minLightHours: 6, maxLightHours: 10,
+          wateringGuideline: 'cada 10-20 dias', soilMixId: '100001',
+          description: 'Cactus globular', sunExposure: 'soleado', environment: 'ambos', bloomColor: 'Amarillo',
+          periods: [{ type: 'reposo', startMonth: 11, endMonth: 2, intensity: null, notes: 'seco' }],
+        },
+        plantCount: 1,
+      })
+
+      expect((wrapper.find('[data-test="species-exposure"] input[value="soleado"]').element as HTMLInputElement).checked).toBe(true)
+      expect((wrapper.find('[data-test="species-environment"] input[value="ambos"]').element as HTMLInputElement).checked).toBe(true)
+      expect((wrapper.find('[data-test="description"]').element as HTMLTextAreaElement).value).toBe('Cactus globular')
+      expect((wrapper.find('[data-test="bloom-color"]').element as HTMLInputElement).value).toBe('Amarillo')
+      const rest = wrapper.findAll('[data-test="species-year-grid"] [data-role="year-row"]')[ROW.rest]!
+        .findAll('[data-role="month"]').map((cell) => cell.attributes('data-level'))
+      expect(rest).toEqual(['1', '1', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1'])
+
+      await wrapper.find('[data-test="species-form"]').trigger('submit')
+      expect((wrapper.emitted('submit')?.[0]?.[0] as { periods: unknown[] }).periods).toEqual([
+        { type: 'reposo', startMonth: 11, endMonth: 2, intensity: null, notes: null },
+      ])
+    })
   })
 
   it('la edición llega prellenada con lo que la especie tenía, mezcla incluida', async () => {
