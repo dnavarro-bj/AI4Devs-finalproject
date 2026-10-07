@@ -34,7 +34,8 @@ internal fun PlantEvent.toEntry(): TimelineEntryResponse {
     id = id.toString(),
     type = "",
     occurredAt = occurredAt,
-    batchId = batchId?.toString(),
+    batchId = batch?.id?.toString(),
+    batchSize = batch?.plantCount,
   )
   return when (this) {
     is PlantComment -> base.copy(
@@ -89,6 +90,8 @@ internal fun CareRecord.toEntry(recommendation: AIRecommendation?) = TimelineEnt
   id = id.toString(),
   type = TimelineType.Reading.value,
   occurredAt = recordedAt,
+  batchId = batch?.id?.toString(),
+  batchSize = batch?.plantCount,
   reading = CareRecordResponse(
     id = id.toString(),
     plantId = plant.id.toString(),
@@ -102,6 +105,7 @@ internal fun CareRecord.toEntry(recommendation: AIRecommendation?) = TimelineEnt
       CareRecordRecommendationResponse(it.id.toString(), it.riskLevel.toString(), it.recommendationText)
     },
     taskId = task?.id?.toString(),
+    batchId = batch?.id?.toString(),
   ),
 )
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { SpeciesCare } from '@features/species/types/species.types'
 import { useRecommendation } from '@features/recommendations/composables/useRecommendation'
-import type { CareRecord, CareRecordInput } from '../types/careRecord.types'
+import type { CareRecord } from '../types/careRecord.types'
 import { useCareRecords } from '../composables/useCareRecords'
+import { emptyReadingValues, readingInput } from '../mappers/readingFields'
 
 /**
  * Formulario de lectura de cultivo, con la forma del wireframe.
@@ -42,79 +43,15 @@ const recordedAt = ref(toLocalInput(nowIso))
 const maxRecordedAt = toLocalInput(nowIso)
 
 /** Los cinco campos, vacíos hasta que el usuario los informa. */
-const fields = reactive<Record<keyof CareRecordInput, string>>({
-  humidity: '',
-  temperature: '',
-  lightHours: '',
-  waterAmountMl: '',
-  soilPh: '',
-})
-
-/** La unidad vive en el control y fuera del valor: nunca se cuela en lo que se envía. */
-const FIELDS: {
-  key: keyof CareRecordInput
-  label: string
-  unit: string
-  test: string
-  mark: string
-  range?: (species: SpeciesCare) => string
-}[] = [
-  {
-    key: 'humidity',
-    label: 'Humedad',
-    unit: '%',
-    test: 'humidity',
-    mark: '◫',
-    range: (s) => `Recomendada ${s.minHumidity}–${s.maxHumidity} %`,
-  },
-  {
-    key: 'temperature',
-    label: 'Temperatura',
-    unit: '°C',
-    test: 'temperature',
-    mark: '♨',
-    range: (s) => `Recomendada ${s.minTemperature}–${s.maxTemperature} °C`,
-  },
-  {
-    key: 'lightHours',
-    label: 'Horas de luz',
-    unit: 'h',
-    test: 'lightHours',
-    mark: '☼',
-    range: (s) => `Recomendadas ${s.minLightHours}–${s.maxLightHours} h`,
-  },
-  {
-    key: 'waterAmountMl',
-    label: 'Cantidad de riego',
-    unit: 'ml',
-    test: 'waterAmountMl',
-    mark: '◇',
-    range: () => 'Déjalo vacío si hoy no has regado.',
-  },
-  { key: 'soilPh', label: 'Acidez del sustrato', unit: 'pH', test: 'soilPh', mark: 'pH' },
-]
+const fields = ref(emptyReadingValues())
 
 const generateAi = ref(true)
 const submitting = ref(false)
 const error = ref<string | null>(null)
 
-/** Solo los valores informados: un campo vacío se omite, no se manda a cero. */
-function toInput(): CareRecordInput {
-  const input: CareRecordInput = {}
-  for (const [field, raw] of Object.entries(fields)) {
-    const value = typeof raw === 'string' ? raw.trim() : raw
-    if (value === '') continue
-
-    const parsed = Number(value)
-    if (!Number.isNaN(parsed)) input[field as keyof CareRecordInput] = parsed
-  }
-  return input
-}
+const toInput = () => readingInput(fields.value)
 
 const readyCount = computed(() => Object.keys(toInput()).length)
-
-const helpOf = (field: typeof FIELDS[number]) =>
-  (props.species && field.range ? field.range(props.species) : undefined)
 
 async function submit() {
   error.value = null
@@ -142,7 +79,7 @@ async function submit() {
 
   submitting.value = false
   emit('registered', record)
-  for (const field of Object.keys(fields)) fields[field as keyof CareRecordInput] = ''
+  fields.value = emptyReadingValues()
 }
 </script>
 
@@ -159,27 +96,11 @@ async function submit() {
       data-test="recorded-at"
     />
 
-    <fieldset class="reading__grid">
-      <legend>Mediciones y riego</legend>
-      <p class="reading__hint">
-        Introduce al menos un valor.
-        <template v-if="species">Los rangos son los efectivos para esta planta.</template>
-      </p>
-
-      <div v-for="field in FIELDS" :key="field.key" class="reading__row">
-        <span class="reading__mark" aria-hidden="true">{{ field.mark }}</span>
-        <UiField
-          v-model="fields[field.key]"
-          layout="row"
-          :label="field.label"
-          :unit="field.unit"
-          :help="helpOf(field)"
-          :data-test="field.test"
-          type="number"
-          inputmode="decimal"
-        />
-      </div>
-    </fieldset>
+    <ReadingFields
+      v-model="fields"
+      :species="species"
+      :hint="species ? 'Los rangos son los efectivos para esta planta.' : undefined"
+    />
 
     <!-- Los comentarios de una lectura llegan en T-20: no hay dónde guardarlos todavía. -->
     <UiField
@@ -218,53 +139,6 @@ async function submit() {
 
 .reading__error {
   margin: 0;
-}
-
-.reading__grid {
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  margin: 0;
-  padding: var(--space-4);
-}
-
-.reading__grid legend {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 0 var(--space-1);
-  text-transform: uppercase;
-}
-
-.reading__hint {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-12);
-  margin: 0 0 var(--space-3);
-}
-
-.reading__row {
-  align-items: center;
-  display: grid;
-  gap: var(--space-3);
-  grid-template-columns: 28px 1fr;
-}
-
-.reading__row + .reading__row {
-  border-top: 1px solid var(--color-line);
-  margin-top: var(--space-2);
-  padding-top: var(--space-2);
-}
-
-.reading__mark {
-  align-items: center;
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-sm);
-  color: var(--color-ink-muted);
-  display: flex;
-  font-size: var(--font-size-12);
-  height: 28px;
-  justify-content: center;
-  width: 28px;
 }
 
 .reading__foot {

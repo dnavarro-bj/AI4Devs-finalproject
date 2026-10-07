@@ -13,8 +13,8 @@ import java.time.temporal.ChronoUnit
 @Entity
 @Table(name = "plant_comment")
 @DiscriminatorValue("comentario")
-class PlantComment private constructor(plant: Plant, text: String, occurredAt: Instant) :
-  PlantEvent(plant = plant, occurredAt = occurredAt) {
+class PlantComment private constructor(plant: Plant, text: String, occurredAt: Instant, batch: Batch? = null) :
+  PlantEvent(plant = plant, occurredAt = occurredAt, batch = batch) {
 
   @Column(name = "text", nullable = false)
   var text: String = text
@@ -32,9 +32,16 @@ class PlantComment private constructor(plant: Plant, text: String, occurredAt: I
   }
 
   companion object {
-    fun record(plant: Plant, text: String, occurredAt: Instant?, clock: Clock, maxFutureSkew: Duration): PlantComment {
+    fun record(
+      plant: Plant,
+      text: String,
+      occurredAt: Instant?,
+      clock: Clock,
+      maxFutureSkew: Duration,
+      batch: Batch? = null,
+    ): PlantComment {
       val cleaned = requireText(text)
-      return PlantComment(plant, cleaned, stamp(occurredAt, clock, maxFutureSkew, "del comentario"))
+      return PlantComment(plant, cleaned, stamp(occurredAt, clock, maxFutureSkew, "del comentario"), batch)
     }
 
     private fun requireText(text: String): String {

@@ -133,3 +133,36 @@ export function toLocalInput(iso?: string | null): string {
 export function fromLocalInput(value: string): string | undefined {
   return value ? new Date(value).toISOString() : undefined
 }
+
+/**
+ * Lo que el usuario escribe de una intervención, tal cual: texto. Lo comparten el diálogo de una
+ * intervención y el de lote, para que **los campos de cada tipo y su validación sean los mismos**.
+ */
+export interface InterventionValues {
+  type: InterventionType
+  potSize: string
+  product: string
+  soilMixId: string
+  notes: string
+}
+
+export const emptyInterventionValues = (): InterventionValues => ({
+  type: 'trasplante', potSize: '', product: '', soilMixId: '', notes: '',
+})
+
+/** «Elige la mezcla de sustrato»: la única regla que el formulario comprueba antes de enviar. */
+export function interventionError(values: InterventionValues): string {
+  return INTERVENTION_FIELDS[values.type].soilMix && !values.soilMixId ? 'Elige la mezcla de sustrato.' : ''
+}
+
+/** Solo lo que el tipo admite: lo escrito para otro tipo antes de cambiar no viaja. */
+export function interventionPayload(values: InterventionValues) {
+  const fields = INTERVENTION_FIELDS[values.type]
+  return {
+    type: values.type,
+    potSize: fields.potSize ? values.potSize.trim() : undefined,
+    product: fields.product ? values.product.trim() : undefined,
+    soilMixId: fields.soilMix ? values.soilMixId : undefined,
+    notes: values.notes.trim() || undefined,
+  }
+}

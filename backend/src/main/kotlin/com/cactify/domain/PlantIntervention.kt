@@ -31,7 +31,8 @@ class PlantIntervention private constructor(
   notes: String?,
   occurredAt: Instant,
   task: Task? = null,
-) : PlantEvent(plant = plant, occurredAt = occurredAt) {
+  batch: Batch? = null,
+) : PlantEvent(plant = plant, occurredAt = occurredAt, batch = batch) {
 
   @Column(name = "intervention_type", nullable = false)
   var type: InterventionType = type
@@ -93,6 +94,7 @@ class PlantIntervention private constructor(
       clock: Clock,
       maxFutureSkew: Duration,
       task: Task? = null,
+      batch: Batch? = null,
     ): PlantIntervention {
       val cleanProduct = product.cleaned()
       val cleanPot = potSize.cleaned()
@@ -101,6 +103,7 @@ class PlantIntervention private constructor(
         plant, type, cleanProduct, cleanPot, soilMix, notes.cleaned(),
         stamp(occurredAt, clock, maxFutureSkew, "de la intervención"),
         task,
+        batch,
       )
     }
 

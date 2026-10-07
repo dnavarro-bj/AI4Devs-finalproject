@@ -1,7 +1,7 @@
 # F.3 - Consultar cuidados pendientes
 
 **Tipo:** Must-Have
-**Estado:** **Promovida al núcleo** — bloque 2 (era roadmap)
+**Estado:** **Parcial** — la base está en las alertas de «sin revisar» y «cuidado vencido» (T-23); falta el Dashboard operativo (`dashboard-operativo`, T-24)
 **Ticket:** [T-24](../tickets/T-24-dashboard-operativo-y-trabajo-por-lote.md)
 
 > Es la base del Dashboard operativo: la portada responde «¿qué requiere mi atención?», no muestra métricas decorativas.

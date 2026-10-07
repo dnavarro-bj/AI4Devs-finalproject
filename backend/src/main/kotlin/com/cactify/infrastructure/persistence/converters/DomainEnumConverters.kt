@@ -161,3 +161,17 @@ class AlertSeverityConverter : AttributeConverter<com.cactify.domain.AlertSeveri
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.AlertSeverity? =
     dbData?.let { com.cactify.domain.AlertSeverity(it) }
 }
+
+@Converter(autoApply = true)
+class BatchActionConverter : AttributeConverter<com.cactify.domain.BatchAction, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.BatchAction?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.BatchAction? =
+    dbData?.let { com.cactify.domain.BatchAction(it) }
+}
+
+@Converter(autoApply = true)
+class BatchScopeKindConverter : AttributeConverter<com.cactify.domain.BatchScopeKind, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.BatchScopeKind?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.BatchScopeKind? =
+    dbData?.let { com.cactify.domain.BatchScopeKind(it) }
+}

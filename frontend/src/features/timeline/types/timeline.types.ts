@@ -24,6 +24,8 @@ export interface TimelineEntry {
   type: TimelineType | string
   occurredAt: string
   batchId?: string
+  /** Cuántas plantas tuvo la operación de lote de la que viene: lo trae toda entrada con `batchId`. */
+  batchSize?: number
   reading?: CareRecord
   statusChange?: { from: PlantStatus, to: PlantStatus, reason?: string | null }
   movement?: { from: { id: string, name: string }, to: { id: string, name: string } }

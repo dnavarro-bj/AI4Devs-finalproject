@@ -86,8 +86,10 @@ function editedLabel(at: string): string {
       <NuxtLink :to="`/alerts?plant=${plantId}&status=all`" class="entry-body__meta" data-test="alert-entry-link">Ver las alertas del ejemplar</NuxtLink>
     </div>
 
-    <small v-if="entry.batchId" class="entry-body__meta" data-test="batch-note">
-      Operación sobre varias plantas
+    <!-- Un registro de un lote lo dice: fue una sola operación sobre varias plantas, no un registro suelto. -->
+    <small v-if="entry.batchId" class="entry-body__meta" data-test="batch-legend">
+      <template v-if="entry.batchSize">En un lote de {{ entry.batchSize }} {{ entry.batchSize === 1 ? 'planta' : 'plantas' }}</template>
+      <template v-else>Operación sobre varias plantas</template>
     </small>
 
     <div v-if="editable" class="entry-body__actions">

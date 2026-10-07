@@ -171,3 +171,15 @@ class AlertClosedException(id: String) :
 /** La localización tiene alertas propias y no puede retirarse: 409. */
 class LocationHasAlertsException(id: String) :
   RuntimeException("La localización '$id' tiene alertas y no se puede eliminar")
+
+/** El lote pedido por la ruta no existe: 404. */
+class BatchNotFoundException(id: String) :
+  RuntimeException("El lote '$id' no existe")
+
+/**
+ * El alcance de un lote supera el máximo configurado: 422, como la exportación (ADR-017). Se rechaza
+ * **en lugar de truncar**: aplicar un lote «a las primeras N» sin decirlo deja plantas sin su registro
+ * sin que nadie lo vea. El mensaje dice cuántas plantas serían y cuál es el máximo.
+ */
+class BatchTooLargeException(val plants: Long, val maxPlants: Int) :
+  RuntimeException("$plants plantas superan el máximo de $maxPlants: acota el alcance")

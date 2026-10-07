@@ -31,6 +31,9 @@ cactify:
   export:
     # Filas máximas de una exportación a CSV. Por encima, 422: nunca se trunca en silencio (ADR-017).
     max-rows: ${EXPORT_MAX_ROWS:5000}
+  batch:
+    # Plantas máximas de un lote. Por encima, 422: nunca se aplica a «las primeras N» en silencio.
+    max-plants: ${BATCH_MAX_PLANTS:2000}
   care-records:
     # Margen que se admite por delante del reloj del servidor al aceptar la fecha de una lectura:
     # absorbe un movil ligeramente desincronizado sin dar por buena una fecha equivocada.

@@ -138,12 +138,13 @@ class PlantTimelineApiTest : AbstractTimelineApiTest() {
     val inBatchB = idOf(addComment(b, "Con lote"))
     addComment(a, "Sin lote")
     flushPersistenceContext()
+    jdbcTemplate.update("INSERT INTO batch (id, action, scope_kind, plant_count, occurred_at) VALUES (777, 'comentario', 'plantas', 2, now())")
     jdbcTemplate.update("UPDATE plant_event SET batch_id = 777 WHERE id IN (?, ?)", inBatchA.toLong(), inBatchB.toLong())
     entityManager.clear()
 
     timeline(a)
       .andExpect(jsonPath("$.content[?(@.comment.text == 'Con lote')].batchId", contains("777")))
       .andExpect(jsonPath("$.content[?(@.comment.text == 'Sin lote')].batchId", hasSize<Any>(0)))
-    timeline(b).andExpect(jsonPath("$.content[0].batchId").value("777"))
+    timeline(b).andExpect(jsonPath("$.content[0].batchId").value("777")).andExpect(jsonPath("$.content[0].batchSize").value(2))
   }
 }

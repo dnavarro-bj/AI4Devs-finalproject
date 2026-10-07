@@ -185,3 +185,14 @@ data class AlertTransitionId(@Column(name = "id") override val id: Long) : Entit
 
   override fun toString(): String = id.toString()
 }
+
+@Embeddable
+data class BatchId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): BatchId = BatchId(TSID.fast().toLong())
+    fun from(value: Long): BatchId = BatchId(value)
+    fun from(value: String): BatchId = BatchId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}

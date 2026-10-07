@@ -22,6 +22,8 @@ data class CareRecordResponse(
   val recommendation: CareRecordRecommendationResponse?,
   /** La tarea que se completó al registrar la lectura, si la hay: el «cuidado asociado». */
   val taskId: String? = null,
+  /** El lote con el que se registró, si lo hay. Solo un lote lo asigna. */
+  val batchId: String? = null,
 )
 
 data class CareRecordRecommendationResponse(

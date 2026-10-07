@@ -15,6 +15,8 @@ data class TimelineEntryResponse(
   val type: String,
   val occurredAt: Instant,
   val batchId: String? = null,
+  /** El número de plantas de la operación por lote, cuando la entrada vino de uno. */
+  val batchSize: Int? = null,
   val reading: CareRecordResponse? = null,
   val statusChange: TimelineStatusChangeResponse? = null,
   val movement: TimelineMovementResponse? = null,

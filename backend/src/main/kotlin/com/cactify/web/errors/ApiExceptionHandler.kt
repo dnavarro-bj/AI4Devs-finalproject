@@ -3,6 +3,8 @@ package com.cactify.web.errors
 import com.cactify.application.AIProviderException
 import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
+import com.cactify.application.BatchNotFoundException
+import com.cactify.application.BatchTooLargeException
 import com.cactify.application.ExportTooLargeException
 import com.cactify.domain.InvalidPlantStatusTransitionException
 import com.cactify.application.DuplicateSpeciesCodeException
@@ -100,6 +102,15 @@ class ApiExceptionHandler {
   @ExceptionHandler(ExportTooLargeException::class)
   fun onExportTooLarge(ex: ExportTooLargeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.UNPROCESSABLE_ENTITY, ex.message ?: "La exportación es demasiado grande", request)
+
+  /** Un lote cuyo alcance es demasiado grande: la petición es válida, pero no se aplica como está. */
+  @ExceptionHandler(BatchTooLargeException::class)
+  fun onBatchTooLarge(ex: BatchTooLargeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.UNPROCESSABLE_ENTITY, ex.message ?: "El alcance del lote es demasiado grande", request)
+
+  @ExceptionHandler(BatchNotFoundException::class)
+  fun onBatchNotFound(ex: BatchNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Lote no encontrado", request)
 
   @ExceptionHandler(InvalidReferenceException::class)
   fun onInvalidReference(ex: InvalidReferenceException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =

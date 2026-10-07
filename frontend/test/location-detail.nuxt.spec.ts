@@ -6,6 +6,7 @@ import { createApiDouble, settle } from './helpers/apiDouble'
 import { detail, movement, plantRow, serveLocation } from './helpers/locationFixtures'
 import LocationDetail from '../app/pages/locations/[id]/index.vue'
 import { tasksApiService } from '@features/tasks/services/tasks.api.service'
+import { batchesApiService } from '@features/batches/services/batches.api.service'
 import { alertsApiService } from '@features/alerts/services/alerts.api.service'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import { ok } from '@shared/types/api.types'
@@ -189,6 +190,49 @@ describe('ficha de una localización', () => {
       const dialog = wrapper.find('[data-test="task-dialog"]')
       expect(dialog.text()).toContain('Nueva tarea')
       expect((dialog.find('select[data-test="destination-location"]').element as HTMLSelectElement).value).toBe('300002')
+    })
+  })
+
+  describe('registrar en toda la localización', () => {
+    it('ofrece registrar en todo lo que contiene y abre el lote con esta localización como alcance', async () => {
+      const preview = vi.spyOn(batchesApiService, 'preview').mockResolvedValue(ok(4))
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+
+      const button = wrapper.find('[data-test="batch-here"]')
+      expect(button.text()).toContain('Registrar en toda la localización')
+
+      await button.trigger('click')
+      await settle()
+      await settle()
+
+      const dialog = wrapper.find('[data-test="batch-dialog"]')
+      expect(dialog.exists()).toBe(true)
+      expect(preview).toHaveBeenCalledWith({ kind: 'location', locationId: '300002', includeDescendants: false }, [])
+      expect(dialog.find('[data-test="batch-count"]').text()).toContain('Se registrará en 4 plantas')
+      expect(dialog.find('[data-test="batch-action-choice"]').exists()).toBe(true)
+    })
+
+    it('con sublocalizaciones se puede decidir si cuentan, y el número se actualiza', async () => {
+      const preview = vi.spyOn(batchesApiService, 'preview').mockResolvedValueOnce(ok(4)).mockResolvedValueOnce(ok(62))
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+      await wrapper.find('[data-test="batch-here"]').trigger('click')
+      await settle()
+      await settle()
+
+      await wrapper.find('[data-test="batch-dialog"] [data-test="batch-descendants"]').setValue(true)
+      await settle()
+
+      expect(preview).toHaveBeenLastCalledWith({ kind: 'location', locationId: '300002', includeDescendants: true }, [])
+      expect(wrapper.find('[data-test="batch-dialog"] [data-test="batch-count"]').text()).toContain('Se registrará en 62 plantas')
+    })
+
+    it('sin plantas no se ofrece', async () => {
+      serveLocation(api, { detail: detail({ plantCount: 0, plantCountTotal: 0, children: [] }), plants: [] })
+      const wrapper = await open()
+
+      expect(wrapper.find('[data-test="batch-here"]').exists()).toBe(false)
     })
   })
 

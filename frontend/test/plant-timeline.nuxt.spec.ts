@@ -152,7 +152,7 @@ describe('cronología real de la ficha', () => {
     serve([{ ...comment('1', '2026-09-01T00:00:00Z'), batchId: '99' }])
     const wrapper = await mountPage()
 
-    expect(wrapper.find('[data-test="batch-note"]').text()).toContain('varias plantas')
+    expect(wrapper.find('[data-test="batch-legend"]').text()).toContain('varias plantas')
   })
 
   it('sin eventos lo dice y ofrece añadir el primer comentario', async () => {
@@ -350,5 +350,43 @@ describe('pestaña Floración y última floración', () => {
     await openTab(wrapper, 'Floración')
 
     expect(wrapper.find('[data-test="bloom-panel"]').text()).not.toMatch(/esperada/i)
+  })
+})
+
+/** Requirement «La cronología dice cuándo un registro vino de un lote» (`plant-dashboard`). */
+describe('registros de un lote en la cronología', () => {
+  beforeEach(() => Object.values(api).forEach((fn) => fn.mockReset()))
+
+  const legend = (wrapper: Wrapper, id: string) => wrapper.find(`[data-test="entry-${id}"] [data-test="batch-legend"]`)
+
+  it('una lectura, una intervención y un comentario de un lote lo dicen con el tamaño de la operación', async () => {
+    serve([
+      { id: '3', type: 'comentario', occurredAt: '2026-09-03T10:00:00Z', batchId: '9', batchSize: 31, comment: { text: 'Movidas por el frío' } },
+      { id: '2', type: 'intervencion', occurredAt: '2026-09-02T10:00:00Z', batchId: '8', batchSize: 12, intervention: { type: 'poda' } },
+      { id: '1', type: 'lectura', occurredAt: '2026-09-01T10:00:00Z', batchId: '7', batchSize: 24, reading: careRecord({ id: '1', waterAmountMl: 200 }) },
+    ])
+    const wrapper = await mountPage()
+
+    expect(legend(wrapper, '3').text()).toBe('En un lote de 31 plantas')
+    expect(legend(wrapper, '2').text()).toBe('En un lote de 12 plantas')
+    expect(legend(wrapper, '1').text()).toBe('En un lote de 24 plantas')
+  })
+
+  it('un registro individual no menciona ningún lote', async () => {
+    serve([
+      comment('2', '2026-09-02T10:00:00Z'),
+      { id: '1', type: 'lectura', occurredAt: '2026-09-01T10:00:00Z', reading: careRecord({ id: '1', humidity: 31 }) },
+    ])
+    const wrapper = await mountPage()
+
+    expect(wrapper.find('[data-test="batch-legend"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('En un lote')
+  })
+
+  it('un lote de una sola planta habla en singular', async () => {
+    serve([{ id: '1', type: 'comentario', occurredAt: '2026-09-01T10:00:00Z', batchId: '9', batchSize: 1, comment: { text: 'a' } }])
+    const wrapper = await mountPage()
+
+    expect(legend(wrapper, '1').text()).toBe('En un lote de 1 planta')
   })
 })

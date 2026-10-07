@@ -98,5 +98,6 @@ class CareRecordService(
       )
     },
     taskId = task?.id?.toString(),
+    batchId = batch?.id?.toString(),
   )
 }

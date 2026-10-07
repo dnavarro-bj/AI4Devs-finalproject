@@ -6,8 +6,11 @@
  *
  * Sale con `submit`; guardar es de quien lo abre y un fallo no pierde lo escrito.
  */
-import { fromLocalInput, INTERVENTION_FIELDS, INTERVENTION_LABELS, toLocalInput } from '../mappers/timeline.mapper'
-import type { InterventionInput, InterventionType, TimelineEntry } from '../types/timeline.types'
+import {
+  emptyInterventionValues, fromLocalInput, interventionError, interventionPayload, toLocalInput,
+  type InterventionValues,
+} from '../mappers/timeline.mapper'
+import type { InterventionInput, TimelineEntry } from '../types/timeline.types'
 
 const props = withDefaults(defineProps<{
   open: boolean
@@ -20,43 +23,28 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ submit: [InterventionInput], close: [] }>()
 
-const TYPES = (Object.keys(INTERVENTION_LABELS) as InterventionType[])
-  .map((value) => ({ value, label: INTERVENTION_LABELS[value] }))
-
-const type = ref<InterventionType>('trasplante')
-const potSize = ref('')
-const product = ref('')
-const soilMixId = ref('')
-const notes = ref('')
+const values = ref<InterventionValues>(emptyInterventionValues())
 const occurredAt = ref('')
 const mixError = ref('')
 
 watch(() => [props.open, props.entry], () => {
   const current = props.entry?.intervention
-  type.value = current?.type ?? 'trasplante'
-  potSize.value = current?.potSize ?? ''
-  product.value = current?.product ?? ''
-  soilMixId.value = current?.soilMix?.id ?? ''
-  notes.value = current?.notes ?? ''
+  values.value = {
+    type: current?.type ?? 'trasplante',
+    potSize: current?.potSize ?? '',
+    product: current?.product ?? '',
+    soilMixId: current?.soilMix?.id ?? '',
+    notes: current?.notes ?? '',
+  }
   occurredAt.value = toLocalInput(props.entry?.occurredAt)
   mixError.value = ''
 }, { immediate: true })
 
-const fields = computed(() => INTERVENTION_FIELDS[type.value])
-
 function submit() {
-  mixError.value = fields.value.soilMix && !soilMixId.value ? 'Elige la mezcla de sustrato.' : ''
+  mixError.value = interventionError(values.value)
   if (mixError.value) return
 
-  emit('submit', {
-    type: type.value,
-    occurredAt: fromLocalInput(occurredAt.value),
-    // Solo lo que el tipo admite: lo escrito para otro tipo antes de cambiar no viaja.
-    potSize: fields.value.potSize ? potSize.value.trim() : undefined,
-    product: fields.value.product ? product.value.trim() : undefined,
-    soilMixId: fields.value.soilMix ? soilMixId.value : undefined,
-    notes: notes.value.trim() || undefined,
-  })
+  emit('submit', { ...interventionPayload(values.value), occurredAt: fromLocalInput(occurredAt.value) })
 }
 </script>
 
@@ -69,21 +57,7 @@ function submit() {
     <form class="dialog-form" data-test="intervention-form" @submit.prevent="submit">
       <UiInlineError v-if="error" data-test="timeline-dialog-error">{{ error }}</UiInlineError>
 
-      <UiField v-model="type" label="Tipo" as="select" :options="TYPES" data-test="intervention-type" />
-      <UiField v-if="fields.potSize" v-model="potSize" label="Maceta" help="Por ejemplo, «12 cm»." data-test="intervention-pot-size" />
-      <UiField
-        v-if="fields.soilMix"
-        v-model="soilMixId"
-        label="Mezcla de sustrato"
-        as="select"
-        placeholder="Elige una mezcla"
-        :options="soilMixes.map((mix) => ({ value: mix.id, label: mix.name }))"
-        :error="mixError"
-        error-test="intervention-mix-error"
-        data-test="intervention-soil-mix"
-      />
-      <UiField v-if="fields.product" v-model="product" label="Producto" data-test="intervention-product" />
-      <UiField v-model="notes" label="Notas" as="textarea" :rows="3" data-test="intervention-notes" />
+      <InterventionFields v-model="values" :soil-mixes="soilMixes" :mix-error="mixError" />
       <UiField
         v-model="occurredAt"
         label="Fecha"

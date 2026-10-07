@@ -55,6 +55,10 @@ const work = useRelatedTasks(() => ({ location: id, includeDescendants: true }))
 const alertsHere = useRelatedAlerts(() => ({ location: id, includeDescendants: true }))
 const taskWorkflow = useTaskWorkflow(() => work.load())
 
+/** Registrar una lectura, una intervención o un comentario en todas las plantas de aquí: el alcance es esta localización. */
+const batchOpen = ref(false)
+const batchScope = computed(() => ({ kind: 'location' as const, locationId: id, includeDescendants: false }))
+
 const location = ref<LocationDetail | null>(null)
 const plants = ref<PageResponse<PlantSummary> | null>(null)
 const plantsLoading = ref(false)
@@ -273,6 +277,9 @@ const asPlant = (row: unknown) => row as PlantSummary
           <UiButton :to="`/locations/${id}/edit`" data-test="edit-location">Editar localización</UiButton>
           <UiButton variant="secondary" data-test="create-task" @click="taskWorkflow.openCreate({ locationId: id })">
             Crear tarea aquí
+          </UiButton>
+          <UiButton v-if="plantTotal > 0" variant="secondary" data-test="batch-here" @click="batchOpen = true">
+            Registrar en toda la localización
           </UiButton>
           <UiButton variant="secondary" data-test="remove-location" @click="confirming = true">
             Retirar
@@ -498,6 +505,15 @@ const asPlant = (row: unknown) => row as PlantSummary
       </UiDetailLayout>
 
       <TaskDialogs :workflow="taskWorkflow" />
+      <BatchDialog
+        :open="batchOpen"
+        action="reading"
+        choose-action
+        :descendants-choice="children.length > 0"
+        :scope="batchScope"
+        @done="batchOpen = false"
+        @close="batchOpen = false"
+      />
 
       <LocationMoveDialog
         :open="moveOpen"

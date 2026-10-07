@@ -159,3 +159,27 @@ Un lote SHALL aplicarse a un **alcance**, que SHALL ser exactamente uno de: una 
 
 - **WHEN** se aplica un lote a 1.500 plantas
 - **THEN** se completa en una sola transacción con un registro por planta
+
+### Requirement: Una lectura de lote evalúa las alertas como cualquier lectura
+
+Cada lectura creada por un lote SHALL pasar por la **detección de medición** de las alertas, en la misma transacción que la escribe, igual que una lectura individual: una medida de humedad, temperatura o luz fuera del rango efectivo de **esa planta** SHALL abrir o actualizar su alerta. Una lectura dentro de rango SHALL NOT abrir nada, una planta excluida SHALL NOT recibir alerta, y un lote rechazado SHALL NOT dejar ninguna.
+
+#### Scenario: Fuera de rango en cada planta
+
+- **WHEN** se registra por lote una temperatura de 2 °C en 3 plantas cuyo mínimo es mayor
+- **THEN** cada una de las 3 tiene su alerta abierta
+
+#### Scenario: Dentro de rango
+
+- **WHEN** la lectura de lote está dentro del rango de cada planta
+- **THEN** no se abre ninguna alerta
+
+#### Scenario: Una excluida
+
+- **WHEN** una planta se excluye del lote
+- **THEN** no recibe alerta
+
+#### Scenario: Un lote rechazado
+
+- **WHEN** el lote se rechaza por una lectura inválida
+- **THEN** no queda ninguna alerta

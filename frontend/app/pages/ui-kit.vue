@@ -27,6 +27,7 @@ const dialogOpen = ref(false)
 const tab = ref('resumen')
 const group = ref<string | null>('sun')
 const menuChoice = ref<string | null>(null)
+const bannerAll = ref(false)
 const ROW_ACTIONS = [
   { id: 'edit', label: 'Editar' },
   { id: 'skip', label: 'Omitir' },
@@ -302,6 +303,16 @@ const SEARCH_GROUPS = [
 
     <section class="gallery__section">
       <h2>Datos</h2>
+      <!-- El aviso de una tabla con selección: ofrece ampliar a todo el resultado y, ampliado, volver a la página. -->
+      <UiSelectionBanner
+        :page-count="25"
+        :total="486"
+        :all-selected="bannerAll"
+        @select-all="bannerAll = true"
+        @clear="bannerAll = false"
+      />
+      <UiSelectionBanner :page-count="25" :total="25" :all-selected="false" />
+      <p class="note">Selección ampliada: {{ bannerAll ? 'sí' : 'no' }} · el segundo aviso no se muestra: no hay más resultados que filas.</p>
       <!-- Las tres posiciones del recorrido: primera, intermedia y última. -->
       <UiPagination :page="0" :total-pages="7" />
       <UiPagination v-model:page="galleryPage" :total-pages="7" />

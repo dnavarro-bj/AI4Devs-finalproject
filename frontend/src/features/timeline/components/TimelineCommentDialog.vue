@@ -47,15 +47,7 @@ function submit() {
     <form class="dialog-form" data-test="comment-form" @submit.prevent="submit">
       <UiInlineError v-if="error" data-test="timeline-dialog-error">{{ error }}</UiInlineError>
 
-      <UiField
-        v-model="text"
-        label="Comentario"
-        as="textarea"
-        :rows="4"
-        :error="textError"
-        error-test="comment-text-error"
-        data-test="comment-text"
-      />
+      <CommentFields v-model="text" :error="textError" />
       <UiField
         v-if="!entry"
         v-model="occurredAt"

@@ -781,3 +781,178 @@ describe('atención de cada ejemplar en el inventario', () => {
     expect(row.text()).not.toContain('T-23')
   })
 })
+
+/**
+ * Requirements «Acciones por lote en la selección del inventario» y «Diálogo de lote con el alcance
+ * declarado» (`plant-dashboard`): lo seleccionado se registra de una vez, y «todo el resultado» es
+ * la consulta del inventario, no una lista de identificadores.
+ */
+describe('acciones por lote del inventario', () => {
+  beforeEach(() => {
+    api.get.mockReset()
+    api.post.mockReset()
+    api.put.mockReset()
+  })
+
+  const plant = (id: string, nickname: string): PlantSummary => ({
+    id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
+    nickname,
+    createdAt: '2026-09-01T10:00:00Z',
+    location: { id: '300001', name: 'Invernadero 1' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+  })
+
+  /** `total` es el de todos los resultados; `content`, lo que cabe en la página. */
+  function serve(content: PlantSummary[], total = content.length) {
+    api.get.mockImplementation(async (path: string) => (path === '/locations'
+      ? { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      : { content, totalElements: total, totalPages: Math.ceil(total / 25) || 1, pageNumber: 0, pageSize: 25 }))
+    api.post.mockImplementation(async (path: string) => (path === '/batches/preview' ? { count: total } : {}))
+  }
+
+  const flush = async () => { for (let i = 0; i < 4; i++) await settle() }
+
+  async function openWithRows(content: PlantSummary[], total = content.length, route = '/plants') {
+    serve(content, total)
+    const wrapper = await mountSuspended(PlantsIndex, { route })
+    await flush()
+    return wrapper
+  }
+
+  const previewCalls = () => api.post.mock.calls.filter(([path]) => path === '/batches/preview')
+
+  it('la barra ofrece las tres acciones de lote y crear tarea, con el número de la selección', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos'), plant('3', 'Bola azul')])
+
+    expect(wrapper.find('[data-test="bulk-reading"]').exists()).toBe(false)
+    const boxes = wrapper.findAll('tbody input[type="checkbox"]')
+    await boxes[0]!.setValue(true)
+    await boxes[2]!.setValue(true)
+
+    expect(wrapper.find('[data-test="bulk-reading"]').text()).toBe('Registrar lectura (2)')
+    expect(wrapper.find('[data-test="bulk-intervention"]').text()).toBe('Registrar intervención (2)')
+    expect(wrapper.find('[data-test="bulk-comment"]').text()).toBe('Añadir comentario (2)')
+    expect(wrapper.find('[data-test="bulk-create-task"]').text()).toContain('2')
+  })
+
+  it('«Mover» y «Etiquetar» siguen marcados como no disponibles', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde')])
+    await wrapper.find('tbody input[type="checkbox"]').setValue(true)
+
+    const bar = wrapper.find('[data-role="bulk-actions"]')
+    const moving = bar.findAll('button').find((button) => button.text() === 'Mover')!
+    const tagging = bar.findAll('button').find((button) => button.text() === 'Etiquetar')!
+    for (const button of [moving, tagging]) {
+      expect(button.attributes('disabled')).toBeDefined()
+      expect(button.attributes('data-mock')).toBe('true')
+    }
+  })
+
+  it('registrar una lectura sobre la selección abre el lote con esas plantas y el número del servidor', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos'), plant('3', 'Bola azul')])
+    api.post.mockImplementation(async (path: string) => (path === '/batches/preview' ? { count: 2 } : {}))
+    const boxes = wrapper.findAll('tbody input[type="checkbox"]')
+    await boxes[0]!.setValue(true)
+    await boxes[2]!.setValue(true)
+
+    await wrapper.find('[data-test="bulk-reading"]').trigger('click')
+    await flush()
+
+    const dialog = wrapper.find('[data-test="batch-dialog"]')
+    expect(dialog.exists()).toBe(true)
+    expect(previewCalls().at(-1)![1]).toEqual({ scope: { kind: 'plants', plantIds: ['1', '3'] } })
+    expect(dialog.find('[data-test="batch-count"]').text()).toContain('Se registrará en 2 plantas')
+    expect(dialog.findAll('[data-test="exclude-plant"]')).toHaveLength(2)
+  })
+
+  it('con la página entera marcada y más resultados, ofrece seleccionar todo el resultado', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')], 486)
+
+    expect(wrapper.find('[data-test="selection-banner"] button').exists()).toBe(false)
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+
+    const banner = wrapper.find('[data-test="selection-banner"]')
+    expect(banner.text()).toContain('Seleccionadas las 2 de esta página')
+    expect(banner.find('button').text()).toBe('Seleccionar los 486 resultados')
+  })
+
+  it('sin más resultados que filas no hay aviso', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')])
+
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+
+    expect(wrapper.find('[data-test="selection-banner"] button').exists()).toBe(false)
+  })
+
+  it('al seleccionar todo el resultado el alcance es la consulta del inventario, no una lista', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')], 486, '/plants?status=cuarentena&q=gruss')
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+    await wrapper.find('[data-test="selection-banner"] button').trigger('click')
+
+    expect(wrapper.find('[data-test="bulk-reading"]').text()).toBe('Registrar lectura (486)')
+
+    await wrapper.find('[data-test="bulk-reading"]').trigger('click')
+    await flush()
+
+    const scope = (previewCalls().at(-1)![1] as { scope: { kind: string, query: string } }).scope
+    expect(scope.kind).toBe('query')
+    expect(scope.query).toContain('status=cuarentena')
+    expect(scope.query).toContain('q=gruss')
+    expect(scope.query).not.toContain('page=')
+    const dialog = wrapper.find('[data-test="batch-dialog"]')
+    expect(dialog.find('[data-test="batch-count"]').text()).toContain('Se registrará en 486 plantas')
+    expect(dialog.find('[data-test="exclude-plant"]').exists()).toBe(false)
+  })
+
+  it('«volver a la página» vuelve a la selección de las filas', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')], 486)
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+    await wrapper.find('[data-test="selection-banner"] button').trigger('click')
+
+    await wrapper.find('[data-test="selection-banner"] button').trigger('click')
+
+    expect(wrapper.find('[data-test="bulk-reading"]').text()).toBe('Registrar lectura (2)')
+  })
+
+  it('crear tarea no admite todo el resultado: una tarea lleva hasta 500 plantas', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')], 486)
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+    await wrapper.find('[data-test="selection-banner"] button').trigger('click')
+
+    expect(wrapper.find('[data-test="bulk-create-task"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('cambiar un filtro vacía la selección y el aviso', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')], 486)
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+    await wrapper.find('[data-test="selection-banner"] button').trigger('click')
+    expect(wrapper.find('[data-role="bulk-actions"]').exists()).toBe(true)
+
+    await wrapper.find('[data-test="filter-location"]').setValue('300001')
+    await flush()
+
+    expect(wrapper.find('[data-role="bulk-actions"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="selection-banner"] button').exists()).toBe(false)
+  })
+
+  it('al terminar un lote la selección se vacía y la tabla se recarga', async () => {
+    const wrapper = await openWithRows([plant('1', 'Bola verde'), plant('2', 'Pinchitos')])
+    api.post.mockImplementation(async (path: string) => (path === '/batches/preview'
+      ? { count: 2 }
+      : { id: '9', action: 'comentario', scopeKind: 'plantas', plantCount: 2, occurredAt: '2026-10-07T10:00:00Z' }))
+    await wrapper.find('thead input[type="checkbox"]').setValue(true)
+    await wrapper.find('[data-test="bulk-comment"]').trigger('click')
+    await flush()
+    const loads = api.get.mock.calls.filter(([path]) => path === '/plants').length
+
+    await wrapper.find('[data-test="comment-text"]').setValue('movidas por el frío')
+    await wrapper.find('[data-test="batch-confirm"]').trigger('click')
+    await flush()
+
+    expect(api.post.mock.calls.some(([path]) => path === '/batches')).toBe(true)
+    expect(wrapper.find('[data-test="batch-dialog"]').exists()).toBe(false)
+    expect(wrapper.find('[data-role="bulk-actions"]').exists()).toBe(false)
+    expect(api.get.mock.calls.filter(([path]) => path === '/plants').length).toBeGreaterThan(loads)
+  })
+})

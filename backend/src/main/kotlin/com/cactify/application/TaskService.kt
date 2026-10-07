@@ -122,6 +122,7 @@ class TaskService(
   private val careRecordRepository: CareRecordRepository,
   private val soilMixRepository: SoilMixRepository,
   private val alertRepository: AlertRepository,
+  private val alertDetection: AlertDetectionService,
   private val clock: Clock,
   @Value("\${cactify.care-records.max-future-skew}") private val maxFutureSkew: Duration,
 ) {
@@ -232,7 +233,8 @@ class TaskService(
     included.chunked(CHUNK).forEach { chunk ->
       plantRepository.findAllWithLocationByIdIn(chunk).forEach { plant ->
         eventRepository.save(PlantTaskEvent.record(plant, task, completedAt, clock, maxFutureSkew))
-        request.reading?.let { careRecordRepository.save(it.toRecord(plant, completedAt, task)) }
+        // La lectura de una tarea se evalúa como cualquier otra: fuera de rango abre su alerta (T-23).
+        request.reading?.let { alertDetection.onReading(careRecordRepository.save(it.toRecord(plant, completedAt, task))) }
         request.intervention?.let { eventRepository.save(it.toIntervention(plant, mix, completedAt, task)) }
       }
     }

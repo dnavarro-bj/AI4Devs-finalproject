@@ -32,6 +32,7 @@ import { plantsDraft, plantsRouteQuery } from '@features/views/mappers/viewState
 import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
 import type { SavedView } from '@features/views/types/view.types'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
+import type { BatchActionKind, BatchPlant, BatchScope } from '@features/batches/types/batch.types'
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
 import { severityMarkLevel } from '@features/alerts/mappers/alert.mapper'
 import { ALERT_SEVERITY_LABELS } from '@features/alerts/types/alert.types'
@@ -135,23 +136,70 @@ const moreFiltersOpen = ref(false)
 const selected = ref<string[]>([])
 
 /**
- * «Crear tarea» sobre la selección. La tabla solo tiene delante una página (ADR-009), así que la
- * selección vale para **esa página**: las plantas se toman de las filas visibles, no de una lista
- * que envejece. Elegir **todo el resultado filtrado** es trabajo por lote y lo estrena T-24.
+ * La selección vale para **la página**: las plantas se toman de las filas visibles, no de una lista
+ * que envejece. Con la página entera marcada y más resultados que filas, se puede **ampliar a todo
+ * el resultado**: entonces el alcance deja de ser una lista y pasa a ser la consulta del inventario
+ * —una cadena, no cientos de identificadores—.
  */
-const taskWorkflow = useTaskWorkflow(() => { selected.value = [] })
+const allResults = ref(false)
+const chosen = computed(() => (page.value?.content ?? []).filter((plant) => selected.value.includes(plant.id)))
+const pageAllSelected = computed(() => Boolean(page.value?.content.length) && chosen.value.length === page.value!.content.length)
+const bulkCount = computed(() => (allResults.value ? page.value?.totalElements ?? 0 : chosen.value.length))
+const showBanner = computed(() => allResults.value || pageAllSelected.value)
+
+// Si ya no está marcada toda la página, «todo el resultado» deja de ser lo que se ve.
+watch(pageAllSelected, (all) => { if (!all) allResults.value = false })
+
+function clearSelection() {
+  selected.value = []
+  allResults.value = false
+}
+
+/** «Crear tarea» sobre la selección de la página. Una tarea admite hasta 500 plantas, no «todo el resultado». */
+const taskWorkflow = useTaskWorkflow(clearSelection)
 
 function createTaskFromSelection() {
-  const chosen = (page.value?.content ?? []).filter((plant) => selected.value.includes(plant.id))
-  if (!chosen.length) return
+  if (!chosen.value.length) return
   taskWorkflow.openCreate({
-    plants: chosen.map((plant) => ({
+    plants: chosen.value.map((plant) => ({
       id: plant.id,
       code: plant.code,
       nickname: plant.nickname,
       detail: `${plant.species.scientificName} · ${plant.location.name}`,
     })),
   })
+}
+
+/** El lote que se está abriendo: su alcance se fija **al abrir**, no sigue a la selección. */
+const batchDialog = reactive({
+  open: false,
+  action: 'reading' as BatchActionKind,
+  scope: null as BatchScope | null,
+  plants: [] as BatchPlant[],
+})
+
+function openBatch(action: BatchActionKind) {
+  if (allResults.value) {
+    batchDialog.scope = { kind: 'query', query: plantsDraft(toUrlQuery(URL_SCHEMA, state), viewContext).query }
+    batchDialog.plants = []
+  } else {
+    if (!chosen.value.length) return
+    batchDialog.scope = { kind: 'plants', plantIds: chosen.value.map((plant) => plant.id) }
+    batchDialog.plants = chosen.value.map((plant) => ({
+      id: plant.id,
+      code: plant.code,
+      nickname: plant.nickname,
+      detail: `${plant.species.scientificName} · ${plant.location.name}`,
+    }))
+  }
+  batchDialog.action = action
+  batchDialog.open = true
+}
+
+async function onBatchDone() {
+  batchDialog.open = false
+  clearSelection()
+  await load(page.value?.pageNumber ?? 0)
 }
 
 const locationName = computed(
@@ -221,6 +269,9 @@ const request = computed(() => ({
 }))
 
 watch(() => JSON.stringify(request.value), () => load(0))
+
+// Cambiar un filtro cambia el resultado: una selección «de todo el resultado» no puede sobrevivirle. Ordenar no lo cambia.
+watch(() => JSON.stringify({ ...request.value, sort: undefined }), clearSelection)
 
 async function load(pageNumber: number) {
   loading.value = true
@@ -443,6 +494,17 @@ const asPlant = (row: unknown) => row as PlantSummary
       </label>
     </div>
 
+    <!-- Solo con la página entera marcada (o ya ampliada): una selección a medias no ofrece ampliar nada. -->
+    <UiSelectionBanner
+      v-if="page?.content.length"
+      :page-count="chosen.length"
+      :total="showBanner ? page.totalElements : 0"
+      :all-selected="allResults"
+      data-test="selection-banner"
+      @select-all="allResults = true"
+      @clear="allResults = false"
+    />
+
     <p v-if="loading" data-test="loading" role="status">Cargando el inventario…</p>
 
     <UiInlineError v-else-if="error" data-test="error">{{ error }}</UiInlineError>
@@ -484,9 +546,20 @@ const asPlant = (row: unknown) => row as PlantSummary
       :visible-columns="visibleColumns"
       @update:sort="onSort"
     >
-      <template #bulk-actions="{ count }">
-        <!-- Crear tarea sobre la selección de la página ya funciona; mover y etiquetar, y elegir todo el resultado, llegan con T-24. -->
-        <UiButton variant="secondary" data-test="bulk-create-task" @click="createTaskFromSelection">Crear tarea ({{ count }})</UiButton>
+      <template #bulk-actions>
+        <UiButton variant="secondary" data-test="bulk-reading" @click="openBatch('reading')">Registrar lectura ({{ bulkCount }})</UiButton>
+        <UiButton variant="secondary" data-test="bulk-intervention" @click="openBatch('intervention')">Registrar intervención ({{ bulkCount }})</UiButton>
+        <UiButton variant="secondary" data-test="bulk-comment" @click="openBatch('comment')">Añadir comentario ({{ bulkCount }})</UiButton>
+        <UiButton
+          variant="secondary"
+          :disabled="allResults"
+          :title="allResults ? 'Una tarea admite hasta 500 plantas: selecciona las de la página.' : undefined"
+          data-test="bulk-create-task"
+          @click="createTaskFromSelection"
+        >
+          Crear tarea ({{ allResults ? chosen.length : bulkCount }})
+        </UiButton>
+        <!-- Mover y etiquetar por lote no están en T-24: mover desde la ficha de una localización ya existe (T-18). -->
         <UiButton variant="secondary" disabled data-mock="true">Mover</UiButton>
         <UiButton variant="secondary" disabled data-mock="true">Etiquetar</UiButton>
       </template>
@@ -540,6 +613,14 @@ const asPlant = (row: unknown) => row as PlantSummary
     </UiTable>
 
     <TaskDialogs :workflow="taskWorkflow" />
+    <BatchDialog
+      :open="batchDialog.open"
+      :action="batchDialog.action"
+      :scope="batchDialog.scope"
+      :plants="batchDialog.plants"
+      @done="onBatchDone"
+      @close="batchDialog.open = false"
+    />
 
     <UiListFooter
       v-if="page?.content.length"

@@ -41,6 +41,7 @@ abstract class AbstractApiIntegrationTest : AbstractIntegrationTest() {
     jdbcTemplate.update("DELETE FROM plant_tag")
     jdbcTemplate.update("DELETE FROM plant_movement")
     jdbcTemplate.update("DELETE FROM plant_event")
+    jdbcTemplate.update("DELETE FROM batch")
     jdbcTemplate.update("DELETE FROM task_plant")
     jdbcTemplate.update("DELETE FROM task")
     jdbcTemplate.update("DELETE FROM plant")

@@ -26,6 +26,7 @@ class CareRecord private constructor(
   soilPh: BigDecimal?,
   recordedAt: Instant,
   task: Task? = null,
+  batch: Batch? = null,
 ) : AbstractEntity<CareRecordId>() {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -58,6 +59,12 @@ class CareRecord private constructor(
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "task_id", updatable = false)
   var task: Task? = task
+    private set
+
+  /** El lote con el que se registró, si lo hay. Solo lo asigna un lote (T-24); nunca cambia después. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "batch_id", updatable = false)
+  var batch: Batch? = batch
     private set
 
   init {
@@ -96,6 +103,7 @@ class CareRecord private constructor(
       clock: Clock,
       maxFutureSkew: Duration,
       task: Task? = null,
+      batch: Batch? = null,
     ): CareRecord {
       val stamped = (recordedAt ?: clock.instant()).truncatedTo(ChronoUnit.MICROS)
       require(!stamped.isAfter(clock.instant().plus(maxFutureSkew))) {
@@ -110,6 +118,7 @@ class CareRecord private constructor(
         soilPh = soilPh,
         recordedAt = stamped,
         task = task,
+        batch = batch,
       )
     }
   }

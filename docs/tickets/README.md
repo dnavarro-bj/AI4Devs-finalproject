@@ -66,7 +66,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 |----|--------|------|--------|
 | [T-22](T-22-tareas.md) | Tareas: creación, agenda y finalización | Backend + Frontend | Archivado |
 | [T-23](T-23-alertas.md) | Alertas con ciclo de vida | Backend + Frontend | Archivado |
-| [T-24](T-24-dashboard-operativo-y-trabajo-por-lote.md) | Dashboard operativo y trabajo por lote | Backend + Frontend | Pendiente |
+| [T-24](T-24-dashboard-operativo-y-trabajo-por-lote.md) | Dashboard operativo y trabajo por lote | Backend + Frontend | En curso (1 de 2) |
 | [T-29](T-29-importar-exportar-y-configuracion.md) | Importar, exportar y configuración | Backend + Frontend | Pendiente |
 
 ## Cierre

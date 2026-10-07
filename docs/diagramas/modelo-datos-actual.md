@@ -29,6 +29,8 @@ erDiagram
     PLANT ||--o{ TASK_PLANT : "es destino de"
     TASK ||--o{ PLANT_TASK_EVENT : "deja"
     TASK ||--o{ CARE_RECORD : "origina"
+    BATCH ||--o{ CARE_RECORD : "agrupa"
+    BATCH ||--o{ PLANT_EVENT : "agrupa"
     TASK ||--o{ PLANT_INTERVENTION : "origina"
     SOIL_MIX ||--o{ PLANT_INTERVENTION : "cambio de sustrato"
     TAG ||--o{ PLANT_TAG : "se asigna en"
@@ -129,6 +131,14 @@ erDiagram
         timestamp occurredAt
     }
 
+    BATCH {
+        TSID id PK
+        string action "lectura, intervencion, comentario"
+        string scope_kind "plantas, localizacion, consulta"
+        int plant_count "plantas realmente afectadas"
+        timestamptz occurred_at
+    }
+
     TASK {
         TSID id PK
         string type "riego, proteccion_frio, proteccion_sol, poda_raices, cambio_maceta, otra"
@@ -193,7 +203,7 @@ erDiagram
         TSID plantId FK
         enum eventType "comentario|intervencion|floracion|tarea"
         timestamp occurredAt
-        TSID batchId "opcional; nadie lo escribe aun (T-24)"
+        TSID batchId FK "opcional; lo asigna solo un lote"
     }
 
     PLANT_COMMENT {
@@ -265,6 +275,7 @@ erDiagram
 * **Alertas (`V16`).** `alert` es una incidencia con ciclo de vida (`nueva → revisada → resuelta | descartada`) sobre **una planta o una localización** (`CHECK` de exactamente una). Una alerta **abierta** por planta o localización, origen y categoría la defienden **dos índices únicos parciales** (las manuales quedan fuera): una nueva detección no abre otra, suma una ocurrencia, actualiza `last_detected_at` y puede subir la severidad, nunca bajarla. `alert_transition` es el historial, con **la apertura como primera fila** (`from_status` nulo); la cronología del ejemplar la lee ahí, sin copiarla a `plant_event`. `task.origin_alert_id` enlaza una tarea con la alerta que la originó: una alerta puede tener varias. Las lecturas anteriores a la migración no se reevalúan.
 * **Cronología del ejemplar (`V13`).** La espina `plant_event` solo recibe los tres tipos nuevos —comentario, intervención y floración— con un satélite por tipo, clave compartida y borrado en cascada. **Se desvía del borrador**: las lecturas, los cambios de estado y los movimientos **no** se copian a la espina; `GET /plants/{id}/timeline` los une al leer con una consulta `UNION ALL` paginada, de modo que cada tabla sigue siendo la fuente de su verdad y no hay doble escritura. Cada intervención admite solo sus datos (maceta en el trasplante, mezcla en el cambio de sustrato, producto en tratamiento y **fertilización**, que es una intervención y no un insumo de `care_record`) y lo repiten `CHECK`s. Una floración es un intervalo que puede seguir abierta: `finalizada` si y solo si tiene fin, y su instante en la cronología es su inicio a las 00:00 UTC. `batch_id` existe sin nadie que lo escriba, para que T-24 no migre la espina. La migración no fabrica eventos.
 * **Tareas (`V15`).** `task` es una **intención**, no un cuidado: crearla no escribe nada en el historial. El destino es **una localización o un conjunto de 1 a 500 plantas expresas** (`task_plant`, clave compuesta), nunca los dos —regla de conjunto en el dominio—; una tarea de localización **no guarda plantas**: su alcance se calcula al completar con las del momento. El periodo son dos fechas de calendario (`due_from`, `due_to`; un día es inicio = fin), sin hora, y «vencida» **no se almacena**: es una tarea pendiente cuyo fin ya pasó respecto a la fecha que declara el cliente. Completar escribe, en una transacción, **un evento `tarea` por planta incluida** (`plant_task_event`, satélite de `plant_event`) y, si se pide, el hecho concreto —lectura o intervención— con `task_id` enlazado; omitir y cancelar no escriben nada y conservan la tarea. `affected_plants` solo existe en las completadas. No hay `DELETE`: lo planificado se conserva. `plant_event.batch_id` sigue sin escribirse (T-24).
+* **Lotes (`V17`).** Una acción por lote escribe **un registro por planta** en una transacción, todos con el mismo instante y el mismo `batch_id`, más **una fila `batch`**: el tipo de acción, el tipo de alcance, el número **real** de plantas y el instante. **No se guardan los ids de las plantas**: están en los eventos. `plant_event.batch_id` —que T-20 dejó sin escribir y sin clave foránea— gana su FK, y `care_record` gana `batch_id` con la suya e índice parcial. La FK es sin cascada: borrar un registro de un lote no toca la operación, cuyo `plant_count` es lo que se hizo y no lo que sobrevive. Solo `BatchService` asigna el lote.
 * **`care_record` exige al menos una de sus cinco medidas.** Una lectura completamente vacía se rechaza con `400`; es una regla deliberada y su revisión está atada a la ingesta automática, no antes.
 * **Los enums (`riskLevel`, `priority`) se persisten por su `value` explícito** con un `AttributeConverter`, nunca con `@Enumerated` ([ADR-007](../adr/ADR-007-enums-de-dominio.md)).
 

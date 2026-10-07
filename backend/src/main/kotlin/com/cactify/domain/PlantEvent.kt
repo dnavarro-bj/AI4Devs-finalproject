@@ -35,6 +35,7 @@ abstract class PlantEvent(
   @JoinColumn(name = "plant_id", nullable = false, updatable = false)
   open val plant: Plant,
   occurredAt: Instant,
+  batch: Batch? = null,
 ) : AbstractEntity<PlantEventId>() {
 
   // `open`: PlantEvent es la única entidad no final (las subclases sí lo son) y Hibernate no puede
@@ -43,9 +44,13 @@ abstract class PlantEvent(
   open var occurredAt: Instant = occurredAt.truncatedTo(ChronoUnit.MICROS)
     protected set
 
-  /** La operación única que lo originó cuando se aplicó a varias plantas. Nadie la escribe todavía (T-24). */
-  @Column(name = "batch_id", updatable = false, insertable = false)
-  open var batchId: Long? = null
+  /**
+   * La operación única que lo originó cuando se aplicó a varias plantas. **Solo un lote la asigna**
+   * (T-24): las altas directas y las de una tarea no la llevan. Nunca cambia después.
+   */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "batch_id", updatable = false)
+  open var batch: Batch? = batch
     protected set
 
   protected companion object {

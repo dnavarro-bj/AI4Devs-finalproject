@@ -77,20 +77,26 @@ Funcionalidades construidas y utilizables en esta entrega:
 
 * **Catálogo de especies**: cada especie tiene una ficha con sus rangos de cuidado recomendados (humedad, temperatura, horas de luz, frecuencia orientativa de riego) y una mezcla de tierra (soil mix) recomendada. Esta base de conocimiento es determinista, no generada por IA.
 * **Catálogo de mezclas de tierra (soil mix)**: mezclas reutilizables definidas por su proporción de componente orgánico y mineral (deben sumar 100%), para poder asociarlas a una o varias especies.
-* **Catálogo de localizaciones**: listado plano y reutilizable de ubicaciones (p. ej. "Invernadero 1", "Bandeja A3"), para asociarlas a las plantas sin depender de texto libre. No es jerárquico en el MVP (ver evolución futura en [F.1](docs/user-stories/F.1-organizar-cactus-por-ubicacion-jerarquica.md)).
+* **Catálogo de localizaciones jerárquicas**: ubicaciones reutilizables que se contienen unas a otras (p. ej. "Invernadero 1 / Bancada norte / Bandeja A3"), con movimientos de ejemplares por lote ([F.1](docs/user-stories/F.1-organizar-cactus-por-ubicacion-jerarquica.md)).
 * **Catálogo de tags**: etiquetas reutilizables (p. ej. "globular", "pequeño", "sin espinas", "híbrido") asignables a varias plantas, para poder filtrar y buscar la colección de forma sencilla.
 * **Inventario de plantas**: alta de cactus asociados a una especie y a una localización, con herencia de los cuidados recomendados de su especie.
 * **Registro de lecturas/cuidados**: introducción manual de humedad, temperatura, horas de luz, acidez del sustrato y cantidad de riego, asociadas a una planta y con fecha/hora automática.
 * **Recomendaciones con IA**: la IA recibe la especie, la última lectura, el último riego y las desviaciones respecto a los rangos recomendados, y genera un nivel de riesgo, una explicación breve, una acción recomendada y una prioridad de actuación. La IA no decide de forma autónoma ni se "inventa" los rangos de cuidado: estos provienen de la ficha de la especie y la IA solo interpreta esos datos.
 * **Historial**: consulta de lecturas, riegos y recomendaciones de IA ordenadas por fecha, accesible desde la ficha de cada planta.
 * **Administración de catálogos**: alta, consulta, edición y retirada de especies, mezclas y localizaciones; las etiquetas se pueden renombrar, retirar o combinar sin perder asignaciones.
-* **Aplicación de administración**: navegación lateral, breadcrumbs, búsqueda global con datos de ejemplo, estados de carga/error/vacío y pantallas de inventario y catálogos fieles al wireframe.
-* **Sistema de diseño propio**: 53 componentes públicos reutilizables, documentados en la galería viva `/ui-kit`, incluidos tabla, filtros, paginación, árbol, cronología, agenda, calendario, diálogo y patrones multimedia (`UiTreeNode` es una pieza interna del árbol y no se cuenta aparte).
+* **Aplicación de administración**: navegación lateral, breadcrumbs, estados de carga/error/vacío y pantallas de inventario y catálogos fieles al wireframe.
+* **Inventario a escala (T-21)**: búsqueda por código, apodo o especie, filtros combinables y orden por claves públicas, con el estado de la pantalla en la URL; **vistas guardadas** (filtros, orden y columnas) y **grupos dinámicos de especies**; **buscador global** real sobre plantas, especies, localizaciones y etiquetas; y **exportación a CSV** del resultado filtrado.
+* **Tareas (T-22)**: agenda, calendario y completadas con tareas de uno o varios ejemplares o de una localización. Una tarea es una intención, no un cuidado: al **completarla** se muestra el alcance exacto, se pueden excluir excepciones y cada planta incluida recibe su evento (y, si se quiere, el registro de agua, trasplante o poda).
+* **Alertas con ciclo de vida (T-23)**: detección por rango efectivo, por tiempo sin revisar y por cuidado vencido, con bandeja, escalada sin duplicados y tarea desde la alerta.
+* **Trabajo por lote (T-24, primera mitad)**: registrar una lectura (riego), una intervención o un comentario en todas las plantas seleccionadas, de una localización o del resultado de un filtro, con el **número exacto de plantas declarado antes de guardar** y la operación visible en la cronología de cada ficha.
+* **Sistema de diseño propio**: más de 50 componentes públicos reutilizables, documentados en la galería viva `/ui-kit`, incluidos tabla, filtros, paginación, árbol, cronología, agenda, calendario, diálogo y patrones multimedia (`UiTreeNode` es una pieza interna del árbol y no se cuenta aparte).
 
 La visión completa del producto —incluidos personalización por ejemplar, fotografías, tareas,
 alertas con ciclo de vida, localizaciones jerárquicas e inventario a escala— está documentada en
-[la definición funcional y de UX](docs/producto/definicion-funcional-y-ux.md). Esos módulos forman
-parte del producto objetivo, pero no se presentan como implementados en esta entrega.
+[la definición funcional y de UX](docs/producto/definicion-funcional-y-ux.md). Buena parte ya está
+construida (ver arriba); **siguen pendientes** las fotografías (T-19), el Dashboard operativo
+completo (T-24, segunda mitad) y la importación y la configuración (T-29), y no se presentan como
+implementados.
 
 **Explícitamente fuera del alcance del MVP** (quedan documentadas como evolución futura del producto, no como parte de esta entrega):
 
@@ -235,7 +241,7 @@ trade-offs quedan registradas en [los ADR](docs/adr/README.md).
 
 ### **2.2. Descripción de componentes principales:**
 
-* **Frontend**: Nuxt 4, Vue 3 y Pinia. Está organizado por features y consume el API desde el cliente. La presentación usa CSS propio gobernado por tokens y 53 componentes públicos `Ui*`; no usa Tailwind ni otra librería de estilos.
+* **Frontend**: Nuxt 4, Vue 3 y Pinia. Está organizado por features y consume el API desde el cliente. La presentación usa CSS propio gobernado por tokens y más de 50 componentes públicos `Ui*`; no usa Tailwind ni otra librería de estilos.
 * **Backend**: Kotlin 2.3 sobre Java 21 y Spring Boot 3.5, con Spring Web, Bean Validation, Spring Data JPA y Flyway.
 * **Base de datos**: PostgreSQL 16. Los tests de integración usan también PostgreSQL real mediante Testcontainers, no una base en memoria.
 * **IA**: adaptador dedicado para OpenAI. El dominio entrega contexto estructurado y el proveedor devuelve una recomendación; la respuesta se valida y persiste, y una recomendación ya creada no vuelve a generar coste.
@@ -396,6 +402,24 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 * **Detección:** al registrar una lectura se comparan humedad, temperatura y luz con el **rango efectivo del ejemplar**; la IA (riesgo `high`/`medium`) enriquece la alerta de la lectura o abre una; un proceso programado diario abre `sin_revisar` y `cuidado_vencido`. **Una alerta abierta por condición**: las repeticiones suman ocurrencias, actualizan la última detección y escalan la severidad (nunca bajan). Una alerta nunca se cierra sola. Umbrales en `cactify.alerts.*`.
 * `POST /tasks` admite `originAlertId`; completar una tarea con alerta de origen abierta devuelve `suggestedAlertResolution`. La cronología gana el tipo `alerta`; las localizaciones traen `openAlerts` y las filas del inventario `attention`.
 
+**Task** (tarea: trabajo planificado, no un cuidado realizado)
+
+* `type` (`riego`, `proteccion_frio`, `proteccion_sol`, `poda_raices`, `cambio_maceta`, `otra`), `title`, `priority` (`alta`, `normal`, `baja`), `notes` y `origin` (`manual`, o `alerta` si nació de una).
+* **Periodo en días, sin hora**: `dueFrom` y `dueTo` (un día exacto es inicio = fin). **«Vencida» no se almacena**: es una tarea pendiente cuyo fin ya pasó respecto a la fecha que declara el cliente (`?due=overdue&today=`).
+* **Destino exclusivo**: una localización (`locationId`) **o** de 1 a 500 plantas expresas (`task_plant`). El alcance de una tarea de localización es **el del momento de completar**: `GET /tasks/{id}/scope` lo pagina.
+* Estado `pendiente → completada | omitida | cancelada`; solo se edita una pendiente y no hay `DELETE`. `POST /tasks/{id}/complete` escribe, en una transacción con la tarea bloqueada, **un evento `tarea` por planta incluida** (ninguno por las excluidas) y, opcionalmente, una lectura o intervención enlazada con `task_id`; omitir y cancelar no escriben nada.
+* `GET /tasks` (paginado; `status`, `type`, `priority` y `species` repetibles, `q`, `from`/`to`, `due`, `location` con `includeDescendants`, `plant` —incluye la localización de la planta y sus ascendientes—, orden `due|createdAt|title`). Las localizaciones traen `pendingTasks`.
+
+**Batch** (una operación por lote: una acción aplicada a muchas plantas a la vez)
+
+* `action` (`lectura`, `intervencion`, `comentario`), `scopeKind` (`plantas`, `localizacion`, `consulta`), `plantCount` —el número **real** de plantas— y `occurredAt`. No guarda los ids de las plantas: cada planta afectada tiene su registro con el mismo `batch_id`.
+* `POST /batches/preview` devuelve cuántas plantas afectaría un alcance; `POST /batches` aplica **una** de `reading`, `intervention` o `comment` en una sola transacción a una lista de plantas, a una localización o a **una consulta del inventario**, con exclusiones opcionales. Solo cuentan las plantas en curso y por encima de `BATCH_MAX_PLANTS` (2.000) responde `422`: nunca trunca. La lectura de un lote abre alertas como cualquier otra. La cronología trae `batchId` y `batchSize`.
+
+**SavedView** (consulta guardada con nombre: vista del inventario o grupo de especies)
+
+* `scope` (`plants`, `species`), `name` (único por ámbito, sin distinguir mayúsculas), `query` —la *query string* del listado en forma canónica— y, solo en `plants`, `columns`. `POST/GET /saved-views`, `GET/PUT/DELETE /saved-views/{id}`.
+* La consulta **se valida con el mismo código que el listado**: una vista no puede quedar guardada inservible. Un grupo de especies **se evalúa, no se almacena**: `matchCount` es el número de especies que cumplen hoy su regla.
+
 **PlantEvent** (comentario, intervención o floración observada de un ejemplar; cronología del ejemplar)
 
 * Espina `plant_event` (`plantId`, `eventType`, `occurredAt`, `batchId` opcional) con tres satélites. **Las lecturas, los cambios de estado y los movimientos no se copian**: `GET /plants/{id}/timeline` los une al leer. Paginada, del más reciente al más antiguo (desempate por id), con `?type=` repetible (`lectura`, `cambio_estado`, `movimiento`, `comentario`, `intervencion`, `floracion`) aplicado **antes** de paginar; un tipo desconocido es `400`. Cada entrada trae `id`, `type`, `occurredAt`, `batchId?` y un solo detalle (`reading`, `statusChange`, `movement`, `comment`, `intervention`, `bloom`).
@@ -469,7 +493,7 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 ### Convenciones transversales
 
-Tres reglas aplican a **todos** los endpoints:
+Tres reglas aplican a **todos** los endpoints (y los listados siguen además una convención de filtros y orden, [ADR-016](docs/adr/ADR-016-filtros-y-orden-en-los-listados.md): parámetros planos, repetible = cualquiera de los valores, `sort=<clave pública>,<dir>` y `400` ante lo desconocido; `GET /plants/export` y `GET /species/export` devuelven el mismo resultado como CSV, [ADR-017](docs/adr/ADR-017-exportacion-a-csv.md)):
 
 * **Identificadores como cadena**: en las respuestas y en los cuerpos de petición, los `id` son cadenas decimales (`"882687672222443468"`), nunca números JSON — un TSID supera `2^53` y un cliente JavaScript lo redondearía en silencio ([ADR-008](docs/adr/ADR-008-identificadores-tipados.md)).
 * **Listados siempre paginados** ([ADR-009](docs/adr/ADR-009-paginacion-obligatoria.md)). Admiten `?page=` y `?size=`, y devuelven el mismo envelope. El tamaño por defecto (25) y el máximo (500) se configuran por variable de entorno (`PAGE_SIZE_DEFAULT`, `PAGE_SIZE_MAX`); un `size` por encima del máximo se recorta y la respuesta declara el aplicado:
