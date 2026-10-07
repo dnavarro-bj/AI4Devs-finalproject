@@ -6,7 +6,7 @@ import { speciesCare } from './helpers/fixtures'
 import PlantsIndex from '../app/pages/plants/index.vue'
 import NewPlantPage from '../app/pages/plants/new.vue'
 
-const api = createApiDouble()
+const api = createApiDouble({ savedViews: true })
 mockNuxtImport('getApiClient', () => () => api)
 mockNuxtImport('useRoute', () => () => ({
   params: {},

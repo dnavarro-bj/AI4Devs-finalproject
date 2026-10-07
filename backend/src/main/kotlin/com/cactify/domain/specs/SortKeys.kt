@@ -26,6 +26,25 @@ class SortKeys(private val paths: Map<String, String>) {
     return PageRequest.of(pageable.pageNumber, pageable.pageSize, Sort.by(orders + Sort.Order.asc(TIEBREAK)))
   }
 
+  /**
+   * Comprueba, sin construir un `Pageable`, que unos valores de `sort` (`code,asc`, `species,desc`…)
+   * se podrían servir: lo que el listado rechazaría con `400` lo rechaza también esta función. Sigue
+   * la lectura de Spring: el último elemento es la dirección **si lo es**, y si no, es otra propiedad
+   * (así `code,sideways` falla por «sideways», igual que en el listado).
+   */
+  fun requireValid(values: List<String>) {
+    values.forEach { value ->
+      val parts = value.split(",").map { it.trim() }
+      val last = parts.lastOrNull()
+      val properties = if (parts.size > 1 && last != null && Sort.Direction.fromOptionalString(last).isPresent) parts.dropLast(1) else parts
+      properties.filter { it.isNotEmpty() }.forEach { property ->
+        require(property in paths) {
+          "No se puede ordenar por '$property': las claves admitidas son ${paths.keys.joinToString()}"
+        }
+      }
+    }
+  }
+
   private companion object {
     const val TIEBREAK = "id"
   }
@@ -48,5 +67,13 @@ val SpeciesSortKeys = SortKeys(
     "scientificName" to "scientificName",
     "commonName" to "commonName",
     "exposure" to "sunExposure",
+  ),
+)
+
+/** Las vistas guardadas se listan por nombre o por antigüedad. */
+val SavedViewSortKeys = SortKeys(
+  linkedMapOf(
+    "name" to "name",
+    "createdAt" to "createdAt",
   ),
 )

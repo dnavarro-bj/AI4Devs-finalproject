@@ -6,7 +6,7 @@ import PlantsIndex from '../app/pages/plants/index.vue'
 
 enableAutoUnmount(afterEach)
 
-const api = createApiDouble()
+const api = createApiDouble({ savedViews: true })
 mockNuxtImport('getApiClient', () => () => api)
 
 /**

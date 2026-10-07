@@ -98,3 +98,10 @@ class BloomStatusConverter : AttributeConverter<com.cactify.domain.BloomStatus, 
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.BloomStatus? =
     dbData?.let { com.cactify.domain.BloomStatus(it) }
 }
+
+@Converter(autoApply = true)
+class ViewScopeConverter : AttributeConverter<com.cactify.domain.ViewScope, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.ViewScope?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.ViewScope? =
+    dbData?.let { com.cactify.domain.ViewScope(it) }
+}

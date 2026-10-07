@@ -200,29 +200,18 @@ class PlantService(
   }
 
   @Transactional(readOnly = true)
-  fun search(
-    locationId: String?,
-    tagIds: List<String>,
-    code: String?,
-    pageable: Pageable,
-    statuses: List<String> = emptyList(),
-    includeDescendants: Boolean = false,
-    text: String? = null,
-    speciesIds: List<String> = emptyList(),
-    exposures: List<String> = emptyList(),
-    environments: List<String> = emptyList(),
-  ): PageResponse<PlantSummaryResponse> {
+  fun search(criteria: PlantCriteria, pageable: Pageable): PageResponse<PlantSummaryResponse> {
     // Lo archivado no se mezcla con lo que está en curso: sin filtro, solo lo que está en curso.
-    val wanted = if (statuses.isEmpty()) PlantStatus.inProgress else statuses.map { PlantStatus(it) }.toSet()
+    val wanted = criteria.statuses.ifEmpty { PlantStatus.inProgress }
     val spec = PlantSpecs
       .withSpeciesAndLocation()
       .and(PlantSpecs.byStatuses(wanted))
-      .and(PlantSpecs.byCodeContaining(code))
-      .and(PlantSpecs.byText(text))
-      .and(byLocation(locationId, includeDescendants))
-      .and(PlantSpecs.byAllTags(tagIds.map { TagId.from(it) }.toSet()))
-      .and(PlantSpecs.bySpecies(speciesIds.map { SpeciesId.from(it) }.toSet()))
-      .and(PlantSpecs.bySpeciesTraits(exposures.map { SunExposure(it) }.toSet(), environments.map { Environment(it) }.toSet()))
+      .and(PlantSpecs.byCodeContaining(criteria.code))
+      .and(PlantSpecs.byText(criteria.text))
+      .and(byLocation(criteria.locationId, criteria.includeDescendants))
+      .and(PlantSpecs.byAllTags(criteria.tagIds))
+      .and(PlantSpecs.bySpecies(criteria.speciesIds))
+      .and(PlantSpecs.bySpeciesTraits(criteria.exposures, criteria.environments))
     // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
     return PageResponse.of(plantRepository.findAll(spec, PlantSortKeys.translate(pageable))) { it.toSummary() }
   }
@@ -232,11 +221,11 @@ class PlantService(
    * recursiva— y filtra por ese conjunto: no se recorren plantas. Una localización inexistente da
    * un subárbol vacío y, por tanto, ninguna planta.
    */
-  private fun byLocation(locationId: String?, includeDescendants: Boolean) =
+  private fun byLocation(locationId: LocationId?, includeDescendants: Boolean) =
     if (locationId != null && includeDescendants) {
-      PlantSpecs.byLocations(locationHierarchy.subtreeIds(LocationId.from(locationId)))
+      PlantSpecs.byLocations(locationHierarchy.subtreeIds(locationId))
     } else {
-      PlantSpecs.byLocation(locationId?.let { LocationId.from(it) })
+      PlantSpecs.byLocation(locationId)
     }
 
   /** La mezcla propia, si la hay, tiene que existir: una referencia inválida es un `400`. */

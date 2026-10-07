@@ -1,7 +1,9 @@
 package com.cactify.persistence
 
 import com.cactify.AbstractIntegrationTest
+import com.cactify.application.PlantCriteria
 import com.cactify.application.PlantService
+import com.cactify.application.SpeciesCriteria
 import com.cactify.application.SpeciesService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -84,30 +86,30 @@ class InventoryAtScaleTest : AbstractIntegrationTest() {
 
   @Test
   fun `the text search over 2000 plants is correct and fast`() {
-    val result = plantService.search(null, emptyList(), null, firstPage, text = "numero 1999")
+    val result = plantService.search(PlantCriteria(text = "numero 1999"), firstPage)
 
     assertEquals(1, result.totalElements)
-    assertTrue(measure("q sobre 2000 ejemplares") { plantService.search(null, emptyList(), null, firstPage, text = "numero 19") } < 1000)
+    assertTrue(measure("q sobre 2000 ejemplares") { plantService.search(PlantCriteria(text = "numero 19"), firstPage) } < 1000)
   }
 
   @Test
   fun `sorting 2000 plants by species is fast`() {
     val sorted = PageRequest.of(0, 25, Sort.by("species"))
 
-    assertEquals(2000, plantService.search(null, emptyList(), null, sorted).totalElements)
-    assertTrue(measure("sort=species sobre 2000 ejemplares") { plantService.search(null, emptyList(), null, sorted) } < 1000)
+    assertEquals(2000, plantService.search(PlantCriteria(), sorted).totalElements)
+    assertTrue(measure("sort=species sobre 2000 ejemplares") { plantService.search(PlantCriteria(), sorted) } < 1000)
   }
 
   @Test
   fun `filtering by species traits and species over 2000 plants is fast`() {
     assertTrue(
       measure("exposure+environment sobre 2000 ejemplares") {
-        plantService.search(null, emptyList(), null, firstPage, exposures = listOf("pleno_sol"), environments = listOf("exterior"))
+        plantService.search(PlantCriteria(exposures = listOf("pleno_sol"), environments = listOf("exterior")), firstPage)
       } < 1000,
     )
     assertTrue(
       measure("species sobre 2000 ejemplares") {
-        plantService.search(null, emptyList(), null, firstPage, speciesIds = listOf("5000010", "5000020"))
+        plantService.search(PlantCriteria(species = listOf("5000010", "5000020")), firstPage)
       } < 1000,
     )
   }
@@ -116,14 +118,14 @@ class InventoryAtScaleTest : AbstractIntegrationTest() {
   fun `the species catalog filters over 500 species are correct and fast`() {
     val page = PageRequest.of(0, 25, Sort.by("scientificName"))
 
-    assertEquals(1, speciesService.list(null, page, text = "species123").totalElements)
-    assertTrue(measure("q sobre 500 especies") { speciesService.list(null, page, text = "nombre comun 1") } < 1000)
+    assertEquals(1, speciesService.list(SpeciesCriteria(text = "species123"), page).totalElements)
+    assertTrue(measure("q sobre 500 especies") { speciesService.list(SpeciesCriteria(text = "nombre comun 1"), page) } < 1000)
     assertTrue(
-      measure("growthMonth x3 sobre 500 especies") { speciesService.list(null, page, growthMonths = listOf(12, 1, 2)) } < 1000,
+      measure("growthMonth x3 sobre 500 especies") { speciesService.list(SpeciesCriteria(growthMonths = listOf(12, 1, 2)), page) } < 1000,
     )
     assertTrue(
       measure("rasgos + temperatura sobre 500 especies") {
-        speciesService.list(null, page, exposures = listOf("semisombra"), minTemperatureFrom = 5, minTemperatureTo = 9)
+        speciesService.list(SpeciesCriteria(exposures = listOf("semisombra"), minTemperatureFrom = 5, minTemperatureTo = 9), page)
       } < 1000,
     )
   }

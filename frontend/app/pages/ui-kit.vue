@@ -25,6 +25,13 @@ const editableYear = ref([
 const filters = ref(['Pleno sol', 'Revisar'])
 const dialogOpen = ref(false)
 const tab = ref('resumen')
+const group = ref<string | null>('sun')
+const GROUP_NAV = [
+  { id: 'all', label: 'Todas', hint: '74 especies', symbol: '⌘' },
+  { id: 'sun', label: 'Pleno sol', hint: '38 especies', symbol: '☼', tone: 'warning' as const },
+  { id: 'shade', label: 'Semisombra', hint: '19 especies', symbol: '◐', tone: 'info' as const },
+  { id: 'cold', label: 'Sensibles al frío', hint: 'Mínima superior a 8 °C · 12' },
+]
 const selected = ref<string[]>([])
 const humidity = ref('31')
 const ph = ref('15')
@@ -266,6 +273,11 @@ const SEARCH_GROUPS = [
         ]"
       />
       <p class="note">Pestaña activa: {{ tab }}</p>
+
+      <!-- Un grupo seleccionado, y con modelValue nulo ninguno: quien la usa decide qué lo está. -->
+      <UiGroupNav v-model="group" :groups="GROUP_NAV" aria-label="Grupos de cultivo guardados" />
+      <UiGroupNav :model-value="null" :groups="GROUP_NAV.slice(0, 2)" aria-label="Sin ningún grupo seleccionado" />
+      <p class="note">Grupo seleccionado: {{ group ?? 'ninguno' }}</p>
     </section>
 
     <section class="gallery__section">

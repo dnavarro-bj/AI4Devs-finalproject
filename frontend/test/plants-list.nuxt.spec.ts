@@ -12,7 +12,7 @@ import type { PageResponse } from '@shared/types/api.types'
  */
 enableAutoUnmount(afterEach)
 
-const api = createApiDouble()
+const api = createApiDouble({ savedViews: true })
 mockNuxtImport('getApiClient', () => () => api)
 
 /**

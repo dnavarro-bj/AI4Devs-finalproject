@@ -178,32 +178,9 @@ class SpeciesService(
   }
 
   @Transactional(readOnly = true)
-  fun list(
-    code: String?,
-    pageable: Pageable,
-    text: String? = null,
-    exposures: List<String> = emptyList(),
-    environments: List<String> = emptyList(),
-    soilMixIds: List<String> = emptyList(),
-    minTemperatureFrom: Int? = null,
-    minTemperatureTo: Int? = null,
-    growthMonths: List<Int> = emptyList(),
-    bloomMonths: List<Int> = emptyList(),
-  ): PageResponse<SpeciesSummaryResponse> {
-    (growthMonths + bloomMonths).forEach {
-      require(it in 1..12) { "El mes $it no es válido: debe estar entre 1 y 12" }
-    }
-    val spec = SpeciesSpecs.byCodeContaining(code)
-      .and(SpeciesSpecs.byText(text))
-      .and(SpeciesSpecs.byExposures(exposures.map { SunExposure(it) }.toSet()))
-      .and(SpeciesSpecs.byEnvironments(environments.map { Environment(it) }.toSet()))
-      .and(SpeciesSpecs.bySoilMixes(soilMixIds.map { SoilMixId.from(it) }.toSet()))
-      .and(SpeciesSpecs.byMinTemperature(minTemperatureFrom, minTemperatureTo))
-      .and(SpeciesSpecs.byMonthsCovered(PeriodType.Growth, growthMonths.toSet()))
-      .and(SpeciesSpecs.byMonthsCovered(PeriodType.Flowering, bloomMonths.toSet()))
+  fun list(criteria: SpeciesCriteria, pageable: Pageable): PageResponse<SpeciesSummaryResponse> =
     // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
-    return PageResponse.of(speciesRepository.findAll(spec, SpeciesSortKeys.translate(pageable))) { it.toSummary() }
-  }
+    PageResponse.of(speciesRepository.findAll(criteria.toSpecification(), SpeciesSortKeys.translate(pageable))) { it.toSummary() }
 
   @Transactional(readOnly = true)
   fun findById(id: String): SpeciesDetailResponse {

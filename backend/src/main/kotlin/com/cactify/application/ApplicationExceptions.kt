@@ -131,3 +131,11 @@ class LocationInMovementsException(id: String) :
 /** El evento pedido por la ruta no existe, no cuelga de la planta indicada o no es del tipo del recurso: 404. */
 class PlantEventNotFoundException(kind: String, id: String) :
   RuntimeException("$kind '$id' no existe")
+
+/** La vista guardada pedida por la ruta no existe: 404. */
+class SavedViewNotFoundException(id: String) :
+  RuntimeException("La vista '$id' no existe")
+
+/** Ya hay otra vista con ese nombre normalizado en ese ámbito: 409. */
+class DuplicateSavedViewNameException(name: String, scope: String) :
+  RuntimeException("Ya existe una vista del ámbito '$scope' con el nombre '$name'")

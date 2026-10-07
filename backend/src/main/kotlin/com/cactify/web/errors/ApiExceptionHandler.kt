@@ -6,6 +6,7 @@ import com.cactify.application.DuplicateScientificNameException
 import com.cactify.domain.InvalidPlantStatusTransitionException
 import com.cactify.application.DuplicateSpeciesCodeException
 import com.cactify.application.SpeciesCodeLockedException
+import com.cactify.application.DuplicateSavedViewNameException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
 import com.cactify.application.DuplicateLocationCodeException
@@ -17,6 +18,7 @@ import com.cactify.application.LocationNotFoundException
 import com.cactify.application.PlantEventNotFoundException
 import com.cactify.application.PlantNotFoundException
 import com.cactify.application.RecommendationNotFoundException
+import com.cactify.application.SavedViewNotFoundException
 import com.cactify.application.SoilMixInUseException
 import com.cactify.application.SoilMixNotFoundException
 import com.cactify.application.SpeciesInUseException
@@ -140,6 +142,14 @@ class ApiExceptionHandler {
   fun onNoResource(ex: NoResourceFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, "Recurso no encontrado", request)
 
+  @ExceptionHandler(SavedViewNotFoundException::class)
+  fun onSavedViewNotFound(ex: SavedViewNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  @ExceptionHandler(DuplicateSavedViewNameException::class)
+  fun onDuplicateSavedViewName(ex: DuplicateSavedViewNameException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "El recurso ya existe", request)
+
   @ExceptionHandler(DuplicateTagNameException::class)
   fun onDuplicateTagName(ex: DuplicateTagNameException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso ya existe", request)
@@ -203,6 +213,10 @@ class ApiExceptionHandler {
       log.warn("Código de especie duplicado detectado por la restricción en {}", request.requestURI)
       return body(HttpStatus.CONFLICT, "Ya existe una especie con ese código", request)
     }
+    if (SAVED_VIEW_NAME_CONSTRAINT in cause) {
+      log.warn("Nombre de vista duplicado detectado por la restricción en {}", request.requestURI)
+      return body(HttpStatus.CONFLICT, "Ya existe una vista con ese nombre en ese ámbito", request)
+    }
     if (SPECIES_NAME_CONSTRAINT !in cause) throw ex
     log.warn("Nombre científico duplicado detectado por la restricción en {}", request.requestURI)
     return body(HttpStatus.CONFLICT, "Ya existe una especie con ese nombre científico", request)
@@ -226,6 +240,7 @@ class ApiExceptionHandler {
     const val SPECIES_NAME_CONSTRAINT = "species_scientific_name_unique"
     const val SPECIES_CODE_CONSTRAINT = "species_code_unique"
     const val LOCATION_CODE_CONSTRAINT = "location_code_unique"
+    const val SAVED_VIEW_NAME_CONSTRAINT = "saved_view_scope_name_unique"
   }
 
   private fun rootMessage(ex: Throwable): String? {

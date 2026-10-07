@@ -1,0 +1,31 @@
+{
+  "description": "Vectores de la forma canónica de una consulta de listado (design de vistas-guardadas-y-grupos-de-especies, decisión 2). Los consumen el backend (CanonicalQueryTest) y el frontend (canonicalQuery.test.ts): las dos implementaciones de la misma regla tienen que dar lo mismo. Pares ordenados por clave y, dentro de una clave, por valor (orden de unidades UTF-16); `sort` conserva su orden; sin `page`, `size`, valores en blanco ni repetidos; sin `?` inicial; valores codificados con todo menos A-Z a-z 0-9 - . _ ~ , en %XX mayúsculas sobre UTF-8; `+` entrante es un espacio.",
+  "vectors": [
+    { "name": "empty", "input": "", "expected": "" },
+    { "name": "leading question mark", "input": "?status=cuarentena", "expected": "status=cuarentena" },
+    { "name": "pairs sorted by key", "input": "status=cuarentena&location=1", "expected": "location=1&status=cuarentena" },
+    { "name": "repeatable sorted by value", "input": "species=20&species=10", "expected": "species=10&species=20" },
+    { "name": "string order, not numeric", "input": "species=9&species=10", "expected": "species=10&species=9" },
+    { "name": "repeatable deduplicated", "input": "species=10&species=10", "expected": "species=10" },
+    { "name": "paging dropped", "input": "status=cuarentena&page=3&size=25", "expected": "status=cuarentena" },
+    { "name": "only paging", "input": "page=1&size=10", "expected": "" },
+    { "name": "empty value dropped", "input": "q=&status=cuarentena", "expected": "status=cuarentena" },
+    { "name": "key without value dropped", "input": "q&status=cuarentena", "expected": "status=cuarentena" },
+    { "name": "blank value dropped", "input": "q=%20%20&status=cuarentena", "expected": "status=cuarentena" },
+    { "name": "empty segments ignored", "input": "&&status=cuarentena&", "expected": "status=cuarentena" },
+    { "name": "sort keeps its order", "input": "sort=species,asc&sort=code,desc&q=a", "expected": "q=a&sort=species,asc&sort=code,desc" },
+    { "name": "sort is not deduplicated or sorted", "input": "sort=b,asc&sort=a,asc", "expected": "sort=b,asc&sort=a,asc" },
+    { "name": "comma in sort is literal", "input": "sort=code%2Casc", "expected": "sort=code,asc" },
+    { "name": "plus is a space", "input": "q=a+b", "expected": "q=a%20b" },
+    { "name": "percent-encoded space", "input": "q=asiento%20de%20suegra", "expected": "q=asiento%20de%20suegra" },
+    { "name": "utf-8 uppercase hex", "input": "q=cact%c3%a1ceas", "expected": "q=cact%C3%A1ceas" },
+    { "name": "raw utf-8 is encoded", "input": "q=cactáceas", "expected": "q=cact%C3%A1ceas" },
+    { "name": "reserved characters encoded", "input": "q=a%26b%3Dc", "expected": "q=a%26b%3Dc" },
+    { "name": "unreserved characters kept", "input": "q=a-b_c.d~e", "expected": "q=a-b_c.d~e" },
+    { "name": "javascript-safe characters are encoded", "input": "q=a!b*c'd(e)", "expected": "q=a%21b%2Ac%27d%28e%29" },
+    { "name": "literal percent", "input": "q=100%25", "expected": "q=100%25" },
+    { "name": "same order regardless of input order", "input": "tag=b&status=cuarentena&tag=a&exposure=pleno_sol", "expected": "exposure=pleno_sol&status=cuarentena&tag=a&tag=b" },
+    { "name": "months of a growth rule", "input": "growthMonth=12&growthMonth=1&growthMonth=2", "expected": "growthMonth=1&growthMonth=12&growthMonth=2" },
+    { "name": "flag value", "input": "includeDescendants=true&location=300001", "expected": "includeDescendants=true&location=300001" }
+  ]
+}

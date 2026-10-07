@@ -1,6 +1,7 @@
 package com.cactify.web.controllers
 
 import com.cactify.application.PlantMovementService
+import com.cactify.application.PlantCriteria
 import com.cactify.application.PlantService
 import com.cactify.application.dto.MovementResponse
 import com.cactify.application.dto.PageResponse
@@ -163,7 +164,10 @@ class PlantController(
     @SortDefault(sort = ["createdAt"]) pageable: Pageable,
   ): PageResponse<PlantSummaryResponse> =
     plantService.search(
-      location, tags.orEmpty(), code, pageable, statuses.orEmpty(), includeDescendants,
-      text, speciesIds.orEmpty(), exposures.orEmpty(), environments.orEmpty(),
+      PlantCriteria(
+        location, tags.orEmpty(), code, statuses.orEmpty(), includeDescendants,
+        text, speciesIds.orEmpty(), exposures.orEmpty(), environments.orEmpty(),
+      ),
+      pageable,
     )
 }

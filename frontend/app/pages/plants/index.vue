@@ -11,12 +11,14 @@
  * con un dato.
  *
  * **El estado de la pantalla es la URL** (`useUrlState`): filtros, orden y columnas ocultas. Recargar
- * o compartir el enlace la reproduce, y es lo que una vista guardada guardará.
+ * o compartir el enlace la reproduce, y es lo que una vista guardada guarda: guardar una vista es
+ * leer ese estado y aplicarla, escribirlo. «Aplicada» es una derivación del estado, no algo que la
+ * pantalla recuerde.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSearchText } from '@shared/composables/useSearchText'
 import { useUrlState } from '@shared/composables/useUrlState'
-import type { UrlSchema } from '@shared/utils/urlState'
+import { readUrlState, toUrlQuery, type UrlSchema } from '@shared/utils/urlState'
 import { usePlants } from '@features/plants/composables/usePlants'
 import { PLANT_STATUSES, STATUS_LABELS } from '@features/plants/mappers/plantProfile'
 import type { PlantSummary } from '@features/plants/types/plant.types'
@@ -24,7 +26,11 @@ import { useLocations } from '@features/locations/composables/useLocations'
 import type { LocationSummary } from '@features/locations/types/location.types'
 import { useSpecies } from '@features/species/composables/useSpecies'
 import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
-import type { PageResponse } from '@shared/types/api.types'
+import { useSavedViews } from '@features/views/composables/useSavedViews'
+import { plantsDraft, plantsRouteQuery } from '@features/views/mappers/viewState'
+import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
+import type { SavedView } from '@features/views/types/view.types'
+import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
 
 const { list } = usePlants()
 const { loadAll: loadLocations } = useLocations()
@@ -208,6 +214,7 @@ async function load(pageNumber: number) {
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
 onMounted(async () => {
   load(0)
+  savedViews.load()
   const result = await loadLocations()
   if (result.success) locations.value = result.data!
 
@@ -224,6 +231,26 @@ onMounted(async () => {
     }
   }
 })
+
+/**
+ * Las vistas guardadas. La pantalla **traduce** su estado a lo que se guarda —el lenguaje del API,
+ * sin las columnas ocultas ni el pseudo-estado `all`— y al revés; el composable no conoce la URL.
+ */
+const viewContext = {
+  statuses: PLANT_STATUSES as string[],
+  // «Acciones» no es una columna de datos: una vista no habla de ella y aplicarla nunca la oculta.
+  hideable: HIDEABLE.map((column) => column.key).filter((key) => key !== 'actions'),
+}
+const savedViews = useSavedViews('plants', {
+  current: () => plantsDraft(toUrlQuery(URL_SCHEMA, state), viewContext),
+  apply: (view) => { Object.assign(state, readUrlState(URL_SCHEMA, plantsRouteQuery(view, viewContext))) },
+})
+
+const failure = (result: ServiceResponse<unknown>) => (result.success ? null : result.error!.message)
+const saveView = async (name: string) => failure(await savedViews.saveCurrent(name))
+const replaceView = async (view: SavedView) => failure(await savedViews.replaceWithCurrent(view))
+const renameView = async (view: SavedView, name: string) => failure(await savedViews.rename(view, name))
+const removeView = async (view: SavedView) => failure(await savedViews.remove(view))
 
 const nothing = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
 /** Sin ningún criterio el inventario está vacío; con alguno, simplemente nada coincide. */
@@ -312,6 +339,18 @@ const asPlant = (row: unknown) => row as PlantSummary
       <UiButton variant="secondary" data-test="more-filters" @click="moreFiltersOpen = !moreFiltersOpen">
         {{ moreFiltersOpen ? 'Menos filtros' : 'Más filtros' }} <span aria-hidden="true">{{ moreFiltersOpen ? '−' : '＋' }}</span>
       </UiButton>
+      <SavedViewMenu
+        :views="savedViews.views.value"
+        :applied-id="savedViews.applied.value?.id ?? null"
+        :modified="savedViews.modified.value"
+        :loading="savedViews.loading.value"
+        :error="savedViews.loadError.value"
+        :save-as="saveView"
+        :replace-with="replaceView"
+        :rename-to="renameView"
+        :remove-view="removeView"
+        @apply="savedViews.apply"
+      />
       <UiButton
         variant="icon"
         label="Configurar columnas"

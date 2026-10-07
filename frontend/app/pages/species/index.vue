@@ -9,8 +9,12 @@
  * * **«En la ficha»** — temperatura, riego y sustrato **existen**: están en `GET /species/{id}`.
  *   Lo que no los trae es el listado. Marcarlas sin más las haría parecer inventadas, cuando lo
  *   que pasa es que están a un clic.
- * * **Con su ticket** — la exposición, el código, los ejemplares y los grupos de cultivo no
- *   existen en ningún sitio todavía (T-17, T-15, T-21).
+ * * **Con su ticket** — la exposición y los ejemplares de cada fila no los trae el listado (T-17,
+ *   T-21).
+ *
+ * Los **grupos de cultivo** son reales: una vista guardada del catálogo es un grupo, y sus miembros
+ * no se guardan —son las especies que cumplen su regla al evaluarla—. «Todas» es el catálogo sin
+ * criterios; un grupo está seleccionado cuando **su consulta coincide con la de la URL**.
  *
  * La distinción importa: «el listado no lo trae» y «no existe» son problemas distintos y se
  * arreglan de formas distintas.
@@ -18,11 +22,16 @@
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useSearchText } from '@shared/composables/useSearchText'
 import { useUrlState } from '@shared/composables/useUrlState'
-import type { UrlSchema } from '@shared/utils/urlState'
+import { canonicalQuery } from '@shared/utils/canonicalQuery'
+import { readUrlState, toUrlQuery, type UrlSchema } from '@shared/utils/urlState'
 import { useSpecies } from '@features/species/composables/useSpecies'
 import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import type { SpeciesSummary } from '@features/species/types/species.types'
-import type { PageResponse } from '@shared/types/api.types'
+import { useSavedViews } from '@features/views/composables/useSavedViews'
+import { groupSymbol, speciesDraft, speciesRouteQuery } from '@features/views/mappers/viewState'
+import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
+import type { SavedView } from '@features/views/types/view.types'
+import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
 
 useHead({ title: 'Cactify · Especies' })
 useBreadcrumbs().set([{ label: 'Especies' }])
@@ -165,16 +174,55 @@ const COLUMNS = [
 ]
 
 /**
- * Los grupos dinámicos llegan con T-21, salvo «Todas», que **no es un grupo pendiente**: es el
- * estado actual del listado y su recuento sale del API. Marcarlo sería mentir en la otra
- * dirección, como pasaría con el género en la ficha.
+ * Los grupos de cultivo. La pantalla traduce su estado a una consulta canónica del API y al revés;
+ * el composable no conoce la URL. «Todas» no es una vista: es el catálogo sin criterios, y ordenar
+ * no es un criterio.
  */
-const GROUPS = [
-  { key: 'sun', mark: '☼', label: 'Pleno sol', tone: 'warning' },
-  { key: 'shade', mark: '◐', label: 'Semisombra', tone: 'info' },
-  { key: 'cold', mark: '❄', label: 'Sensibles al frío', tone: 'cold' },
-  { key: 'winter', mark: '◒', label: 'Crecimiento invernal', tone: 'winter' },
-]
+const savedViews = useSavedViews('species', {
+  current: () => speciesDraft(toUrlQuery(URL_SCHEMA, state)),
+  apply: (view) => { Object.assign(state, readUrlState(URL_SCHEMA, speciesRouteQuery(view))) },
+})
+
+const failure = (result: ServiceResponse<unknown>) => (result.success ? null : result.error!.message)
+const saveGroup = async (name: string) => failure(await savedViews.saveCurrent(name))
+const replaceGroup = async (view: SavedView) => failure(await savedViews.replaceWithCurrent(view))
+const renameGroup = async (view: SavedView, name: string) => failure(await savedViews.rename(view, name))
+const removeGroup = async (view: SavedView) => failure(await savedViews.remove(view))
+
+/** El total del catálogo sin filtrar: lo que dice «Todas», que no es el recuento de lo que se está viendo. */
+const allTotal = ref<number | null>(null)
+
+const noCriteria = computed(() => {
+  const { sort: _sort, ...criteria } = toUrlQuery(URL_SCHEMA, state)
+  return canonicalQuery(criteria) === ''
+})
+
+const selectedGroup = computed(() => savedViews.applied.value?.id ?? (noCriteria.value ? 'all' : null))
+
+const TONES: Record<string, 'warning' | 'info' | undefined> = { '☼': 'warning', '◐': 'info' }
+
+const groupItems = computed(() => [
+  { id: 'all', label: 'Todas', hint: allTotal.value === null ? '…' : `${allTotal.value} especies`, symbol: '⌘' },
+  ...savedViews.views.value.map((view) => {
+    const symbol = groupSymbol(view.query)
+    return {
+      id: view.id,
+      label: view.name,
+      hint: view.matchCount === undefined ? undefined : `${view.matchCount} ${view.matchCount === 1 ? 'especie' : 'especies'}`,
+      symbol,
+      tone: TONES[symbol],
+    }
+  }),
+])
+
+function selectGroup(id: string) {
+  if (id === 'all') {
+    Object.assign(state, readUrlState(URL_SCHEMA, {}))
+    return
+  }
+  const view = savedViews.views.value.find((item) => item.id === id)
+  if (view) savedViews.apply(view)
+}
 
 /**
  * La escala visual que ocupará la exposición real con T-17. Mientras falta el dato se muestran
@@ -199,6 +247,14 @@ async function load(pageNumber: number) {
     return
   }
   page.value = result.data!
+  if (noCriteria.value) allTotal.value = result.data!.totalElements
+}
+
+/** Con criterios desde el primer momento (un enlace), el total sin filtrar hay que pedirlo aparte. */
+async function loadAllTotal() {
+  if (allTotal.value !== null) return
+  const result = await search({ page: 0, size: 1 })
+  if (result.success && allTotal.value === null) allTotal.value = result.data!.totalElements
 }
 
 function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
@@ -206,7 +262,11 @@ function onSort(next: { key: string, direction: 'asc' | 'desc' }) {
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
-onMounted(() => load(0))
+onMounted(async () => {
+  savedViews.load()
+  await load(0)
+  if (!noCriteria.value) loadAllTotal()
+})
 
 const nothing = computed(() => !loading.value && !error.value && page.value?.content.length === 0)
 /** Sin ningún criterio el catálogo está vacío; con alguno, simplemente nada coincide. */
@@ -230,31 +290,21 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
       </template>
     </UiPageHeader>
 
-    <!-- Las tarjetas de grupo del prototipo. Las levanta el change `vistas-guardadas-y-grupos-de-especies` (T-21); «Todas» ya es real. -->
-    <nav class="groups" data-mock="true" data-test="groups" aria-label="Grupos de cultivo">
-      <span class="groups__card is-selected" data-test="group-all">
-        <span class="groups__symbol" aria-hidden="true">⌘</span>
-        <span>
-          <strong>Todas</strong>
-          <small>{{ page ? `${page.totalElements} especies` : '…' }}</small>
-        </span>
-      </span>
-
-      <span
-        v-for="group in GROUPS"
-        :key="group.key"
-        class="groups__card"
-        :class="`is-${group.tone}`"
-        data-mock="true"
-        :data-test="`group-${group.key}`"
-      >
-        <span class="groups__symbol" aria-hidden="true">{{ group.mark }}</span>
-        <span>
-          <strong>{{ group.label }}</strong>
-          <small><i>T-21 · vistas guardadas</i> · recuento pendiente</small>
-        </span>
-      </span>
-    </nav>
+    <!-- La fila de grupos del prototipo: «Todas» y un grupo por vista guardada del catálogo. -->
+    <UiGroupNav
+      :groups="groupItems"
+      :model-value="selectedGroup"
+      aria-label="Grupos de cultivo guardados"
+      class="species-groups"
+      data-test="groups"
+      @update:model-value="selectGroup"
+    />
+    <p v-if="!savedViews.loading.value && !savedViews.loadError.value && !savedViews.views.value.length" class="groups-note" data-test="groups-empty">
+      Aún no hay grupos de cultivo. Filtra por lo que las especies tienen en común y guarda los filtros como grupo.
+    </p>
+    <UiInlineError v-if="savedViews.loadError.value" class="groups-note" data-test="groups-error">
+      No se han podido cargar los grupos: {{ savedViews.loadError.value }}
+    </UiInlineError>
 
     <UiFilterBar
       :applied="appliedFilters"
@@ -305,6 +355,19 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         data-test="filter-growth"
       />
       <span class="toolbar-spacer" />
+      <SavedViewMenu
+        kind="group"
+        :views="savedViews.views.value"
+        :applied-id="savedViews.applied.value?.id ?? null"
+        :modified="savedViews.modified.value"
+        :loading="savedViews.loading.value"
+        :error="savedViews.loadError.value"
+        :save-as="saveGroup"
+        :replace-with="replaceGroup"
+        :rename-to="renameGroup"
+        :remove-view="removeGroup"
+        @apply="savedViews.apply"
+      />
       <UiButton variant="icon" label="Vista de tabla" class="view-button is-selected">☷</UiButton>
       <UiButton variant="icon" label="Vista de fotografías" disabled data-mock="true">▦</UiButton>
     </UiFilterBar>
@@ -420,96 +483,14 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
   font-weight: 400;
 }
 
-/*
- * Las tarjetas de grupo del prototipo: símbolo en círculo, nombre y recuento. La seleccionada va
- * en oscuro, que es lo que hace legible de un vistazo qué se está mirando.
- *
- * No es un componente del kit todavía: quien de verdad las va a usar es T-21, y sacar el patrón
- * antes de que exista su caso real es adivinarlo.
- */
-.groups {
-  display: grid;
-  gap: var(--space-2);
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  margin-bottom: var(--space-5);
-}
-
-.groups__card {
-  align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  display: grid;
-  gap: var(--space-2);
-  grid-template-columns: auto 1fr;
-  min-height: 68px;
-  padding: var(--space-2) var(--space-3);
-}
-
-.groups__card.is-selected {
-  background: var(--color-brand-strong);
-  border-color: var(--color-brand-strong);
-  color: var(--color-surface);
-}
-
-.groups__card strong,
-.groups__card small {
-  display: block;
-}
-
-.groups__card strong {
+.groups-note {
+  color: var(--color-ink-muted);
   font-size: var(--font-size-12);
+  margin: var(--space-2) 0 var(--space-5);
 }
 
-.groups__card small {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  margin-top: 2px;
-}
-
-.groups__card.is-selected small {
-  color: color-mix(in srgb, var(--color-surface) 75%, var(--color-brand-strong));
-}
-
-.groups__card small i {
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-pill);
-  color: var(--color-ink-muted);
-  font-style: normal;
-  padding: 2px var(--space-2);
-}
-
-.groups__symbol {
-  align-items: center;
-  background: var(--color-brand-soft);
-  border-radius: 50%;
-  color: var(--color-brand);
-  display: flex;
-  font-size: var(--font-size-17);
-  height: 36px;
-  justify-content: center;
-  width: 36px;
-}
-
-.groups__card.is-selected .groups__symbol {
-  background: color-mix(in srgb, var(--color-surface) 18%, transparent);
-  color: var(--color-surface);
-}
-
-.groups__card.is-warning .groups__symbol {
-  background: var(--color-warning-soft);
-  color: var(--color-warning);
-}
-
-.groups__card.is-info .groups__symbol,
-.groups__card.is-cold .groups__symbol {
-  background: var(--color-info-soft);
-  color: var(--color-info);
-}
-
-.groups__card.is-winter .groups__symbol {
-  background: color-mix(in srgb, var(--color-brand-soft) 60%, var(--color-surface-muted));
-  color: var(--color-ink-muted);
+.species-groups {
+  margin-bottom: var(--space-3);
 }
 
 .result-count {

@@ -10,7 +10,7 @@ import type { PageResponse } from '@shared/types/api.types'
 /** La URL es estado compartido entre tests: cada uno desmonta lo suyo. */
 enableAutoUnmount(afterEach)
 
-const api = createApiDouble()
+const api = createApiDouble({ savedViews: true })
 mockNuxtImport('getApiClient', () => () => api)
 
 /** Escenarios de la requirement «Catálogo de especies». */
@@ -170,35 +170,6 @@ describe('catálogo de especies', () => {
     expect(exposure.findAll('i')).toHaveLength(4)
   })
 
-  /**
-   * «Todas» no es un grupo pendiente: es el estado actual del listado, y su recuento sale del API.
-   * Marcarlo sería mentir en la otra dirección, como con el género en la ficha.
-   */
-  it('el grupo «Todas» lleva el recuento real y no va marcado', async () => {
-    api.get.mockResolvedValue(page([
-      species('200001', 'Echinocactus grusonii', 'Asiento de suegra'),
-      species('200002', 'Mammillaria elongata', 'Cactus dedo de dama'),
-    ]))
-
-    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
-    await settle()
-
-    const all = wrapper.find('[data-test="group-all"]')
-    expect(all.text()).toContain('2')
-    expect(all.attributes('data-mock')).toBeUndefined()
-  })
-
-  it('los grupos de cultivo aparecen marcados, porque no existen todavía', async () => {
-    api.get.mockResolvedValue(page([species('200001', 'Echinocactus grusonii', 'Asiento de suegra')]))
-
-    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
-    await settle()
-
-    const groups = wrapper.find('[data-test="groups"]')
-    expect(groups.attributes('data-mock')).toBe('true')
-    expect(groups.text()).toContain('T-21')
-  })
-
   it('dice cuántas especies se están mostrando', async () => {
     api.get.mockResolvedValue(page([
       species('200001', 'Echinocactus grusonii', 'Asiento de suegra'),
@@ -356,16 +327,6 @@ describe('catálogo de especies: filtros y orden', () => {
     const watering = wrapper.find('[data-test="filter-watering"]')
     expect(watering.attributes('disabled')).toBeDefined()
     expect(watering.attributes('aria-label')).toContain('texto libre')
-  })
-
-  it('la fila de grupos sigue marcada con el change que la levanta, y no simula especies agrupadas', async () => {
-    const wrapper = await mountSuspended(SpeciesIndex, { route: '/species' })
-    await settle()
-
-    const groups = wrapper.find('[data-test="groups"]')
-    expect(groups.attributes('data-mock')).toBe('true')
-    expect(groups.text()).toContain('T-21')
-    expect(groups.text()).toContain('vistas guardadas')
   })
 
   it('el estado vive en la URL: un enlace llega filtrado y ordenado, y cambiar un criterio la escribe', async () => {

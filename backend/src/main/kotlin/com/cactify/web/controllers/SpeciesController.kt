@@ -1,5 +1,6 @@
 package com.cactify.web.controllers
 
+import com.cactify.application.SpeciesCriteria
 import com.cactify.application.SpeciesRequest
 import com.cactify.application.SpeciesService
 import com.cactify.application.dto.PageResponse
@@ -51,8 +52,11 @@ class SpeciesController(private val speciesService: SpeciesService) {
     @SortDefault(sort = ["scientificName"]) pageable: Pageable,
   ): PageResponse<SpeciesSummaryResponse> =
     speciesService.list(
-      code, pageable, text, exposures.orEmpty(), environments.orEmpty(), soilMixIds.orEmpty(),
-      minTemperatureFrom, minTemperatureTo, growthMonths.orEmpty(), bloomMonths.orEmpty(),
+      SpeciesCriteria(
+        code, text, exposures.orEmpty(), environments.orEmpty(), soilMixIds.orEmpty(),
+        minTemperatureFrom, minTemperatureTo, growthMonths.orEmpty(), bloomMonths.orEmpty(),
+      ),
+      pageable,
     )
 
   @PostMapping

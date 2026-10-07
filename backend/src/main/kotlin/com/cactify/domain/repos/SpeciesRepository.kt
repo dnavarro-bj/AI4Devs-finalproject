@@ -28,4 +28,7 @@ interface SpeciesRepository {
 
   /** El catálogo filtrado y paginado. Una especificación nula no filtra. */
   fun findAll(spec: Specification<Species>?, pageable: Pageable): Page<Species>
+
+  /** Cuántas especies cumplen la especificación, sin traerlas. Una especificación nula las cuenta todas. */
+  fun count(spec: Specification<Species>?): Long
 }
