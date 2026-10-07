@@ -43,7 +43,7 @@ class AuditTimestampsSchemaTest : AbstractIntegrationTest() {
   @Test
   fun `a row inserted straight through SQL gets both timestamps filled in`() {
     val id = System.nanoTime()
-    jdbcTemplate.update("INSERT INTO location (id, name) VALUES (?, 'Audit SQL location')", id)
+    jdbcTemplate.update("INSERT INTO location (id, name, code) VALUES (?, 'Audit SQL location', 'LOC-ASQL-' || ?)", id, id)
 
     val filled = jdbcTemplate.queryForObject(
       "SELECT created_at IS NOT NULL AND updated_at IS NOT NULL FROM location WHERE id = ?",
@@ -58,7 +58,7 @@ class AuditTimestampsSchemaTest : AbstractIntegrationTest() {
   fun `a null creation timestamp is rejected`() {
     assertFailsWith<DataIntegrityViolationException> {
       jdbcTemplate.update(
-        "INSERT INTO location (id, name, created_at) VALUES (?, 'Audit null location', NULL)",
+        "INSERT INTO location (id, name, code, created_at) VALUES (?, 'Audit null location', 'LOC-ANULL', NULL)",
         System.nanoTime(),
       )
     }

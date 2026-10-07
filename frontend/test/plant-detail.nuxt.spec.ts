@@ -17,14 +17,15 @@ mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }
  * La ficha pide **dos** cosas: la planta y su historial de lecturas, que `GET
  * /plants/{id}/care-records` sirve desde T-03 y hasta ahora nadie consumía. El doble tiene que
  * distinguirlas, porque un `mockResolvedValue` único devolvería una planta donde se espera un
- * envelope paginado.
+ * envelope paginado. Los movimientos y los cambios de estado son otras dos páginas más.
  */
-function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = []) {
+function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = [], movements: unknown[] = []) {
   const envelope = (content: unknown[]) => ({ content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 })
   api.get.mockImplementation((path: string) => Promise.resolve(
     path.endsWith('/care-records')
       ? envelope(records)
-      : path.endsWith('/status-changes') ? envelope(statusChanges) : plant,
+      : path.endsWith('/status-changes') ? envelope(statusChanges)
+        : path.endsWith('/movements') ? envelope(movements) : plant,
   ))
 }
 
@@ -227,6 +228,19 @@ describe('ficha de la planta: perfil, estado e historial', () => {
     await openTab(wrapper, 'Datos')
 
     expect(wrapper.find('[data-test="status-change"]').text()).toContain('Cochinilla')
+  })
+
+  it('la pestaña de datos incluye el historial de movimientos, con la cronología marcada T-20', async () => {
+    serve(plantDetail(), [], [], [
+      { id: '1', plantId: '882687672222443468', plantCode: 'CAT-GRUSS-01', from: { id: '300005', name: 'Cuarentena' }, to: { id: '300001', name: 'Invernadero 1' }, movedAt: '2026-10-06T10:00:00Z' },
+    ])
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
+
+    await openTab(wrapper, 'Datos')
+
+    expect(wrapper.find('[data-test="movement-route"]').text()).toBe('Cuarentena → Invernadero 1')
+    expect(wrapper.find('[data-test="movements-timeline-pending"]').text()).toContain('T-20')
   })
 
   it('cambiar el estado desde la cabecera actualiza la ficha y refresca el historial', async () => {

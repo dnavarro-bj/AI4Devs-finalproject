@@ -1,4 +1,5 @@
-import type { Location, Tag } from '@features/catalogs/types/catalog.types'
+import type { Tag } from '@features/catalogs/types/catalog.types'
+import type { Location } from '@features/locations/types/location.types'
 import type { SoilMixSummary } from '@features/soil-mixes/types/soilMix.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
 

@@ -71,7 +71,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
 
   @Test
   fun `a location round-trips through its typed identifier`() {
-    val location = Location(name = "Typed location")
+    val location = Location(name = "Typed location", code = com.cactify.locationCode("Typed location"))
     entityManager.persist(location)
     entityManager.flush()
     entityManager.clear()
@@ -101,7 +101,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
   fun `a plant round-trips through its typed identifier`() {
     val soilMix = newSoilMix("Typed mix for plant")
     val species = newSpecies(soilMix, "Typedus plantus")
-    val location = Location(name = "Typed plant location")
+    val location = Location(name = "Typed plant location", code = com.cactify.locationCode("Typed plant location"))
     val plant = Plant(code = "TEST-A-01", nickname = "Pepito tipado", location = location, species = species)
     entityManager.persist(soilMix)
     entityManager.persist(species)
@@ -123,7 +123,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
   fun `a care record and an AI recommendation round-trip through their typed identifiers`() {
     val soilMix = newSoilMix("Typed mix for care")
     val species = newSpecies(soilMix, "Typedus carus")
-    val location = Location(name = "Typed care location")
+    val location = Location(name = "Typed care location", code = com.cactify.locationCode("Typed care location"))
     val plant = Plant(code = "TEST-A-01", nickname = "Juanito tipado", location = location, species = species)
     val careRecord = CareRecord.record(plant = plant, humidity = 40, temperature = 22, lightHours = 8, recordedAt = null, clock = Clock.systemUTC(), maxFutureSkew = Duration.ofMinutes(5))
     val recommendation = AIRecommendation(
@@ -155,7 +155,7 @@ class TypedIdMappingTest : AbstractIntegrationTest() {
 
   @Test
   fun `a typed identifier keeps the same numeric value in its BIGINT column`() {
-    val location = Location(name = "Typed numeric location")
+    val location = Location(name = "Typed numeric location", code = com.cactify.locationCode("Typed numeric location"))
     entityManager.persist(location)
     entityManager.flush()
 

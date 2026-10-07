@@ -379,7 +379,15 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 **Location** (catálogo de localizaciones)
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).
-* `name`: String. Nombre identificativo de la localización (p. ej. "Invernadero 1", "Bandeja A3"). Catálogo plano, sin jerarquía en el MVP.
+* `name`: String. Nombre identificativo de la localización (p. ej. "Invernadero 1", "Bandeja A3"). **Invariante**: no puede quedar en blanco.
+* `code`: String. Código corto (`LOC-I1-BN`), **obligatorio, escrito a mano** (el formulario lo propone desde el nombre), único sin distinguir mayúsculas y editable siempre.
+* `parentId`: TSID, opcional. La localización que la contiene; sin padre es una **raíz**. La ruta completa («Invernadero 1 / Bancada norte / Bandeja A3») y los recuentos de ejemplares —directos y totales, con descendientes— **se calculan con consultas recursivas, no se guardan**: mover una localización con contenido es cambiar una fila. Hacerla hija de sí misma o de un descendiente responde `409`.
+* `description`, `locationType` (`bancada`, `bandeja`, `invernadero`, `zona_exterior`, `estanteria`, `otro`), `capacity` (entero positivo, orientativa), `operationalNotes`, `environment` (`interior`, `cubierto`, `exterior`) y `sunExposure` (`sombra`, `semisombra`, `soleado`, `pleno_sol`): todos opcionales.
+* `PUT /locations/{id}` es **reemplazo completo**. Retirar una localización con ejemplares, con sublocalizaciones o que figure en movimientos responde `409`.
+
+**PlantMovement** (movimiento de un ejemplar entre localizaciones)
+
+* `plantId`, `fromLocationId`, `toLocationId` (distintos) y `movedAt`. Se registra al mover por lote (`POST /locations/{id}/movements`, atómico, con `{plantIds}` y respuesta `{moved, unchanged}`) y **también cuando `PUT /plants/{id}` cambia la localización**. Crear un ejemplar no es un movimiento. Historial paginado, más reciente primero: `GET /plants/{id}/movements` y `GET /locations/{id}/movements` (los de esa localización como origen o destino, no los de sus descendientes). `GET /plants?location=X&includeDescendants=true` incluye lo de las sublocalizaciones.
 
 **Plant** (ejemplar de la colección)
 

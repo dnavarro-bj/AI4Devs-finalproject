@@ -16,6 +16,9 @@ interface PlantRepository {
   fun findOneById(id: PlantId): Plant?
   fun findAll(spec: Specification<Plant>?, pageable: Pageable): Page<Plant>
 
+  /** Las plantas con esos identificadores, con su localización ya cargada, en **una** consulta. */
+  fun findAllWithLocationByIdIn(ids: Collection<PlantId>): List<Plant>
+
   /**
    * Si la especie tiene algún ejemplar. Es lo que sostiene el `409` al retirar una especie del
    * catálogo: `plant.species_id` es `NOT NULL` y no tiene `ON DELETE`, así que sin esta

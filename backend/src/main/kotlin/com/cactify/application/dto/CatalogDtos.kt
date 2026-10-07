@@ -9,22 +9,59 @@ import java.math.BigDecimal
 data class LocationResponse(val id: String, val name: String)
 
 /**
- * La localización en el catálogo: el nombre más la carga que soporta.
+ * La localización en el catálogo: su identidad, **dónde cuelga** y la carga que soporta.
  *
  * El recuento viaja también aquí, y no solo en la ficha como en mezclas, porque el mapa del vivero
- * **es** la carga de cada sitio: sin ella el catálogo es una lista de nombres. Se resuelve con una
- * agregación para toda la página, no con una consulta por fila.
+ * **es** la carga de cada sitio. `plantCount` son los ejemplares directos y `plantCountTotal` los de
+ * ella y todos sus descendientes; `path` es la ruta completa **incluida ella misma**. Todo se
+ * resuelve con consultas para la página entera, no una por fila.
  */
-data class LocationSummaryResponse(val id: String, val name: String, val plantCount: Long)
+data class LocationSummaryResponse(
+  val id: String,
+  val name: String,
+  val code: String,
+  val parentId: String?,
+  val path: String,
+  val locationType: String?,
+  val capacity: Int?,
+  val plantCount: Long,
+  val plantCountTotal: Long,
+)
+
+/** Un ancestro en la ruta de una localización: lo justo para un breadcrumb navegable. */
+data class LocationAncestorResponse(val id: String, val name: String)
+
+/** Una sublocalización directa, con su carga. */
+data class LocationChildResponse(
+  val id: String,
+  val name: String,
+  val code: String,
+  val locationType: String?,
+  val plantCount: Long,
+  val plantCountTotal: Long,
+)
 
 /**
- * La localización en su propia ficha: el nombre más **cuántos ejemplares alberga**.
- *
- * El recuento vive aquí y no en el listado a propósito, igual que en mezclas: en el catálogo
- * sería una consulta por fila, y en la ficha es la cifra que decide si la localización se puede
- * retirar y cuántas plantas habría que mover antes.
+ * La localización en su propia ficha: todos sus campos, su ruta como lista de ancestros, sus
+ * sublocalizaciones directas y cuántos ejemplares alberga, directos y con descendientes. Es también
+ * lo que devuelven el alta y la edición.
  */
-data class LocationDetailResponse(val id: String, val name: String, val plantCount: Long)
+data class LocationDetailResponse(
+  val id: String,
+  val name: String,
+  val code: String,
+  val parentId: String?,
+  val description: String?,
+  val locationType: String?,
+  val capacity: Int?,
+  val operationalNotes: String?,
+  val environment: String?,
+  val sunExposure: String?,
+  val ancestors: List<LocationAncestorResponse>,
+  val children: List<LocationChildResponse>,
+  val plantCount: Long,
+  val plantCountTotal: Long,
+)
 
 data class TagResponse(val id: String, val name: String)
 

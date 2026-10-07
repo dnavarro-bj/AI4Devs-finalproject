@@ -47,7 +47,7 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
   @Test
   fun `a location tells how many plants it holds`() {
     clearInventory()
-    val used = locationRepository.save(Location(name = "Invernadero en uso"))
+    val used = locationRepository.save(Location(name = "Invernadero en uso", code = com.cactify.locationCode("Invernadero en uso")))
     val species = someSpecies()
     plantRepository.save(Plant(code = "TEST-A-01", nickname = "Uno", location = used, species = species))
     plantRepository.save(Plant(code = "TEST-A-02", nickname = "Dos", location = used, species = species))
@@ -60,7 +60,7 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
   @Test
   fun `an empty location counts zero, it does not fail`() {
     clearInventory()
-    val empty = locationRepository.save(Location(name = "Estanteria vacia"))
+    val empty = locationRepository.save(Location(name = "Estanteria vacia", code = com.cactify.locationCode("Estanteria vacia")))
     entityManager.flush()
 
     assertEquals(0, locationRepository.countPlantsIn(empty.id))
@@ -73,9 +73,9 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
   @Test
   fun `the usage of a whole page of locations is resolved at once`() {
     clearInventory()
-    val busy = locationRepository.save(Location(name = "Invernadero lleno"))
-    val quiet = locationRepository.save(Location(name = "Bandeja tranquila"))
-    val empty = locationRepository.save(Location(name = "Estanteria vacia"))
+    val busy = locationRepository.save(Location(name = "Invernadero lleno", code = com.cactify.locationCode("Invernadero lleno")))
+    val quiet = locationRepository.save(Location(name = "Bandeja tranquila", code = com.cactify.locationCode("Bandeja tranquila")))
+    val empty = locationRepository.save(Location(name = "Estanteria vacia", code = com.cactify.locationCode("Estanteria vacia")))
     val species = someSpecies()
     plantRepository.save(Plant(code = "TEST-A-01", nickname = "Uno", location = busy, species = species))
     plantRepository.save(Plant(code = "TEST-A-02", nickname = "Dos", location = busy, species = species))
@@ -98,7 +98,7 @@ class LocationRepositoryTest : AbstractIntegrationTest() {
   @Test
   fun `a location is withdrawn from the catalog`() {
     clearInventory()
-    val saved = locationRepository.save(Location(name = "Localizacion efimera"))
+    val saved = locationRepository.save(Location(name = "Localizacion efimera", code = com.cactify.locationCode("Localizacion efimera")))
     entityManager.flush()
 
     locationRepository.delete(saved)

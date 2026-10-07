@@ -93,7 +93,7 @@ class InventoryCodeTest {
 
   @Test
   fun `a plant needs a code with a valid format`() {
-    val location = Location(name = "Invernadero 1")
+    val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
     val species = species()
 
     assertFailsWith<IllegalArgumentException> { Plant(code = "", nickname = "Bola", location = location, species = species) }
@@ -102,7 +102,7 @@ class InventoryCodeTest {
 
   @Test
   fun `updating a plant does not change its code, not even when the species changes`() {
-    val location = Location(name = "Invernadero 1")
+    val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
     val grusonii = species("CAT-GRUSS")
     val other = species("CAT-MAMMI")
     val plant = Plant(code = grusonii.nextPlantCode(), nickname = "Bola", location = location, species = grusonii)

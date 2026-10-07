@@ -16,7 +16,7 @@ class ApiErrorFormatTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/locations")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "   ")),
+        .content(json("name" to "   ", "code" to "LOC-X")),
     )
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))

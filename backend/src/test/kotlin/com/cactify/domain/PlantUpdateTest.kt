@@ -34,8 +34,8 @@ class PlantUpdateTest {
     soilMix = soilMix,
   )
 
-  private val greenhouse = Location(name = "Invernadero 1")
-  private val tray = Location(name = "Bandeja A3")
+  private val greenhouse = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
+  private val tray = Location(name = "Bandeja A3", code = com.cactify.locationCode("Bandeja A3"))
   private val grusonii = species("Echinocactus grusonii", "TEST-A")
   private val elongata = species("Mammillaria elongata", "TEST-B")
 

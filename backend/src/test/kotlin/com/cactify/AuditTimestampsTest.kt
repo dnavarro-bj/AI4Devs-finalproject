@@ -39,7 +39,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
   fun `a row created by the application carries both timestamps, equal to each other`() {
     val now = clock.instant()
 
-    val location = Location(name = "Auditada al crear")
+    val location = Location(name = "Auditada al crear", code = com.cactify.locationCode("Auditada al crear"))
     entityManager.persist(location)
     entityManager.flush()
 
@@ -49,7 +49,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
 
   @Test
   fun `modifying a row advances only its update timestamp`() {
-    val location = Location(name = "Auditada al modificar")
+    val location = Location(name = "Auditada al modificar", code = com.cactify.locationCode("Auditada al modificar"))
     entityManager.persist(location)
     entityManager.flush()
     val createdAt = location.createdAt
@@ -115,7 +115,7 @@ class AuditTimestampsTest : AbstractIntegrationTest() {
     // recorta al sellarla, la respuesta del alta y una consulta posterior devuelven cadenas
     // distintas para el mismo instante.
     clock.advanceBy(Duration.ofNanos(479_235_925))
-    val location = Location(name = "Auditada con nanos")
+    val location = Location(name = "Auditada con nanos", code = com.cactify.locationCode("Auditada con nanos"))
     entityManager.persist(location)
     val inMemory = location.createdAt
     entityManager.flush()

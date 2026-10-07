@@ -20,12 +20,12 @@ class CatalogInvariantsTest {
     minHumidity = 10, maxHumidity = 30, minTemperature = 10, maxTemperature = 35,
     minLightHours = 6, maxLightHours = 10, wateringGuideline = "semanal", soilMix = soilMix,
   )
-  private val location = Location(name = "Invernadero 1")
+  private val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
   private val clock = Clock.fixed(Instant.parse("2026-08-14T09:30:00Z"), ZoneOffset.UTC)
 
   @Test
   fun `a location without a name cannot be created`() {
-    assertFailsWith<IllegalArgumentException> { Location(name = "   ") }
+    assertFailsWith<IllegalArgumentException> { Location(name = "   ", code = com.cactify.locationCode("   ")) }
   }
 
   @Test
@@ -68,7 +68,7 @@ class CatalogInvariantsTest {
 
   @Test
   fun `valid catalog entities are built`() {
-    assertEquals("Invernadero 1", Location(name = "Invernadero 1").name)
+    assertEquals("Invernadero 1", Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1")).name)
     assertEquals("globular", Tag(name = "globular").name)
     assertEquals("Bola", Plant(code = "TEST-A-01", nickname = "Bola", location = location, species = species).nickname)
   }

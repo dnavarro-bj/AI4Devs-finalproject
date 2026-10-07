@@ -111,3 +111,19 @@ class RecommendationNotFoundException(careRecordId: String) :
  */
 class AIProviderException(message: String, cause: Throwable? = null) :
   RuntimeException(message, cause)
+
+/** Ya hay otra localización con ese código, sin distinguir mayúsculas: 409. */
+class DuplicateLocationCodeException(code: String) :
+  RuntimeException("Ya existe una localización con el código '$code'")
+
+/** Hacer a una localización hija de sí misma o de un descendiente rompería la jerarquía: 409. */
+class LocationHierarchyCycleException(id: String, parentId: String) :
+  RuntimeException("La localización '$id' no puede colgar de '$parentId': es ella misma o uno de sus descendientes")
+
+/** La localización contiene otras y no puede retirarse: 409. */
+class LocationHasChildrenException(id: String) :
+  RuntimeException("La localización '$id' contiene sublocalizaciones y no se puede eliminar")
+
+/** La localización figura en el historial de movimientos y no puede retirarse: 409. */
+class LocationInMovementsException(id: String) :
+  RuntimeException("La localización '$id' figura en el historial de movimientos y no se puede eliminar")

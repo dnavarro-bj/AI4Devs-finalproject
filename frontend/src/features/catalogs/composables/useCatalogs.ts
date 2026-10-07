@@ -1,9 +1,6 @@
 import type { SpeciesCare } from '@features/species/types/species.types'
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
 import type {
-  Location,
-  LocationDetail,
-  LocationListItem,
   Tag,
   TagDetail,
   TagListItem,
@@ -22,20 +19,6 @@ import { catalogsApiService } from '../services/catalogs.api.service'
 export function useCatalogs() {
   const cache = useState<Record<string, SpeciesCare>>('species-care-cache', () => ({}))
 
-  const listLocations = (page = 0, sort?: string): Promise<ServiceResponse<PageResponse<LocationListItem>>> =>
-    catalogsApiService.listLocations(page, sort)
-
-  const locationDetail = (id: string): Promise<ServiceResponse<LocationDetail>> =>
-    catalogsApiService.locationDetail(id)
-
-  const createLocation = (name: string): Promise<ServiceResponse<Location>> =>
-    catalogsApiService.createLocation(name)
-
-  const renameLocation = (id: string, name: string): Promise<ServiceResponse<Location>> =>
-    catalogsApiService.renameLocation(id, name)
-
-  const removeLocation = (id: string): Promise<ServiceResponse<null>> =>
-    catalogsApiService.removeLocation(id)
   const listTags = (page = 0, sort?: string): Promise<ServiceResponse<PageResponse<TagListItem>>> =>
     catalogsApiService.listTags(page, sort)
 
@@ -66,11 +49,6 @@ export function useCatalogs() {
   }
 
   return {
-    listLocations,
-    locationDetail,
-    createLocation,
-    renameLocation,
-    removeLocation,
     listTags,
     tagDetail,
     createTag,

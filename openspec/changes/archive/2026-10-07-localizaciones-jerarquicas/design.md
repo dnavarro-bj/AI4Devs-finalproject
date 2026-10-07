@@ -40,7 +40,7 @@
 
 **10. Retirar es más estricto.** Tres bloqueos con mensaje propio: ejemplares directos, sublocalizaciones, movimientos que la referencian. Se comprueban **antes** de borrar, como hoy, para que la FK no convierta un caso previsible en `500`. Que un movimiento bloquee es el precio de que el historial no quede con un origen huérfano; la alternativa —borrado lógico o `ON DELETE SET NULL`— hace opcional un dato que el modelo quiere obligatorio. La salida para el usuario es la de siempre: vaciar y, si fuera preciso, dejarla.
 
-**11. Códigos: backfill en la migración.** `V11` añade `code` nulable, lo **rellena** con `LOC-` más las iniciales del nombre en mayúsculas sin acentos, desambiguando con un sufijo numérico cuando dos coinciden (`row_number()` por código base), y entonces lo deja `NOT NULL` con `UNIQUE INDEX ON lower(trim(code))` y un `CHECK` de no vacío. Todo en el mismo fichero y transacción (ADR-001): nunca existe una versión de la tabla con códigos nulos visibles al código de aplicación. La propuesta del formulario es **solo de frontend** (función pura, como la de especie): el servidor no genera códigos.
+**11. Códigos: backfill en la migración.** `V12` añade `code` nulable, lo **rellena** con `LOC-` más las iniciales del nombre en mayúsculas sin acentos, desambiguando con un sufijo numérico cuando dos coinciden (`row_number()` por código base), y entonces lo deja `NOT NULL` con `UNIQUE INDEX ON lower(trim(code))` y un `CHECK` de no vacío. Todo en el mismo fichero y transacción (ADR-001): nunca existe una versión de la tabla con códigos nulos visibles al código de aplicación. La propuesta del formulario es **solo de frontend** (función pura, como la de especie): el servidor no genera códigos.
 
 **12. Frontend: el feature `locations` se separa de `catalogs`.** Como `species` y `soil-mixes`, la localización deja de ser un caso de `catalogs` y gana `src/features/locations/` con su service completo, tipos, mappers y composables (ADR-015). `catalogs` conserva las etiquetas. El selector de localización del alta y la edición de planta pasa a leerlo del nuevo service.
 
@@ -56,6 +56,15 @@
 
 Se **aparta** del prototipo solo en que «Ver historial completo» abre un panel/ruta con el historial paginado (el prototipo no dibuja esa pantalla).
 
+## Contraste con el prototipo (frontend, tarea 5.9)
+
+| Pantalla | Se reproduce | Marcado con su ticket | Apartado del prototipo |
+|---|---|---|---|
+| `locations` | Cabecera con recuento y alta; mapa del vivero con árbol real plegable, buscador y total de la colección; vista general con tarjetas de zona (proporción solo con capacidad, «Sin capacidad definida» si no); métricas operativas | Tareas pendientes y alertas abiertas de la fila de métricas y el bloque «Requieren atención» (T-22, T-23) | Seleccionar un nodo lleva la vista general a esa zona (el prototipo lo insinúa); se retiran el menú «•••» del mapa, que no hacía nada, y la nota de jerarquía pendiente. Las raíces suman el total de la colección en lugar de pedir el inventario |
+| `location-detail` | Portada (marca por tipo, código, ruta con ancestros navegables, descripción, acciones); fila de métricas; «Dentro de» con «Añadir dentro»; ejemplares con ubicación exacta, selección y paginación; características con ocupación; últimos movimientos con sentido | «Crear tarea aquí», métricas de tareas y alertas, y «Próximo trabajo» (T-22, T-23) | «Mover» es la acción masiva de la tabla de ejemplares y no un botón de la portada; el historial completo es una ruta propia (`/locations/{id}/movements`) que el prototipo no dibuja |
+| `location-editor` | Posición en el vivero con ruta resultante y selector de padre, identificación con código propuesto, características del espacio, lateral informativo | Nada | El selector de padre es un panel plegable con `UiEntityPicker`, no un diálogo; entorno y exposición se pueden dejar «sin definir» |
+| Ficha del ejemplar | Historial de movimientos real junto al de estado | Cronología unificada (T-20) | — |
+
 ## Riesgos
 
 * **Recursión con una jerarquía profunda o corrupta** → tope de profundidad en las consultas y `CHECK (parent_id <> id)`; los ciclos largos se evitan con el bloqueo de la decisión 4.
@@ -66,7 +75,7 @@ Se **aparta** del prototipo solo en que «Ver historial completo» abre un panel
 
 ## Plan de migración
 
-`V11` es aditiva salvo `code NOT NULL`, que se alcanza tras el relleno en la misma migración. No hay rollback automático (ADR-001): si falla, la transacción de Flyway la deshace entera. Las localizaciones existentes quedan como raíces con código nuevo; las plantas conservan su localización y no tienen movimientos.
+`V12` es aditiva salvo `code NOT NULL`, que se alcanza tras el relleno en la misma migración. No hay rollback automático (ADR-001): si falla, la transacción de Flyway la deshace entera. Las localizaciones existentes quedan como raíces con código nuevo; las plantas conservan su localización y no tienen movimientos.
 
 ## Siguiente
 

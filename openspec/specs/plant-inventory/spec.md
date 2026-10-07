@@ -89,7 +89,7 @@ El sistema SHALL exponer el detalle de una planta por su identificador, incluyen
 
 El sistema SHALL permitir modificar una planta ya creada: su apodo, su localización y su especie. La petición es un **reemplazo completo** de esos tres campos —no un parche— y la respuesta SHALL ser el detalle de la planta ya actualizado.
 
-La edición SHALL conservar la identidad del ejemplar: su identificador, su fecha de alta, sus tags, su historial de lecturas de cultivo y los análisis de IA de esas lecturas. **Cambiar la especie SHALL cambiar los cuidados efectivos de la planta** —que se heredan de ella— sin alterar nada de lo anterior. El nombre se almacena sin espacios al principio ni al final, como en el alta.
+La edición SHALL conservar la identidad del ejemplar: su identificador, su fecha de alta, sus tags, su historial de lecturas de cultivo y los análisis de IA de esas lecturas. **Cambiar la especie SHALL cambiar los cuidados efectivos de la planta** —que se heredan de ella— sin alterar nada de lo anterior. **Cambiar la localización SHALL registrar un movimiento** del sitio anterior al nuevo, según [`plant-movements`](../plant-movements/spec.md). El nombre se almacena sin espacios al principio ni al final, como en el alta.
 
 #### Scenario: Apodo corregido
 
@@ -105,6 +105,7 @@ La edición SHALL conservar la identidad del ejemplar: su identificador, su fech
 
 - **WHEN** se edita una planta indicando otra localización existente
 - **THEN** el detalle posterior muestra la localización nueva y el inventario filtrado por la antigua ya no la incluye
+- **AND** el historial de movimientos del ejemplar tiene un movimiento de la antigua a la nueva
 
 #### Scenario: Cambio de especie
 
@@ -124,7 +125,7 @@ La edición SHALL conservar la identidad del ejemplar: su identificador, su fech
 #### Scenario: Edición idempotente
 
 - **WHEN** se edita dos veces seguidas una planta con los mismos valores
-- **THEN** ambas peticiones terminan con éxito y la planta queda igual
+- **THEN** ambas peticiones terminan con éxito, la planta queda igual y no se registra ningún movimiento
 
 #### Scenario: Apodo en blanco
 
@@ -172,7 +173,7 @@ El sistema SHALL permitir reemplazar el conjunto completo de tags de una planta 
 
 ### Requirement: Listado del inventario con filtros combinables
 
-El sistema SHALL exponer el listado de plantas del inventario y SHALL admitir dos filtros opcionales, combinables entre sí: por localización, y por tag. El filtro de tag es repetible y su semántica es conjuntiva: solo se devuelven las plantas que tienen **todos** los tags indicados. Sin filtros, el listado SHALL devolver el inventario completo, paginado según el requisito de paginación.
+El sistema SHALL exponer el listado de plantas del inventario y SHALL admitir dos filtros opcionales, combinables entre sí: por localización, y por tag. El filtro de tag es repetible y su semántica es conjuntiva: solo se devuelven las plantas que tienen **todos** los tags indicados. **El filtro por localización SHALL admitir `includeDescendants=true`, que añade las plantas de todas las sublocalizaciones a cualquier profundidad**; sin él, devuelve solo las directas, como hasta ahora. Sin filtros, el listado SHALL devolver el inventario completo, paginado según el requisito de paginación.
 
 #### Scenario: Listado sin filtros
 
@@ -182,7 +183,12 @@ El sistema SHALL exponer el listado de plantas del inventario y SHALL admitir do
 #### Scenario: Filtro por localización
 
 - **WHEN** se consulta el listado filtrando por una localización concreta
-- **THEN** la respuesta contiene únicamente las plantas registradas en esa localización
+- **THEN** la respuesta contiene únicamente las plantas registradas directamente en esa localización
+
+#### Scenario: Filtro por localización con descendientes
+
+- **WHEN** se consulta el listado filtrando por `Bancada norte` con `includeDescendants=true`
+- **THEN** la respuesta contiene las plantas de la bancada y las de sus bandejas, y su total coincide con el recuento total de la localización
 
 #### Scenario: Filtro por un tag
 

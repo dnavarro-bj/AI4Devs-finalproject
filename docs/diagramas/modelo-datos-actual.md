@@ -11,7 +11,10 @@ erDiagram
     SOIL_MIX ||--o{ SPECIES : "recomienda"
     SPECIES ||--o{ PLANT : "es de"
     SPECIES ||--o{ SPECIES_PERIOD : "se calendariza en"
+    LOCATION ||--o{ LOCATION : "contiene"
     LOCATION ||--o{ PLANT : "ubica"
+    PLANT ||--o{ PLANT_MOVEMENT : "se mueve en"
+    LOCATION ||--o{ PLANT_MOVEMENT : "origen y destino de"
     PLANT ||--o{ CARE_RECORD : "tiene"
     CARE_RECORD ||--o| AI_RECOMMENDATION : "genera"
     PLANT ||--o{ PLANT_TAG : "tiene"
@@ -63,7 +66,23 @@ erDiagram
 
     LOCATION {
         TSID id PK
+        TSID parentId FK "nulo en la raiz; ruta y recuentos se calculan, no se guardan"
+        string code UK "LOC-I1-BN, manual, unico sin distinguir mayusculas"
         string name
+        string description
+        enum locationType "bancada|bandeja|invernadero|zona_exterior|estanteria|otro"
+        int capacity "orientativa, > 0"
+        string operationalNotes
+        enum environment "interior|cubierto|exterior"
+        enum sunExposure "sombra|semisombra|soleado|pleno_sol"
+    }
+
+    PLANT_MOVEMENT {
+        TSID id PK
+        TSID plantId FK
+        TSID fromLocationId FK
+        TSID toLocationId FK "distinto de fromLocationId"
+        timestamp movedAt
     }
 
     PLANT {

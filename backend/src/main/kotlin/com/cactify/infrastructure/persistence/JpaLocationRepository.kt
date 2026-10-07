@@ -4,6 +4,8 @@ import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.LocationUsage
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -25,6 +27,24 @@ interface JpaLocationRepository :
    */
   @Query("SELECT COUNT(p) FROM Plant p WHERE p.location.id = :id")
   override fun countPlantsIn(@Param("id") id: LocationId): Long
+
+  @Query("SELECT l FROM Location l WHERE lower(trim(l.code)) = lower(trim(:code))")
+  override fun findOneByCode(@Param("code") code: String): Location?
+
+  @Query(
+    value = "SELECT l FROM Location l WHERE l.parentId = :parentId",
+    countQuery = "SELECT COUNT(l) FROM Location l WHERE l.parentId = :parentId",
+  )
+  override fun findByParentId(@Param("parentId") parentId: LocationId, pageable: Pageable): Page<Location>
+
+  @Query(
+    value = "SELECT l FROM Location l WHERE l.parentId.id IS NULL",
+    countQuery = "SELECT COUNT(l) FROM Location l WHERE l.parentId.id IS NULL",
+  )
+  override fun findRoots(pageable: Pageable): Page<Location>
+
+  @Query("SELECT COUNT(l) FROM Location l WHERE l.parentId = :id")
+  override fun countChildren(@Param("id") id: LocationId): Long
 
   /**
    * `LEFT JOIN` desde `Location` y no desde `Plant`: contando sobre `Plant` las localizaciones

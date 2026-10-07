@@ -1,8 +1,14 @@
 <script setup lang="ts">
-/** Alta de una localización con la composición `location-editor` del wireframe. */
+/**
+ * Alta de una localización con la composición `location-editor` del prototipo. Desde «Añadir
+ * dentro» de una ficha llega con `?parent=` y la posición ya elegida.
+ */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
-import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
-import LocationForm from '@features/catalogs/components/LocationForm.vue'
+import { useLocations } from '@features/locations/composables/useLocations'
+import { locationSubmitError, type LocationSubmitError } from '@features/locations/composables/locationSubmitError'
+import { emptyLocationInput } from '@features/locations/mappers/locationInput'
+import LocationForm from '@features/locations/components/LocationForm.vue'
+import type { LocationInput } from '@features/locations/types/location.types'
 
 useHead({ title: 'Cactify · Nueva localización' })
 useBreadcrumbs().set([
@@ -10,19 +16,24 @@ useBreadcrumbs().set([
   { label: 'Nueva localización' },
 ])
 
-const { createLocation } = useCatalogs()
-const submitting = ref(false)
-const submitError = ref<string | null>(null)
+const route = useRoute()
+const { create } = useLocations()
 
-async function save(name: string) {
+const queryParent = route.query.parent
+const initial = emptyLocationInput(typeof queryParent === 'string' && queryParent ? queryParent : null)
+
+const submitting = ref(false)
+const submitError = ref<LocationSubmitError | null>(null)
+
+async function save(input: LocationInput) {
   submitting.value = true
   submitError.value = null
 
-  const result = await createLocation(name)
+  const result = await create(input)
   submitting.value = false
 
   if (!result.success) {
-    submitError.value = result.error!.message || 'No se ha podido crear la localización.'
+    submitError.value = locationSubmitError(result.error!)
     return
   }
 
@@ -37,6 +48,7 @@ async function save(name: string) {
       context="Sitúala dentro del vivero para que plantas, tareas y alertas hereden una ruta clara."
     />
     <LocationForm
+      :initial="initial"
       :submitting="submitting"
       :submit-error="submitError"
       @submit="save"

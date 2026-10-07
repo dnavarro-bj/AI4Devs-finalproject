@@ -22,6 +22,16 @@ object PlantSpecs {
     }
 
   /**
+   * Las plantas de **cualquiera** de esas localizaciones: es el filtro por una localización y sus
+   * descendientes. A diferencia del resto, un conjunto **vacío** no deja de filtrar sino que no
+   * admite nada: significa «esa localización no existe», y no «sin filtro».
+   */
+  fun byLocations(locationIds: Set<LocationId>): Specification<Plant> =
+    Specification { root, _, cb ->
+      if (locationIds.isEmpty()) cb.disjunction() else root.get<Location>("location").get<LocationId>("id").`in`(locationIds)
+    }
+
+  /**
    * Los ejemplares en **cualquiera** de los estados indicados. El servicio decide qué pasa cuando no
    * se indica ninguno —por defecto, solo lo que está en curso—, así que aquí un conjunto vacío no
    * filtra, igual que en el resto de factorías.

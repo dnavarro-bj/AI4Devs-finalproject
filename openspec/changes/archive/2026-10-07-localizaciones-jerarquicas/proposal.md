@@ -23,7 +23,7 @@ Resueltas por el usuario antes de abrir el change:
 
 ## What Changes
 
-**Esquema** — migración `V11` (V10 es de `especie-ampliada`): `location` gana `parent_id` (FK a sí misma, nulo en la raíz), `code`, `description`, `location_type`, `capacity`, `operational_notes`, `environment` y `sun_exposure`; todos nulables salvo `code`, que **se rellena en la propia migración** para lo existente y queda `NOT NULL` con índice único sobre `lower(code)`. `CHECK` de enums y de capacidad > 0, y de que una localización no sea su propio padre. Nueva tabla `plant_movement`.
+**Esquema** — migración `V12` (V10 y V11 son de `especie-ampliada`): `location` gana `parent_id` (FK a sí misma, nulo en la raíz), `code`, `description`, `location_type`, `capacity`, `operational_notes`, `environment` y `sun_exposure`; todos nulables salvo `code`, que **se rellena en la propia migración** para lo existente y queda `NOT NULL` con índice único sobre `lower(code)`. `CHECK` de enums y de capacidad > 0, y de que una localización no sea su propio padre. Nueva tabla `plant_movement`.
 
 **Backend**
 
@@ -67,6 +67,6 @@ Resueltas por el usuario antes de abrir el change:
 
 ## Impact
 
-* `backend/src/main/resources/db/migration/V11__location_hierarchy.sql`; `domain/` (`Location`, `LocationType`, `PlantMovement`, enums de entorno y exposición de espacio), `LocationService`, nuevo `PlantMovementService`, `PlantService` (edición), repos y specs, DTOs y controllers. Tests con Testcontainers.
+* `backend/src/main/resources/db/migration/V12__location_hierarchy.sql`; `domain/` (`Location`, `LocationType`, `PlantMovement`, enums de entorno y exposición de espacio), `LocationService`, nuevo `PlantMovementService`, `PlantService` (edición), repos y specs, DTOs y controllers. Tests con Testcontainers.
 * `frontend/` — `src/features/catalogs` (o nueva `locations`), tipos, service, mapper árbol/ruta, `LocationForm`, las tres pantallas, el selector de localización del alta y la edición de planta.
 * `docs/diagramas/modelo-datos-actual.md`, el borrador de gestión (pendientes 9, 16 y 17), `README.md`, ticket T-18 y historias F.1/1.9.

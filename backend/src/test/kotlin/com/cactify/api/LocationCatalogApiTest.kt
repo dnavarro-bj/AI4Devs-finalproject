@@ -1,6 +1,7 @@
 package com.cactify.api
 
 import com.cactify.AbstractApiIntegrationTest
+import com.cactify.locationCode
 import org.hamcrest.Matchers.hasItems
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
@@ -73,7 +74,7 @@ class LocationCatalogApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       put("/locations/$locationId")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "Invernadero principal")),
+        .content(json("name" to "Invernadero principal", "code" to locationCode("Invernadero 1"))),
     )
       .andExpect(status().isOk)
       .andExpect(jsonPath("$.id").value(locationId))
@@ -95,7 +96,7 @@ class LocationCatalogApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       put("/locations/$locationId")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "   ")),
+        .content(json("name" to "   ", "code" to locationCode("Bandeja A3"))),
     )
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))
@@ -110,7 +111,7 @@ class LocationCatalogApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       put("/locations/999999999")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "Da igual")),
+        .content(json("name" to "Da igual", "code" to "LOC-X")),
     )
       .andExpect(status().isNotFound)
       .andExpect(jsonPath("$.status").value(404))
@@ -157,7 +158,7 @@ class LocationCatalogApiTest : AbstractApiIntegrationTest() {
     val response = mockMvc.perform(
       post("/locations")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to name)),
+        .content(json("name" to name, "code" to locationCode(name))),
     )
       .andExpect(status().isCreated)
       .andReturn()

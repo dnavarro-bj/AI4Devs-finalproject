@@ -1,6 +1,7 @@
 package com.cactify.api
 
 import com.cactify.AbstractApiIntegrationTest
+import com.cactify.locationCode
 import org.hamcrest.Matchers.hasItems
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -17,7 +18,7 @@ class LocationApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/locations")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "Invernadero 1")),
+        .content(json("name" to "Invernadero 1", "code" to "LOC-NEW-1")),
     )
       .andExpect(status().isCreated)
       .andExpect(jsonPath("$.id").isNotEmpty)
@@ -31,7 +32,7 @@ class LocationApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/locations")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to "   ")),
+        .content(json("name" to "   ", "code" to "LOC-X")),
     )
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.status").value(400))
@@ -80,7 +81,7 @@ class LocationApiTest : AbstractApiIntegrationTest() {
     mockMvc.perform(
       post("/locations")
         .contentType(MediaType.APPLICATION_JSON)
-        .content(json("name" to name)),
+        .content(json("name" to name, "code" to locationCode(name))),
     ).andExpect(status().isCreated)
   }
 

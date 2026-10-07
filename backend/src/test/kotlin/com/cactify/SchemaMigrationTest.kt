@@ -113,7 +113,7 @@ class SchemaMigrationTest : AbstractIntegrationTest() {
 
   private fun insertLocation(): Long {
     val id = System.nanoTime()
-    jdbcTemplate.update("INSERT INTO location (id, name) VALUES (?, 'Greenhouse')", id)
+    jdbcTemplate.update("INSERT INTO location (id, name, code) VALUES (?, 'Greenhouse', 'LOC-GH-' || ?)", id, id)
     return id
   }
 

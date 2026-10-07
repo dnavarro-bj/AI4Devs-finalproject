@@ -1,7 +1,7 @@
 # F.1 - Organizar cactus por localizaciones jerárquicas
 
 **Tipo:** Must-Have
-**Estado:** **Promovida al núcleo** — bloque 1 (era roadmap)
+**Estado:** **Construida** (`localizaciones-jerarquicas`, T-18)
 **Ticket:** [T-18](../tickets/T-18-localizaciones-jerarquicas.md)
 
 > Absorbe a [0.9](0.9-registrar-localizacion.md), que describía el mismo catálogo sin jerarquía. Un catálogo plano es esta misma historia con un solo nivel, así que se mantienen como una sola.

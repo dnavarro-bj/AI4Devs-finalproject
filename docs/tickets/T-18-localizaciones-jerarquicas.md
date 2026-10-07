@@ -23,6 +23,8 @@ Sustituir el catálogo plano de localizaciones por una jerarquía —vivero, inv
 * El recuento de una localización incluye lo que cuelga de sus descendientes.
 * Un ciclo en la jerarquía —hacer a una localización descendiente de sí misma— se rechaza.
 
-## Pendiente antes de empezar
+## Resolución
 
-Quién mantiene coherente la ruta materializada al mover una localización con contenido.
+**Cerrado** con el change `localizaciones-jerarquicas` (migración `V12`). El pendiente —quién mantiene coherente la ruta materializada— se resolvió **por eliminación**: no hay ruta materializada; la ruta y los recuentos se calculan con consultas recursivas y mover una localización con contenido es cambiar una fila.
+
+Añadido al alcance original: código `LOC-···`, tipo, capacidad, entorno, exposición y notas de la localización (los pedía el prototipo), y el **movimiento por lote** atómico. `plant_movement` es tabla propia; que el movimiento salga en la cronología del ejemplar queda para [T-20](T-20-cronologia-unificada.md). Tareas y alertas de la localización siguen marcadas (T-22, T-23).

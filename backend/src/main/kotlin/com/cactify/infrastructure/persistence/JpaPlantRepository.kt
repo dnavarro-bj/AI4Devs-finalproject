@@ -5,6 +5,8 @@ import com.cactify.domain.PlantId
 import com.cactify.domain.repos.PlantRepository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 
 /** `JpaSpecificationExecutor` aporta la ejecución de las `Specification` sin escribir nada. */
@@ -12,4 +14,8 @@ import org.springframework.stereotype.Repository
 interface JpaPlantRepository :
   PlantRepository,
   JpaRepository<Plant, PlantId>,
-  JpaSpecificationExecutor<Plant>
+  JpaSpecificationExecutor<Plant> {
+
+  @Query("select p from Plant p join fetch p.location where p.id in :ids")
+  override fun findAllWithLocationByIdIn(@Param("ids") ids: Collection<PlantId>): List<Plant>
+}

@@ -117,7 +117,7 @@ class TagRepositoryTest : AbstractIntegrationTest() {
   private var cachedSpecies: Species? = null
 
   private fun location(): Location = cachedLocation
-    ?: locationRepository.save(Location(name = "Invernadero de prueba")).also { cachedLocation = it }
+    ?: locationRepository.save(Location(name = "Invernadero de prueba", code = com.cactify.locationCode("Invernadero de prueba"))).also { cachedLocation = it }
 
   private fun species(): Species = cachedSpecies ?: speciesRepository.save(
     Species(

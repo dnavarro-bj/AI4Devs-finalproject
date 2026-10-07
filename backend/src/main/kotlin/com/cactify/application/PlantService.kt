@@ -24,7 +24,9 @@ import com.cactify.domain.SoilMixId
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.Tag
 import com.cactify.domain.TagId
+import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
+import com.cactify.domain.repos.PlantMovementRepository
 import com.cactify.domain.repos.PlantRepository
 import com.cactify.domain.repos.PlantStatusChangeRepository
 import com.cactify.domain.repos.SoilMixRepository
@@ -49,6 +51,8 @@ class PlantService(
   private val speciesRepository: SpeciesRepository,
   private val tagRepository: TagRepository,
   private val statusChangeRepository: PlantStatusChangeRepository,
+  private val movementRepository: PlantMovementRepository,
+  private val locationHierarchy: LocationHierarchy,
   private val soilMixRepository: SoilMixRepository,
   private val clock: Clock,
 ) {
@@ -127,6 +131,9 @@ class PlantService(
     val plant = requirePlant(id)
     val location = requireLocation(locationId)
     val species = requireSpecies(speciesId)
+    // Cambiar de localización es un movimiento y deja rastro en la misma transacción; si algo de lo
+    // que sigue se rechaza, la transacción entera se deshace y no queda ni cambio ni movimiento.
+    val movement = plant.moveTo(location, clock)
     plant.update(
       nickname = nickname.trim(),
       location = location,
@@ -139,6 +146,7 @@ class PlantService(
       originNote = profile.originNote,
       careOverrides = resolveCare(profile.careOverrides),
     )
+    movement?.let { movementRepository.save(it) }
     return plant.toDetail()
   }
 
@@ -195,6 +203,7 @@ class PlantService(
     code: String?,
     pageable: Pageable,
     statuses: List<String> = emptyList(),
+    includeDescendants: Boolean = false,
   ): PageResponse<PlantSummaryResponse> {
     // Lo archivado no se mezcla con lo que está en curso: sin filtro, solo lo que está en curso.
     val wanted = if (statuses.isEmpty()) PlantStatus.inProgress else statuses.map { PlantStatus(it) }.toSet()
@@ -202,10 +211,22 @@ class PlantService(
       .withSpeciesAndLocation()
       .and(PlantSpecs.byStatuses(wanted))
       .and(PlantSpecs.byCodeContaining(code))
-      .and(PlantSpecs.byLocation(locationId?.let { LocationId.from(it) }))
+      .and(byLocation(locationId, includeDescendants))
       .and(PlantSpecs.byAllTags(tagIds.map { TagId.from(it) }.toSet()))
     return PageResponse.of(plantRepository.findAll(spec, pageable)) { it.toSummary() }
   }
+
+  /**
+   * Con descendientes, el filtro se resuelve primero a los ids del subárbol —una consulta
+   * recursiva— y filtra por ese conjunto: no se recorren plantas. Una localización inexistente da
+   * un subárbol vacío y, por tanto, ninguna planta.
+   */
+  private fun byLocation(locationId: String?, includeDescendants: Boolean) =
+    if (locationId != null && includeDescendants) {
+      PlantSpecs.byLocations(locationHierarchy.subtreeIds(LocationId.from(locationId)))
+    } else {
+      PlantSpecs.byLocation(locationId?.let { LocationId.from(it) })
+    }
 
   /** La mezcla propia, si la hay, tiene que existir: una referencia inválida es un `400`. */
   private fun resolveCare(input: CareOverridesInput?): CareOverrides? = input?.let {

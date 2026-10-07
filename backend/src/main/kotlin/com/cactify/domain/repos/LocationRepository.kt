@@ -27,6 +27,18 @@ interface LocationRepository {
   fun findAll(pageable: Pageable): Page<Location>
   fun countPlantsIn(id: LocationId): Long
 
+  /** La localización con ese código, sin distinguir mayúsculas ni espacios de los extremos. */
+  fun findOneByCode(code: String): Location?
+
+  /** Los hijos directos de una localización, paginados (ADR-009). */
+  fun findByParentId(parentId: LocationId, pageable: Pageable): Page<Location>
+
+  /** Las localizaciones sin padre, paginadas. */
+  fun findRoots(pageable: Pageable): Page<Location>
+
+  /** Cuántas localizaciones cuelgan directamente de esta: decide si se puede retirar. */
+  fun countChildren(id: LocationId): Long
+
   /**
    * El uso de varias localizaciones **en una sola consulta**. Es lo que sostiene el mapa del
    * vivero: una localización sin su carga es un nombre suelto, y preguntarlo fila a fila sería el

@@ -1,103 +1,111 @@
 <script setup lang="ts">
 /**
- * El catálogo de localizaciones (historia 0.9), con la composición de la pantalla `locations` del
- * prototipo: cabecera con el recuento y el alta, **mapa del vivero** a un lado y **vista general**
- * al otro, con una tarjeta por localización y su carga como proporción.
+ * El catálogo de localizaciones, con la composición de la pantalla `locations` del prototipo:
+ * cabecera con el recuento y el alta, **mapa del vivero** a un lado y **vista general** al otro.
  *
- * **El mapa se construye aunque la jerarquía no exista.** El esquema es plano hasta T-18, así que
- * el árbol tiene un solo nivel —todo cuelga de «Toda la colección»— y la ausencia de los demás se
- * declara **dentro del propio mapa**. Sustituir el mapa por una tabla porque falta la jerarquía
- * sería recortar la pantalla para no tocar nada, que es justo lo que el bloque 0 evita.
+ * El mapa es el **árbol real**: la jerarquía se monta en cliente con todas las páginas del listado
+ * (el API pagina siempre y no hay endpoint de árbol sin límite, ADR-009), y cada nodo dice los
+ * ejemplares **totales**, contando a los descendientes. Seleccionar un nodo lleva la vista general
+ * a esa zona, con sus sublocalizaciones como tarjetas y la carga como proporción **solo cuando hay
+ * capacidad**: sin ella no se inventa una.
  *
- * **Híbrida, y marcada.** Real: el nombre, la carga de cada sitio —el listado la trae, resuelta en
- * una sola consulta— y el total de la colección, que sale del propio inventario. Marcado con su
- * ticket: los niveles de la jerarquía y la capacidad orientativa (T-18), y el trabajo que requiere
- * atención (T-23).
- *
- * El alta abre el editor completo del prototipo. Solo el nombre se persiste hoy; los campos de
- * jerarquía y características permanecen visibles y marcados con T-18 en su propia pantalla.
+ * Marcado con su ticket, como en el prototipo y sin dato todavía: el trabajo que requiere atención
+ * (T-22, T-23).
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
-import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
-import { usePlants } from '@features/plants/composables/usePlants'
-import type { LocationListItem } from '@features/catalogs/types/catalog.types'
-import type { TreeNode } from '@ui/UiTree.vue'
-import type { PageResponse } from '@shared/types/api.types'
+import { useLocations } from '@features/locations/composables/useLocations'
+import { occupancyOf } from '@features/locations/mappers/locationInput'
+import { buildLocationTree, filterLocationTree, type LocationTreeNode } from '@features/locations/mappers/locationTree'
+import { LOCATION_TYPE_MARKS } from '@features/locations/types/locationVocabulary'
+import type { LocationSummary } from '@features/locations/types/location.types'
 
 useHead({ title: 'Cactify · Localizaciones' })
 useBreadcrumbs().set([{ label: 'Localizaciones' }])
 
-const { listLocations } = useCatalogs()
-const { list: listPlants } = usePlants()
+const { loadAll } = useLocations()
 
-const page = ref<PageResponse<LocationListItem> | null>(null)
-/** El total de la colección es el del inventario, no la suma de una página. */
-const collectionSize = ref(0)
+const ALL = 'all'
+
+const rows = ref<LocationSummary[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-async function load(pageNumber: number) {
+const selectedId = ref(ALL)
+const searchText = ref('')
+
+async function load() {
   loading.value = true
   error.value = null
 
-  const [locations, plants] = await Promise.all([listLocations(pageNumber), listPlants({ page: 0 })])
+  const result = await loadAll()
   loading.value = false
 
-  if (!locations.success) {
-    error.value = locations.error!.message
+  if (!result.success) {
+    error.value = result.error!.message
     return
   }
-  page.value = locations.data!
-  if (plants.success) collectionSize.value = plants.data!.totalElements
+  rows.value = result.data!
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
-onMounted(() => load(0))
+onMounted(load)
 
-const locations = computed(() => page.value?.content ?? [])
-const isEmpty = computed(() => !loading.value && !error.value && locations.value.length === 0)
+const isEmpty = computed(() => !loading.value && !error.value && rows.value.length === 0)
 
-/**
- * El árbol del mapa. Un solo nivel mientras el esquema sea plano: `UiTree` recibe la jerarquía ya
- * construida y quien la construye es la feature, no el kit.
- */
-const tree = computed<TreeNode[]>(() => [{
-  id: 'all',
-  label: 'Toda la colección',
-  count: collectionSize.value,
-  detail: `${page.value?.totalElements ?? 0} localizaciones`,
-  mark: '⌖',
-  children: locations.value.map((location) => ({
-    id: location.id,
-    label: location.name,
-    count: location.plantCount,
-    detail: `${location.plantCount} ${location.plantCount === 1 ? 'planta' : 'plantas'} · niveles T-18`,
-    mark: locationMark(location.name),
-  })),
-}])
+const roots = computed(() => rows.value.filter((row) => !row.parentId))
+/** Las raíces abarcan toda la colección: cada ejemplar vive en alguna localización. */
+const collectionSize = computed(() => roots.value.reduce((sum, row) => sum + row.plantCountTotal, 0))
 
-/** Qué parte de la colección vive en cada sitio. La capacidad orientativa del prototipo es T-18. */
-const shareOf = (location: LocationListItem) =>
-  collectionSize.value > 0 ? Math.round((location.plantCount / collectionSize.value) * 100) : 0
+const tree = computed(() => buildLocationTree(rows.value))
 
-function locationMark(name: string) {
-  const normalized = name.toLowerCase()
-  if (normalized.includes('invernadero')) return '⌂'
-  if (normalized.includes('bandeja')) return '▦'
-  if (normalized.includes('exterior')) return '☼'
-  if (normalized.includes('cuarentena')) return '!'
-  if (normalized.includes('bancada')) return '═'
-  return '⌖'
+/** El mapa, encabezado por la colección completa y, al buscar, reducido a las coincidencias. */
+const mapNodes = computed<LocationTreeNode[]>(() => {
+  const visible = filterLocationTree(tree.value, searchText.value)
+  if (searchText.value.trim() && !visible.length) return []
+  return [{
+    id: ALL,
+    label: 'Toda la colección',
+    code: '',
+    count: collectionSize.value,
+    detail: `${rows.value.length} localizaciones`,
+    mark: '⌖',
+    children: visible,
+  }]
+})
+const searching = computed(() => searchText.value.trim() !== '')
+const noMatch = computed(() => searching.value && mapNodes.value.length === 0)
+
+const selected = computed(() => rows.value.find((row) => row.id === selectedId.value) ?? null)
+
+/** Las zonas de la vista general: las raíces, o los hijos directos de lo seleccionado. */
+const zones = computed(() => {
+  const parent = selected.value?.id ?? null
+  return rows.value
+    .filter((row) => (parent ? row.parentId === parent : !row.parentId))
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+})
+
+const plantsLabel = (total: number) => `${total} ${total === 1 ? 'planta' : 'plantas'}`
+const markOf = (row: LocationSummary) => (row.locationType ? LOCATION_TYPE_MARKS[row.locationType] : '⌖')
+
+function summaryOf(row: LocationSummary) {
+  const total = plantsLabel(row.plantCountTotal)
+  return row.plantCountTotal === row.plantCount ? total : `${total} · ${row.plantCount} directas`
 }
+
+const overviewTitle = computed(() => selected.value?.name ?? 'Toda la colección')
+const overviewIntro = computed(() => (selected.value
+  ? `${selected.value.path} · ${plantsLabel(selected.value.plantCountTotal)} contando sus sublocalizaciones.`
+  : `${collectionSize.value} ejemplares repartidos en ${rows.value.length} localizaciones.`))
 
 const workSummary = computed(() => [
   { value: '—', label: 'Tareas pendientes', note: 'Trabajo por zona · T-22', to: '/tasks', mock: true },
   { value: '—', label: 'Alertas abiertas', note: 'Incidencias · T-23', to: '/alerts', tone: 'danger' as const, mock: true },
-  { value: page.value?.totalElements ?? 0, label: 'Localizaciones', note: 'Jerarquía completa · T-18' },
+  { value: rows.value.length, label: 'Localizaciones', note: 'En el vivero' },
 ])
 
-function openLocation(id: string) {
-  if (id !== 'all') navigateTo(`/locations/${id}`)
+function select(id: string) {
+  selectedId.value = id
 }
 </script>
 
@@ -109,7 +117,7 @@ function openLocation(id: string) {
       context="Organiza el vivero tal como lo recorres: de la zona a la bancada y de la bancada a la bandeja."
     >
       <template #title>
-        Localizaciones <span class="heading-count">{{ page?.totalElements ?? '—' }}</span>
+        Localizaciones <span class="heading-count">{{ loading || error ? '—' : rows.length }}</span>
       </template>
       <template #actions>
         <UiButton to="/locations/new" data-test="new-location"><span aria-hidden="true">＋</span> Añadir localización</UiButton>
@@ -132,73 +140,86 @@ function openLocation(id: string) {
       </template>
     </UiEmptyState>
 
-    <div v-else-if="locations.length" class="overview">
+    <div v-else class="overview">
       <aside class="nursery-map" data-test="nursery-map">
         <header>
           <div>
             <h2>Mapa del vivero</h2>
             <p data-test="collection-total">
               <strong>{{ collectionSize }}</strong> plantas en
-              <strong>{{ page!.totalElements }}</strong> localizaciones
+              <strong>{{ rows.length }}</strong> localizaciones
             </p>
           </div>
-          <UiButton variant="icon" label="Opciones del mapa" disabled data-mock="true">•••</UiButton>
         </header>
 
         <label class="map-search">
           <span aria-hidden="true">⌕</span>
-          <input type="search" placeholder="Buscar localización · T-21" disabled data-mock="true">
+          <input
+            v-model="searchText"
+            type="search"
+            placeholder="Buscar localización"
+            aria-label="Buscar localización por nombre o código"
+            data-test="map-search"
+          >
         </label>
 
         <div class="map-tree">
+          <p v-if="noMatch" class="map-empty" data-test="map-no-match">
+            Ninguna localización coincide con «{{ searchText.trim() }}».
+          </p>
           <UiTree
-            :nodes="tree"
-            selected="all"
+            v-else
+            :nodes="mapNodes"
+            :selected="selectedId"
             label="Jerarquía de localizaciones"
-            @select="openLocation"
+            @select="select"
           />
         </div>
-
-        <p class="map-pending" data-mock="true" data-test="hierarchy-pending">
-          El esquema todavía es plano. Los niveles de zona, bancada y bandeja completarán este mapa
-          con <strong>T-18</strong>.
-        </p>
       </aside>
 
       <main class="overview-main">
         <header class="overview-head">
           <div>
             <span>Vista general</span>
-            <h2>Toda la colección</h2>
-            <p>{{ collectionSize }} ejemplares repartidos en {{ page!.totalElements }} localizaciones.</p>
+            <h2 data-test="overview-title">{{ overviewTitle }}</h2>
+            <p>{{ overviewIntro }}</p>
           </div>
-          <UiButton variant="secondary" to="/plants" data-test="all-plants">
-            Ver todas las plantas
-          </UiButton>
+          <div class="overview-actions">
+            <UiButton v-if="selected" variant="secondary" :to="`/locations/${selected.id}`" data-test="open-location">
+              Abrir ficha
+            </UiButton>
+            <UiButton variant="secondary" to="/plants" data-test="all-plants">
+              Ver todas las plantas
+            </UiButton>
+          </div>
         </header>
 
         <UiMetricStrip :items="workSummary" label="Resumen operativo de localizaciones" />
 
-        <div class="zones">
+        <div v-if="zones.length" class="zones">
           <UiZoneCard
-            v-for="location in locations"
-            :key="location.id"
-            :title="location.name"
-            :summary="`${location.plantCount} ${location.plantCount === 1 ? 'planta' : 'plantas'}`"
-            :to="`/locations/${location.id}`"
-            :mark="locationMark(location.name)"
-            :status="location.plantCount ? 'En uso' : 'Vacía'"
-            :status-tone="location.plantCount ? 'ok' : 'neutral'"
-            :progress="shareOf(location)"
-            :progress-label="`${shareOf(location)} % de la colección`"
+            v-for="zone in zones"
+            :key="zone.id"
+            :title="zone.name"
+            :summary="summaryOf(zone)"
+            :to="`/locations/${zone.id}`"
+            :mark="markOf(zone)"
+            :status="zone.plantCountTotal ? 'En uso' : 'Vacía'"
+            :status-tone="zone.plantCountTotal ? 'ok' : 'neutral'"
+            :progress="occupancyOf(zone.plantCountTotal, zone.capacity) ?? undefined"
+            :progress-label="occupancyOf(zone.plantCountTotal, zone.capacity) !== null
+              ? `${occupancyOf(zone.plantCountTotal, zone.capacity)} % de ${zone.capacity} plantas`
+              : undefined"
+            :note="zone.capacity ? undefined : 'Sin capacidad definida'"
             data-test="zone-card"
           />
         </div>
-
-        <p class="capacity-note" data-mock="true" data-test="capacity-pending">
-          Las barras comparan hoy cada sitio con la colección. La capacidad orientativa de cada
-          zona llega con <strong>T-18</strong>.
-        </p>
+        <UiEmptyState v-else title="No tiene sublocalizaciones" mark="▦" class="no-children" data-test="no-children">
+          Es el último nivel de esta ruta. Puedes crear una dentro desde su ficha.
+          <template #action>
+            <UiButton v-if="selected" variant="secondary" :to="`/locations/new?parent=${selected.id}`">Añadir dentro</UiButton>
+          </template>
+        </UiEmptyState>
 
         <section class="attention" data-mock="true" data-test="attention">
           <header>
@@ -215,15 +236,6 @@ function openLocation(id: string) {
         </section>
       </main>
     </div>
-
-    <UiPagination
-      :page="page?.pageNumber ?? 0"
-      :total-pages="page?.totalPages ?? 0"
-      :loading="loading"
-      label="Paginación del catálogo de localizaciones"
-      @update:page="load"
-    />
-
   </section>
 </template>
 
@@ -291,7 +303,7 @@ function openLocation(id: string) {
 .map-search input {
   background: transparent;
   border: 0;
-  color: var(--color-ink-muted);
+  color: var(--color-ink);
   font: inherit;
   font-size: var(--font-size-13);
   min-width: 0;
@@ -303,12 +315,11 @@ function openLocation(id: string) {
   padding: var(--space-2);
 }
 
-.map-pending {
-  border-top: 1px solid var(--color-line);
+.map-empty {
   color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
+  font-size: var(--font-size-12);
   margin: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3);
 }
 
 .overview-main {
@@ -340,17 +351,21 @@ function openLocation(id: string) {
   max-width: 570px;
 }
 
+.overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.no-children {
+  margin-top: var(--space-3);
+}
+
 .zones {
   display: grid;
   gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: var(--space-3);
-}
-
-.capacity-note {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  margin: var(--space-3) 0 0;
 }
 
 .attention {

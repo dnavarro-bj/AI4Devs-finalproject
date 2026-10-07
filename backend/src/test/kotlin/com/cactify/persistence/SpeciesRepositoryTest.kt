@@ -73,7 +73,7 @@ class SpeciesRepositoryTest : AbstractIntegrationTest() {
     clearSpecies()
     val planted = speciesRepository.save(species("Echinopsis oxygona"))
     val untouched = speciesRepository.save(species("Gymnocalycium mihanovichii"))
-    val location = locationRepository.save(Location(name = "Bandeja de prueba"))
+    val location = locationRepository.save(Location(name = "Bandeja de prueba", code = com.cactify.locationCode("Bandeja de prueba")))
     plantRepository.save(Plant(code = "TEST-1-01", nickname = "Pinchitos", location = location, species = planted))
     entityManager.flush()
 

@@ -4,7 +4,7 @@ import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import DashboardPage from '../app/pages/index.vue'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
-import type { LocationListItem } from '@features/catalogs/types/catalog.types'
+import type { LocationSummary } from '@features/locations/types/location.types'
 import type { PageResponse } from '@shared/types/api.types'
 
 const api = createApiDouble()
@@ -16,15 +16,15 @@ mockNuxtImport('getApiClient', () => () => api)
  * carga por zona a la derecha. «Hoy» es el de la maqueta, 2026-09-03.
  */
 describe('dashboard de trabajo', () => {
-  const page = (content: LocationListItem[]): PageResponse<LocationListItem> => ({
+  const page = (content: LocationSummary[]): PageResponse<LocationSummary> => ({
     content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25,
   })
 
   beforeEach(() => {
     api.get.mockReset()
     api.get.mockResolvedValue(page([
-      { id: '300001', name: 'Invernadero 1', plantCount: 12 },
-      { id: '300002', name: 'Invernadero 2', plantCount: 4 },
+      { id: '300001', name: 'Invernadero 1', code: 'LOC-I1', parentId: null, path: 'Invernadero 1', locationType: 'invernadero', capacity: null, plantCount: 2, plantCountTotal: 12 },
+      { id: '300002', name: 'Invernadero 2', code: 'LOC-I2', parentId: null, path: 'Invernadero 2', locationType: 'invernadero', capacity: null, plantCount: 4, plantCountTotal: 4 },
     ]))
   })
 

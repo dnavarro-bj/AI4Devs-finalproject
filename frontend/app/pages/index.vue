@@ -122,10 +122,10 @@ onMounted(load)
             <li v-for="zone in busiestZones" :key="zone.id" data-test="zone-load">
               <NuxtLink :to="`/locations/${zone.id}`">
                 <strong>{{ zone.name }}</strong>
-                <small>{{ zone.plantCount }} plantas</small>
+                <small>{{ zone.plantCountTotal }} plantas</small>
               </NuxtLink>
               <UiProgressBar
-                :value="zone.plantCount"
+                :value="zone.plantCountTotal"
                 :max="maxZoneLoad"
                 :label="`Carga de ${zone.name}`"
                 :show-value="false"

@@ -32,7 +32,7 @@ class RelationshipMappingTest : AbstractIntegrationTest() {
       minHumidity = 10, maxHumidity = 20, minTemperature = 10, maxTemperature = 20,
       minLightHours = 6, maxLightHours = 10, wateringGuideline = "weekly", soilMix = soilMix,
     )
-    val location = Location(name = "Test location $suffix")
+    val location = Location(name = "Test location $suffix", code = com.cactify.locationCode("Test location $suffix"))
     val plant = Plant(code = "TEST-${suffix.uppercase()}-01", nickname = nickname, location = location, species = species)
     entityManager.persist(soilMix)
     entityManager.persist(species)

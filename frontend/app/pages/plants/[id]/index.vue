@@ -236,6 +236,9 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
 
         <h3 class="data-heading">Historial de estado</h3>
         <PlantStatusHistory :plant-id="plant.id" :version="historyVersion" />
+
+        <h3 class="data-heading">Historial de movimientos</h3>
+        <PlantMovementHistory :plant-id="plant.id" />
       </UiPanel>
 
       <PlantStatusDialog

@@ -245,6 +245,10 @@ erDiagram
 
 `PLANT_CARE_OVERRIDE` **no se creó como tabla 1-1**: los ocho valores opcionales son columnas de `PLANT` con prefijo `care_` (nulo = hereda). La asociación 1-1 inversa no se carga perezosamente en Hibernate, y cada planta de un listado habría disparado una consulta más; la semántica es la misma. Cambiar la especie **conserva** los valores propios y se revalida el perfil efectivo. Ya está en el [modelo actual](modelo-datos-actual.md).
 
+## Hecho: localizaciones jerárquicas (7 oct 2026, `localizaciones-jerarquicas`)
+
+`LOCATION` gana `parentId` y los campos que pedía el frontend, **sin `path`**. `PLANT_MOVEMENT` se construyó como **tabla propia** (`movedAt`) y no como satélite de `PLANT_EVENT`, que aún no existe: T-20 la enlazará a la cronología. Ya está en el [modelo actual](modelo-datos-actual.md).
+
 ## Contraste con el frontend
 
 Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aquí solo se recoge el **qué**; lo que cambia el esquema y no está decidido va a «Pendiente de decidir».
@@ -280,15 +284,15 @@ Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aqu�
 6. **Fotografías**: formatos, tamaño máximo, miniaturas, EXIF, borrado real o referencia histórica, y dónde vive el binario. Es material de un ADR propio, no de este diagrama.
 7. ~~Datos parciales.~~ **Resuelta (7 oct 2026):** una sola regla —el mes solo vale con año—, con `CHECK` en el esquema y `require` en el dominio; un año sin mes significa «en algún momento de ese año» y la ficha lo cuenta como edad aproximada.
 8. **Vistas guardadas y columnas configurables** del inventario (§5.1): probablemente una tabla `SAVED_VIEW` con el filtro serializado. No se dibuja todavía porque puede caer al final de la fase o pasar a la siguiente.
-9. **`LOCATION.path`** es redundante con `parentId`, y se propone porque abarata las dos consultas que el producto pide en todas partes: ruta completa para los breadcrumbs y recuento de descendientes. Falta decidir quién lo mantiene coherente al mover una localización.
+9. ~~`LOCATION.path`~~ **Resuelta (7 oct 2026, `localizaciones-jerarquicas`, `V12`):** no existe. Solo `parent_id`; ruta y recuentos se calculan con consultas recursivas, así que nadie tiene que mantenerlos coherentes.
 10. ~~¿Existe el entorno «Estacional»?~~ **Resuelta (6 oct 2026):** no, el entorno queda en tres valores. Sigue abierto si la localización (`interior|cubierto|exterior`) y la especie deben usar el mismo conjunto: son conceptos distintos —una cubre el sitio, la otra la tolerancia de la planta— y de momento se mantienen separados.
 11. ~~Calendario anual de la especie~~ **Resuelta (6 oct 2026) y construida (7 oct, `especie-ampliada`, `V10`):** una sola tabla `SPECIES_PERIOD` por tipo, con el cruce de año como inicio > fin. El entorno quedó en **tres valores** (decisión del usuario, §9.3 resuelta: sin «estacional») y «soleado»/«pleno sol» se distinguen por **definición funcional en la interfaz**, sin umbrales (§24.6 resuelta). Los datos de floración quedaron como columnas de `SPECIES`; `description` pasó a opcional.
 12. **Grupos de cultivo de especies** («Pleno sol», «Sensibles al frío: mínima > 8 °C», «Crecimiento invernal»). Son filtros guardados, pero sobre **especies**, y el punto 8 solo contempla vistas de plantas. Depende de si los grupos son manuales o dinámicos (§24.11).
 13. **«Año de cultivo» en la ficha de especie.** No está claro qué dato es ni de dónde sale; hasta saberlo, no tiene campo.
 14. ~~Procedencia del ejemplar: ¿texto libre o enum?~~ **Resuelta (7 oct 2026): lista cerrada** (`vivero`, `intercambio`, `germinacion_propia`, `compra`, `regalo`, `otro`) **más una nota libre**.
 15. **Componentes del sustrato.** El frontend muestra una lista de «componentes orientativos» con su proporción. Es una lista de longitud variable: ¿tabla `SOIL_MIX_COMPONENT` o descripción de texto? Lo decide T-27.
-16. **Código de las localizaciones.** El frontend muestra `LOC-···`, pero T-15 solo cubre códigos de especie y de ejemplar. Falta un ticket que lo cubra o retirar el código de la maqueta.
-17. **Valores de `LOCATION.locationType`.** El select del formulario existe y está vacío. Sin valores no se puede hacer un enum (ADR-007).
+16. ~~Código de las localizaciones.~~ **Resuelta (7 oct 2026, `V12`):** `LOC-···` manual, obligatorio, único sin distinguir mayúsculas y editable siempre; el formulario lo propone.
+17. ~~Valores de `LOCATION.locationType`.~~ **Resuelta (7 oct 2026, `V12`):** `bancada`, `bandeja`, `invernadero`, `zona_exterior`, `estanteria`, `otro`.
 18. **Texto de la etiqueta.** Decidir si `TAG.description` es un campo opcional y quién lo edita.
 19. **Propósito de la foto de planta**: los tres valores (`general`, `detalle`, `etiqueta_fisica`) salen del formulario de alta del frontend y no están confirmados como enum.
 20. **Configuración de la aplicación** (formato de códigos, unidades, umbrales de alerta, ajustes de IA). Ningún borrador la modela y ningún ticket la recoge. El **formato de código** sí toca este borrador: si el prefijo y los dígitos son configurables, `SPECIES.code` y `PLANT.code` guardan el texto ya compuesto y el cambio de formato no puede reescribir los existentes.

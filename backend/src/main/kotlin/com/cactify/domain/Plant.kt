@@ -133,6 +133,18 @@ class Plant(
     this.careOverrides = ownCare
   }
 
+  /**
+   * Cambia de localización y **devuelve el movimiento** ya construido, o `null` si ya está allí: la
+   * localización actual y su historial salen del mismo método y no se pueden desincronizar. El reloj
+   * entra por parámetro porque la fecha del movimiento es la del sistema (ADR-010).
+   */
+  fun moveTo(destination: Location, clock: Clock): PlantMovement? {
+    if (location.id == destination.id) return null
+    val movement = PlantMovement.record(this, location, destination, clock.instant())
+    this.location = destination
+    return movement
+  }
+
   /** El perfil que se aplica: lo propio donde lo hay y la pauta de la especie donde no. */
   fun effectiveCare(): EffectiveCare = (careOverrides ?: CareOverrides()).effective(species)
 

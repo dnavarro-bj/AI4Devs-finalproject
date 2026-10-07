@@ -12,7 +12,7 @@ class LocationRenameTest {
 
   @Test
   fun `renaming to a blank name is rejected and leaves the previous name intact`() {
-    val location = Location(name = "Invernadero 1")
+    val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
 
     assertFailsWith<IllegalArgumentException> { location.rename("   ") }
 
@@ -21,7 +21,7 @@ class LocationRenameTest {
 
   @Test
   fun `renaming to a valid name applies the change`() {
-    val location = Location(name = "Invernadero 1")
+    val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
 
     location.rename("Invernadero 2")
 

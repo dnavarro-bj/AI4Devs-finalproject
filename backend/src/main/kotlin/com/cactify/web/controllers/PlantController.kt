@@ -1,6 +1,8 @@
 package com.cactify.web.controllers
 
+import com.cactify.application.PlantMovementService
 import com.cactify.application.PlantService
+import com.cactify.application.dto.MovementResponse
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.PlantDetailResponse
 import com.cactify.application.dto.PlantStatusChangeResponse
@@ -72,7 +74,10 @@ data class ReplacePlantTagsRequest(val tagIds: List<String> = emptyList())
 
 @RestController
 @RequestMapping("/plants")
-class PlantController(private val plantService: PlantService) {
+class PlantController(
+  private val plantService: PlantService,
+  private val movementService: PlantMovementService,
+) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
@@ -122,6 +127,15 @@ class PlantController(private val plantService: PlantService) {
     ) pageable: Pageable,
   ): PageResponse<PlantStatusChangeResponse> = plantService.statusChanges(id, pageable)
 
+  /** Dónde ha estado el ejemplar, del movimiento más reciente al más antiguo; `id` desempata los de un mismo instante. */
+  @GetMapping("/{id}/movements")
+  fun movements(
+    @PathVariable id: String,
+    @SortDefault.SortDefaults(
+      SortDefault(sort = ["movedAt", "id.id"], direction = Sort.Direction.DESC),
+    ) pageable: Pageable,
+  ): PageResponse<MovementResponse> = movementService.historyOfPlant(id, pageable)
+
   @PutMapping("/{id}/tags")
   fun replaceTags(
     @PathVariable id: String,
@@ -137,7 +151,9 @@ class PlantController(private val plantService: PlantService) {
     @RequestParam(required = false) code: String?,
     /** Repetible: los estados que se quieren. Sin él, solo lo que está en curso. */
     @RequestParam(name = "status", required = false) statuses: List<String>?,
+    /** Con `location`, añade las plantas de todas sus sublocalizaciones. */
+    @RequestParam(required = false, defaultValue = "false") includeDescendants: Boolean,
     @SortDefault(sort = ["createdAt"]) pageable: Pageable,
   ): PageResponse<PlantSummaryResponse> =
-    plantService.search(location, tags.orEmpty(), code, pageable, statuses.orEmpty())
+    plantService.search(location, tags.orEmpty(), code, pageable, statuses.orEmpty(), includeDescendants)
 }

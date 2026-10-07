@@ -28,7 +28,7 @@ class CareRecordInvariantsTest {
     minHumidity = 10, maxHumidity = 30, minTemperature = 10, maxTemperature = 35,
     minLightHours = 6, maxLightHours = 10, wateringGuideline = "semanal", soilMix = soilMix,
   )
-  private val plant = Plant(code = "TEST-A-01", nickname = "Bola", location = Location(name = "Invernadero 1"), species = species)
+  private val plant = Plant(code = "TEST-A-01", nickname = "Bola", location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1")), species = species)
 
   private fun record(
     humidity: Int? = 35,

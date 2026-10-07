@@ -15,7 +15,8 @@
  * formulario que parece guardar y no guarda es peor que uno que no deja editar.
  */
 import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
-import type { Location } from '@features/catalogs/types/catalog.types'
+import { useLocations } from '@features/locations/composables/useLocations'
+import type { LocationSummary } from '@features/locations/types/location.types'
 import type { SpeciesCare, SpeciesSummary } from '@features/species/types/species.types'
 import { validateRange } from '@shared/utils/careRanges'
 import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
@@ -56,7 +57,8 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ submit: [PlantFormValues] }>()
 
-const { listLocations, listSpecies, speciesCare } = useCatalogs()
+const { listSpecies, speciesCare } = useCatalogs()
+const { loadAll: loadLocations } = useLocations()
 const { list: listSoilMixes } = useSoilMixes()
 
 const nickname = ref(props.initial.nickname ?? '')
@@ -84,7 +86,7 @@ watch(germinationYear, (year) => {
   if (year.trim() === '') germinationMonth.value = ''
 })
 
-const locations = ref<Location[]>([])
+const locations = ref<LocationSummary[]>([])
 const species = ref<SpeciesSummary[]>([])
 const selectedSpecies = ref<SpeciesCare | null>(null)
 
@@ -126,7 +128,7 @@ function goToSection(value: string) {
 
 // Ya montado, no en `setup`: ver ADR-013.
 onMounted(async () => {
-  const [locationsResult, speciesResult] = await Promise.all([listLocations(), listSpecies()])
+  const [locationsResult, speciesResult] = await Promise.all([loadLocations(), listSpecies()])
   loading.value = false
 
   const failed = [locationsResult, speciesResult].find((result) => !result.success)
@@ -135,7 +137,7 @@ onMounted(async () => {
     return
   }
 
-  locations.value = locationsResult.data!.content
+  locations.value = locationsResult.data!
   species.value = speciesResult.data!.content
 })
 
@@ -159,9 +161,10 @@ const shownSpecies = computed(() => {
     `${item.scientificName} ${item.commonName}`.toLowerCase().includes(needle))
 })
 
+/** Cada opción lleva su ruta completa: dos «Bandeja A3» de invernaderos distintos no se distinguirían por el nombre. */
 const locationOptions = computed(() => locations.value.map((location) => ({
   value: location.id,
-  label: location.name,
+  label: location.path || location.name,
 })))
 
 const selectedLocation = computed(
@@ -442,8 +445,8 @@ function submit() {
           <span class="location-picked__mark" aria-hidden="true">▦</span>
           <span>
             <small>Ubicación seleccionada</small>
-            <strong>{{ selectedLocation.name }}</strong>
-            <em data-mock="true">La ruta jerárquica y el recuento llegan en T-18.</em>
+            <strong>{{ selectedLocation.path || selectedLocation.name }}</strong>
+            <em v-if="selectedLocation.plantCountTotal !== undefined" data-test="location-load">{{ selectedLocation.plantCountTotal }} {{ selectedLocation.plantCountTotal === 1 ? 'planta' : 'plantas' }} en esta ubicación</em>
           </span>
         </div>
       </UiFormSection>

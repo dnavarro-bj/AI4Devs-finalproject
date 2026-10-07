@@ -19,7 +19,7 @@ class PlantCareTest {
 
   private val dry = species("CAT-SECA", 10, 30)
   private val humid = species("CAT-HUME", 50, 90)
-  private val location = Location(name = "Invernadero 1")
+  private val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
 
   private fun plant(species: Species = dry, care: CareOverrides? = null) =
     Plant(code = "CAT-SECA-01", nickname = "Bola", location = location, species = species, careOverrides = care)

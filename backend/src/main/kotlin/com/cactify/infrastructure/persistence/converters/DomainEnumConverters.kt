@@ -63,3 +63,24 @@ class WateringIntensityConverter : AttributeConverter<com.cactify.domain.Waterin
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.WateringIntensity? =
     dbData?.let { com.cactify.domain.WateringIntensity(it) }
 }
+
+@Converter(autoApply = true)
+class LocationTypeConverter : AttributeConverter<com.cactify.domain.LocationType, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.LocationType?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.LocationType? =
+    dbData?.let { com.cactify.domain.LocationType(it) }
+}
+
+@Converter(autoApply = true)
+class LocationEnvironmentConverter : AttributeConverter<com.cactify.domain.LocationEnvironment, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.LocationEnvironment?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.LocationEnvironment? =
+    dbData?.let { com.cactify.domain.LocationEnvironment(it) }
+}
+
+@Converter(autoApply = true)
+class LocationExposureConverter : AttributeConverter<com.cactify.domain.LocationExposure, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.LocationExposure?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.LocationExposure? =
+    dbData?.let { com.cactify.domain.LocationExposure(it) }
+}

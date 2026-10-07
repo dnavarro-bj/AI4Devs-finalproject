@@ -27,7 +27,7 @@ class PlantProfileTest {
     minHumidity = 10, maxHumidity = 30, minTemperature = 10, maxTemperature = 35,
     minLightHours = 6, maxLightHours = 10, wateringGuideline = "cada 10 dias", soilMix = soilMix,
   )
-  private val location = Location(name = "Invernadero 1")
+  private val location = Location(name = "Invernadero 1", code = com.cactify.locationCode("Invernadero 1"))
   private val clock: Clock = Clock.fixed(Instant.parse("2026-10-07T10:00:00Z"), ZoneOffset.UTC)
 
   private fun plant(

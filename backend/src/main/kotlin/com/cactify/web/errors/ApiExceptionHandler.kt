@@ -8,6 +8,10 @@ import com.cactify.application.DuplicateSpeciesCodeException
 import com.cactify.application.SpeciesCodeLockedException
 import com.cactify.application.DuplicateTagNameException
 import com.cactify.application.InvalidReferenceException
+import com.cactify.application.DuplicateLocationCodeException
+import com.cactify.application.LocationHasChildrenException
+import com.cactify.application.LocationHierarchyCycleException
+import com.cactify.application.LocationInMovementsException
 import com.cactify.application.LocationInUseException
 import com.cactify.application.LocationNotFoundException
 import com.cactify.application.PlantNotFoundException
@@ -147,6 +151,16 @@ class ApiExceptionHandler {
   fun onLocationInUse(ex: LocationInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
 
+  /** Código repetido, ciclo en la jerarquía y retiradas bloqueadas: dependen del estado, no del formato. */
+  @ExceptionHandler(
+    DuplicateLocationCodeException::class,
+    LocationHierarchyCycleException::class,
+    LocationHasChildrenException::class,
+    LocationInMovementsException::class,
+  )
+  fun onLocationConflict(ex: RuntimeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "La localización entra en conflicto", request)
+
   @ExceptionHandler(SoilMixInUseException::class)
   fun onSoilMixInUse(ex: SoilMixInUseException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "El recurso está en uso", request)
@@ -176,6 +190,10 @@ class ApiExceptionHandler {
   @ExceptionHandler(DataIntegrityViolationException::class)
   fun onIntegrityViolation(ex: DataIntegrityViolationException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
     val cause = rootMessage(ex) ?: ""
+    if (LOCATION_CODE_CONSTRAINT in cause) {
+      log.warn("Código de localización duplicado detectado por la restricción en {}", request.requestURI)
+      return body(HttpStatus.CONFLICT, "Ya existe una localización con ese código", request)
+    }
     if (SPECIES_CODE_CONSTRAINT in cause) {
       log.warn("Código de especie duplicado detectado por la restricción en {}", request.requestURI)
       return body(HttpStatus.CONFLICT, "Ya existe una especie con ese código", request)
@@ -202,6 +220,7 @@ class ApiExceptionHandler {
     val log = LoggerFactory.getLogger(ApiExceptionHandler::class.java)
     const val SPECIES_NAME_CONSTRAINT = "species_scientific_name_unique"
     const val SPECIES_CODE_CONSTRAINT = "species_code_unique"
+    const val LOCATION_CODE_CONSTRAINT = "location_code_unique"
   }
 
   private fun rootMessage(ex: Throwable): String? {

@@ -39,12 +39,14 @@ abstract class AbstractApiIntegrationTest : AbstractIntegrationTest() {
     jdbcTemplate.update("DELETE FROM ai_recommendation")
     jdbcTemplate.update("DELETE FROM care_record")
     jdbcTemplate.update("DELETE FROM plant_tag")
+    jdbcTemplate.update("DELETE FROM plant_movement")
     jdbcTemplate.update("DELETE FROM plant")
   }
 
   /** Deja el catálogo de localizaciones vacío; exige que no queden plantas. */
   protected fun clearLocations() {
     clearPlants()
+    jdbcTemplate.update("UPDATE location SET parent_id = NULL")
     jdbcTemplate.update("DELETE FROM location")
   }
 

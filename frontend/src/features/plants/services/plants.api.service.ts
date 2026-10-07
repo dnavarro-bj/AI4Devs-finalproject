@@ -19,6 +19,8 @@ export interface PlantQuery {
   sort?: string
   tag?: string[]
   location?: string
+  /** Con `location`, añade las plantas de todas las sublocalizaciones a cualquier profundidad. */
+  includeDescendants?: boolean
   /** Coincidencia parcial sobre el código de inventario, sin distinguir mayúsculas. */
   code?: string
   /**
@@ -35,6 +37,7 @@ export const plantsApiService = {
     if (query.sort) params.sort = query.sort
     if (query.tag?.length) params.tag = query.tag
     if (query.location) params.location = query.location
+    if (query.location && query.includeDescendants) params.includeDescendants = true
     // Un texto en blanco no es un filtro: no viaja.
     if (query.code?.trim()) params.code = query.code.trim()
     if (query.status?.length) params.status = query.status

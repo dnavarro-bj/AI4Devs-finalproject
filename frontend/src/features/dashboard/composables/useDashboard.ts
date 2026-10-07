@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
-import { useCatalogs } from '@features/catalogs/composables/useCatalogs'
-import type { LocationListItem } from '@features/catalogs/types/catalog.types'
+import { useLocations } from '@features/locations/composables/useLocations'
+import type { LocationSummary } from '@features/locations/types/location.types'
 import { alertsApiService } from '@features/alerts/services/alerts.api.service'
 import { isOpen, type Alert } from '@features/alerts/types/alert.types'
 import { tasksApiService } from '@features/tasks/services/tasks.api.service'
@@ -21,17 +21,17 @@ const MS_PER_DAY = 86_400_000
  */
 export function useDashboard() {
   const today = useReferenceDate()
-  const { listLocations } = useCatalogs()
+  const { list: listLocations } = useLocations()
 
   const tasks = ref<Task[]>([])
   const alerts = ref<Alert[]>([])
-  const zones = ref<LocationListItem[]>([])
+  const zones = ref<LocationSummary[]>([])
   const zonesError = ref<string | null>(null)
   const loading = ref(true)
 
   async function loadZones() {
     zonesError.value = null
-    const result = await listLocations(0, 'name')
+    const result = await listLocations({ root: true, sort: 'name' })
     if (!result.success) {
       zonesError.value = result.error!.message
       return
@@ -84,9 +84,9 @@ export function useDashboard() {
 
   /** Las zonas más cargadas, y la mayor como escala de las barras. */
   const busiestZones = computed(() => [...zones.value]
-    .sort((a, b) => b.plantCount - a.plantCount)
+    .sort((a, b) => b.plantCountTotal - a.plantCountTotal)
     .slice(0, ZONES_LIMIT))
-  const maxZoneLoad = computed(() => Math.max(1, ...zones.value.map((zone) => zone.plantCount)))
+  const maxZoneLoad = computed(() => Math.max(1, ...zones.value.map((zone) => zone.plantCountTotal)))
 
   return {
     today, load, loadZones, loading, zonesError,

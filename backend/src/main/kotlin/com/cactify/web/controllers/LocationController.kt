@@ -1,13 +1,16 @@
 package com.cactify.web.controllers
 
 import com.cactify.application.LocationService
+import com.cactify.application.PlantMovementService
 import com.cactify.application.dto.LocationDetailResponse
-import com.cactify.application.dto.LocationResponse
 import com.cactify.application.dto.LocationSummaryResponse
+import com.cactify.application.dto.MoveResultResponse
+import com.cactify.application.dto.MovementResponse
 import com.cactify.application.dto.PageResponse
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.SortDefault
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -17,32 +20,46 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
-/** Cuerpo de la petición: es la forma del mensaje HTTP, así que vive en `web`. */
-data class CreateLocationRequest(
-  @field:NotBlank(message = "el nombre es obligatorio")
-  val name: String,
-)
-
 /**
- * Corregir una localización es cambiarle el nombre, que es todo lo que tiene: el cuerpo coincide
- * con el del alta, pero se declara aparte porque la jerarquía (T-18) los separará.
+ * Cuerpo del alta y de la edición: la forma del mensaje HTTP, así que vive en `web`. La edición es un
+ * **reemplazo completo**: lo que no se envíe queda ausente, y no enviar `parentId` la hace raíz.
  */
-data class RenameLocationRequest(
+data class LocationRequest(
   @field:NotBlank(message = "el nombre es obligatorio")
   val name: String,
-)
+  @field:NotBlank(message = "el código es obligatorio")
+  val code: String,
+  val parentId: String? = null,
+  val description: String? = null,
+  val locationType: String? = null,
+  val capacity: Int? = null,
+  val operationalNotes: String? = null,
+  val environment: String? = null,
+  val sunExposure: String? = null,
+) {
+  fun toInput() = LocationService.LocationInput(
+    name, code, parentId, description, locationType, capacity, operationalNotes, environment, sunExposure,
+  )
+}
+
+/** Los ejemplares que se mueven al destino de la ruta. */
+data class MovePlantsRequest(val plantIds: List<String> = emptyList())
 
 @RestController
 @RequestMapping("/locations")
-class LocationController(private val locationService: LocationService) {
+class LocationController(
+  private val locationService: LocationService,
+  private val movementService: PlantMovementService,
+) {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  fun create(@Valid @RequestBody request: CreateLocationRequest): LocationResponse =
-    locationService.create(request.name)
+  fun create(@Valid @RequestBody request: LocationRequest): LocationDetailResponse =
+    locationService.create(request.toInput())
 
   /**
    * Orden estable por nombre: sin él, dos páginas consecutivas pueden repetir u omitir filas.
@@ -50,17 +67,36 @@ class LocationController(private val locationService: LocationService) {
    * tamaño de página (10) y taparía el `default-page-size` configurado.
    */
   @GetMapping
-  fun list(@SortDefault(sort = ["name"]) pageable: Pageable): PageResponse<LocationSummaryResponse> =
-    locationService.list(pageable)
+  fun list(
+    /** Solo los hijos directos de esta localización. */
+    @RequestParam(required = false) parentId: String?,
+    /** Solo las localizaciones sin padre. */
+    @RequestParam(required = false, defaultValue = "false") root: Boolean,
+    @SortDefault(sort = ["name"]) pageable: Pageable,
+  ): PageResponse<LocationSummaryResponse> = locationService.list(pageable, parentId, root)
 
   @GetMapping("/{id}")
   fun detail(@PathVariable id: String): LocationDetailResponse = locationService.findById(id)
 
   @PutMapping("/{id}")
-  fun rename(@PathVariable id: String, @Valid @RequestBody request: RenameLocationRequest): LocationResponse =
-    locationService.rename(id, request.name)
+  fun update(@PathVariable id: String, @Valid @RequestBody request: LocationRequest): LocationDetailResponse =
+    locationService.update(id, request.toInput())
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   fun delete(@PathVariable id: String) = locationService.delete(id)
+
+  /** Mueve el lote **a esta localización**, atómicamente. */
+  @PostMapping("/{id}/movements")
+  fun move(@PathVariable id: String, @RequestBody request: MovePlantsRequest): MoveResultResponse =
+    movementService.move(id, request.plantIds)
+
+  /** Lo que ha recibido y cedido, del más reciente al más antiguo; `id` desempata los de un mismo instante. */
+  @GetMapping("/{id}/movements")
+  fun movements(
+    @PathVariable id: String,
+    @SortDefault.SortDefaults(
+      SortDefault(sort = ["movedAt", "id.id"], direction = Sort.Direction.DESC),
+    ) pageable: Pageable,
+  ): PageResponse<MovementResponse> = movementService.historyOfLocation(id, pageable)
 }
