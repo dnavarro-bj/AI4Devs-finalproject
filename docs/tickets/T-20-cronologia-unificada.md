@@ -26,6 +26,10 @@ Sustituye a **T-06**, que se retira: su alcance queda repartido entre este ticke
 * Una acción aplicada a varias plantas aparece en el historial de cada una y el sistema conserva que fue una sola operación.
 * Registrar una lectura la hace aparecer inmediatamente sin recargar la página.
 
-## Pendiente antes de empezar
+## Resuelto
 
-De qué lado cae la fertilización: insumo dosificado como el agua, o intervención.
+* **La fertilización es una intervención**, con producto y notas, no un insumo dosificado en `CareRecord`.
+* **Los comentarios se editan y se borran**, marcando «editado» (§24.8); sin historial de versiones.
+* El lote entra solo como columna (`batchId`); el registro por lote es de T-24.
+
+**Cerrado** por `cronologia-del-ejemplar` (7 oct 2026): espina `V13`, `GET /plants/{id}/timeline`, comentarios, intervenciones y floraciones, y la ficha con la cronología real.

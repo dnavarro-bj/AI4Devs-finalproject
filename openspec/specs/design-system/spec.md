@@ -179,7 +179,6 @@ La tabla NO SHALL ordenar los datos por sí misma: emite el criterio y quien sir
 - **WHEN** el usuario recorre las columnas que puede ocultar
 - **THEN** la columna identificativa no está entre ellas, porque sin ella una fila deja de poder reconocerse
 
-
 ### Requirement: Aviso
 
 El sistema SHALL ofrecer un componente de aviso con severidad explícita, título accionable, explicación breve y una acción opcional. Cerrar visualmente un aviso NO SHALL considerarse la resolución de la condición que lo originó.
@@ -292,7 +291,6 @@ El sistema SHALL ofrecer el armazón de la aplicación: una barra lateral de nav
 
 - **WHEN** la aplicación se muestra en una pantalla muy ancha
 - **THEN** el área de contenido no supera su ancho máximo y permanece legible
-
 
 ### Requirement: Garantías de accesibilidad comunes
 
@@ -795,3 +793,27 @@ La pauta anual SHALL poder usarse como **editor**: con la opción `editable`, ca
 
 - **WHEN** una fila que admite un solo nivel tiene un mes marcado
 - **THEN** ese mes se pinta con la fuerza máxima de la escala
+
+### Requirement: Cronología con filtro controlado desde fuera
+
+La cronología SHALL admitir un **filtro controlado**: cuando quien la usa le pasa el tipo activo, la cronología NO SHALL filtrar por sí misma, sino emitir el tipo que se pide y mostrar los eventos que recibe. Sin tipo controlado, SHALL conservar su filtro local. El motivo: con paginación, un filtro local solo vería lo ya cargado y diría «no hay» donde sí hay.
+
+#### Scenario: Controlado, emite y no filtra
+
+- **WHEN** la cronología recibe el tipo activo y se pulsa otro tipo
+- **THEN** emite el tipo pedido y los eventos mostrados siguen siendo los recibidos
+
+#### Scenario: El tipo activo se marca
+
+- **WHEN** el tipo activo es `floracion`
+- **THEN** ese filtro se marca como activo y «Todos» no
+
+#### Scenario: Volver a todos
+
+- **WHEN** se pulsa «Todos» con un tipo activo
+- **THEN** emite `null`
+
+#### Scenario: Sin control, filtra por sí misma
+
+- **WHEN** no se le pasa el tipo activo y se pulsa un tipo
+- **THEN** muestra solo los eventos de ese tipo, como hasta ahora

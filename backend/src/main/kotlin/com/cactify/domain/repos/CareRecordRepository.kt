@@ -14,6 +14,8 @@ import java.time.Instant
 interface CareRecordRepository {
   fun save(careRecord: CareRecord): CareRecord
   fun findOneById(id: CareRecordId): CareRecord?
+  /** Las lecturas de una página de la cronología, en una sola consulta. */
+  fun findAllByIdIn(ids: Collection<CareRecordId>): List<CareRecord>
   fun findAllByPlantId(plantId: PlantId, pageable: Pageable): Page<CareRecord>
 
   /**

@@ -85,4 +85,39 @@ describe('UiTimeline', () => {
     expect(wrapper.findAll('[data-role="event"]')).toHaveLength(0)
     expect(wrapper.text().toLowerCase()).toContain('todavía')
   })
+
+  describe('filtro controlado desde fuera', () => {
+    it('emite el tipo pedido y no filtra: muestra lo que recibe', async () => {
+      const wrapper = timeline({ activeType: null })
+
+      await wrapper.find('[data-test="filter-reading"]').trigger('click')
+
+      expect(wrapper.emitted('update:activeType')).toEqual([['reading']])
+      expect(wrapper.findAll('[data-role="event"]')).toHaveLength(4)
+    })
+
+    it('marca como activo el tipo recibido y no «Todos»', () => {
+      const wrapper = timeline({ activeType: 'photo' })
+
+      const active = (test: string) => wrapper.find(`[data-test="${test}"]`).classes().join(' ')
+      expect(active('filter-photo')).not.toBe(active('filter-all'))
+      expect(active('filter-reading')).toBe(active('filter-all'))
+    })
+
+    it('«Todos» emite null', async () => {
+      const wrapper = timeline({ activeType: 'photo' })
+
+      await wrapper.find('[data-test="filter-all"]').trigger('click')
+
+      expect(wrapper.emitted('update:activeType')).toEqual([[null]])
+    })
+
+    it('sin tipo controlado filtra por sí misma, como siempre', async () => {
+      const wrapper = timeline()
+
+      await wrapper.find('[data-test="filter-photo"]').trigger('click')
+
+      expect(wrapper.findAll('[data-role="event"]')).toHaveLength(1)
+    })
+  })
 })

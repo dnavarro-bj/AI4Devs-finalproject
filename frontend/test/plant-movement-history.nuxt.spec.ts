@@ -40,17 +40,7 @@ describe('historial de movimientos de un ejemplar', () => {
     expect(wrapper.find('[data-test="no-movements"]').exists()).toBe(true)
   })
 
-  it('declara que la cronología unificada llega con T-20', async () => {
-    api.get.mockResolvedValue(page([movement()]))
-
-    const wrapper = await mountHistory()
-
-    const note = wrapper.find('[data-test="movements-timeline-pending"]')
-    expect(note.attributes('data-mock')).toBe('true')
-    expect(note.text()).toContain('T-20')
-  })
-
-  it('un fallo se dice en su bloque, sin esconder la nota', async () => {
+  it('un fallo se dice en su bloque', async () => {
     api.get.mockRejectedValue(new ApiError(500, 'No se ha podido completar la operación.'))
 
     const wrapper = await mountHistory()

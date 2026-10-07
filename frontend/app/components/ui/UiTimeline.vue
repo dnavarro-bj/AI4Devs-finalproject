@@ -10,6 +10,11 @@
  * Un tipo que no esté en `types` **se muestra igual**, con una representación de reserva:
  * ocultarlo escondería algo que ocurrió de verdad.
  *
+ * **El filtro puede ser local o controlado.** Sin `activeType`, la cronología filtra los eventos que
+ * tiene. Con `activeType` (un tipo o `null` para «Todos») no filtra: marca el activo, emite
+ * `update:activeType` y pinta lo que recibe, porque con paginación en el servidor un filtro local
+ * solo vería lo ya cargado y diría «no hay» donde sí hay en la página siguiente.
+ *
  * Una fotografía, un comentario breve y una alerta piden densidades distintas; por eso el cuerpo
  * lo pone quien la usa y aquí solo se garantiza el orden y la cabecera.
  */
@@ -33,17 +38,32 @@ const props = withDefaults(defineProps<{
   events: TimelineEvent[]
   types: TimelineType[]
   emptyMessage?: string
-}>(), { emptyMessage: 'Todavía no hay nada registrado para esta planta.' })
+  /** `undefined`: filtro local. Un tipo o `null` («Todos»): filtro controlado desde fuera. */
+  activeType?: string | null
+}>(), { emptyMessage: 'Todavía no hay nada registrado para esta planta.', activeType: undefined })
 
-const activeType = ref<string | null>(null)
+const emit = defineEmits<{ 'update:activeType': [string | null] }>()
 
-/** Ordenar es del componente: quien sirve los eventos no tiene por qué garantizar el orden. */
+const localType = ref<string | null>(null)
+const controlled = computed(() => props.activeType !== undefined)
+const activeType = computed(() => (controlled.value ? props.activeType ?? null : localType.value))
+
+function select(type: string | null) {
+  if (!controlled.value) localType.value = type
+  emit('update:activeType', type)
+}
+
+/**
+ * Ordenar es del componente: quien sirve los eventos no tiene por qué garantizar el orden. Por
+ * instante y no por texto: dos ISO del mismo momento pueden diferir en los decimales. El orden es
+ * estable, así que los empates conservan el de llegada.
+ */
 const ordered = computed(
-  () => [...props.events].sort((a, b) => b.at.localeCompare(a.at)),
+  () => [...props.events].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)),
 )
 
 const shown = computed(
-  () => (activeType.value ? ordered.value.filter((event) => event.type === activeType.value) : ordered.value),
+  () => (activeType.value && !controlled.value ? ordered.value.filter((event) => event.type === activeType.value) : ordered.value),
 )
 
 /** Un tipo desconocido no tiene etiqueta declarada, así que se muestra por su valor crudo. */
@@ -62,7 +82,7 @@ function formatDate(at: string): string {
       <UiButton
         :variant="activeType === null ? 'secondary' : 'text'"
         data-test="filter-all"
-        @click="activeType = null"
+        @click="select(null)"
       >
         Todos
       </UiButton>
@@ -71,7 +91,7 @@ function formatDate(at: string): string {
         :key="type.value"
         :variant="activeType === type.value ? 'secondary' : 'text'"
         :data-test="`filter-${type.value}`"
-        @click="activeType = type.value"
+        @click="select(type.value)"
       >
         {{ type.label }}
       </UiButton>

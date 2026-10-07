@@ -25,6 +25,8 @@ describe('flujo completo', () => {
   })
 
   it('recorre alta, lectura y análisis sin una sola recarga', async () => {
+    // La cronología del servidor: vacía hasta que se registra la lectura.
+    const timeline: unknown[] = []
     api.get.mockImplementation(async (path: string) => {
       if (path === '/locations') {
         return { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
@@ -37,6 +39,9 @@ describe('flujo completo', () => {
       // La ficha estrena el historial de lecturas, que hasta ahora nadie consumía.
       if (path === '/plants/882687672222443468/care-records') {
         return { content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 25 }
+      }
+      if (path === '/plants/882687672222443468/timeline') {
+        return { content: timeline, totalElements: timeline.length, totalPages: 1, pageNumber: 0, pageSize: 25 }
       }
       throw new Error(`ruta inesperada: ${path}`)
     })
@@ -63,6 +68,7 @@ describe('flujo completo', () => {
     // 3. La lectura, que la ficha refleja en su cronología sin recarga. El formulario vive ahora
     //    en un diálogo, así que hay que abrirlo.
     api.post.mockResolvedValueOnce(careRecord())
+    timeline.push({ id: '500001', type: 'lectura', occurredAt: careRecord().recordedAt, reading: careRecord() })
     await detail.find('[data-test="register-reading"]').trigger('click')
     await detail.find('[data-test="humidity"]').setValue('8')
     await detail.find('[data-test="care-record-form"]').trigger('submit')

@@ -43,9 +43,6 @@ onMounted(load)
       Este ejemplar no se ha movido desde que se dio de alta.
     </p>
     <PlantMovementList v-else :movements="movements" />
-    <p class="movement-history__pending" data-mock="true" data-test="movements-timeline-pending">
-      En la cronología unificada del ejemplar aparecerán con <strong>T-20</strong>.
-    </p>
   </section>
 </template>
 
@@ -56,9 +53,4 @@ onMounted(load)
   margin: 0;
 }
 
-.movement-history__pending {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  margin: var(--space-3) 0 0;
-}
 </style>

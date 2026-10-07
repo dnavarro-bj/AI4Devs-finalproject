@@ -14,6 +14,7 @@ import com.cactify.application.LocationHierarchyCycleException
 import com.cactify.application.LocationInMovementsException
 import com.cactify.application.LocationInUseException
 import com.cactify.application.LocationNotFoundException
+import com.cactify.application.PlantEventNotFoundException
 import com.cactify.application.PlantNotFoundException
 import com.cactify.application.RecommendationNotFoundException
 import com.cactify.application.SoilMixInUseException
@@ -115,6 +116,10 @@ class ApiExceptionHandler {
 
   @ExceptionHandler(CareRecordNotFoundException::class)
   fun onCareRecordNotFound(ex: CareRecordNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  @ExceptionHandler(PlantEventNotFoundException::class)
+  fun onPlantEventNotFound(ex: PlantEventNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
 
   @ExceptionHandler(RecommendationNotFoundException::class)

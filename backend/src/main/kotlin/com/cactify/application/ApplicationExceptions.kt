@@ -127,3 +127,7 @@ class LocationHasChildrenException(id: String) :
 /** La localización figura en el historial de movimientos y no puede retirarse: 409. */
 class LocationInMovementsException(id: String) :
   RuntimeException("La localización '$id' figura en el historial de movimientos y no se puede eliminar")
+
+/** El evento pedido por la ruta no existe, no cuelga de la planta indicada o no es del tipo del recurso: 404. */
+class PlantEventNotFoundException(kind: String, id: String) :
+  RuntimeException("$kind '$id' no existe")

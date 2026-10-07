@@ -19,6 +19,11 @@ erDiagram
     CARE_RECORD ||--o| AI_RECOMMENDATION : "genera"
     PLANT ||--o{ PLANT_TAG : "tiene"
     PLANT ||--o{ PLANT_STATUS_CHANGE : "cambia de estado en"
+    PLANT ||--o{ PLANT_EVENT : "protagoniza"
+    PLANT_EVENT ||--o| PLANT_COMMENT : "detalla"
+    PLANT_EVENT ||--o| PLANT_INTERVENTION : "detalla"
+    PLANT_EVENT ||--o| PLANT_BLOOM : "detalla"
+    SOIL_MIX ||--o{ PLANT_INTERVENTION : "cambio de sustrato"
     TAG ||--o{ PLANT_TAG : "se asigna en"
 
     SOIL_MIX {
@@ -117,6 +122,38 @@ erDiagram
         timestamp occurredAt
     }
 
+    PLANT_EVENT {
+        TSID id PK
+        TSID plantId FK
+        enum eventType "comentario|intervencion|floracion"
+        timestamp occurredAt
+        TSID batchId "opcional; nadie lo escribe aun (T-24)"
+    }
+
+    PLANT_COMMENT {
+        TSID id PK,FK "evento"
+        string text "no en blanco"
+        timestamp editedAt "opcional"
+    }
+
+    PLANT_INTERVENTION {
+        TSID id PK,FK "evento"
+        enum interventionType "trasplante|sustrato|tratamiento|fertilizacion|poda|revision"
+        string product "tratamiento y fertilizacion"
+        string potSize "trasplante"
+        TSID soilMixId FK "sustrato"
+        string notes
+    }
+
+    PLANT_BLOOM {
+        TSID id PK,FK "evento"
+        date startedOn
+        date endedOn "solo si finalizada"
+        enum bloomStatus "boton|en_flor|finalizada"
+        int flowerCount
+        string notes
+    }
+
     TAG {
         TSID id PK
         string name UK "unico normalizado: lower(trim(name))"
@@ -159,11 +196,12 @@ erDiagram
 * **Ficha y estado del ejemplar (`V8`).** `plant` gana descripción, estado, germinación, adquisición y procedencia. El estado es obligatorio y uno de siete (tres **en curso**: `activa`, `cuarentena`, `enferma`; cuatro **finales**: `cedida`, `vendida`, `muerta`, `perdida`); el mes de germinación está entre 1 y 12 y **solo existe con año**; la procedencia es de una lista cerrada. Los ejemplares existentes quedaron `activa` y sin datos inventados. Cada cambio de estado se guarda en `plant_status_change` con su estado anterior, el nuevo, un motivo opcional y cuándo ocurrió; el estado actual y su historial nacen del mismo método de dominio (`Plant.changeStatus`). Las transiciones válidas viven en el dominio, no en el esquema.
 * **Ficha de cultivo y calendario de la especie (`V10`).** `species` gana descripción, exposición solar, entorno y cuatro datos de la floración esperada, **todos opcionales**: las especies existentes no tienen valor que inventar y «sin definir» es una respuesta. La exposición y las horas de luz son independientes. El entorno tiene tres valores. Nueva tabla `species_period` con un único calendario por tipo (`crecimiento`, `reposo`, `floracion`, `riego`): meses 1–12 con `CHECK`, **inicio > fin = periodo que cruza el año**, e intensidad obligatoria solo en el riego. Que dos periodos de un tipo no se solapen es una regla de conjunto y vive en el dominio. Se borra en cascada con la especie. `V11` añade el tipo **`crecimiento_maximo`** (los meses en que más crece): se superpone al crecimiento y su regla —caer dentro de él— vive en el dominio.
 * **Cuidados propios del ejemplar (`V9`).** Un ejemplar hereda la pauta de su especie y puede sobrescribir parte de ella: los rangos de humedad, temperatura y luz, la pauta de riego y la mezcla de sustrato. Son **columnas opcionales de `plant`** (prefijo `care_`) y **nulo significa «hereda»**; el borrador proponía una tabla 1-1, pero la asociación inversa no se carga perezosamente en Hibernate. El esquema solo defiende la escala (humedad 0–100, luz 0–24) y que la mezcla exista; **la coherencia de los extremos depende de la especie** y la comprueba el dominio. El detalle devuelve el perfil **efectivo** ya resuelto. Cambiar la especie conserva los valores propios.
+* **Cronología del ejemplar (`V13`).** La espina `plant_event` solo recibe los tres tipos nuevos —comentario, intervención y floración— con un satélite por tipo, clave compartida y borrado en cascada. **Se desvía del borrador**: las lecturas, los cambios de estado y los movimientos **no** se copian a la espina; `GET /plants/{id}/timeline` los une al leer con una consulta `UNION ALL` paginada, de modo que cada tabla sigue siendo la fuente de su verdad y no hay doble escritura. Cada intervención admite solo sus datos (maceta en el trasplante, mezcla en el cambio de sustrato, producto en tratamiento y **fertilización**, que es una intervención y no un insumo de `care_record`) y lo repiten `CHECK`s. Una floración es un intervalo que puede seguir abierta: `finalizada` si y solo si tiene fin, y su instante en la cronología es su inicio a las 00:00 UTC. `batch_id` existe sin nadie que lo escriba, para que T-24 no migre la espina. La migración no fabrica eventos.
 * **`care_record` exige al menos una de sus cinco medidas.** Una lectura completamente vacía se rechaza con `400`; es una regla deliberada y su revisión está atada a la ingesta automática, no antes.
 * **Los enums (`riskLevel`, `priority`) se persisten por su `value` explícito** con un `AttributeConverter`, nunca con `@Enumerated` ([ADR-007](../adr/ADR-007-enums-de-dominio.md)).
 
 ## Lo que este modelo todavía no soporta
 
-El [documento de producto](../producto/definicion-funcional-y-ux.md) da por supuestas varias cosas que aquí no existen: fotografías, descripción y estado del ejemplar, germinación, localizaciones jerárquicas, comentarios, floraciones, intervenciones, cronología unificada, tareas y alertas. Están repartidas entre los dos borradores enlazados arriba.
+El [documento de producto](../producto/definicion-funcional-y-ux.md) da por supuestas varias cosas que aquí no existen: fotografías, tareas y alertas. Están repartidas entre los dos borradores enlazados arriba.
 
 La personalización de cuidados por ejemplar ([0.7](../user-stories/0.7-personalizar-cuidados-de-un-ejemplar.md)) sigue sin implementar; el borrador de gestión propone cómo.

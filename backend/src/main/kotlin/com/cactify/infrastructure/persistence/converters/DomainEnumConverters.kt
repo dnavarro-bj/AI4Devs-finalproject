@@ -84,3 +84,17 @@ class LocationExposureConverter : AttributeConverter<com.cactify.domain.Location
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.LocationExposure? =
     dbData?.let { com.cactify.domain.LocationExposure(it) }
 }
+
+@Converter(autoApply = true)
+class InterventionTypeConverter : AttributeConverter<com.cactify.domain.InterventionType, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.InterventionType?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.InterventionType? =
+    dbData?.let { com.cactify.domain.InterventionType(it) }
+}
+
+@Converter(autoApply = true)
+class BloomStatusConverter : AttributeConverter<com.cactify.domain.BloomStatus, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.BloomStatus?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.BloomStatus? =
+    dbData?.let { com.cactify.domain.BloomStatus(it) }
+}

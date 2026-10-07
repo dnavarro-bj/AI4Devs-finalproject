@@ -36,37 +36,37 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 
 ## Bloque 0 — esqueleto de la web
 
-| ID | Ticket | Área |
-|----|--------|------|
-| [T-10](T-10-armazon-y-navegacion-de-la-aplicacion.md) | Armazón y navegación de la aplicación | Frontend |
-| [T-25](T-25-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Frontend |
-| [T-11](T-11-kit-de-datos-a-escala.md) | Kit: datos a escala | Frontend (kit) |
-| [T-12](T-12-kit-de-cronologia-calendario-y-multimedia.md) | Kit: cronología, calendario y multimedia | Frontend (kit) |
-| [T-13](T-13-esqueleto-de-las-pantallas-de-gestion.md) | Esqueleto de las pantallas de gestión — se implementa en dos changes: `esqueleto-plantas` y el de catálogos | Frontend |
-| [T-14](T-14-esqueleto-de-las-pantallas-de-trabajo.md) | Esqueleto de las pantallas de trabajo | Frontend |
+| ID | Ticket | Área | Estado |
+|----|--------|------|--------|
+| [T-10](T-10-armazon-y-navegacion-de-la-aplicacion.md) | Armazón y navegación de la aplicación | Frontend | Archivado |
+| [T-25](T-25-arquitectura-del-frontend.md) | Arquitectura del frontend orientada a features | Frontend | Archivado |
+| [T-11](T-11-kit-de-datos-a-escala.md) | Kit: datos a escala | Frontend (kit) | Archivado |
+| [T-12](T-12-kit-de-cronologia-calendario-y-multimedia.md) | Kit: cronología, calendario y multimedia | Frontend (kit) | Archivado |
+| [T-13](T-13-esqueleto-de-las-pantallas-de-gestion.md) | Esqueleto de las pantallas de gestión — se implementa en dos changes: `esqueleto-plantas` y el de catálogos | Frontend | Archivado |
+| [T-14](T-14-esqueleto-de-las-pantallas-de-trabajo.md) | Esqueleto de las pantallas de trabajo | Frontend | Archivado |
 
 ## Bloque 1 — gestión de plantas
 
-| ID | Ticket | Área |
-|----|--------|------|
-| [T-15](T-15-codigos-de-inventario.md) | Códigos de inventario de especie y ejemplar | Backend + Frontend |
-| [T-26](T-26-api-de-edicion-de-planta.md) | API de edición de planta | Backend |
-| [T-27](T-27-api-del-catalogo-de-mezclas-de-sustrato.md) | API del catálogo de mezclas de sustrato | Backend |
-| [T-28](T-28-administracion-de-etiquetas.md) | Administración de etiquetas: renombrar y combinar | Backend + Frontend |
-| [T-16](T-16-ficha-del-ejemplar-ampliada.md) | Ficha del ejemplar ampliada y herencia de cuidados | Backend + Frontend |
-| [T-17](T-17-especie-ampliada.md) | Especie ampliada: exposición, entorno, crecimiento y floración | Backend + Frontend |
-| [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend |
-| [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend |
-| [T-20](T-20-cronologia-unificada.md) | Cronología unificada del ejemplar | Backend + Frontend |
-| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend |
+| ID | Ticket | Área | Estado |
+|----|--------|------|--------|
+| [T-15](T-15-codigos-de-inventario.md) | Códigos de inventario de especie y ejemplar | Backend + Frontend | Archivado |
+| [T-26](T-26-api-de-edicion-de-planta.md) | API de edición de planta | Backend | Archivado |
+| [T-27](T-27-api-del-catalogo-de-mezclas-de-sustrato.md) | API del catálogo de mezclas de sustrato | Backend | Archivado |
+| [T-28](T-28-administracion-de-etiquetas.md) | Administración de etiquetas: renombrar y combinar | Backend + Frontend | Archivado |
+| [T-16](T-16-ficha-del-ejemplar-ampliada.md) | Ficha del ejemplar ampliada y herencia de cuidados | Backend + Frontend | Archivado |
+| [T-17](T-17-especie-ampliada.md) | Especie ampliada: exposición, entorno, crecimiento y floración | Backend + Frontend | Archivado |
+| [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend | Archivado |
+| [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend | Pendiente |
+| [T-20](T-20-cronologia-unificada.md) | Cronología unificada del ejemplar | Backend + Frontend | Archivado |
+| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | Pendiente |
 
 ## Bloque 2 — organización del trabajo
 
-| ID | Ticket | Área |
-|----|--------|------|
-| [T-22](T-22-tareas.md) | Tareas: creación, agenda y finalización | Backend + Frontend |
-| [T-23](T-23-alertas.md) | Alertas con ciclo de vida | Backend + Frontend |
-| [T-24](T-24-dashboard-operativo-y-trabajo-por-lote.md) | Dashboard operativo y trabajo por lote | Backend + Frontend |
+| ID | Ticket | Área | Estado |
+|----|--------|------|--------|
+| [T-22](T-22-tareas.md) | Tareas: creación, agenda y finalización | Backend + Frontend | Pendiente |
+| [T-23](T-23-alertas.md) | Alertas con ciclo de vida | Backend + Frontend | Pendiente |
+| [T-24](T-24-dashboard-operativo-y-trabajo-por-lote.md) | Dashboard operativo y trabajo por lote | Backend + Frontend | Pendiente |
 
 ## Cierre
 

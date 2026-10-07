@@ -389,6 +389,14 @@ SoilMix (1) ────< (N) Species (1) ────< (N) Plant (1) ───�
 
 * `plantId`, `fromLocationId`, `toLocationId` (distintos) y `movedAt`. Se registra al mover por lote (`POST /locations/{id}/movements`, atómico, con `{plantIds}` y respuesta `{moved, unchanged}`) y **también cuando `PUT /plants/{id}` cambia la localización**. Crear un ejemplar no es un movimiento. Historial paginado, más reciente primero: `GET /plants/{id}/movements` y `GET /locations/{id}/movements` (los de esa localización como origen o destino, no los de sus descendientes). `GET /plants?location=X&includeDescendants=true` incluye lo de las sublocalizaciones.
 
+**PlantEvent** (comentario, intervención o floración observada de un ejemplar; cronología del ejemplar)
+
+* Espina `plant_event` (`plantId`, `eventType`, `occurredAt`, `batchId` opcional) con tres satélites. **Las lecturas, los cambios de estado y los movimientos no se copian**: `GET /plants/{id}/timeline` los une al leer. Paginada, del más reciente al más antiguo (desempate por id), con `?type=` repetible (`lectura`, `cambio_estado`, `movimiento`, `comentario`, `intervencion`, `floracion`) aplicado **antes** de paginar; un tipo desconocido es `400`. Cada entrada trae `id`, `type`, `occurredAt`, `batchId?` y un solo detalle (`reading`, `statusChange`, `movement`, `comment`, `intervention`, `bloom`).
+* **Comentarios**: `POST /plants/{id}/comments`, `PUT`/`DELETE …/{commentId}`. Texto obligatorio, fecha opcional y nunca futura; corregir marca `editedAt` y conserva el instante.
+* **Intervenciones**: `POST /plants/{id}/interventions`, `PUT`/`DELETE …/{interventionId}`. Tipos `trasplante`, `sustrato`, `tratamiento`, `fertilizacion`, `poda`, `revision`; cada tipo admite solo sus datos (`potSize`, `soilMixId`, `product`) y un dato ajeno es `400`; una mezcla inexistente, también. `PUT` reemplaza por completo.
+* **Floraciones**: `POST /plants/{id}/blooms`, `PUT`/`DELETE …/{bloomId}`. `startedOn`, `endedOn` opcional, `status` (`boton`, `en_flor`, `finalizada`), `flowerCount`, `notes`. Puede seguir abierta; `finalizada` exige fin y solo ella lo admite. No es la floración esperada de la especie.
+* `POST`/`PUT` devuelven la entrada de la cronología ya montada; `DELETE` responde `204`. Un evento de otra planta es `404`. Se puede anotar sobre un ejemplar archivado.
+
 **Plant** (ejemplar de la colección)
 
 * `id`: TSID. Clave primaria (entero de 64 bits ordenado por tiempo, generado en aplicación — ver [ADR-003](docs/adr/ADR-003-tsid-como-clave-primaria.md)).

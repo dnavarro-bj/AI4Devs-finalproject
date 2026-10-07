@@ -19,15 +19,24 @@ mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }
  * distinguirlas, porque un `mockResolvedValue` único devolvería una planta donde se espera un
  * envelope paginado. Los movimientos y los cambios de estado son otras dos páginas más.
  */
-function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = [], movements: unknown[] = []) {
+function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = [], movements: unknown[] = [], timeline: unknown[] = []) {
   const envelope = (content: unknown[]) => ({ content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 })
-  api.get.mockImplementation((path: string) => Promise.resolve(
+  api.get.mockImplementation((path: string, params?: { type?: string[] }) => Promise.resolve(
     path.endsWith('/care-records')
       ? envelope(records)
       : path.endsWith('/status-changes') ? envelope(statusChanges)
-        : path.endsWith('/movements') ? envelope(movements) : plant,
+        : path.endsWith('/movements') ? envelope(movements)
+          // El servidor aplica el filtro de tipo; el doble lo imita.
+          : path.endsWith('/timeline')
+            ? envelope(timeline.filter((entry) => !params?.type?.length || params.type.includes((entry as { type: string }).type)))
+            : plant,
   ))
 }
+
+/** Una entrada de lectura de la cronología, con la forma que sirve el API. */
+const readingEntry = (record: ReturnType<typeof careRecord>) => ({
+  id: record.id, type: 'lectura', occurredAt: record.recordedAt, reading: record,
+})
 
 describe('ficha de la planta', () => {
   beforeEach(() => {
@@ -62,15 +71,13 @@ describe('ficha de la planta', () => {
    * `undefined`, y la ficha no debe pintarlos como filas vacías.
    */
   it('muestra las cinco magnitudes de la lectura, marcando las no informadas', async () => {
+    const registered = { id: '500001', plantId: '882687672222443468', recordedAt: '2026-09-02T09:00:00Z', humidity: 4 }
     serve(plantDetail())
-    api.post.mockResolvedValue({
-      id: '500001',
-      plantId: '882687672222443468',
-      recordedAt: '2026-09-02T09:00:00Z',
-      humidity: 4,
-    })
+    api.post.mockResolvedValue(registered)
     const wrapper = await mountSuspended(PlantDetailPage)
     await settle()
+    // Tras registrar, la ficha recarga la cronología: el servidor ya la trae.
+    serve(plantDetail(), [], [], [], [readingEntry(registered)])
 
     // El formulario vive ahora en un diálogo: hay que abrirlo.
     await wrapper.find('[data-test="register-reading"]').trigger('click')
@@ -129,10 +136,11 @@ describe('ficha de la planta', () => {
   })
 
   it('muestra las lecturas anteriores a la sesión, sin registrar ninguna', async () => {
-    serve(plantDetail(), [
+    const records = [
       careRecord({ id: '600001', recordedAt: '2026-09-05T10:00:00Z', humidity: 31 }),
       careRecord({ id: '600002', recordedAt: '2026-09-01T10:00:00Z', temperature: 24 }),
-    ])
+    ]
+    serve(plantDetail(), records, [], [], records.map(readingEntry))
     const wrapper = await mountSuspended(PlantDetailPage)
     await settle()
 
@@ -166,13 +174,16 @@ describe('ficha de la planta', () => {
 
 /**
  * El riego es una medida de la lectura, no un tipo de evento: la cronología no ofrece «Riego»
- * como filtro propio ni lo inventa en la maqueta.
+ * como filtro propio.
  */
 describe('cronología de la ficha: el riego no es un evento', () => {
-  it('no ofrece «Riego» como tipo de evento ni lo simula en los datos de ejemplo', async () => {
-    const { MOCK_EVENTS } = await import('@features/plants/mocks/plantDetail.mock')
+  it('no ofrece «Riego» como tipo de evento', async () => {
+    serve(plantDetail())
+    const wrapper = await mountSuspended(PlantDetailPage)
+    await settle()
 
-    expect(MOCK_EVENTS.some((event) => event.type === 'water')).toBe(false)
+    const filters = wrapper.findAll('[data-test^="filter-"]').map((node) => node.text())
+    expect(filters.some((label) => /riego/i.test(label))).toBe(false)
   })
 })
 
@@ -230,7 +241,7 @@ describe('ficha de la planta: perfil, estado e historial', () => {
     expect(wrapper.find('[data-test="status-change"]').text()).toContain('Cochinilla')
   })
 
-  it('la pestaña de datos incluye el historial de movimientos, con la cronología marcada T-20', async () => {
+  it('la pestaña de datos incluye el historial de movimientos', async () => {
     serve(plantDetail(), [], [], [
       { id: '1', plantId: '882687672222443468', plantCode: 'CAT-GRUSS-01', from: { id: '300005', name: 'Cuarentena' }, to: { id: '300001', name: 'Invernadero 1' }, movedAt: '2026-10-06T10:00:00Z' },
     ])
@@ -240,7 +251,6 @@ describe('ficha de la planta: perfil, estado e historial', () => {
     await openTab(wrapper, 'Datos')
 
     expect(wrapper.find('[data-test="movement-route"]').text()).toBe('Cuarentena → Invernadero 1')
-    expect(wrapper.find('[data-test="movements-timeline-pending"]').text()).toContain('T-20')
   })
 
   it('cambiar el estado desde la cabecera actualiza la ficha y refresca el historial', async () => {

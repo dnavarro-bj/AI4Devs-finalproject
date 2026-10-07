@@ -59,6 +59,10 @@ const filterLocation = ref('')
 const filterTag = ref('globular')
 const recommendAfterReading = ref(true)
 const calendarMonth = ref('2026-09')
+/** Filtro de la cronología controlado desde fuera: la muestra de `activeType`. */
+const timelineFilter = ref<string | null>(null)
+const timelineControlledEvents = computed(() => TIMELINE_EVENTS
+  .filter((event) => !timelineFilter.value || event.type === timelineFilter.value))
 
 const TIMELINE_TYPES = [
   { value: 'reading', label: 'Lectura de cultivo', mark: '∿', tone: 'brand' as const },
@@ -441,6 +445,14 @@ const SEARCH_GROUPS = [
         <template #event-water><p class="note">450 ml · desde la tarea «Regar bandejas A3 y A4».</p></template>
         <template #event-photo><p class="note">La coloración se mantiene uniforme.</p></template>
       </UiTimeline>
+
+      <!-- Controlada: no filtra sola, emite el tipo y pinta lo que recibe (la paginación vive fuera). -->
+      <UiTimeline
+        v-model:active-type="timelineFilter"
+        :events="timelineControlledEvents"
+        :types="TIMELINE_TYPES"
+        data-test="timeline-controlled"
+      />
 
       <div class="two-columns">
         <div>

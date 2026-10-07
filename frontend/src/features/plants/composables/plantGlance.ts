@@ -1,6 +1,8 @@
 import type { SummaryItem } from '@ui/UiSummaryGrid.vue'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
-import { MOCK_LAST_BLOOM, MOCK_NEXT_TASK } from '../mocks/plantDetail.mock'
+import { MOCK_NEXT_TASK } from '../mocks/plantDetail.mock'
+import { bloomDays, bloomMonth } from '@features/timeline/mappers/timeline.mapper'
+import type { Bloom } from '@features/timeline/types/timeline.types'
 
 /**
  * El resumen «de un vistazo» de la ficha: las cuatro magnitudes del wireframe.
@@ -11,8 +13,9 @@ import { MOCK_LAST_BLOOM, MOCK_NEXT_TASK } from '../mocks/plantDetail.mock'
  * «Hace 18 días» es una comparación, no un hecho del universo, y un componente que consultara el
  * reloj no se podría testear sin congelar el tiempo.
  *
- * El riego y la medición salen de lecturas **reales**; la tarea y la floración son maqueta hasta
- * T-22 y T-20, y van marcadas como tales.
+ * El riego, la medición y la última floración salen de datos **reales**; solo la tarea es maqueta
+ * hasta T-22, y va marcada como tal. `lastBloom` es `undefined` mientras no se ha consultado y
+ * `null` cuando el ejemplar nunca ha florecido: no son lo mismo.
  */
 
 const MEASURES: { key: keyof CareRecord, unit: string }[] = [
@@ -22,7 +25,7 @@ const MEASURES: { key: keyof CareRecord, unit: string }[] = [
   { key: 'soilPh', unit: 'pH' },
 ]
 
-export function plantGlance(records: CareRecord[], now: string): SummaryItem[] {
+export function plantGlance(records: CareRecord[], now: string, lastBloom?: Bloom | null): SummaryItem[] {
   // El API sirve las lecturas en orden descendente, así que la primera que cumpla es la última.
   const lastWatering = records.find((record) => record.waterAmountMl != null)
   const lastMeasured = records.find((record) => MEASURES.some((measure) => record[measure.key] != null))
@@ -46,12 +49,7 @@ export function plantGlance(records: CareRecord[], now: string): SummaryItem[] {
       value: lastMeasured ? measuresOf(lastMeasured) : '—',
       note: lastMeasured ? shortDate(lastMeasured.recordedAt) : 'Sin lecturas registradas',
     },
-    {
-      label: 'Última floración',
-      value: MOCK_LAST_BLOOM.value,
-      note: MOCK_LAST_BLOOM.context,
-      mock: true,
-    },
+    bloomItem(lastBloom),
   ]
 }
 
@@ -78,4 +76,16 @@ function sinceLabel(at: string, now: string): string {
 /** Comparar días, no instantes: dos horas de diferencia no son «hace un día». */
 function dayOf(at: string): number {
   return Date.parse(`${at.slice(0, 10)}T00:00:00Z`)
+}
+
+/** La floración **observada** más reciente: su mes y cuánto duró, o que sigue en curso. */
+function bloomItem(bloom: Bloom | null | undefined): SummaryItem {
+  if (bloom === undefined) return { label: 'Última floración', value: '—', note: 'Sin consultar' }
+  if (bloom === null) return { label: 'Última floración', value: '—', note: 'Sin floraciones registradas' }
+  const days = bloomDays(bloom)
+  return {
+    label: 'Última floración',
+    value: bloomMonth(bloom),
+    note: days === null ? 'En curso' : `Duró ${days === 1 ? '1 día' : `${days} días`}`,
+  }
 }

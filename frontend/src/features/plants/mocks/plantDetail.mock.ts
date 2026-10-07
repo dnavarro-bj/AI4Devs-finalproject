@@ -31,37 +31,5 @@ export const MOCK_TASKS = [
   { id: 't2', title: 'Comprobar tamaño de maceta', detail: '15 oct', overdue: false },
 ]
 
-/** Próxima tarea y última floración del resumen — T-22 y T-20. */
+/** Próxima tarea del resumen — la sustituye T-22. La última floración ya es real (T-20). */
 export const MOCK_NEXT_TASK = { value: 'Revisión general', context: 'Vencida hace 2 días' }
-export const MOCK_LAST_BLOOM = { value: 'Mayo de 2026', context: 'Duró 4 días' }
-
-/**
- * Eventos de la cronología que no son lecturas — los sustituye T-20, cuando exista la espina de
- * eventos. Las lecturas sí son reales y salen del API.
- *
- * **No hay evento «Riego»**: el riego es una medida más de la lectura (`waterAmountMl`) y se
- * muestra como tal. Un tipo de evento propio duplicaría el dato en dos sitios.
- */
-export const MOCK_EVENTS = [
-  {
-    id: 'm2',
-    type: 'photo',
-    title: 'Nueva espinación en el ápice',
-    at: '2026-08-02T18:14:00Z',
-    body: 'La coloración se mantiene uniforme. Volver a revisar tras el siguiente riego.',
-  },
-  {
-    id: 'm3',
-    type: 'bloom',
-    title: 'Floración finalizada',
-    at: '2026-05-22T10:00:00Z',
-    body: 'Una flor amarilla · 4 días de duración.',
-  },
-  {
-    id: 'm4',
-    type: 'move',
-    title: 'Traslado a Bandeja A3',
-    at: '2026-03-11T09:00:00Z',
-    body: 'Desde Zona exterior / Mesa 2.',
-  },
-]

@@ -6,25 +6,39 @@
  * la pantalla `plant-detail` del wireframe de administración.
  *
  * **Híbrida a propósito.** Lo que el API sirve es real: la planta, su especie, su localización, sus
- * tags, los cuidados heredados y —por fin— sus lecturas, que `GET /plants/{id}/care-records`
- * expone desde T-03 y nadie consumía. Lo que no existe todavía sale de `mocks/plantDetail.mock.ts`
- * y **se marca en la pantalla**, no solo en el código.
+ * tags, los cuidados heredados y su **cronología unificada** (T-20: lecturas, estados, movimientos,
+ * comentarios, intervenciones y floraciones). Lo que no existe todavía —tareas, avisos— sale de
+ * `mocks/plantDetail.mock.ts` y **se marca en la pantalla**, no solo en el código.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePlants } from '@features/plants/composables/usePlants'
 import type { PlantDetail } from '@features/plants/types/plant.types'
-import { usePlantHistory, toTimelineEvents } from '@features/care-records/composables/usePlantHistory'
+import { usePlantHistory } from '@features/care-records/composables/usePlantHistory'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
 import { plantGlance } from '@features/plants/composables/plantGlance'
 import { ORIGIN_LABELS, germinationLabel } from '@features/plants/mappers/plantProfile'
+import { useOnVisible } from '@shared/composables/useOnVisible'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
-import { MOCK_EVENTS, MOCK_NOTICE, MOCK_TASKS } from '@features/plants/mocks/plantDetail.mock'
+import { MOCK_NOTICE, MOCK_TASKS } from '@features/plants/mocks/plantDetail.mock'
+import { usePlantTimeline } from '@features/timeline/composables/usePlantTimeline'
+import { usePlantBlooms } from '@features/timeline/composables/usePlantBlooms'
+import { TIMELINE_KIT_TYPES, toEvent } from '@features/timeline/mappers/timeline.mapper'
+import type { EventInput, EventResource, TimelineEntry } from '@features/timeline/types/timeline.types'
+import { useSoilMixes } from '@features/soil-mixes/composables/useSoilMixes'
 
 const route = useRoute()
 const plantId = String(route.params.id)
 const { detail } = usePlants()
 const { set: setBreadcrumbs } = useBreadcrumbs()
 const history = usePlantHistory()
+const timeline = usePlantTimeline(plantId)
+const moreSentinel = ref<HTMLElement | null>(null)
+// Scroll infinito: al llegar al final se pide la página siguiente; un fallo no se reintenta solo.
+useOnVisible(moreSentinel, () => {
+  if (!timeline.error.value) timeline.loadMore()
+})
+const blooms = usePlantBlooms(plantId)
+const { list: listSoilMixes } = useSoilMixes()
 
 const plant = ref<PlantDetail | null>(null)
 const loading = ref(true)
@@ -41,6 +55,8 @@ function onStatusChanged(updated: PlantDetail) {
   plant.value = updated
   statusOpen.value = false
   historyVersion.value += 1
+  // El cambio de estado aparece en la cronología sin recargar la ficha.
+  timeline.reload()
 }
 
 const germination = computed(() => plant.value
@@ -69,38 +85,115 @@ onMounted(async () => {
 
   plant.value = result.data!
   setBreadcrumbs([{ label: 'Inventario', to: '/plants' }, { label: plant.value.nickname }])
-  // El historial no bloquea la ficha: si falla, la planta se ve igual.
+  // Ni el historial ni las floraciones bloquean la ficha: si fallan, la planta se ve igual.
   history.load(plantId)
+  timeline.load()
+  blooms.load()
 })
 
 /** La lectura recién registrada entra en la cronología sin recargar. */
 function onRegistered(record: CareRecord) {
   history.prepend(record)
   readingOpen.value = false
+  timeline.reload()
 }
 
-const readingEvents = computed(() => toTimelineEvents(history.records.value))
-
-/** Las lecturas son reales; el resto de eventos, maqueta hasta T-20. `UiTimeline` los ordena. */
-const timelineEvents = computed(() => [...readingEvents.value, ...MOCK_EVENTS])
-
-/** El color de la marca es lo que hace la cronología legible de un vistazo, como en el wireframe. */
-const TIMELINE_TYPES = [
-  { value: 'reading', label: 'Lectura de cultivo', mark: '∿', tone: 'brand' as const },
-  { value: 'photo', label: 'Fotografía y comentario', mark: '▧', tone: 'brand' as const },
-  { value: 'bloom', label: 'Floración', mark: '✣', tone: 'warning' as const },
-  { value: 'move', label: 'Movimiento', mark: '⌖', tone: 'neutral' as const },
-]
-
-const recordById = computed(
-  () => new Map(history.records.value.map((record) => [record.id, record])),
-)
+const timelineEvents = computed(() => timeline.entries.value.map(toEvent))
+const entryById = computed(() => new Map(timeline.entries.value.map((entry) => [entry.id, entry])))
 
 /**
- * «De un vistazo»: riego y medición salen de lecturas reales; la tarea y la floración son maqueta
- * y van marcadas. `now` se pasa aquí y no dentro, para que la función sea determinista y testeable.
+ * «De un vistazo»: riego y medición salen de lecturas reales y la última floración de las
+ * observadas; solo la tarea es maqueta y va marcada. `now` se pasa aquí y no dentro, para que la
+ * función sea determinista y testeable.
  */
-const glance = computed(() => plantGlance(history.records.value, new Date().toISOString()))
+const glance = computed(() => plantGlance(history.records.value, new Date().toISOString(), blooms.last.value))
+
+/*
+ * Comentarios, intervenciones y floraciones: un solo diálogo abierto a la vez. `source` dice quién
+ * guarda —la cronología o la pestaña de floraciones— para que la otra se entere.
+ */
+type DialogKind = 'comment' | 'intervention' | 'bloom' | 'remove'
+interface DialogState {
+  kind: DialogKind
+  source: 'timeline' | 'blooms'
+  entry?: TimelineEntry
+  closing?: boolean
+}
+
+const RESOURCE_OF: Record<string, EventResource> = {
+  comentario: 'comments', intervencion: 'interventions', floracion: 'blooms',
+}
+const WHAT_OF: Record<string, string> = {
+  comentario: 'el comentario', intervencion: 'la intervención', floracion: 'la floración',
+}
+
+const addOpen = ref(false)
+const dialog = ref<DialogState | null>(null)
+const saving = ref(false)
+const dialogError = ref<string | null>(null)
+const soilMixes = ref<{ id: string, name: string }[]>([])
+
+function openDialog(state: DialogState) {
+  dialogError.value = null
+  addOpen.value = false
+  dialog.value = state
+  if (state.kind === 'intervention' && !soilMixes.value.length) {
+    listSoilMixes().then((result) => {
+      if (result.success) soilMixes.value = result.data?.content ?? []
+    })
+  }
+}
+
+const closeDialog = () => { dialog.value = null }
+
+function editEntry(entry: TimelineEntry, source: DialogState['source'] = 'timeline', closing = false) {
+  const kind = ({ comentario: 'comment', intervencion: 'intervention', floracion: 'bloom' } as const)[entry.type as 'comentario']
+  if (kind) openDialog({ kind, source, entry, closing })
+}
+
+const removeEntry = (entry: TimelineEntry, source: DialogState['source'] = 'timeline') =>
+  openDialog({ kind: 'remove', source, entry })
+
+/** Lo que cambia en un lado se refleja en el otro: la pestaña y la cronología cuentan lo mismo. */
+async function afterChange(source: DialogState['source']) {
+  if (source === 'timeline') await blooms.load()
+  else await timeline.reload()
+}
+
+async function submitDialog(resource: EventResource, input: EventInput) {
+  const current = dialog.value!
+  saving.value = true
+  dialogError.value = null
+  const result = current.source === 'blooms'
+    ? await blooms.save(input as never, current.entry?.id)
+    : await timeline.save(resource, input, current.entry?.id)
+  saving.value = false
+
+  if (!result.success) {
+    dialogError.value = result.error!.message
+    return
+  }
+  await afterChange(current.source)
+  closeDialog()
+}
+
+async function confirmRemove() {
+  const current = dialog.value!
+  const entry = current.entry!
+  saving.value = true
+  dialogError.value = null
+  const result = current.source === 'blooms'
+    ? await blooms.remove(entry.id)
+    : await timeline.remove(RESOURCE_OF[entry.type]!, entry.id)
+  saving.value = false
+
+  if (!result.success) {
+    dialogError.value = result.error!.message
+    return
+  }
+  await afterChange(current.source)
+  closeDialog()
+}
 </script>
 
 <template>
@@ -137,7 +230,7 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
         :tabs="[
           { value: 'resumen', label: 'Resumen e historial' },
           { value: 'fotografias', label: 'Fotografías' },
-          { value: 'floracion', label: 'Floración' },
+          { value: 'floracion', label: 'Floración', count: blooms.total.value || undefined },
           { value: 'datos', label: 'Datos' },
         ]"
       />
@@ -151,27 +244,68 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
           </UiSummaryGrid>
 
           <UiPanel title="Historial completo" class="history">
-            <p v-if="history.loading.value" role="status">Cargando el historial…</p>
-            <UiTimeline v-else :events="timelineEvents" :types="TIMELINE_TYPES" data-test="timeline">
-              <template #event-reading="{ event }">
-                <!-- Las medidas, comparables entre sí: mismo patrón que «de un vistazo», compacto. -->
-                <div :data-test="`reading-${event.id}`" class="reading-values">
-                  <UiSummaryGrid
-                    density="compact"
-                    :items="event.values.map((value) => ({ label: value.label, value: value.text, absent: value.absent }))"
-                  />
-                </div>
-                <RecommendationPanel
-                  v-if="recordById.get(event.id)"
-                  :plant-id="plant.id"
-                  :care-record="recordById.get(event.id)!"
-                />
+            <template #action>
+              <div class="history__actions">
+                <small v-if="!timeline.loading.value && !timeline.error.value" data-test="timeline-total">
+                  {{ timeline.total.value === 1 ? '1 registro' : `${timeline.total.value} registros` }}
+                </small>
+                <UiButton variant="secondary" data-test="add-event" :aria-expanded="addOpen" @click="addOpen = !addOpen">＋ Añadir</UiButton>
+              </div>
+            </template>
+
+            <div v-if="addOpen" class="history__add" role="group" aria-label="Qué añadir" data-test="add-menu">
+              <UiButton variant="text" data-test="add-comment" @click="openDialog({ kind: 'comment', source: 'timeline' })">Comentario</UiButton>
+              <UiButton variant="text" data-test="add-intervention" @click="openDialog({ kind: 'intervention', source: 'timeline' })">Intervención</UiButton>
+              <UiButton variant="text" data-test="add-bloom-event" @click="openDialog({ kind: 'bloom', source: 'timeline' })">Floración</UiButton>
+            </div>
+
+            <p v-if="timeline.loading.value" role="status">Cargando el historial…</p>
+            <UiInlineError v-else-if="timeline.error.value && !timeline.entries.value.length" title="No se ha podido cargar el historial" data-test="timeline-error">
+              {{ timeline.error.value }}
+              <template #action>
+                <UiButton variant="secondary" data-test="timeline-retry" @click="timeline.load()">Reintentar</UiButton>
               </template>
-              <template #event-water="{ event }"><p class="mock-body">{{ event.body }} <em>(ejemplo · T-20)</em></p></template>
-              <template #event-photo="{ event }"><p class="mock-body">{{ event.body }} <em>(ejemplo · T-20)</em></p></template>
-              <template #event-bloom="{ event }"><p class="mock-body">{{ event.body }} <em>(ejemplo · T-20)</em></p></template>
-              <template #event-move="{ event }"><p class="mock-body">{{ event.body }} <em>(ejemplo · T-20)</em></p></template>
-            </UiTimeline>
+            </UiInlineError>
+            <UiEmptyState
+              v-else-if="!timeline.entries.value.length && !timeline.filter.value"
+              title="Este ejemplar todavía no tiene historia"
+              mark="∿"
+              data-test="timeline-empty"
+            >
+              Las lecturas, los cambios y lo que observes aparecerán aquí.
+              <template #action>
+                <UiButton variant="secondary" data-test="add-first-comment" @click="openDialog({ kind: 'comment', source: 'timeline' })">
+                  Añadir el primer comentario
+                </UiButton>
+              </template>
+            </UiEmptyState>
+            <template v-else>
+              <UiTimeline
+                :events="timelineEvents"
+                :types="TIMELINE_KIT_TYPES"
+                :active-type="timeline.filter.value"
+                empty-message="No hay registros de este tipo."
+                data-test="timeline"
+                @update:active-type="timeline.setFilter"
+              >
+                <template v-for="type in [...TIMELINE_KIT_TYPES.map((t) => t.value)]" :key="type" #[`event-${type}`]="{ event }">
+                  <TimelineEntryBody
+                    v-if="entryById.get(event.id)"
+                    :entry="entryById.get(event.id)!"
+                    :plant-id="plant.id"
+                    @edit="editEntry($event)"
+                    @close="editEntry($event, 'timeline', true)"
+                    @remove="removeEntry($event)"
+                  />
+                </template>
+              </UiTimeline>
+              <UiInlineError v-if="timeline.error.value" data-test="timeline-more-error">{{ timeline.error.value }}</UiInlineError>
+              <div v-if="timeline.hasMore.value" ref="moreSentinel" class="history__more" data-test="timeline-sentinel">
+                <UiButton variant="secondary" :busy="timeline.loadingMore.value" data-test="load-more" @click="timeline.loadMore()">
+                  Cargar registros anteriores
+                </UiButton>
+              </div>
+            </template>
           </UiPanel>
         </div>
 
@@ -196,9 +330,16 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
         Esta sección necesita almacenamiento de ficheros, que todavía no existe.
       </UiEmptyState>
 
-      <UiEmptyState v-else-if="tab === 'floracion'" title="Las floraciones llegan en T-20" mark="✣">
-        Registrar floraciones reales necesita la cronología de eventos del modelo.
-      </UiEmptyState>
+      <PlantBloomPanel
+        v-else-if="tab === 'floracion'"
+        :blooms="blooms.items.value"
+        :loading="blooms.loading.value"
+        :error="blooms.error.value"
+        @create="openDialog({ kind: 'bloom', source: 'blooms' })"
+        @edit="editEntry($event, 'blooms')"
+        @close="editEntry($event, 'blooms', true)"
+        @remove="removeEntry($event, 'blooms')"
+      />
 
       <UiPanel v-else title="Datos del ejemplar">
         <dl class="data">
@@ -241,6 +382,41 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
         <PlantMovementHistory :plant-id="plant.id" />
       </UiPanel>
 
+      <TimelineCommentDialog
+        :open="dialog?.kind === 'comment'"
+        :entry="dialog?.entry"
+        :busy="saving"
+        :error="dialogError"
+        @submit="submitDialog('comments', $event)"
+        @close="closeDialog"
+      />
+      <TimelineInterventionDialog
+        :open="dialog?.kind === 'intervention'"
+        :entry="dialog?.entry"
+        :soil-mixes="soilMixes"
+        :busy="saving"
+        :error="dialogError"
+        @submit="submitDialog('interventions', $event)"
+        @close="closeDialog"
+      />
+      <TimelineBloomDialog
+        :open="dialog?.kind === 'bloom'"
+        :entry="dialog?.entry"
+        :closing="dialog?.closing"
+        :busy="saving"
+        :error="dialogError"
+        @submit="submitDialog('blooms', $event)"
+        @close="closeDialog"
+      />
+      <TimelineRemoveDialog
+        :open="dialog?.kind === 'remove'"
+        :what="dialog?.entry ? WHAT_OF[dialog.entry.type] ?? 'el registro' : ''"
+        :busy="saving"
+        :error="dialogError"
+        @confirm="confirmRemove"
+        @close="closeDialog"
+      />
+
       <PlantStatusDialog
         :open="statusOpen"
         :plant="plant"
@@ -282,17 +458,34 @@ const glance = computed(() => plantGlance(history.records.value, new Date().toIS
   margin-top: var(--space-5);
 }
 
+.history__actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.history__actions small {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+}
+
+.history__add {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.history__more {
+  display: flex;
+  justify-content: center;
+}
+
 .plant-side {
   display: grid;
   gap: var(--space-5);
   height: fit-content;
 }
 
-.reading-values {
-  margin-top: var(--space-2);
-}
-
-.mock-body,
 .mock-note {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);

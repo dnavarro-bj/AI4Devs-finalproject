@@ -21,6 +21,9 @@ interface JpaPlantMovementRepository :
   PlantMovementRepository,
   JpaRepository<PlantMovement, PlantMovementId> {
 
+  @Query("select m from PlantMovement m join fetch m.fromLocation join fetch m.toLocation where m.id in :ids")
+  override fun findAllByIdIn(@Param("ids") ids: Collection<PlantMovementId>): List<PlantMovement>
+
   @Query(
     value = """
       select m from PlantMovement m join fetch m.plant join fetch m.fromLocation join fetch m.toLocation

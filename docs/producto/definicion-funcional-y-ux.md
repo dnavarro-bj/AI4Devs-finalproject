@@ -965,7 +965,7 @@ Estas preguntas no bloquean seguir descubriendo pantallas, pero deberán resolve
 5. ¿Una planta puede estar simultáneamente en interior/exterior de forma estacional?
 6. ~~¿Cómo se define de forma objetiva la diferencia entre «soleado» y «pleno sol»?~~ **Resuelta (7 oct 2026):** sin umbral numérico; la interfaz muestra la definición funcional de cada valor y la exposición es independiente de las horas de luz.
 7. ¿Se necesita registrar propagación por esqueje, hijuelo o injerto además de germinación?
-8. ¿Los comentarios pueden editarse y eliminarse, o solo corregirse conservando historial?
+8. ¿Los comentarios pueden editarse y eliminarse, o solo corregirse conservando historial? **Resuelta**: se pueden editar y borrar, marcando «editado»; sin historial de versiones.
 9. ¿Qué tipos de cuidado entran en la primera versión?
 10. ¿Qué eventos deben generar alertas automáticamente?
 11. ¿Se necesitan grupos manuales además de filtros dinámicos?

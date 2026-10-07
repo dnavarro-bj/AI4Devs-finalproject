@@ -68,12 +68,31 @@ describe('plantGlance', () => {
     expect(find(items, 'Último riego').note).toBe('Ayer')
   })
 
-  it('marca como ejemplo la próxima tarea y la última floración', () => {
-    const items = plantGlance([], NOW)
+  it('marca como ejemplo solo la próxima tarea: la última floración es real', () => {
+    const items = plantGlance([], NOW, null)
 
     expect(find(items, 'Próxima tarea').mock).toBe(true)
-    expect(find(items, 'Última floración').mock).toBe(true)
+    expect(find(items, 'Última floración').mock).toBeFalsy()
     expect(find(items, 'Última medición').mock).toBeFalsy()
+  })
+
+  it('la última floración dice su mes y cuánto duró', () => {
+    const items = plantGlance([], NOW, { startedOn: '2026-05-22', endedOn: '2026-05-25', status: 'finalizada' })
+
+    const bloom = find(items, 'Última floración')
+    expect(bloom.value).toBe('Mayo de 2026')
+    expect(bloom.note).toBe('Duró 4 días')
+  })
+
+  it('una floración abierta se dice en curso', () => {
+    const items = plantGlance([], NOW, { startedOn: '2026-09-01', status: 'en_flor' })
+
+    expect(find(items, 'Última floración').note).toBe('En curso')
+  })
+
+  it('un ejemplar que nunca ha florecido lo dice, y sin consultar no inventa nada', () => {
+    expect(find(plantGlance([], NOW, null), 'Última floración').note).toBe('Sin floraciones registradas')
+    expect(find(plantGlance([], NOW), 'Última floración').value).toBe('—')
   })
 
   it('devuelve las cuatro magnitudes del wireframe, en su orden', () => {

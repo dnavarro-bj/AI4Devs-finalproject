@@ -249,6 +249,10 @@ erDiagram
 
 `LOCATION` gana `parentId` y los campos que pedía el frontend, **sin `path`**. `PLANT_MOVEMENT` se construyó como **tabla propia** (`movedAt`) y no como satélite de `PLANT_EVENT`, que aún no existe: T-20 la enlazará a la cronología. Ya está en el [modelo actual](modelo-datos-actual.md).
 
+## Hecho: cronología del ejemplar (7 oct 2026, `cronologia-del-ejemplar`)
+
+`PLANT_EVENT` se construyó **solo con los tres tipos nuevos** —`PLANT_COMMENT`, `PLANT_INTERVENTION` (el `INTERVENTION` del borrador) y `PLANT_BLOOM` (el `BLOOM_EVENT`)—. `PLANT_MOVEMENT` y `PLANT_STATE_CHANGE` **se quedaron como tablas propias**, igual que `CARE_RECORD`: copiarlos a la espina obligaba a rellenar lo existente y a escribir dos veces desde servicios que ya funcionaban. La cronología es una unión paginada de las cuatro fuentes. Añade **`fertilizacion`** a los tipos de intervención y `editedAt` al comentario. `batchId` queda sin dueño hasta T-24. Ya está en el [modelo actual](modelo-datos-actual.md).
+
 ## Contraste con el frontend
 
 Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aquí solo se recoge el **qué**; lo que cambia el esquema y no está decidido va a «Pendiente de decidir».

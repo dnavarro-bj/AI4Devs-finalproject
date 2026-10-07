@@ -125,3 +125,19 @@ data class PlantMovementId(@Column(name = "id") override val id: Long) : EntityI
 
   override fun toString(): String = id.toString()
 }
+
+/**
+ * Identificador de un evento de la cronología. Es **uno solo** para los tres tipos —comentario,
+ * intervención y floración—: comparten espina `JOINED` y el identificador de la entrada de la
+ * cronología es el del evento, así que `PUT`/`DELETE` actúan por él.
+ */
+@Embeddable
+data class PlantEventId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): PlantEventId = PlantEventId(TSID.fast().toLong())
+    fun from(value: Long): PlantEventId = PlantEventId(value)
+    fun from(value: String): PlantEventId = PlantEventId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}
