@@ -23,11 +23,11 @@ abstract class AbstractEntity<K : EntityId<*>> {
   abstract val id: K
 
   @Column(name = "created_at", nullable = false)
-  lateinit var createdAt: Instant
+  open lateinit var createdAt: Instant
     internal set
 
   @Column(name = "updated_at", nullable = false)
-  lateinit var updatedAt: Instant
+  open lateinit var updatedAt: Instant
     internal set
 }
 

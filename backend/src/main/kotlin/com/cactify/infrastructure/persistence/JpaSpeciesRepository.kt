@@ -3,6 +3,7 @@ package com.cactify.infrastructure.persistence
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.repos.SpeciesRepository
+import com.cactify.domain.repos.SpeciesUsage
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -25,4 +26,15 @@ interface JpaSpeciesRepository :
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select s from Species s where s.id = :id")
   override fun findOneByIdForUpdate(@Param("id") id: SpeciesId): Species?
+
+  /** `LEFT JOIN` desde `Species`: contando sobre `Plant`, las especies sin ejemplares no producirían fila. */
+  @Query(
+    """
+    SELECT new com.cactify.domain.repos.SpeciesUsage(s.id, COUNT(p))
+    FROM Species s LEFT JOIN Plant p ON p.species = s
+    WHERE s.id IN :ids
+    GROUP BY s.id
+    """,
+  )
+  override fun countPlantsBySpecies(@Param("ids") ids: Collection<SpeciesId>): List<SpeciesUsage>
 }

@@ -28,6 +28,7 @@ import { useSpecies } from '@features/species/composables/useSpecies'
 import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import type { SpeciesSummary } from '@features/species/types/species.types'
 import { useSavedViews } from '@features/views/composables/useSavedViews'
+import { useExport } from '@features/exports/composables/useExport'
 import { groupSymbol, speciesDraft, speciesRouteQuery } from '@features/views/mappers/viewState'
 import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
 import type { SavedView } from '@features/views/types/view.types'
@@ -182,6 +183,23 @@ const savedViews = useSavedViews('species', {
   current: () => speciesDraft(toUrlQuery(URL_SCHEMA, state)),
   apply: (view) => { Object.assign(state, readUrlState(URL_SCHEMA, speciesRouteQuery(view))) },
 })
+
+/**
+ * Exportar es el listado con otro formato: lo que se pide es **el estado de la pantalla en lenguaje
+ * del API**, la misma consulta canónica que define un grupo. El máximo de filas lo decide el
+ * servidor y su mensaje se muestra tal cual.
+ */
+const exporter = useExport('species')
+const exportQuery = () => speciesDraft(toUrlQuery(URL_SCHEMA, state)).query
+const exportable = computed(() => !loading.value && !error.value && (page.value?.totalElements ?? 0) > 0)
+const exportLabel = computed(() => {
+  if (exporter.exporting.value) return 'Exportando…'
+  const total = page.value?.totalElements
+  if (total === undefined) return 'Exportar'
+  return `Exportar ${total} ${total === 1 ? 'resultado' : 'resultados'}`
+})
+// El error de una exportación habla de lo que había en pantalla al pedirla: si cambia, ya no aplica.
+watch(() => JSON.stringify(toUrlQuery(URL_SCHEMA, state)), () => exporter.clearError())
 
 const failure = (result: ServiceResponse<unknown>) => (result.success ? null : result.error!.message)
 const saveGroup = async (name: string) => failure(await savedViews.saveCurrent(name))
@@ -368,9 +386,22 @@ const asSpecies = (row: unknown) => row as SpeciesSummary
         :remove-view="removeGroup"
         @apply="savedViews.apply"
       />
+      <UiButton
+        variant="secondary"
+        data-test="export"
+        :disabled="!exportable"
+        :busy="exporter.exporting.value"
+        @click="exporter.run(exportQuery())"
+      >
+        <span aria-hidden="true">⇩</span> {{ exportLabel }}
+      </UiButton>
       <UiButton variant="icon" label="Vista de tabla" class="view-button is-selected">☷</UiButton>
       <UiButton variant="icon" label="Vista de fotografías" disabled data-mock="true">▦</UiButton>
     </UiFilterBar>
+
+    <UiInlineError v-if="exporter.error.value" data-test="export-error">
+      No se ha podido exportar: {{ exporter.error.value }}
+    </UiInlineError>
 
     <p v-if="loading" data-test="loading" role="status">Cargando el catálogo…</p>
 

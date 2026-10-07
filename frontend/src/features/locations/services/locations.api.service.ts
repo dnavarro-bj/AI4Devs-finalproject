@@ -24,6 +24,9 @@ export const locationsApiService = {
     if (query.sort) params.sort = query.sort
     if (query.parentId) params.parentId = query.parentId
     if (query.root) params.root = true
+    // Un texto en blanco no es un filtro: no viaja.
+    if (query.q?.trim()) params.q = query.q.trim()
+    if (query.size) params.size = query.size
 
     try {
       return ok(await getApiClient().get<PageResponse<LocationSummary>>('/locations', params))

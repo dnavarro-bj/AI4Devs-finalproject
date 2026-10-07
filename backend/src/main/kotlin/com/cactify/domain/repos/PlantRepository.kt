@@ -7,6 +7,9 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 
+/** Una etiqueta de un ejemplar, para resolver las de un bloque de plantas en **una** consulta. */
+data class PlantTagName(val plantId: PlantId, val name: String)
+
 /**
  * Puerto de acceso a plantas. El listado solo existe en su forma filtrada y paginada: no hay
  * `findAll()` sin límite (ADR-009).
@@ -15,6 +18,12 @@ interface PlantRepository {
   fun save(plant: Plant): Plant
   fun findOneById(id: PlantId): Plant?
   fun findAll(spec: Specification<Plant>?, pageable: Pageable): Page<Plant>
+
+  /** Cuántas plantas cumplen la especificación, sin traerlas. Una especificación nula las cuenta todas. */
+  fun count(spec: Specification<Plant>?): Long
+
+  /** Los nombres de las etiquetas de esas plantas, en **una** consulta: sin ellas, una fila por planta. */
+  fun findTagNames(ids: Collection<PlantId>): List<PlantTagName>
 
   /** Las plantas con esos identificadores, con su localización ya cargada, en **una** consulta. */
   fun findAllWithLocationByIdIn(ids: Collection<PlantId>): List<Plant>

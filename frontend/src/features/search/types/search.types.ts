@@ -16,6 +16,8 @@ export interface SearchGroup {
   kind: SearchResultKind
   label: string
   results: SearchResult[]
+  /** «Ver los N resultados»: solo cuando hay más de los que caben y la pantalla del tipo sabe filtrar por texto. */
+  more?: { label: string, to: string }
 }
 
 export const KIND_LABELS: Record<SearchResultKind, string> = {

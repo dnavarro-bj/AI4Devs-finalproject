@@ -4,13 +4,16 @@ import com.cactify.application.SpeciesCriteria
 import com.cactify.application.SpeciesRequest
 import com.cactify.application.SpeciesService
 import com.cactify.application.dto.PageResponse
+import com.cactify.application.export.ExportService
 import com.cactify.application.dto.SpeciesCareResponse
 import com.cactify.application.dto.SpeciesDetailResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.SortDefault
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -24,7 +27,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/species")
-class SpeciesController(private val speciesService: SpeciesService) {
+class SpeciesController(
+  private val speciesService: SpeciesService,
+  private val exportService: ExportService,
+) {
 
   /**
    * Orden estable por nombre científico: `species` no tiene columna `name`, así que no vale el
@@ -74,4 +80,26 @@ class SpeciesController(private val speciesService: SpeciesService) {
   @PutMapping("/{id}")
   fun update(@PathVariable id: String, @Valid @RequestBody request: SpeciesRequest): SpeciesCareResponse =
     speciesService.update(id, request)
+
+  /** El resultado del listado como CSV, sin paginar (ADR-017): los mismos parámetros que `GET /species`. */
+  @GetMapping("/export")
+  fun export(
+    @RequestParam(required = false) code: String?,
+    @RequestParam(name = "q", required = false) text: String?,
+    @RequestParam(name = "exposure", required = false) exposures: List<String>?,
+    @RequestParam(name = "environment", required = false) environments: List<String>?,
+    @RequestParam(name = "soilMix", required = false) soilMixIds: List<String>?,
+    @RequestParam(required = false) minTemperatureFrom: Int?,
+    @RequestParam(required = false) minTemperatureTo: Int?,
+    @RequestParam(name = "growthMonth", required = false) growthMonths: List<Int>?,
+    @RequestParam(name = "bloomMonth", required = false) bloomMonths: List<Int>?,
+    @SortDefault(sort = ["scientificName"]) sort: Sort,
+  ): ResponseEntity<ByteArray> =
+    exportService.exportSpecies(
+      SpeciesCriteria(
+        code, text, exposures.orEmpty(), environments.orEmpty(), soilMixIds.orEmpty(),
+        minTemperatureFrom, minTemperatureTo, growthMonths.orEmpty(), bloomMonths.orEmpty(),
+      ),
+      sort,
+    ).asDownload()
 }

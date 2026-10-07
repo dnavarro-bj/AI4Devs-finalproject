@@ -92,6 +92,11 @@ context: |
     es `400` y un id bien formado pero inexistente da un resultado vacío); el orden es
     `sort=<clave>,<asc|desc>` con **claves públicas por recurso** (`SortKeys`) traducidas a la ruta
     de la entidad, `400` ante una clave desconocida y el identificador como desempate final
+  - ADR-017: exportar es un `GET <recurso>/export` con los mismos parámetros y criterios que el listado
+    (mismas filas por construcción); CSV RFC 4180 con BOM UTF-8, nombre fechado con el `Clock`,
+    columnas fijas, acotado por `EXPORT_MAX_ROWS` con `422` que dice filas y máximo (nunca trunca) y
+    celdas de texto que empiezan por `=`, `+`, `-`, `@`, tabulador o CR neutralizadas con un
+    apóstrofo; la cabecera `Content-Disposition` se expone en CORS
 rules:
   proposal:
     - Referenciar siempre el ticket (T-XX) y las historias de usuario (0.x) que originan el change

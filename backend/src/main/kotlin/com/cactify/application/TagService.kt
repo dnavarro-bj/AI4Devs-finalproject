@@ -9,6 +9,7 @@ import com.cactify.domain.Tag
 import com.cactify.domain.TagId
 import com.cactify.domain.TagName
 import com.cactify.domain.repos.TagRepository
+import com.cactify.domain.specs.TagSpecs
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -35,8 +36,8 @@ class TagService(private val tagRepository: TagRepository) {
    * página entera: pedirlos fila a fila sería un `N+1`.
    */
   @Transactional(readOnly = true)
-  fun list(pageable: Pageable): PageResponse<TagSummaryResponse> {
-    val page = tagRepository.findAll(pageable)
+  fun list(pageable: Pageable, text: String? = null): PageResponse<TagSummaryResponse> {
+    val page = tagRepository.findAll(TagSpecs.byText(text), pageable)
     val usage = tagRepository.countPlantsByTag(page.content.map { it.id })
       .associate { it.tagId to it.plantCount }
 

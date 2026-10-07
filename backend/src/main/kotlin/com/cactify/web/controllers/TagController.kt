@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -51,8 +52,12 @@ class TagController(private val tagService: TagService) {
     tagService.create(request.name)
 
   @GetMapping
-  fun list(@SortDefault(sort = ["name"]) pageable: Pageable): PageResponse<TagSummaryResponse> =
-    tagService.list(pageable)
+  fun list(
+    /** Coincidencia parcial sobre el nombre, sin distinguir mayúsculas. */
+    @RequestParam(name = "q", required = false) text: String?,
+    @SortDefault(sort = ["name"]) pageable: Pageable,
+  ): PageResponse<TagSummaryResponse> =
+    tagService.list(pageable, text)
 
   @GetMapping("/{id}")
   fun detail(@PathVariable id: String): TagDetailResponse = tagService.findById(id)

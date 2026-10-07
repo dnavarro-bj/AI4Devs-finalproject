@@ -6,6 +6,9 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 
+/** Cuántos ejemplares tiene una especie. Un hecho del dominio, con su identificador tipado. */
+data class SpeciesUsage(val speciesId: SpeciesId, val plantCount: Long)
+
 /**
  * Puerto de acceso a especies (ADR-006): interfaz Kotlin pura, sin más tipos de Spring que
  * `Page` y `Pageable`. Declara solo lo que el dominio necesita, no la superficie completa de
@@ -31,4 +34,10 @@ interface SpeciesRepository {
 
   /** Cuántas especies cumplen la especificación, sin traerlas. Una especificación nula las cuenta todas. */
   fun count(spec: Specification<Species>?): Long
+
+  /**
+   * El número de ejemplares de varias especies **en una sola consulta**. Las que no tienen ninguno
+   * vienen con cero, no ausentes.
+   */
+  fun countPlantsBySpecies(ids: Collection<SpeciesId>): List<SpeciesUsage>
 }

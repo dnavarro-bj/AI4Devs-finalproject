@@ -5,6 +5,7 @@ import com.cactify.domain.TagId
 import com.cactify.domain.repos.TagRepository
 import com.cactify.domain.repos.TagUsage
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -30,7 +31,8 @@ import org.springframework.stereotype.Repository
 @Repository
 interface JpaTagRepository :
   TagRepository,
-  JpaRepository<Tag, TagId> {
+  JpaRepository<Tag, TagId>,
+  JpaSpecificationExecutor<Tag> {
 
   /** La normalización del nombre no sale del nombre del método, así que va como `@Query`. */
   @Query("SELECT t FROM Tag t WHERE lower(trim(t.name)) = :name")

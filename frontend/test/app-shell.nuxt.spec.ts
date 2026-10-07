@@ -89,6 +89,37 @@ describe('armazón de la aplicación', () => {
     }
   })
 
+  it('«Ver los N resultados» abre el inventario ya filtrado y cierra la búsqueda', async () => {
+    vi.spyOn(searchApiService, 'search').mockResolvedValue(ok([{
+      kind: 'plant',
+      label: 'Plantas',
+      results: [{ kind: 'plant', label: 'CAT-GRUSS-01', detail: 'Bola verde', to: '/plants/1' }],
+      more: { label: 'Ver los 37 resultados', to: '/plants?q=gruss' },
+    }]))
+    const wrapper = await mountSuspended(DefaultLayout)
+    const router = useRouter()
+    const pushed: string[] = []
+    const push = router.push
+    router.push = (async (to: unknown) => { pushed.push(String(to)) }) as typeof router.push
+
+    try {
+      const input = wrapper.find('input[role="combobox"]')
+      await input.setValue('gruss')
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      // El enlace es la segunda opción del recorrido: tras la planta.
+      await input.trigger('keydown', { key: 'ArrowDown' })
+      await input.trigger('keydown', { key: 'ArrowDown' })
+      await input.trigger('keydown', { key: 'Enter' })
+
+      expect(pushed).toEqual(['/plants?q=gruss'])
+      // Elegirlo cierra la búsqueda y vacía la caja.
+      expect((input.element as HTMLInputElement).value).toBe('')
+    } finally {
+      router.push = push
+      vi.restoreAllMocks()
+    }
+  })
+
   it('pinta los breadcrumbs que fija la pantalla', async () => {
     const wrapper = await mountSuspended(DefaultLayout, { route: '/plants/1' })
     // Los fija la pantalla ya montada, que es cuando conoce el nombre de la planta (ADR-013).

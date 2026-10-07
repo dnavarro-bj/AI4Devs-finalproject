@@ -58,7 +58,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | [T-18](T-18-localizaciones-jerarquicas.md) | Localizaciones jerárquicas y movimientos | Backend + Frontend | Archivado |
 | [T-19](T-19-fotografias.md) | Fotografías de especies y ejemplares | Backend + Frontend | Pendiente |
 | [T-20](T-20-cronologia-unificada.md) | Cronología unificada del ejemplar | Backend + Frontend | Archivado |
-| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | En curso (2 de 3) |
+| [T-21](T-21-inventario-a-escala.md) | Inventario a escala: búsqueda, filtros y vistas guardadas | Backend + Frontend | Archivado |
 
 ## Bloque 2 — organización del trabajo
 
@@ -67,6 +67,7 @@ El modelo de datos de cada bloque está en [docs/diagramas/](../diagramas/README
 | [T-22](T-22-tareas.md) | Tareas: creación, agenda y finalización | Backend + Frontend | Pendiente |
 | [T-23](T-23-alertas.md) | Alertas con ciclo de vida | Backend + Frontend | Pendiente |
 | [T-24](T-24-dashboard-operativo-y-trabajo-por-lote.md) | Dashboard operativo y trabajo por lote | Backend + Frontend | Pendiente |
+| [T-29](T-29-importar-exportar-y-configuracion.md) | Importar, exportar y configuración | Backend + Frontend | Pendiente |
 
 ## Cierre
 

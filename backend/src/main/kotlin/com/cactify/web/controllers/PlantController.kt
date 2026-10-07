@@ -3,6 +3,7 @@ package com.cactify.web.controllers
 import com.cactify.application.PlantMovementService
 import com.cactify.application.PlantCriteria
 import com.cactify.application.PlantService
+import com.cactify.application.export.ExportService
 import com.cactify.application.dto.MovementResponse
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.PlantDetailResponse
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.SortDefault
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -78,6 +80,7 @@ data class ReplacePlantTagsRequest(val tagIds: List<String> = emptyList())
 class PlantController(
   private val plantService: PlantService,
   private val movementService: PlantMovementService,
+  private val exportService: ExportService,
 ) {
 
   @PostMapping
@@ -170,4 +173,29 @@ class PlantController(
       ),
       pageable,
     )
+
+  /**
+   * El resultado del listado como CSV, sin paginar (ADR-017): **los mismos parámetros** que
+   * `GET /plants`. `page` y `size` no se leen. La ruta literal gana a `/{id}`.
+   */
+  @GetMapping("/export")
+  fun export(
+    @RequestParam(required = false) location: String?,
+    @RequestParam(name = "tag", required = false) tags: List<String>?,
+    @RequestParam(required = false) code: String?,
+    @RequestParam(name = "status", required = false) statuses: List<String>?,
+    @RequestParam(required = false, defaultValue = "false") includeDescendants: Boolean,
+    @RequestParam(name = "q", required = false) text: String?,
+    @RequestParam(name = "species", required = false) speciesIds: List<String>?,
+    @RequestParam(name = "exposure", required = false) exposures: List<String>?,
+    @RequestParam(name = "environment", required = false) environments: List<String>?,
+    @SortDefault(sort = ["createdAt"]) sort: Sort,
+  ): ResponseEntity<ByteArray> =
+    exportService.exportPlants(
+      PlantCriteria(
+        location, tags.orEmpty(), code, statuses.orEmpty(), includeDescendants,
+        text, speciesIds.orEmpty(), exposures.orEmpty(), environments.orEmpty(),
+      ),
+      sort,
+    ).asDownload()
 }

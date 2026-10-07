@@ -75,6 +75,10 @@ export interface LocationListQuery {
   parentId?: string
   /** Solo las localizaciones sin padre. */
   root?: boolean
+  /** Texto sobre el nombre y el código, parcial y sin distinguir mayúsculas. */
+  q?: string
+  /** Solo para quien necesita una página distinta de la del servidor (el buscador global). */
+  size?: number
 }
 
 /** Un movimiento del historial, del más reciente al más antiguo. */

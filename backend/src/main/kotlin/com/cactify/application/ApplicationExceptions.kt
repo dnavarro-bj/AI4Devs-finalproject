@@ -139,3 +139,11 @@ class SavedViewNotFoundException(id: String) :
 /** Ya hay otra vista con ese nombre normalizado en ese ámbito: 409. */
 class DuplicateSavedViewNameException(name: String, scope: String) :
   RuntimeException("Ya existe una vista del ámbito '$scope' con el nombre '$name'")
+
+/**
+ * El resultado de una exportación supera el máximo configurado: 422 (ADR-017). Se rechaza **en lugar
+ * de truncar**: un CSV parcial que parece completo es peor que ninguno. El mensaje dice cuántas
+ * filas serían y cuál es el máximo, para que quien exporta sepa cuánto afinar.
+ */
+class ExportTooLargeException(val rows: Long, val maxRows: Int) :
+  RuntimeException("$rows filas superan el máximo de $maxRows: afina los filtros")

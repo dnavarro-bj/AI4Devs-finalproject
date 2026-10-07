@@ -4,6 +4,7 @@ import com.cactify.domain.Tag
 import com.cactify.domain.TagId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 
 /**
  * Cuántas plantas tienen un tag. Es un hecho del dominio y no una fila del listado, así que viaja
@@ -24,6 +25,9 @@ interface TagRepository {
   fun delete(tag: Tag)
   fun findOneById(id: TagId): Tag?
   fun findAll(pageable: Pageable): Page<Tag>
+
+  /** El catálogo filtrado y paginado. Una especificación nula no filtra. */
+  fun findAll(spec: Specification<Tag>?, pageable: Pageable): Page<Tag>
   fun findByNormalizedName(name: String): Tag?
   fun findAllByIdIn(ids: Collection<TagId>): List<Tag>
 

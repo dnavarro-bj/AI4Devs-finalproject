@@ -121,4 +121,76 @@ describe('UiGlobalSearch', () => {
 
     expect(wrapper.find('input').attributes('aria-label')).toBeTruthy()
   })
+
+  describe('enlace de continuación «Ver todos»', () => {
+    const WITH_MORE = [
+      {
+        ...GROUPS[0]!,
+        more: { label: 'Ver los 37 resultados', to: '/plants?q=gruss' },
+      },
+      GROUPS[1]!,
+    ]
+
+    it('pinta el enlace al final de su grupo y no en los que no lo declaran', async () => {
+      const wrapper = await search({ modelValue: 'gruss', groups: WITH_MORE })
+
+      const groups = wrapper.findAll('[role="group"]')
+      const more = groups[0]!.find('[data-test="group-more"]')
+      expect(more.exists()).toBe(true)
+      expect(more.text()).toBe('Ver los 37 resultados')
+      // Es lo último del grupo: va después de sus resultados.
+      const options = groups[0]!.findAll('[role="option"]')
+      expect(options.at(-1)!.text()).toContain('Ver los 37 resultados')
+      expect(groups[1]!.find('[data-test="group-more"]').exists()).toBe(false)
+    })
+
+    it('entra en el recorrido plano del teclado, como una opción más', async () => {
+      const wrapper = await search({ modelValue: 'gruss', groups: WITH_MORE })
+      const input = wrapper.find('input')
+
+      // 2 resultados + el enlace del primer grupo + 1 resultado del segundo = 4 opciones.
+      expect(wrapper.findAll('[role="option"]')).toHaveLength(4)
+
+      for (let step = 0; step < 3; step++) await input.trigger('keydown', { key: 'ArrowDown' })
+      const options = wrapper.findAll('[role="option"]')
+      expect(options[2]!.attributes('aria-selected')).toBe('true')
+      expect(input.attributes('aria-activedescendant')).toBe(options[2]!.attributes('id'))
+
+      await input.trigger('keydown', { key: 'ArrowDown' })
+      expect(wrapper.findAll('[role="option"]')[3]!.attributes('aria-selected')).toBe('true')
+    })
+
+    it('activarlo emite la selección con su destino y cierra la lista', async () => {
+      const wrapper = await search({ modelValue: 'gruss', groups: WITH_MORE })
+
+      await wrapper.find('[data-test="group-more"]').trigger('click')
+
+      expect(wrapper.emitted('select')?.[0]?.[0]).toMatchObject({ to: '/plants?q=gruss' })
+      expect(wrapper.find('input').attributes('aria-expanded')).toBe('false')
+    })
+
+    it('con Enter sobre el enlace activo emite su destino', async () => {
+      const wrapper = await search({ modelValue: 'gruss', groups: WITH_MORE })
+      const input = wrapper.find('input')
+
+      for (let step = 0; step < 3; step++) await input.trigger('keydown', { key: 'ArrowDown' })
+      await input.trigger('keydown', { key: 'Enter' })
+
+      expect(wrapper.emitted('select')?.[0]?.[0]).toMatchObject({ to: '/plants?q=gruss' })
+    })
+
+    it('un grupo sin enlace se pinta y se recorre como antes', async () => {
+      const wrapper = await search({ modelValue: 'gruss', groups: GROUPS })
+
+      expect(wrapper.find('[data-test="group-more"]').exists()).toBe(false)
+      expect(wrapper.findAll('[role="option"]')).toHaveLength(3)
+    })
+
+    it('sin resultados no pinta ningún enlace', async () => {
+      const wrapper = await search({ modelValue: 'zzz', groups: [] })
+
+      expect(wrapper.find('[data-test="group-more"]').exists()).toBe(false)
+      expect(wrapper.find('[data-test="no-results"]').exists()).toBe(true)
+    })
+  })
 })

@@ -37,6 +37,7 @@ import com.cactify.domain.repos.TagRepository
 import com.cactify.domain.specs.PlantSortKeys
 import com.cactify.domain.specs.PlantSpecs
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -200,10 +201,19 @@ class PlantService(
   }
 
   @Transactional(readOnly = true)
-  fun search(criteria: PlantCriteria, pageable: Pageable): PageResponse<PlantSummaryResponse> {
+  fun search(criteria: PlantCriteria, pageable: Pageable): PageResponse<PlantSummaryResponse> =
+    // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
+    PageResponse.of(plantRepository.findAll(specification(criteria), PlantSortKeys.translate(pageable))) { it.toSummary() }
+
+  /**
+   * Los criterios del listado como una especificación. Es **la** definición de «qué ejemplares
+   * entran»: el listado y la exportación la comparten, de modo que no pueden divergir (ADR-017).
+   * Debe llamarse dentro de una transacción: con descendientes consulta la jerarquía.
+   */
+  fun specification(criteria: PlantCriteria): Specification<Plant> {
     // Lo archivado no se mezcla con lo que está en curso: sin filtro, solo lo que está en curso.
     val wanted = criteria.statuses.ifEmpty { PlantStatus.inProgress }
-    val spec = PlantSpecs
+    return PlantSpecs
       .withSpeciesAndLocation()
       .and(PlantSpecs.byStatuses(wanted))
       .and(PlantSpecs.byCodeContaining(criteria.code))
@@ -212,8 +222,6 @@ class PlantService(
       .and(PlantSpecs.byAllTags(criteria.tagIds))
       .and(PlantSpecs.bySpecies(criteria.speciesIds))
       .and(PlantSpecs.bySpeciesTraits(criteria.exposures, criteria.environments))
-    // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
-    return PageResponse.of(plantRepository.findAll(spec, PlantSortKeys.translate(pageable))) { it.toSummary() }
   }
 
   /**

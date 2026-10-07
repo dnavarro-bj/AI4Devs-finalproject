@@ -13,6 +13,7 @@ import com.cactify.domain.LocationType
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.PlantMovementRepository
+import com.cactify.domain.specs.LocationSpecs
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -74,12 +75,16 @@ class LocationService(
    * `parentId` pide los hijos de un nodo; `rootsOnly`, las localizaciones sin padre.
    */
   @Transactional(readOnly = true)
-  fun list(pageable: Pageable, parentId: String? = null, rootsOnly: Boolean = false): PageResponse<LocationSummaryResponse> {
-    val page = when {
-      parentId != null -> locationRepository.findByParentId(LocationId.from(parentId), pageable)
-      rootsOnly -> locationRepository.findRoots(pageable)
-      else -> locationRepository.findAll(pageable)
-    }
+  fun list(
+    pageable: Pageable,
+    parentId: String? = null,
+    rootsOnly: Boolean = false,
+    text: String? = null,
+  ): PageResponse<LocationSummaryResponse> {
+    val spec = LocationSpecs.byParent(parentId?.let { LocationId.from(it) })
+      .and(LocationSpecs.rootsOnly(rootsOnly))
+      .and(LocationSpecs.byText(text))
+    val page = locationRepository.findAll(spec, pageable)
     val ids = page.content.map { it.id }
     val direct = locationRepository.countPlantsByLocation(ids).associate { it.locationId to it.plantCount }
     val totals = hierarchy.totalPlantCounts(ids)

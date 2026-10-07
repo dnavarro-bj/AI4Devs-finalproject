@@ -47,6 +47,16 @@ describe('service de localizaciones', () => {
       expect(result.data!.content[0]!.name).toBe('Invernadero 1')
     })
 
+    it('el texto y el tamaño viajan como `q` y `size`; un texto en blanco no viaja', async () => {
+      api.get.mockResolvedValue(page([]))
+
+      await locationsApiService.list({ q: '  inver ', size: 5 })
+      expect(api.get).toHaveBeenLastCalledWith('/locations', { page: 0, q: 'inver', size: 5 })
+
+      await locationsApiService.list({ q: '   ' })
+      expect(api.get).toHaveBeenLastCalledWith('/locations', { page: 0 })
+    })
+
     it('los criterios ausentes no viajan, y los presentes sí', async () => {
       api.get.mockResolvedValue(page([]))
 

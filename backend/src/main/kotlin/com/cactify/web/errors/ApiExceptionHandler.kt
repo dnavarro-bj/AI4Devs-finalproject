@@ -3,6 +3,7 @@ package com.cactify.web.errors
 import com.cactify.application.AIProviderException
 import com.cactify.application.CareRecordNotFoundException
 import com.cactify.application.DuplicateScientificNameException
+import com.cactify.application.ExportTooLargeException
 import com.cactify.domain.InvalidPlantStatusTransitionException
 import com.cactify.application.DuplicateSpeciesCodeException
 import com.cactify.application.SpeciesCodeLockedException
@@ -87,6 +88,11 @@ class ApiExceptionHandler {
     log.warn("Invariante de dominio rechazada en {}: {}", request.requestURI, ex.message)
     return badRequest(ex.message ?: "La petición no es válida", request)
   }
+
+  /** Una exportación demasiado grande: la petición es válida, pero no se puede atender como está. */
+  @ExceptionHandler(ExportTooLargeException::class)
+  fun onExportTooLarge(ex: ExportTooLargeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.UNPROCESSABLE_ENTITY, ex.message ?: "La exportación es demasiado grande", request)
 
   @ExceptionHandler(InvalidReferenceException::class)
   fun onInvalidReference(ex: InvalidReferenceException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =

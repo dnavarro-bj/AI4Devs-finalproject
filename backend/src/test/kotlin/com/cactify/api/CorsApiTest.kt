@@ -48,4 +48,15 @@ class CorsApiTest : AbstractApiIntegrationTest() {
 
     kotlin.test.assertTrue(status < 500, "un preflight nunca debe ser 5xx, y fue $status")
   }
+
+  /**
+   * El nombre fechado de una exportación llega en `Content-Disposition`, y el navegador solo deja a
+   * JavaScript leer esa cabecera de otro origen si el servidor la expone (ADR-017).
+   */
+  @Test
+  fun `the file name header of an export is exposed to the browser`() {
+    mockMvc.perform(get("/plants/export").header(HttpHeaders.ORIGIN, browserOrigin))
+      .andExpect(status().isOk)
+      .andExpect(header().string("Access-Control-Expose-Headers", org.hamcrest.Matchers.containsString("Content-Disposition")))
+  }
 }

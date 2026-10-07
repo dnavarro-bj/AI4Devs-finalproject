@@ -25,6 +25,7 @@ import type { PlantSummary } from '@features/plants/types/plant.types'
 import { useLocations } from '@features/locations/composables/useLocations'
 import type { LocationSummary } from '@features/locations/types/location.types'
 import { useSpecies } from '@features/species/composables/useSpecies'
+import { useExport } from '@features/exports/composables/useExport'
 import { ENVIRONMENTS, SUN_EXPOSURE } from '@features/species/mappers/speciesCultivation'
 import { useSavedViews } from '@features/views/composables/useSavedViews'
 import { plantsDraft, plantsRouteQuery } from '@features/views/mappers/viewState'
@@ -246,6 +247,23 @@ const savedViews = useSavedViews('plants', {
   apply: (view) => { Object.assign(state, readUrlState(URL_SCHEMA, plantsRouteQuery(view, viewContext))) },
 })
 
+/**
+ * Exportar es el listado con otro formato: lo que se pide es **el estado de la pantalla en lenguaje
+ * del API** —el mismo que se guarda en una vista, sin las columnas ocultas ni el pseudo-estado
+ * `all`—. El máximo de filas lo decide el servidor y su mensaje se muestra tal cual.
+ */
+const exporter = useExport('plants')
+const exportQuery = () => plantsDraft(toUrlQuery(URL_SCHEMA, state), viewContext).query
+const exportable = computed(() => !loading.value && !error.value && (page.value?.totalElements ?? 0) > 0)
+const exportLabel = computed(() => {
+  if (exporter.exporting.value) return 'Exportando…'
+  const total = page.value?.totalElements
+  if (total === undefined) return 'Exportar'
+  return `Exportar ${total} ${total === 1 ? 'resultado' : 'resultados'}`
+})
+// El error de una exportación habla de lo que había en pantalla al pedirla: si cambia, ya no aplica.
+watch(() => JSON.stringify(toUrlQuery(URL_SCHEMA, state)), () => exporter.clearError())
+
 const failure = (result: ServiceResponse<unknown>) => (result.success ? null : result.error!.message)
 const saveView = async (name: string) => failure(await savedViews.saveCurrent(name))
 const replaceView = async (view: SavedView) => failure(await savedViews.replaceWithCurrent(view))
@@ -352,6 +370,15 @@ const asPlant = (row: unknown) => row as PlantSummary
         @apply="savedViews.apply"
       />
       <UiButton
+        variant="secondary"
+        data-test="export"
+        :disabled="!exportable"
+        :busy="exporter.exporting.value"
+        @click="exporter.run(exportQuery())"
+      >
+        <span aria-hidden="true">⇩</span> {{ exportLabel }}
+      </UiButton>
+      <UiButton
         variant="icon"
         label="Configurar columnas"
         data-test="configure-columns"
@@ -380,6 +407,10 @@ const asPlant = (row: unknown) => row as PlantSummary
         <UiToolbarField v-model="state.tag" label="Etiqueta" placeholder="Etiqueta" data-test="filter-tag" />
       </div>
     </UiFilterBar>
+
+    <UiInlineError v-if="exporter.error.value" data-test="export-error">
+      No se ha podido exportar: {{ exporter.error.value }}
+    </UiInlineError>
 
     <div v-if="columnsOpen" class="columns-picker" data-test="columns-picker">
       <label v-for="column in HIDEABLE" :key="column.key">

@@ -93,38 +93,65 @@ La aplicación SHALL ofrecer una búsqueda disponible desde cualquier pantalla q
 - **WHEN** el usuario recorre la barra superior con el teclado
 - **THEN** alcanza el campo de búsqueda, puede escribir, recorrer los resultados y activar uno sin usar el ratón
 
-### Requirement: Búsqueda global de plantas y especies por código
+### Requirement: Búsqueda global sobre datos reales
 
-La búsqueda global SHALL encontrar **plantas y especies reales por su código de inventario**, consultando el API, con coincidencia parcial y sin distinguir mayúsculas. Las plantas SHALL mostrarse con su código y su apodo y las especies con su código y su nombre científico, y cada resultado SHALL abrir la ficha del elemento. Los tipos que todavía no se buscan en el API —localizaciones y etiquetas— SHALL seguir apareciendo marcados como datos de ejemplo hasta que los sirva un endpoint (T-21): una búsqueda que mezcla resultados reales con otros inventados sin decirlo es peor que una que dice cuáles son cuáles.
+La búsqueda global SHALL encontrar **plantas, especies, localizaciones y etiquetas reales**, consultando el API, con coincidencia parcial y sin distinguir mayúsculas. Las **plantas** se buscan por código, apodo y nombre de su especie y se muestran con su código y su apodo; las **especies**, por código y por nombre científico o común, con su código y su nombre científico; las **localizaciones**, por nombre y código; las **etiquetas**, por nombre. Cada resultado SHALL abrir la pantalla del elemento. **No queda ningún dato de ejemplo ni marca `· ejemplo`** en la búsqueda.
 
-Escribir deprisa SHALL NO lanzar una petición por tecla, y una respuesta de una búsqueda anterior SHALL NO sustituir a la de la búsqueda actual. Si el API falla, la búsqueda SHALL degradarse a «sin resultados de ese tipo» en lugar de romper el diálogo.
+Cada tipo SHALL mostrar un número acotado de resultados y, si hay más, un enlace **«Ver los N resultados»** que abre el inventario o el catálogo ya filtrado por el mismo texto (`?q=`); localizaciones y etiquetas, cuyas pantallas no se filtran por texto, no lo ofrecen. Las cuatro consultas SHALL ir en paralelo y **cada tipo SHALL fallar por separado**: si una falla, las demás se muestran y esa se degrada a «sin resultados de ese tipo», sin mensaje técnico.
+
+Escribir deprisa SHALL NO lanzar una petición por tecla, y una respuesta de una búsqueda anterior SHALL NO sustituir a la de la búsqueda actual.
 
 #### Scenario: Encontrar una planta por su código
 
 - **WHEN** el usuario escribe `CAT-GRUSS-01` en la búsqueda global
 - **THEN** aparece, en el grupo de plantas, la planta con ese código y su apodo, y al elegirla se abre su ficha
 
+#### Scenario: Encontrar una planta por su apodo
+
+- **WHEN** el usuario escribe `suegra`
+- **THEN** aparece la planta cuyo apodo lo contiene, aunque su código no
+
+#### Scenario: Encontrar plantas por el nombre de su especie
+
+- **WHEN** el usuario escribe `grusonii`
+- **THEN** aparecen en el grupo de plantas los ejemplares de esa especie y en el de especies, la propia especie
+
 #### Scenario: Encontrar una especie por su código
 
 - **WHEN** el usuario escribe `mammi`
 - **THEN** aparece, en el grupo de especies, la que tiene ese código, con su nombre científico, y al elegirla se abre su ficha
 
-#### Scenario: Resultados reales, no de ejemplo
+#### Scenario: Localizaciones y etiquetas reales
 
-- **WHEN** el usuario busca un texto que coincide con el código de una planta
-- **THEN** el resultado es la planta que existe en el API y no una de ejemplo
+- **WHEN** el usuario escribe `inver`
+- **THEN** el grupo de localizaciones muestra las que existen en el API, sin marca de ejemplo, y al elegir una se abre su ficha
 
-#### Scenario: Lo que sigue siendo ejemplo, marcado
+#### Scenario: Ningún dato de ejemplo
 
-- **WHEN** la búsqueda devuelve localizaciones o etiquetas
-- **THEN** esos resultados se distinguen como datos de ejemplo
+- **WHEN** el usuario busca un texto que solo coincide con un dato que existe en el API
+- **THEN** no aparece ningún resultado que no exista en él
+
+#### Scenario: Más resultados de los que caben
+
+- **WHEN** hay 37 plantas que coinciden y el grupo muestra 5
+- **THEN** el grupo ofrece «Ver los 37 resultados» y al elegirlo se abre `/plants?q=<texto>` ya filtrado
+
+#### Scenario: Un tipo que no se filtra por texto
+
+- **WHEN** hay más localizaciones de las que caben
+- **THEN** el grupo muestra las primeras sin enlace «Ver todos»
 
 #### Scenario: Una respuesta tardía no pisa a la actual
 
 - **WHEN** el usuario escribe un texto, escribe otro después, y la respuesta del primero llega la última
 - **THEN** los resultados mostrados son los del segundo texto
 
-#### Scenario: Fallo del API
+#### Scenario: Un tipo falla
 
-- **WHEN** el API de plantas o de especies falla durante una búsqueda
-- **THEN** el diálogo sigue funcionando y no muestra resultados de ese tipo, sin mensaje de error técnico
+- **WHEN** el API de etiquetas falla durante una búsqueda
+- **THEN** plantas, especies y localizaciones se muestran y no hay resultados de etiquetas ni mensaje de error técnico
+
+#### Scenario: Fallan todos
+
+- **WHEN** el API no responde
+- **THEN** el diálogo muestra «sin resultados» y sigue funcionando

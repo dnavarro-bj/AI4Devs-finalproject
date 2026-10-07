@@ -91,3 +91,88 @@ describe('cliente del API', () => {
     expect(error.message).toBeTruthy()
   })
 })
+
+/**
+ * Descarga de archivos: el cliente sigue siendo la única pieza que habla con el transporte. Entrega
+ * el blob y el nombre que fija el servidor, y un fallo llega como `ApiError` con **su mensaje**, no
+ * como un blob ilegible.
+ */
+describe('cliente del API: descargas', () => {
+  const baseUrl = 'http://api.test'
+  const csv = () => new Blob(['﻿código\r\nCAT-GRUSS-01\r\n'], { type: 'text/csv' })
+
+  const raw = (headers: Record<string, string>, data: Blob = csv()) =>
+    vi.fn(async (_url: string, _options?: Record<string, unknown>) => ({ _data: data, headers: new Headers(headers), status: 200 }))
+
+  it('pide el archivo como blob, con la consulta, y devuelve el nombre que fija el servidor', async () => {
+    const fetchRaw = raw({
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': 'attachment; filename="cactify-plantas-2026-10-07.csv"',
+    })
+    const api = createApiClient(baseUrl, vi.fn() as never, fetchRaw as never)
+
+    const file = await api.getBlob('/plants/export', { q: 'gruss', status: ['activa', 'cuarentena'] })
+
+    expect(fetchRaw).toHaveBeenCalledWith(
+      `${baseUrl}/plants/export`,
+      { method: 'GET', query: { q: 'gruss', status: ['activa', 'cuarentena'] }, responseType: 'blob' },
+    )
+    expect(file.filename).toBe('cactify-plantas-2026-10-07.csv')
+    expect(file.blob).toBeInstanceOf(Blob)
+  })
+
+  it('lee también el nombre sin comillas y el codificado en UTF-8', async () => {
+    const plain = createApiClient(baseUrl, vi.fn() as never, raw({ 'content-disposition': 'attachment; filename=plantas.csv' }) as never)
+    const encoded = createApiClient(
+      baseUrl,
+      vi.fn() as never,
+      raw({ 'content-disposition': "attachment; filename*=UTF-8''cactify-esp%C3%A9cies.csv" }) as never,
+    )
+
+    expect((await plain.getBlob('/plants/export')).filename).toBe('plantas.csv')
+    expect((await encoded.getBlob('/plants/export')).filename).toBe('cactify-especies.csv'.replace('especies', 'espécies'))
+  })
+
+  it('sin la cabecera, el nombre es nulo y quien descarga pone el suyo', async () => {
+    const api = createApiClient(baseUrl, vi.fn() as never, raw({}) as never)
+
+    expect((await api.getBlob('/plants/export')).filename).toBeNull()
+  })
+
+  it('un 422 con cuerpo JSON llega con su mensaje, no como un blob', async () => {
+    const body = {
+      status: 422, error: 'Unprocessable Entity', path: '/plants/export',
+      message: '1200 filas superan el máximo de 1000: afina los filtros',
+    }
+    // Con `responseType: 'blob'`, el cuerpo del error también llega como blob.
+    const failing = vi.fn(async () => {
+      throw { response: { status: 422 }, data: new Blob([JSON.stringify(body)], { type: 'application/json' }) }
+    })
+    const api = createApiClient(baseUrl, vi.fn() as never, failing as never)
+
+    await expect(api.getBlob('/plants/export')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 422,
+      message: '1200 filas superan el máximo de 1000: afina los filtros',
+    })
+  })
+
+  it('un error cuyo cuerpo no es interpretable se queda con el mensaje genérico', async () => {
+    const failing = vi.fn(async () => {
+      throw { response: { status: 500 }, data: new Blob(['<html>caído</html>'], { type: 'text/html' }) }
+    })
+    const api = createApiClient(baseUrl, vi.fn() as never, failing as never)
+
+    await expect(api.getBlob('/plants/export')).rejects.toMatchObject({
+      status: 500,
+      message: 'No se ha podido completar la operación. Inténtalo de nuevo.',
+    })
+  })
+
+  it('un fallo de red es un ApiError con estado 0', async () => {
+    const failing = vi.fn(async () => { throw new TypeError('Failed to fetch') })
+    const api = createApiClient(baseUrl, vi.fn() as never, failing as never)
+
+    await expect(api.getBlob('/plants/export')).rejects.toMatchObject({ name: 'ApiError', status: 0 })
+  })
+})

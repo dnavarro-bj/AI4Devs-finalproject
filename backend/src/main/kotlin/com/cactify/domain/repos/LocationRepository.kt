@@ -4,6 +4,7 @@ import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 
 /**
  * Puerto de acceso a localizaciones. No expone `findAll()` sin paginar: en este API no existe el
@@ -25,6 +26,9 @@ interface LocationRepository {
   fun delete(location: Location)
   fun findOneById(id: LocationId): Location?
   fun findAll(pageable: Pageable): Page<Location>
+
+  /** El catálogo filtrado y paginado. Una especificación nula no filtra. */
+  fun findAll(spec: Specification<Location>?, pageable: Pageable): Page<Location>
   fun countPlantsIn(id: LocationId): Long
 
   /** La localización con ese código, sin distinguir mayúsculas ni espacios de los extremos. */

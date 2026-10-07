@@ -156,6 +156,7 @@ const SEARCH_GROUPS = [
       { label: 'CAT-GRUSS-01', detail: 'Bola verde · Bandeja A3', to: '/plants' },
       { label: 'CAT-GRUSS-02', detail: 'Erizo · Bandeja A3', to: '/plants' },
     ],
+    more: { label: 'Ver los 37 resultados', to: '/plants?q=gruss' },
   },
   {
     kind: 'species',
@@ -258,7 +259,7 @@ const SEARCH_GROUPS = [
       </UiPageHeader>
       <UiPageHeader title="Configuración" />
 
-      <!-- Los tres estados del buscador: sin buscar, con resultados agrupados y sin resultados. -->
+      <!-- Los tres estados del buscador: sin buscar, con resultados agrupados (y el enlace «Ver todos» de un grupo) y sin resultados. -->
       <div class="search-samples">
         <UiGlobalSearch v-model="searchEmpty" :groups="[]" />
         <UiGlobalSearch v-model="searchHit" :groups="SEARCH_GROUPS" />

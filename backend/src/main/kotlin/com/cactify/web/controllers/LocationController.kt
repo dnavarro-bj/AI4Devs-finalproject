@@ -72,8 +72,10 @@ class LocationController(
     @RequestParam(required = false) parentId: String?,
     /** Solo las localizaciones sin padre. */
     @RequestParam(required = false, defaultValue = "false") root: Boolean,
+    /** Coincidencia parcial sobre el nombre y el código, sin distinguir mayúsculas. */
+    @RequestParam(name = "q", required = false) text: String?,
     @SortDefault(sort = ["name"]) pageable: Pageable,
-  ): PageResponse<LocationSummaryResponse> = locationService.list(pageable, parentId, root)
+  ): PageResponse<LocationSummaryResponse> = locationService.list(pageable, parentId, root, text)
 
   @GetMapping("/{id}")
   fun detail(@PathVariable id: String): LocationDetailResponse = locationService.findById(id)

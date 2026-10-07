@@ -20,10 +20,19 @@ import type {
  * va en la firma como `ServiceResponse` (ADR-015)—.
  */
 export const catalogsApiService = {
-  async listTags(page = 0, sort?: string): Promise<ServiceResponse<PageResponse<TagListItem>>> {
+  listTags(page = 0, sort?: string): Promise<ServiceResponse<PageResponse<TagListItem>>> {
+    return catalogsApiService.searchTags({ page, sort })
+  },
+
+  /** Las etiquetas con sus criterios: `q` es texto parcial sobre el nombre; `size`, para el buscador global. */
+  async searchTags(
+    criteria: { page?: number, sort?: string, q?: string, size?: number } = {},
+  ): Promise<ServiceResponse<PageResponse<TagListItem>>> {
     try {
-      const query: Record<string, unknown> = { page }
-      if (sort) query.sort = sort
+      const query: Record<string, unknown> = { page: criteria.page ?? 0 }
+      if (criteria.sort) query.sort = criteria.sort
+      if (criteria.q?.trim()) query.q = criteria.q.trim()
+      if (criteria.size) query.size = criteria.size
       return ok(await getApiClient().get<PageResponse<TagListItem>>('/tags', query))
     } catch (cause) {
       return fail(normalizeError(cause))

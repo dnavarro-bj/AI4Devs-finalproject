@@ -35,6 +35,16 @@ describe('service del catálogo de etiquetas', () => {
     expect(result.data!.content[1]!.plantCount, 'el cero es un dato').toBe(0)
   })
 
+  it('busca etiquetas por texto con un tamaño acotado; el texto en blanco no viaja', async () => {
+    api.get.mockResolvedValue({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 5 })
+
+    await catalogsApiService.searchTags({ q: ' glob ', size: 5 })
+    expect(api.get).toHaveBeenLastCalledWith('/tags', { page: 0, q: 'glob', size: 5 })
+
+    await catalogsApiService.searchTags({ q: '  ' })
+    expect(api.get).toHaveBeenLastCalledWith('/tags', { page: 0 })
+  })
+
   it('pide la ficha con su nombre normalizado', async () => {
     api.get.mockResolvedValue({ ...tag, normalizedName: 'globular', plantCount: 3 })
 

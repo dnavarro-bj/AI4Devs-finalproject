@@ -34,6 +34,17 @@ T-21 se parte en tres changes, en este orden:
 
 1. **`filtros-y-orden-del-inventario`** — **hecho**. Convención de filtros y orden ([ADR-016](../adr/ADR-016-filtros-y-orden-en-los-listados.md)), `q`, especie y rasgos de cultivo en `/plants` y `/species`, orden por claves públicas, estado de la pantalla en la URL.
 2. **`vistas-guardadas-y-grupos-de-especies`** — **hecho**. Vistas con nombre (filtros, orden y columnas) y grupos dinámicos de especies. Cierra §24.11: solo grupos dinámicos.
-3. **`buscador-global-y-exportacion`** — buscador global sobre datos reales y exportación CSV del resultado filtrado.
+3. **`buscador-global-y-exportacion`** — **hecho**. Buscador global sobre datos reales y exportación CSV del resultado filtrado.
 
 **Fuera del orden por ahora:** «última revisión» (T-20, ya hecho, pendiente de ordenar por ella) y «nivel de atención» (T-23).
+
+## Resolución
+
+**Cerrado** con tres changes: `filtros-y-orden-del-inventario` (sin migración, [ADR-016](../adr/ADR-016-filtros-y-orden-en-los-listados.md)), `vistas-guardadas-y-grupos-de-especies` (migración `V14`) y `buscador-global-y-exportacion` (sin migración, [ADR-017](../adr/ADR-017-exportacion-a-csv.md)). Las decisiones que resolvieron lo pendiente:
+
+* **§24.11:** solo grupos dinámicos, sin grupos manuales. Un grupo es una vista guardada del catálogo y entra o sale sola.
+* **Convención del API:** parámetros planos y `sort` con claves públicas, no un cuerpo de búsqueda; una vista guardada es, por tanto, una *query string*.
+* **Búsqueda global:** sin endpoint unificado; cuatro consultas con `q` en paralelo, para que cada tipo falle por separado.
+* **Exportación:** un `GET` con los filtros del listado, acotado por `EXPORT_MAX_ROWS` (`422`, nunca truncada). La pantalla de importar y exportar y la importación **no** forman parte de este ticket: ver [T-29](T-29-importar-exportar-y-configuracion.md).
+
+Quedó fuera del orden «última revisión» (la cronología ya existe: falta definir qué cuenta como revisión) y «nivel de atención» (T-23).

@@ -33,17 +33,19 @@ abstract class PlantEvent(
   override val id: PlantEventId = PlantEventId.create(),
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "plant_id", nullable = false, updatable = false)
-  val plant: Plant,
+  open val plant: Plant,
   occurredAt: Instant,
 ) : AbstractEntity<PlantEventId>() {
 
+  // `open`: PlantEvent es la única entidad no final (las subclases sí lo son) y Hibernate no puede
+  // crear su proxy perezoso con getters finales (HHH000305).
   @Column(name = "occurred_at", nullable = false)
-  var occurredAt: Instant = occurredAt.truncatedTo(ChronoUnit.MICROS)
+  open var occurredAt: Instant = occurredAt.truncatedTo(ChronoUnit.MICROS)
     protected set
 
   /** La operación única que lo originó cuando se aplicó a varias plantas. Nadie la escribe todavía (T-24). */
   @Column(name = "batch_id", updatable = false, insertable = false)
-  var batchId: Long? = null
+  open var batchId: Long? = null
     protected set
 
   protected companion object {

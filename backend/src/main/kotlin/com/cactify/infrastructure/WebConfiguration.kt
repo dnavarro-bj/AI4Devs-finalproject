@@ -24,6 +24,8 @@ class WebConfiguration : WebMvcConfigurer {
       .allowedOrigins("*")
       .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
       .allowedHeaders("*")
+      // Sin esto el navegador no deja a JavaScript leer el nombre fechado de una exportación (ADR-017).
+      .exposedHeaders("Content-Disposition")
       .allowCredentials(false)
   }
 }

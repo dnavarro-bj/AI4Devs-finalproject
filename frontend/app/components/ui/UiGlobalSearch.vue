@@ -17,7 +17,14 @@ export interface SearchGroup {
   kind: string
   label: string
   results: { label: string, detail?: string, to: string }[]
+  /**
+   * Un enlace de continuación —«Ver los 37 resultados»— que cierra el grupo. Entra en el recorrido
+   * del teclado como una opción más. Llega ya construido: el componente no sabe qué es un grupo.
+   */
+  more?: { label: string, to: string }
 }
+
+type Option = { label: string, detail?: string, to: string }
 
 const props = withDefaults(
   defineProps<{ modelValue: string, groups: SearchGroup[], label?: string, placeholder?: string }>(),
@@ -32,10 +39,24 @@ const emit = defineEmits<{
 const listId = useId()
 const optionId = (index: number) => `${listId}-option-${index}`
 
+/**
+ * Cada grupo con sus opciones —sus resultados y, si lo declara, su enlace de continuación— y la
+ * posición de cada una en el recorrido plano: el teclado atraviesa los grupos de corrido.
+ */
+const rows = computed(() => {
+  let offset = 0
+  return props.groups.map((group) => {
+    const items = [
+      ...group.results.map((option): { option: Option, more: boolean } => ({ option, more: false })),
+      ...(group.more ? [{ option: { label: group.more.label, to: group.more.to }, more: true }] : []),
+    ].map((item, position) => ({ ...item, index: offset + position }))
+    offset += items.length
+    return { group, items }
+  })
+})
+
 /** El recorrido es plano aunque la vista sea agrupada. */
-const flatResults = computed(() => props.groups.flatMap((group) => group.results))
-const indexOf = (group: SearchGroup, position: number) =>
-  flatResults.value.indexOf(group.results[position]!)
+const flatResults = computed(() => rows.value.flatMap((row) => row.items.map((item) => item.option)))
 
 const dismissed = ref(false)
 const activeIndex = ref(-1)
@@ -110,26 +131,27 @@ function onKeydown(event: KeyboardEvent) {
           No hay resultados para «{{ modelValue }}».
         </p>
         <div
-          v-for="group in groups"
+          v-for="row in rows"
           v-else
-          :key="group.kind"
+          :key="row.group.kind"
           class="global-search__group"
           role="group"
-          :aria-label="group.label"
+          :aria-label="row.group.label"
         >
-          <p class="global-search__group-label">{{ group.label }}</p>
+          <p class="global-search__group-label">{{ row.group.label }}</p>
           <button
-            v-for="(result, position) in group.results"
-            :id="optionId(indexOf(group, position))"
-            :key="result.to + result.label"
+            v-for="item in row.items"
+            :id="optionId(item.index)"
+            :key="item.option.to + item.option.label"
             type="button"
             role="option"
-            :aria-selected="indexOf(group, position) === activeIndex ? 'true' : 'false'"
-            :class="{ 'is-active': indexOf(group, position) === activeIndex }"
-            @click="choose(result)"
+            :aria-selected="item.index === activeIndex ? 'true' : 'false'"
+            :class="{ 'is-active': item.index === activeIndex, 'global-search__more': item.more }"
+            :data-test="item.more ? 'group-more' : undefined"
+            @click="choose(item.option)"
           >
-            <span class="global-search__label">{{ result.label }}</span>
-            <span v-if="result.detail" class="global-search__detail">{{ result.detail }}</span>
+            <span class="global-search__label">{{ item.option.label }}</span>
+            <span v-if="item.option.detail" class="global-search__detail">{{ item.option.detail }}</span>
           </button>
         </div>
       </template>
@@ -212,6 +234,11 @@ function onKeydown(event: KeyboardEvent) {
 
 .global-search__results button.is-active .global-search__label {
   font-weight: 700;
+}
+
+.global-search__more .global-search__label {
+  color: var(--color-brand);
+  font-weight: 600;
 }
 
 .global-search__label {
