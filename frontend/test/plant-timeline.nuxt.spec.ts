@@ -29,7 +29,7 @@ function serve(timeline: Entry[], { size = 25, plant = plantDetail() } = {}) {
       const page = params.page ?? 0
       return Promise.resolve(envelope(all.slice(page * size, (page + 1) * size), page, all.length))
     }
-    if (path.endsWith('/care-records') || path.endsWith('/status-changes') || path.endsWith('/movements')) {
+    if (path === '/tasks' || path.endsWith('/care-records') || path.endsWith('/status-changes') || path.endsWith('/movements')) {
       return Promise.resolve(envelope([]))
     }
     return Promise.resolve(plant)
@@ -93,6 +93,33 @@ describe('cronología real de la ficha', () => {
     expect(titles(wrapper)).toEqual(['alerta'])
   })
 
+  it('una tarea completada aparece con su título y su tipo, y no se puede corregir ni retirar', async () => {
+    serve([
+      { id: '7', type: 'tarea', occurredAt: '2026-09-07T10:00:00Z', task: { taskId: '9', type: 'riego', title: 'Regar la bandeja A3' } },
+      comment('1', '2026-09-01T10:00:00Z'),
+    ])
+    const wrapper = await mountPage()
+
+    expect(titles(wrapper)).toEqual(['Tarea completada', 'Comentario'])
+    expect(wrapper.find('[data-test="task-body"]').text()).toBe('Regar la bandeja A3 · Riego')
+    const entry = wrapper.find('[data-test="entry-7"]')
+    expect(entry.find('[data-test="edit-entry"]').exists()).toBe(false)
+    expect(entry.find('[data-test="remove-entry"]').exists()).toBe(false)
+  })
+
+  it('el filtro de la cronología ofrece «Tareas» y lo pide al servidor', async () => {
+    serve([{ id: '7', type: 'tarea', occurredAt: '2026-09-07T10:00:00Z', task: { taskId: '9', type: 'riego', title: 'Regar' } }, comment('1', '2026-09-01T10:00:00Z')])
+    const wrapper = await mountPage()
+
+    const chip = wrapper.findAll('[data-test="timeline"] button').find((button) => button.text().includes('Tareas'))
+    expect(chip).toBeDefined()
+    await chip!.trigger('click')
+    await settle()
+
+    expect(timelineCalls().at(-1)![1]).toMatchObject({ type: ['tarea'], page: 0 })
+    expect(titles(wrapper)).toEqual(['Tarea completada'])
+  })
+
   it('filtrar pide al servidor el tipo y el recuento es el del filtro', async () => {
     serve([comment('3', '2026-09-03T00:00:00Z'), bloom('2', '2026-09-02'), bloom('1', '2026-09-01')])
     const wrapper = await mountPage()
@@ -140,7 +167,7 @@ describe('cronología real de la ficha', () => {
   it('si la cronología falla, la ficha sigue mostrando la planta', async () => {
     api.get.mockImplementation((path: string) => String(path).endsWith('/timeline')
       ? Promise.reject(new ApiError(500, 'Fallo del servidor'))
-      : Promise.resolve(String(path).match(/care-records|status-changes|movements/)
+      : Promise.resolve(String(path).match(/^\/tasks$|care-records|status-changes|movements/)
         ? { content: [], totalElements: 0, totalPages: 1, pageNumber: 0, pageSize: 25 }
         : plantDetail()))
     const wrapper = await mountPage()

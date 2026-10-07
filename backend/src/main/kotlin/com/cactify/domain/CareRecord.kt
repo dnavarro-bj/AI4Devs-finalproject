@@ -25,6 +25,7 @@ class CareRecord private constructor(
   waterAmountMl: Int?,
   soilPh: BigDecimal?,
   recordedAt: Instant,
+  task: Task? = null,
 ) : AbstractEntity<CareRecordId>() {
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -51,6 +52,12 @@ class CareRecord private constructor(
 
   @Column(name = "recorded_at", nullable = false)
   var recordedAt: Instant = recordedAt
+    private set
+
+  /** La tarea que se completó al registrarla, si la hay: el «cuidado asociado». Solo la establece completar una tarea. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "task_id", updatable = false)
+  var task: Task? = task
     private set
 
   init {
@@ -88,6 +95,7 @@ class CareRecord private constructor(
       recordedAt: Instant?,
       clock: Clock,
       maxFutureSkew: Duration,
+      task: Task? = null,
     ): CareRecord {
       val stamped = (recordedAt ?: clock.instant()).truncatedTo(ChronoUnit.MICROS)
       require(!stamped.isAfter(clock.instant().plus(maxFutureSkew))) {
@@ -101,6 +109,7 @@ class CareRecord private constructor(
         waterAmountMl = waterAmountMl,
         soilPh = soilPh,
         recordedAt = stamped,
+        task = task,
       )
     }
   }

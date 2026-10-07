@@ -1,10 +1,14 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { detail, movement, plantRow, serveLocation } from './helpers/locationFixtures'
 import LocationDetail from '../app/pages/locations/[id]/index.vue'
+import { tasksApiService } from '@features/tasks/services/tasks.api.service'
+import { useReferenceDate } from '@shared/composables/useReferenceDate'
+import { ok } from '@shared/types/api.types'
+import type { Task } from '@features/tasks/types/task.types'
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -12,7 +16,20 @@ mockNuxtImport('useRoute', () => () => ({ params: { id: '300002' }, query: {} })
 
 /** Escenarios de la requirement «Ficha de una localización». */
 describe('ficha de una localización', () => {
+  const taskRow = (id: string, patch: Partial<Task> = {}): Task => ({
+    id, type: 'riego', title: `Tarea ${id}`, priority: 'normal', status: 'pendiente',
+    dueFrom: '2026-10-09', dueTo: '2026-10-09', origin: 'manual',
+    target: { kind: 'location', location: { id: '300002', name: 'Bandeja A3', path: 'Bandeja A3' } },
+    createdAt: '', updatedAt: '', ...patch,
+  })
+  const tasksPage = (content: Task[], total = content.length) =>
+    ok({ content, totalElements: total, totalPages: 1, pageNumber: 0, pageSize: 5 })
+
+  afterEach(() => vi.restoreAllMocks())
+
   beforeEach(() => {
+    useReferenceDate().value = '2026-10-07'
+    vi.spyOn(tasksApiService, 'list').mockResolvedValue(tasksPage([]))
     api.get.mockReset()
     api.post.mockReset()
     api.put.mockReset()
@@ -147,14 +164,29 @@ describe('ficha de una localización', () => {
       expect(useBreadcrumbs().breadcrumbs.value.map((crumb) => crumb.label)).toEqual(['Localizaciones', 'Bancada norte'])
     })
 
-    it('las acciones: editar la ficha y crear una tarea aquí, esta marcada con su ticket', async () => {
+    it('las acciones: editar la ficha y crear una tarea aquí, que ya funciona', async () => {
       serveLocation(api, { plants: twoPlants() })
       const wrapper = await open()
 
       expect(wrapper.find('[data-test="edit-location"]').attributes('href')).toBe('/locations/300002/edit')
       const task = wrapper.find('[data-test="create-task"]')
-      expect(task.attributes('data-mock')).toBe('true')
-      expect(task.text()).toContain('T-22')
+      expect(task.attributes('data-mock')).toBeUndefined()
+      expect(task.attributes('disabled')).toBeUndefined()
+      expect(task.text()).toContain('Crear tarea aquí')
+      expect(task.text()).not.toContain('T-22')
+    })
+
+    it('«Crear tarea aquí» abre el formulario con esta localización como destino', async () => {
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+
+      await wrapper.find('[data-test="create-task"]').trigger('click')
+      await settle()
+      await settle()
+
+      const dialog = wrapper.find('[data-test="task-dialog"]')
+      expect(dialog.text()).toContain('Nueva tarea')
+      expect((dialog.find('select[data-test="destination-location"]').element as HTMLSelectElement).value).toBe('300002')
     })
   })
 
@@ -179,16 +211,28 @@ describe('ficha de una localización', () => {
       expect(tile.attributes('data-mock')).toBeUndefined()
     })
 
-    it('las tareas y las alertas siguen marcadas con su ticket, en su sitio', async () => {
+    it('las alertas siguen marcadas con su ticket, en su sitio', async () => {
       serveLocation(api, { plants: twoPlants() })
       const wrapper = await open()
 
-      for (const [test, ticket] of [['metric-tasks', 'T-22'], ['metric-alerts', 'T-23']] as const) {
-        const tile = wrapper.find(`[data-test="${test}"]`)
-        expect(tile.exists(), `falta la métrica ${test} del prototipo`).toBe(true)
-        expect(tile.attributes('data-mock'), `${test} no está marcada`).toBe('true')
-        expect(tile.text()).toContain(ticket)
-      }
+      const tile = wrapper.find('[data-test="metric-alerts"]')
+      expect(tile.exists(), 'falta la métrica de alertas del prototipo').toBe(true)
+      expect(tile.attributes('data-mock')).toBe('true')
+      expect(tile.text()).toContain('T-23')
+    })
+
+    it('las tareas son una cifra real: cuenta las del lugar, sus sublocalizaciones y sus plantas', async () => {
+      const list = vi.spyOn(tasksApiService, 'list').mockResolvedValue(tasksPage([taskRow('1')], 7))
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+
+      const tile = wrapper.find('[data-test="metric-tasks"]')
+      expect(tile.attributes('data-mock')).toBeUndefined()
+      expect(tile.text()).toContain('7')
+      expect(tile.text()).not.toContain('T-22')
+      expect(list).toHaveBeenCalledWith(expect.objectContaining({
+        location: '300002', includeDescendants: true, status: ['pendiente'], today: '2026-10-07',
+      }))
     })
   })
 
@@ -307,13 +351,37 @@ describe('ficha de una localización', () => {
       expect(wrapper.text()).toContain('Bancada norte')
     })
 
-    it('el próximo trabajo queda declarado con su ticket', async () => {
+    it('el próximo trabajo lista las tareas más próximas y enlaza a /tasks filtrada por este lugar', async () => {
+      vi.spyOn(tasksApiService, 'list').mockResolvedValue(tasksPage([
+        taskRow('1', { title: 'Regar la bandeja' }),
+        taskRow('2', { title: 'Revisar raíces', dueFrom: '2026-10-01', dueTo: '2026-10-02' }),
+      ]))
       serveLocation(api, { plants: twoPlants() })
       const wrapper = await open()
 
       const tasks = wrapper.find('[data-test="tasks"]')
-      expect(tasks.attributes('data-mock')).toBe('true')
-      expect(tasks.text()).toContain('T-22')
+      expect(tasks.attributes('data-mock')).toBeUndefined()
+      expect(tasks.findAll('[data-test="next-work-item"]').map((item) => item.find('strong').text())).toEqual(['Regar la bandeja', 'Revisar raíces'])
+      // Una tarea vencida se lee como vencida.
+      expect(tasks.findAll('[data-test="next-work-overdue"]')).toHaveLength(1)
+      expect(tasks.find('[data-test="all-tasks"]').attributes('href')).toBe('/tasks?location=300002')
+    })
+
+    it('sin trabajo pendiente lo dice y ofrece crear una', async () => {
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+
+      expect(wrapper.find('[data-test="no-tasks"]').text()).toContain('No hay trabajo pendiente')
+      expect(wrapper.find('[data-test="create-task-panel"]').exists()).toBe(true)
+    })
+
+    it('si el API de tareas falla, la ficha sigue y el panel lo explica', async () => {
+      vi.spyOn(tasksApiService, 'list').mockResolvedValue({ success: false, data: null, error: { code: 'SERVER_ERROR', message: 'sin servicio' } })
+      serveLocation(api, { plants: twoPlants() })
+      const wrapper = await open()
+
+      expect(wrapper.find('[data-test="tasks-error"]').text()).toContain('sin servicio')
+      expect(wrapper.text()).toContain('Bancada norte')
     })
 
     it('nada de lo que ya existe sigue marcado con T-18', async () => {

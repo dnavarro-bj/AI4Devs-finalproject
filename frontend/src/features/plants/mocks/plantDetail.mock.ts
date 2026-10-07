@@ -24,12 +24,3 @@ export const MOCK_NOTICE = {
   title: 'Revisión pendiente',
   body: 'No se registra una observación desde hace 43 días.',
 }
-
-/** Próximo trabajo — lo sustituye T-22. */
-export const MOCK_TASKS = [
-  { id: 't1', title: 'Revisión general', detail: 'Vencida · 1 sep', overdue: true },
-  { id: 't2', title: 'Comprobar tamaño de maceta', detail: '15 oct', overdue: false },
-]
-
-/** Próxima tarea del resumen — la sustituye T-22. La última floración ya es real (T-20). */
-export const MOCK_NEXT_TASK = { value: 'Revisión general', context: 'Vencida hace 2 días' }

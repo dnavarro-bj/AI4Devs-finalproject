@@ -10,10 +10,11 @@
  * capacidad**: sin ella no se inventa una.
  *
  * Marcado con su ticket, como en el prototipo y sin dato todavía: el trabajo que requiere atención
- * (T-22, T-23).
+ * (T-23).
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useLocations } from '@features/locations/composables/useLocations'
+import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
 import { occupancyOf } from '@features/locations/mappers/locationInput'
 import { buildLocationTree, filterLocationTree, type LocationTreeNode } from '@features/locations/mappers/locationTree'
 import { LOCATION_TYPE_MARKS } from '@features/locations/types/locationVocabulary'
@@ -23,6 +24,8 @@ useHead({ title: 'Cactify · Localizaciones' })
 useBreadcrumbs().set([{ label: 'Localizaciones' }])
 
 const { loadAll } = useLocations()
+/** Cuántas tareas pendientes hay en toda la colección: solo hace falta el recuento. */
+const work = useRelatedTasks(() => ({}), 1)
 
 const ALL = 'all'
 
@@ -48,7 +51,10 @@ async function load() {
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
-onMounted(load)
+onMounted(() => {
+  load()
+  work.load()
+})
 
 const isEmpty = computed(() => !loading.value && !error.value && rows.value.length === 0)
 
@@ -99,7 +105,7 @@ const overviewIntro = computed(() => (selected.value
   : `${collectionSize.value} ejemplares repartidos en ${rows.value.length} localizaciones.`))
 
 const workSummary = computed(() => [
-  { value: '—', label: 'Tareas pendientes', note: 'Trabajo por zona · T-22', to: '/tasks', mock: true },
+  { value: work.loaded.value ? work.total.value : '—', label: 'Tareas pendientes', note: 'En toda la colección', to: '/tasks' },
   { value: '—', label: 'Alertas abiertas', note: 'Incidencias · T-23', to: '/alerts', tone: 'danger' as const, mock: true },
   { value: rows.value.length, label: 'Localizaciones', note: 'En el vivero' },
 ])
@@ -230,7 +236,7 @@ function select(id: string) {
             <span aria-hidden="true">○</span>
             <p>
               <strong>Sin incidencias disponibles todavía</strong>
-              <small>Las alertas por localización llegan con T-23 y el trabajo pendiente con T-22.</small>
+              <small>Las alertas por localización llegan con T-23.</small>
             </p>
           </div>
         </section>

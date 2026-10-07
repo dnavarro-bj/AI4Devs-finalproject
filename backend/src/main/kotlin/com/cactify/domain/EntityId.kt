@@ -152,3 +152,14 @@ data class SavedViewId(@Column(name = "id") override val id: Long) : EntityId<Lo
 
   override fun toString(): String = id.toString()
 }
+
+@Embeddable
+data class TaskId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): TaskId = TaskId(TSID.fast().toLong())
+    fun from(value: Long): TaskId = TaskId(value)
+    fun from(value: String): TaskId = TaskId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}

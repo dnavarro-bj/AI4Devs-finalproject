@@ -4,6 +4,7 @@ import com.cactify.domain.Environment
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.PlantId
 import com.cactify.domain.PlantStatus
 import com.cactify.domain.Species
 import com.cactify.domain.SpeciesId
@@ -142,5 +143,11 @@ object PlantSpecs {
         )
         cb.equal(sub, tagIds.size.toLong())
       }
+    }
+
+  /** Las plantas con **cualquiera** de esos identificadores. Un conjunto vacío no admite ninguna. */
+  fun byIds(ids: Set<PlantId>): Specification<Plant> =
+    Specification { root, _, cb ->
+      if (ids.isEmpty()) cb.disjunction() else root.get<PlantId>("id").`in`(ids)
     }
 }

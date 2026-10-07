@@ -94,5 +94,6 @@ class CareRecordService(
         recommendationText = it.recommendationText,
       )
     },
+    taskId = task?.id?.toString(),
   )
 }

@@ -35,11 +35,12 @@ class TimelineEnumsTest {
   @Test
   fun `timeline types parse their persisted values`() {
     assertEquals(
-      listOf("lectura", "cambio_estado", "movimiento", "comentario", "intervencion", "floracion"),
+      listOf("lectura", "cambio_estado", "movimiento", "comentario", "intervencion", "floracion", "tarea"),
       TimelineType.entries.map { it.value },
     )
     assertEquals(TimelineType.StatusChange, TimelineType("cambio_estado"))
     assertEquals("floracion", TimelineType.Bloom.toString())
+    assertEquals(TimelineType.Task, TimelineType("tarea"))
   }
 
   @Test

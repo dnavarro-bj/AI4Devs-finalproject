@@ -20,6 +20,8 @@ data class CareRecordResponse(
   val soilPh: BigDecimal?,
   /** La recomendación ya generada para esta lectura, o `null` si aún no tiene. Nunca se genera al leer. */
   val recommendation: CareRecordRecommendationResponse?,
+  /** La tarea que se completó al registrar la lectura, si la hay: el «cuidado asociado». */
+  val taskId: String? = null,
 )
 
 data class CareRecordRecommendationResponse(

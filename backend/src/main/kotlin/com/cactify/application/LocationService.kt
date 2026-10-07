@@ -13,6 +13,7 @@ import com.cactify.domain.LocationType
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.PlantMovementRepository
+import com.cactify.domain.repos.TaskRepository
 import com.cactify.domain.specs.LocationSpecs
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -34,6 +35,7 @@ class LocationService(
   private val locationRepository: LocationRepository,
   private val hierarchy: LocationHierarchy,
   private val movementRepository: PlantMovementRepository,
+  private val taskRepository: TaskRepository,
 ) {
 
   /** Lo que se indica al dar de alta o editar: todo texto del borde, los enums sin resolver. */
@@ -148,6 +150,7 @@ class LocationService(
     if (locationRepository.countPlantsIn(location.id) > 0) throw LocationInUseException(id)
     if (locationRepository.countChildren(location.id) > 0) throw LocationHasChildrenException(id)
     if (movementRepository.existsByLocationId(location.id)) throw LocationInMovementsException(id)
+    if (taskRepository.existsByLocationId(location.id)) throw LocationHasTasksException(id)
     locationRepository.delete(location)
   }
 

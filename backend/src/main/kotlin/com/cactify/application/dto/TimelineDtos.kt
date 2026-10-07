@@ -21,6 +21,7 @@ data class TimelineEntryResponse(
   val comment: TimelineCommentResponse? = null,
   val intervention: TimelineInterventionResponse? = null,
   val bloom: TimelineBloomResponse? = null,
+  val task: TimelineTaskResponse? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -38,6 +39,8 @@ data class TimelineInterventionResponse(
   val potSize: String?,
   val soilMix: SoilMixSummaryResponse?,
   val notes: String?,
+  /** La tarea que se completó al registrarla, si la hay. */
+  val taskId: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -48,3 +51,6 @@ data class TimelineBloomResponse(
   val flowerCount: Int?,
   val notes: String?,
 )
+
+/** Una tarea completada, vista desde la historia de una planta: cuál fue y de qué tipo. */
+data class TimelineTaskResponse(val taskId: String, val type: String, val title: String)

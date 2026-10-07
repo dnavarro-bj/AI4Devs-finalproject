@@ -7,7 +7,7 @@
  * etiqueta, estado, texto sobre código, apodo y especie, especie y características de cultivo de la
  * especie—, la ordenación por clave pública y las columnas visibles. Lo que no existe —el último
  * riego (el listado no trae lecturas), el nivel de atención (T-23), el orden por última revisión
- * (T-20) y las acciones masivas (T-22, T-24)— va **marcado**, para que no se confunda una maqueta
+ * (T-20) y las acciones masivas (T-24)— va **marcado**, para que no se confunda una maqueta
  * con un dato.
  *
  * **El estado de la pantalla es la URL** (`useUrlState`): filtros, orden y columnas ocultas. Recargar
@@ -31,6 +31,7 @@ import { useSavedViews } from '@features/views/composables/useSavedViews'
 import { plantsDraft, plantsRouteQuery } from '@features/views/mappers/viewState'
 import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
 import type { SavedView } from '@features/views/types/view.types'
+import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
 
 const { list } = usePlants()
@@ -129,6 +130,26 @@ const { text: searchText, clear: clearSearch } = useSearchText(state)
 
 const moreFiltersOpen = ref(false)
 const selected = ref<string[]>([])
+
+/**
+ * «Crear tarea» sobre la selección. La tabla solo tiene delante una página (ADR-009), así que la
+ * selección vale para **esa página**: las plantas se toman de las filas visibles, no de una lista
+ * que envejece. Elegir **todo el resultado filtrado** es trabajo por lote y lo estrena T-24.
+ */
+const taskWorkflow = useTaskWorkflow(() => { selected.value = [] })
+
+function createTaskFromSelection() {
+  const chosen = (page.value?.content ?? []).filter((plant) => selected.value.includes(plant.id))
+  if (!chosen.length) return
+  taskWorkflow.openCreate({
+    plants: chosen.map((plant) => ({
+      id: plant.id,
+      code: plant.code,
+      nickname: plant.nickname,
+      detail: `${plant.species.scientificName} · ${plant.location.name}`,
+    })),
+  })
+}
 
 const locationName = computed(
   () => locations.value.find((location) => location.id === state.location)?.name ?? '',
@@ -461,8 +482,8 @@ const asPlant = (row: unknown) => row as PlantSummary
       @update:sort="onSort"
     >
       <template #bulk-actions="{ count }">
-        <!-- Las acciones masivas del inventario llegan con T-22 y T-24; mover desde la ficha de una localización ya existe (T-18). -->
-        <UiButton variant="secondary" disabled data-mock="true">Crear tarea ({{ count }})</UiButton>
+        <!-- Crear tarea sobre la selección de la página ya funciona; mover y etiquetar, y elegir todo el resultado, llegan con T-24. -->
+        <UiButton variant="secondary" data-test="bulk-create-task" @click="createTaskFromSelection">Crear tarea ({{ count }})</UiButton>
         <UiButton variant="secondary" disabled data-mock="true">Mover</UiButton>
         <UiButton variant="secondary" disabled data-mock="true">Etiquetar</UiButton>
       </template>
@@ -511,6 +532,8 @@ const asPlant = (row: unknown) => row as PlantSummary
         </UiButton>
       </template>
     </UiTable>
+
+    <TaskDialogs :workflow="taskWorkflow" />
 
     <UiListFooter
       v-if="page?.content.length"

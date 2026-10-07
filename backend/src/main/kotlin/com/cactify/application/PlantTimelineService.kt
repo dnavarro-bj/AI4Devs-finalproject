@@ -57,7 +57,7 @@ class PlantTimelineService(
       movementRepository.findAllByIdIn(ids.map { PlantMovementId.from(it) })
         .forEach { entries[TimelineType.Movement to it.id.id] = it.toEntry() }
     }
-    val eventTypes = listOf(TimelineType.Comment, TimelineType.Intervention, TimelineType.Bloom)
+    val eventTypes = listOf(TimelineType.Comment, TimelineType.Intervention, TimelineType.Bloom, TimelineType.Task)
     val eventIds = eventTypes.flatMap { byType[it].orEmpty() }
     if (eventIds.isNotEmpty()) {
       eventRepository.findAllByIdIn(eventIds.map { PlantEventId.from(it) }).forEach {

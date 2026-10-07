@@ -1,10 +1,12 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import { nursery, page, summary } from './helpers/locationFixtures'
 import LocationsIndex from '../app/pages/locations/index.vue'
 import type { LocationSummary } from '@features/locations/types/location.types'
+import { tasksApiService } from '@features/tasks/services/tasks.api.service'
+import { ok } from '@shared/types/api.types'
 
 const api = createApiDouble()
 mockNuxtImport('getApiClient', () => () => api)
@@ -14,7 +16,10 @@ mockNuxtImport('getApiClient', () => () => api)
  * la pantalla `locations` del prototipo: mapa del vivero y vista general, no una tabla de filas.
  */
 describe('catálogo de localizaciones', () => {
+  afterEach(() => vi.restoreAllMocks())
+
   beforeEach(() => {
+    vi.spyOn(tasksApiService, 'list').mockResolvedValue(ok({ content: [], totalElements: 9, totalPages: 9, pageNumber: 0, pageSize: 1 }))
     api.get.mockReset()
     api.post.mockReset()
     api.put.mockReset()
@@ -30,6 +35,17 @@ describe('catálogo de localizaciones', () => {
     await settle()
     return wrapper
   }
+
+  it('«Tareas pendientes» cuenta las del API y enlaza a la pantalla de tareas, sin marca de ejemplo', async () => {
+    respond()
+    const wrapper = await open()
+
+    const strip = wrapper.find('.metric-strip')
+    expect(strip.text()).toContain('Tareas pendientes')
+    expect(strip.text()).toContain('9')
+    expect(strip.text()).not.toContain('T-22')
+    expect(strip.find('a[href="/tasks"]').exists()).toBe(true)
+  })
 
   it('el catálogo es un mapa del vivero, no una lista de filas', async () => {
     respond()

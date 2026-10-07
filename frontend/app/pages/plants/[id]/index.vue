@@ -19,7 +19,11 @@ import { plantGlance } from '@features/plants/composables/plantGlance'
 import { ORIGIN_LABELS, germinationLabel } from '@features/plants/mappers/plantProfile'
 import { useOnVisible } from '@shared/composables/useOnVisible'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
-import { MOCK_NOTICE, MOCK_TASKS } from '@features/plants/mocks/plantDetail.mock'
+import { MOCK_NOTICE } from '@features/plants/mocks/plantDetail.mock'
+import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
+import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
+import { overdueText, taskTiming } from '@features/tasks/mappers/task.mapper'
+import { TASK_TYPE_LABELS } from '@features/tasks/types/task.types'
 import { usePlantTimeline } from '@features/timeline/composables/usePlantTimeline'
 import { usePlantBlooms } from '@features/timeline/composables/usePlantBlooms'
 import { TIMELINE_KIT_TYPES, toEvent } from '@features/timeline/mappers/timeline.mapper'
@@ -50,6 +54,24 @@ const statusOpen = ref(false)
 /** Se incrementa tras cada cambio de estado: es lo que refresca el historial de la pestaña de datos. */
 const historyVersion = ref(0)
 const today = useReferenceDate()
+
+/** Su próximo trabajo: lo que le afecta —dirigido a ella, a su localización o a un ascendiente—. */
+const work = useRelatedTasks(() => ({ plant: plantId }))
+const taskWorkflow = useTaskWorkflow(async () => {
+  await Promise.all([work.load(), timeline.reload()])
+})
+
+function createTaskHere() {
+  if (!plant.value) return
+  taskWorkflow.openCreate({
+    plants: [{
+      id: plant.value.id,
+      code: plant.value.code,
+      nickname: plant.value.nickname,
+      detail: `${plant.value.species.scientificName} · ${plant.value.location.name}`,
+    }],
+  })
+}
 
 function onStatusChanged(updated: PlantDetail) {
   plant.value = updated
@@ -89,6 +111,7 @@ onMounted(async () => {
   history.load(plantId)
   timeline.load()
   blooms.load()
+  work.load()
 })
 
 /** La lectura recién registrada entra en la cronología sin recargar. */
@@ -102,11 +125,16 @@ const timelineEvents = computed(() => timeline.entries.value.map(toEvent))
 const entryById = computed(() => new Map(timeline.entries.value.map((entry) => [entry.id, entry])))
 
 /**
- * «De un vistazo»: riego y medición salen de lecturas reales y la última floración de las
- * observadas; solo la tarea es maqueta y va marcada. `now` se pasa aquí y no dentro, para que la
+ * «De un vistazo»: riego y medición salen de lecturas reales, la última floración de las
+ * observadas y la próxima tarea del API de tareas. `now` se pasa aquí y no dentro, para que la
  * función sea determinista y testeable.
  */
-const glance = computed(() => plantGlance(history.records.value, new Date().toISOString(), blooms.last.value))
+const glance = computed(() => plantGlance(
+  history.records.value,
+  new Date().toISOString(),
+  blooms.last.value,
+  work.loaded.value ? { task: work.tasks.value[0] ?? null, today: today.value } : undefined,
+))
 
 /*
  * Comentarios, intervenciones y floraciones: un solo diálogo abierto a la vez. `source` dice quién
@@ -212,7 +240,7 @@ async function confirmRemove() {
     </div>
 
     <template v-else-if="plant">
-      <PlantHeader :plant="plant" @register-reading="readingOpen = true" @change-status="statusOpen = true" />
+      <PlantHeader :plant="plant" @register-reading="readingOpen = true" @create-task="createTaskHere" @change-status="statusOpen = true" />
 
       <UiNotice
         v-if="!noticeDismissed"
@@ -314,14 +342,22 @@ async function confirmRemove() {
             <PlantEffectiveCare :care="plant.effectiveCare" :species-name="plant.species.scientificName" />
           </UiPanel>
 
-          <UiPanel title="Próximo trabajo" data-mock="true">
-            <ul class="tasks">
-              <li v-for="task in MOCK_TASKS" :key="task.id">
+          <UiPanel title="Próximo trabajo" data-test="next-work">
+            <template #action>
+              <UiButton variant="text" :to="`/tasks?plant=${plant.id}`" data-test="all-tasks">Ver todas</UiButton>
+            </template>
+            <p v-if="work.error.value" class="tasks__empty" data-test="next-work-error">{{ work.error.value }}</p>
+            <ul v-else-if="work.tasks.value.length" class="tasks">
+              <li v-for="task in work.tasks.value" :key="task.id" :class="{ 'is-overdue': overdueText(task.dueTo, today) }" data-test="next-work-item">
                 <strong>{{ task.title }}</strong>
-                <small>{{ task.detail }}</small>
+                <small>
+                  {{ TASK_TYPE_LABELS[task.type] }} · {{ taskTiming(task, today).main }}
+                  <b v-if="overdueText(task.dueTo, today)" data-test="next-work-overdue">· Vencida</b>
+                </small>
               </li>
             </ul>
-            <p class="mock-note">Datos de ejemplo hasta T-22.</p>
+            <p v-else-if="work.loaded.value" class="tasks__empty" data-test="next-work-empty">No hay trabajo pendiente para este ejemplar.</p>
+            <UiButton variant="secondary" data-test="create-task-here" @click="createTaskHere">＋ Crear tarea</UiButton>
           </UiPanel>
         </aside>
       </div>
@@ -438,6 +474,8 @@ async function confirmRemove() {
         />
       </UiDialog>
     </template>
+
+    <TaskDialogs :workflow="taskWorkflow" />
   </section>
 </template>
 
@@ -513,6 +551,17 @@ async function confirmRemove() {
   color: var(--color-ink-muted);
   display: block;
   font-size: var(--font-size-12);
+}
+
+/* Lo vencido se lee además de verse: «Vencida» va en el texto. */
+.tasks .is-overdue b {
+  color: var(--color-danger);
+}
+
+.tasks__empty {
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-12);
+  margin: 0 0 var(--space-3);
 }
 
 .data-heading {

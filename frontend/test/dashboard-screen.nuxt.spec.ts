@@ -1,9 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { ApiError } from '@shared/services/httpClient'
 import { createApiDouble, settle } from './helpers/apiDouble'
 import DashboardPage from '../app/pages/index.vue'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
+import { installTasksFake } from './support/tasksFake'
+import { plantsApiService } from '@features/plants/services/plants.api.service'
+import { ok } from '@shared/types/api.types'
 import type { LocationSummary } from '@features/locations/types/location.types'
 import type { PageResponse } from '@shared/types/api.types'
 
@@ -13,7 +16,8 @@ mockNuxtImport('getApiClient', () => () => api)
 /**
  * Escenarios de la requirement «Dashboard de trabajo», que especifica la composición de la
  * pantalla `dashboard` del prototipo: trabajo pendiente primero, agenda a la izquierda, alertas y
- * carga por zona a la derecha. «Hoy» es el de la maqueta, 2026-09-03.
+ * carga por zona a la derecha. «Hoy» es 2026-10-07; las tareas son las del service (en memoria, con
+ * la forma del API) y el resto —localizaciones— se dobla.
  */
 describe('dashboard de trabajo', () => {
   const page = (content: LocationSummary[]): PageResponse<LocationSummary> => ({
@@ -21,6 +25,8 @@ describe('dashboard de trabajo', () => {
   })
 
   beforeEach(() => {
+    useReferenceDate().value = '2026-10-07'
+    installTasksFake()
     api.get.mockReset()
     api.get.mockResolvedValue(page([
       { id: '300001', name: 'Invernadero 1', code: 'LOC-I1', parentId: null, path: 'Invernadero 1', locationType: 'invernadero', capacity: null, plantCount: 2, plantCountTotal: 12 },
@@ -29,7 +35,7 @@ describe('dashboard de trabajo', () => {
   })
 
   afterEach(() => {
-    useReferenceDate().value = '2026-09-03'
+    vi.restoreAllMocks()
   })
 
   async function open() {
@@ -64,7 +70,7 @@ describe('dashboard de trabajo', () => {
   it('la cabecera dice la fecha de referencia, no la del reloj', async () => {
     const wrapper = await open()
 
-    expect(wrapper.find('[data-test="page-eyebrow"]').text().toLowerCase()).toContain('3 de septiembre')
+    expect(wrapper.find('[data-test="page-eyebrow"]').text().toLowerCase()).toContain('7 de octubre')
   })
 
   it('«vencidas» se calcula con la fecha de referencia', async () => {
@@ -73,7 +79,7 @@ describe('dashboard de trabajo', () => {
       Number(wrapper.find('[data-test="work-summary"] a').find('.stat-tile__value').text())
     const before = await overdueOn()
 
-    useReferenceDate().value = '2026-09-10'
+    useReferenceDate().value = '2026-10-14'
     const later = await open()
 
     expect(Number(later.find('[data-test="work-summary"] a .stat-tile__value').text())).toBeGreaterThan(before)
@@ -90,14 +96,49 @@ describe('dashboard de trabajo', () => {
     expect(rows[1]!.find('[role="progressbar"]').attributes('aria-valuemax')).toBe('12')
   })
 
-  it('lo que es de ejemplo lo declara, bloque a bloque y con su ticket', async () => {
+  it('las tareas son reales: ni la agenda ni las cifras de trabajo llevan marca de ejemplo', async () => {
     const wrapper = await open()
 
+    expect(wrapper.find('[data-test="agenda-panel"] [data-test="mock-notice"]').exists()).toBe(false)
     const notices = wrapper.findAll('[data-test="mock-notice"]').map((node) => node.text()).join(' ')
-    expect(notices).toContain('T-22')
-    expect(notices).toContain('T-23')
-    expect(notices).toContain('T-24')
-    expect(wrapper.find('[data-test="zone-tasks-pending"]').text()).toContain('T-22')
+    expect(notices).not.toContain('T-22')
+    expect(notices).toContain('cifra de alertas')
+  })
+
+  it('lo que sigue siendo de ejemplo lo declara, bloque a bloque y con su ticket', async () => {
+    const wrapper = await open()
+
+    expect(wrapper.find('[data-test="alerts-panel"] [data-test="mock-notice"]').text()).toContain('T-23')
+    expect(wrapper.find('[data-test="zone-tasks-pending"]').text()).toContain('T-24')
+  })
+
+  it('las cifras de vencidas y de hoy las cuenta el API con la fecha de referencia', async () => {
+    const wrapper = await open()
+
+    const [overdue, today] = wrapper.findAll('[data-test="work-summary"] a .stat-tile__value').map((node) => Number(node.text()))
+    // Lo sembrado: dos vencidas (hace 4 días y ayer) y al menos dos que tocan hoy.
+    expect(overdue).toBe(2)
+    expect(today).toBeGreaterThanOrEqual(2)
+  })
+
+  it('crear una tarea desde el Dashboard abre el formulario', async () => {
+    const wrapper = await open()
+
+    await wrapper.find('[data-test="new-task"]').trigger('click')
+    await settle()
+
+    expect(wrapper.find('[data-test="task-dialog"]').text()).toContain('Nueva tarea')
+  })
+
+  it('la casilla de una tarea de la agenda abre el diálogo de completar con su alcance', async () => {
+    vi.spyOn(plantsApiService, 'list').mockResolvedValue(ok({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 500 }))
+    const wrapper = await open()
+
+    await wrapper.find('[data-test="agenda-panel"] [data-test="complete-task"]').trigger('click')
+    await settle()
+    await settle()
+
+    expect(wrapper.find('[data-test="complete-dialog"]').exists()).toBe(true)
   })
 
   it('si fallan las localizaciones, lo explica en su panel y el resto sigue visible', async () => {

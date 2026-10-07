@@ -9,10 +9,10 @@ import type { PlantStatus } from '@features/plants/types/plant.types'
  * `type` es `string` y no la unión: un tipo que el cliente no conoce llega igualmente y se muestra
  * con representación de reserva en vez de descartarse.
  */
-export type TimelineType = 'lectura' | 'cambio_estado' | 'movimiento' | 'comentario' | 'intervencion' | 'floracion'
+export type TimelineType = 'lectura' | 'cambio_estado' | 'movimiento' | 'comentario' | 'intervencion' | 'floracion' | 'tarea'
 
 export const TIMELINE_TYPES: TimelineType[] = [
-  'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion',
+  'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea',
 ]
 
 export type InterventionType = 'trasplante' | 'sustrato' | 'tratamiento' | 'fertilizacion' | 'poda' | 'revision'
@@ -29,6 +29,15 @@ export interface TimelineEntry {
   comment?: { text: string, editedAt?: string | null }
   intervention?: Intervention
   bloom?: Bloom
+  /** Una tarea completada: lo escribe completar una tarea y no se edita desde la cronología. */
+  task?: TimelineTask
+}
+
+/** El detalle de un evento `tarea`: qué tarea se completó. */
+export interface TimelineTask {
+  taskId: string
+  type: string
+  title: string
 }
 
 export interface Intervention {
@@ -37,6 +46,8 @@ export interface Intervention {
   potSize?: string | null
   soilMix?: { id: string, name: string } | null
   notes?: string | null
+  /** La tarea con la que se registró, si la hubo. */
+  taskId?: string | null
 }
 
 export interface Bloom {

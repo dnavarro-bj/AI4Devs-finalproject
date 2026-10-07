@@ -17,6 +17,7 @@ export const TIMELINE_KIT_TYPES: KitTimelineType[] = [
   { value: 'comentario', label: 'Comentarios', mark: '✎', tone: 'brand' },
   { value: 'intervencion', label: 'Intervenciones', mark: '⚒', tone: 'info' },
   { value: 'floracion', label: 'Floraciones', mark: '✣', tone: 'warning' },
+  { value: 'tarea', label: 'Tareas', mark: '✓', tone: 'brand' },
 ]
 
 export const INTERVENTION_LABELS: Record<InterventionType, string> = {
@@ -68,6 +69,8 @@ export function entryTitle(entry: TimelineEntry): string {
       return entry.intervention ? INTERVENTION_LABELS[entry.intervention.type] ?? entry.intervention.type : 'Intervención'
     case 'floracion':
       return entry.bloom ? BLOOM_STATUS_LABELS[entry.bloom.status] ?? entry.bloom.status : 'Floración'
+    case 'tarea':
+      return 'Tarea completada'
     default:
       return entry.type
   }

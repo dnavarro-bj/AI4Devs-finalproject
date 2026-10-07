@@ -105,3 +105,31 @@ class ViewScopeConverter : AttributeConverter<com.cactify.domain.ViewScope, Stri
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.ViewScope? =
     dbData?.let { com.cactify.domain.ViewScope(it) }
 }
+
+@Converter(autoApply = true)
+class TaskTypeConverter : AttributeConverter<com.cactify.domain.TaskType, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.TaskType?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.TaskType? =
+    dbData?.let { com.cactify.domain.TaskType(it) }
+}
+
+@Converter(autoApply = true)
+class TaskPriorityConverter : AttributeConverter<com.cactify.domain.TaskPriority, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.TaskPriority?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.TaskPriority? =
+    dbData?.let { com.cactify.domain.TaskPriority(it) }
+}
+
+@Converter(autoApply = true)
+class TaskStatusConverter : AttributeConverter<com.cactify.domain.TaskStatus, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.TaskStatus?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.TaskStatus? =
+    dbData?.let { com.cactify.domain.TaskStatus(it) }
+}
+
+@Converter(autoApply = true)
+class TaskOriginConverter : AttributeConverter<com.cactify.domain.TaskOrigin, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.TaskOrigin?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.TaskOrigin? =
+    dbData?.let { com.cactify.domain.TaskOrigin(it) }
+}

@@ -1,181 +1,192 @@
 <script setup lang="ts">
 /**
  * Las tareas (§14.5), con la composición de la pantalla `tasks` del prototipo: cabecera con la
- * acción de crear, selector de vista y **la misma lista** detrás de las tres vistas.
+ * acción de crear, selector de vista con el número de pendientes, barra de filtros con los criterios
+ * aplicados y debajo la vista —agenda, calendario o completadas—.
  *
- * **Maqueta, y declarada.** No hay entidad tarea (T-22): los datos son de ejemplo y lo dice la
- * pantalla. Crear, completar, editar y completar varias se muestran como lo que serán, **marcadas
- * con T-22**, y no cambian nada. Tarea ≠ cuidado: completar no escribirá en el historial hasta que
- * T-22 decida cómo.
+ * Los datos son los del API de tareas; **no queda maqueta ni marca T-22**. Lo único que sigue
+ * declarado es «Completar varias» (T-24). Tarea ≠ cuidado: crear, omitir y cancelar no escriben en
+ * el historial de las plantas; completar sí, y lo hace tras enseñar el alcance exacto.
  *
- * Una sola carga: alternar de vista no la repite, y los filtros se conservan.
+ * Vista, filtros y mes viven en la URL, igual que el inventario: el enlace reproduce la pantalla, y
+ * `?due=overdue|today` —lo que abren las cifras del Dashboard— es un criterio más, quitable.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { usePendingAction } from '@shared/composables/usePendingAction'
 import { useTasks } from '@features/tasks/composables/useTasks'
-import TaskForm, { type TaskDraft } from '@features/tasks/components/TaskForm.vue'
-import { TASK_TYPE_LABELS, type Task } from '@features/tasks/types/task.types'
+import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
+import { targetText } from '@features/tasks/mappers/task.mapper'
+import {
+  TASK_PRIORITY_LABELS,
+  TASK_STATUS_LABELS,
+  TASK_TYPE_LABELS,
+  type Task,
+} from '@features/tasks/types/task.types'
 
 useHead({ title: 'Cactify · Tareas' })
 useBreadcrumbs().set([{ label: 'Tareas' }])
 
+const tasks = useTasks()
 const {
-  today, loading, error, view, month, filters, load, pending, completed,
-  agendaEntries, calendarEntries, locationOptions, typeOptions, priorityOptions,
-  timing, hasTasks,
-} = useTasks()
+  today, state, view, month, loading, error, load, agendaEntries, agendaTotal, truncated, calendarItems,
+  completed, completedPage, completedPages, setCompletedPage, locationOptions, typeOptions, priorityOptions,
+  hasFilters, timing,
+} = tasks
 
+const workflow = useTaskWorkflow(load)
 const pendingAction = usePendingAction()
 
-// Las cifras del Dashboard abren esta pantalla ya filtradas: `?due=overdue` o `?due=today`.
+onMounted(() => {
+  tasks.loadLocations()
+  load()
+})
+
 const DUE_LABELS: Record<string, string> = { overdue: 'Vencidas', today: 'Para hoy' }
-const dueQuery = String(useRoute().query.due ?? '')
-if (dueQuery in DUE_LABELS) filters.due = dueQuery
 
-const applied = computed(() => filters.due ? [{ id: 'due', label: DUE_LABELS[filters.due]! }] : [])
+const applied = computed(() => [
+  ...(state.location
+    ? [{ id: 'location', label: `Localización: ${locationOptions.value.find((option) => option.value === state.location)?.label ?? state.location}` }]
+    : []),
+  ...(state.plant ? [{ id: 'plant', label: 'Afectan a una planta' }] : []),
+  ...(state.type ? [{ id: 'type', label: `Tipo: ${TASK_TYPE_LABELS[state.type as keyof typeof TASK_TYPE_LABELS]}` }] : []),
+  ...(state.priority ? [{ id: 'priority', label: `Prioridad: ${TASK_PRIORITY_LABELS[state.priority as keyof typeof TASK_PRIORITY_LABELS]}` }] : []),
+  ...(state.due ? [{ id: 'due', label: DUE_LABELS[state.due]! }] : []),
+])
 
-onMounted(load)
+function removeFilter(id: string) {
+  if (id === 'location') state.location = ''
+  if (id === 'plant') state.plant = ''
+  if (id === 'type') state.type = ''
+  if (id === 'priority') state.priority = ''
+  if (id === 'due') state.due = ''
+}
+
+function clearFilters() {
+  state.location = ''
+  state.plant = ''
+  state.type = ''
+  state.priority = ''
+  state.due = ''
+}
 
 const tabs = computed(() => [
-  { value: 'agenda', label: 'Agenda', count: pending.value.length },
+  { value: 'agenda', label: 'Agenda', count: agendaTotal.value },
   { value: 'calendar', label: 'Calendario' },
   { value: 'completed', label: 'Completadas' },
 ])
 
-const editorOpen = ref(false)
-const editingTask = ref<Task | null>(null)
+const asTask = (entry: unknown) => (entry as { task: Task }).task
 
-function openNew() {
-  editingTask.value = null
-  editorOpen.value = true
+/** Cuándo se cerró una tarea cerrada: la fecha de finalización si la hay; si no, su periodo. */
+function closedOn(task: Task): string {
+  return (task.completion?.completedAt ?? task.dueTo).slice(0, 10)
 }
 
-function openEdit(task: Task) {
-  editingTask.value = task
-  editorOpen.value = true
-}
-
-function closeEditor() {
-  editorOpen.value = false
-  editingTask.value = null
-}
-
-/** El formulario fija el flujo y la composición; T-22 conectará la mutación real. */
-function saveDraft(_draft: TaskDraft) {
-  pendingAction(editingTask.value ? 'Guardar cambios de la tarea' : 'Crear tarea', 'T-22')
-  closeEditor()
-}
+const noTasks = computed(() => !loading.value && !error.value && agendaTotal.value === 0 && !hasFilters.value && view.value === 'agenda')
 </script>
 
 <template>
   <section>
     <UiPageHeader title="Tareas" eyebrow="Trabajo diario">
       <template #actions>
-        <UiButton data-test="new-task" @click="openNew"><span aria-hidden="true">＋</span> Crear tarea</UiButton>
+        <UiButton data-test="new-task" @click="workflow.openCreate()"><span aria-hidden="true">＋</span> Crear tarea</UiButton>
       </template>
     </UiPageHeader>
 
-    <p v-if="loading" data-test="loading" role="status">Cargando las tareas…</p>
-
-    <UiInlineError v-else-if="error" data-test="error">{{ error }}</UiInlineError>
-
-    <UiEmptyState v-else-if="!hasTasks" title="Todavía no hay ninguna tarea" data-test="empty" mark="◷">
-      Aquí aparecerá el trabajo pendiente: riegos, protecciones, trasplantes. Crea la primera para empezar.
-      <template #action>
-        <UiButton @click="openNew">Crear la primera tarea</UiButton>
-      </template>
-    </UiEmptyState>
+    <UiInlineError v-if="error" data-test="error">
+      {{ error }}
+      <UiButton variant="secondary" data-test="retry" @click="load">Reintentar</UiButton>
+    </UiInlineError>
 
     <template v-else>
-      <MockNotice ticket="T-22" what="las tareas" />
-
-      <UiTabs v-model="view" :tabs="tabs" />
+      <UiTabs :model-value="view" :tabs="tabs" @update:model-value="view = $event as typeof view" />
 
       <!-- Los filtros valen para las tres vistas: son del conjunto, no de una vista. -->
       <UiFilterBar
         :applied="applied"
         density="compact"
         data-test="applied-filters"
-        @remove="filters.due = ''"
-        @clear="filters.due = ''"
+        @remove="removeFilter"
+        @clear="clearFilters"
       >
-        <UiToolbarField v-model="filters.location" label="Todas las localizaciones" as="select" :options="locationOptions.slice(1)" data-test="filter-location" />
-        <UiToolbarField v-model="filters.type" label="Todos los tipos" as="select" :options="typeOptions.slice(1)" data-test="filter-type" />
-        <UiToolbarField v-model="filters.priority" label="Prioridad" as="select" :options="priorityOptions.slice(1)" data-test="filter-priority" />
+        <UiToolbarField v-model="state.location" label="Localización" as="select" placeholder="Todas las localizaciones" :options="locationOptions" data-test="filter-location" />
+        <UiToolbarField v-model="state.type" label="Tipo" as="select" placeholder="Todos los tipos" :options="typeOptions" data-test="filter-type" />
+        <UiToolbarField v-model="state.priority" label="Prioridad" as="select" placeholder="Cualquier prioridad" :options="priorityOptions" data-test="filter-priority" />
         <span class="toolbar-spacer" />
-        <UiButton variant="text" data-test="complete-many" @click="pendingAction('Completar varias', 'T-22')">
+        <UiButton variant="text" data-test="complete-many" @click="pendingAction('Completar varias', 'T-24')">
           Completar varias
         </UiButton>
-        <UiButton variant="icon" label="Vista de lista" class="view-button is-selected">☷</UiButton>
-        <UiButton variant="icon" label="Vista compacta" disabled data-mock="true">≡</UiButton>
       </UiFilterBar>
 
-      <UiAgendaList
-        v-if="view === 'agenda'"
-        :entries="agendaEntries"
-        :today="today"
-        empty-message="Ninguna tarea pendiente coincide con los filtros."
-      >
-        <template #entry="{ entry, overdue }">
-          <TaskRow
-            :task="(entry as typeof agendaEntries[number]).task"
-            :main="timing((entry as typeof agendaEntries[number]).task).main"
-            :hint="timing((entry as typeof agendaEntries[number]).task).hint"
-            :overdue="overdue"
-            @complete="pendingAction('Completar tarea', 'T-22')"
-            @edit="openEdit((entry as typeof agendaEntries[number]).task)"
-          />
+      <p v-if="loading" data-test="loading" role="status">Cargando las tareas…</p>
+
+      <UiEmptyState v-else-if="noTasks" title="Todavía no hay ninguna tarea pendiente" data-test="empty" mark="◷">
+        Aquí aparecerá el trabajo pendiente: riegos, protecciones, trasplantes. Crea la primera para empezar.
+        <template #action>
+          <UiButton data-test="empty-create" @click="workflow.openCreate()">Crear la primera tarea</UiButton>
         </template>
-      </UiAgendaList>
+      </UiEmptyState>
+
+      <template v-else-if="view === 'agenda'">
+        <UiNotice v-if="truncated" severity="warning" title="Hay más tareas de las que se muestran" data-test="truncated">
+          La agenda enseña las {{ agendaEntries.length }} primeras de {{ agendaTotal }} pendientes. Filtra por
+          localización, tipo o prioridad para ver el resto.
+        </UiNotice>
+
+        <UiAgendaList
+          :entries="agendaEntries"
+          :today="today"
+          empty-message="Ninguna tarea pendiente coincide con los filtros."
+        >
+          <template #entry="{ entry, overdue }">
+            <TaskRow
+              :task="asTask(entry)"
+              :main="timing(asTask(entry)).main"
+              :hint="timing(asTask(entry)).hint"
+              :overdue="overdue"
+              @complete="workflow.openComplete(asTask(entry))"
+              @action="workflow.act(asTask(entry), $event)"
+            />
+          </template>
+        </UiAgendaList>
+      </template>
 
       <UiCalendarMonth
         v-else-if="view === 'calendar'"
-        v-model:month="month"
+        :month="month"
         :today="today"
-        :entries="calendarEntries"
+        :entries="calendarItems"
+        @update:month="month = $event"
+        @select-day="workflow.openCreate({ dueFrom: $event })"
       />
 
       <template v-else>
         <ul v-if="completed.length" class="completed" data-test="completed-list">
-          <li v-for="task in completed" :key="task.id">
+          <li v-for="task in completed" :key="task.id" :data-status="task.status">
             <strong>{{ task.title }}</strong>
-            <span>{{ TASK_TYPE_LABELS[task.type] }} · {{ task.target }} · {{ task.location }}</span>
-            <time :datetime="task.due">{{ task.due }}</time>
+            <span>
+              {{ TASK_TYPE_LABELS[task.type] }} · {{ targetText(task) }} ·
+              <b data-test="completed-status">{{ TASK_STATUS_LABELS[task.status] }}</b>
+              <template v-if="task.completion"> · {{ task.completion.affectedPlants }} {{ task.completion.affectedPlants === 1 ? 'planta' : 'plantas' }}</template>
+              <template v-if="task.closedReason"> · {{ task.closedReason }}</template>
+            </span>
+            <time :datetime="closedOn(task)">{{ closedOn(task) }}</time>
           </li>
         </ul>
-        <UiEmptyState v-else title="Trabajo completado" mark="✓" data-test="completed-empty">
-          Aquí se consultarán las tareas finalizadas y el cuidado registrado en cada planta.
+        <UiEmptyState v-else title="Todavía no hay trabajo cerrado" mark="✓" data-test="completed-empty">
+          Aquí se consultarán las tareas completadas, omitidas y canceladas.
         </UiEmptyState>
+        <UiPagination :page="completedPage" :total-pages="completedPages" label="Páginas de tareas cerradas" @update:page="setCompletedPage" />
       </template>
     </template>
 
-    <UiDialog
-      :open="editorOpen"
-      :title="editingTask ? 'Editar tarea' : 'Nueva tarea'"
-      subtitle="Planificar trabajo"
-      data-test="task-dialog"
-      @close="closeEditor"
-    >
-      <MockNotice ticket="T-22" what="el guardado de esta tarea" />
-      <TaskForm
-        :key="editingTask?.id ?? 'new'"
-        :initial="editingTask"
-        :today="today"
-        @cancel="closeEditor"
-        @submit="saveDraft"
-      />
-    </UiDialog>
+    <TaskDialogs :workflow="workflow" />
   </section>
 </template>
 
 <style scoped>
 .toolbar-spacer {
   flex: 1 1 auto;
-}
-
-.view-button.is-selected {
-  background: var(--color-brand-soft);
-  color: var(--color-brand-strong);
 }
 
 .completed {
@@ -195,5 +206,9 @@ function saveDraft(_draft: TaskDraft) {
 .completed time {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
+}
+
+.completed b {
+  color: var(--color-ink);
 }
 </style>

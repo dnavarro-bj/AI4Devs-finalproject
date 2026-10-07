@@ -6,9 +6,9 @@ import type { TimelineEntry } from '../types/timeline.types'
 const at = '2026-09-02T09:00:00Z'
 
 describe('timeline.mapper', () => {
-  it('declara los seis tipos con marca y tono', () => {
+  it('declara los siete tipos con marca y tono', () => {
     expect(TIMELINE_KIT_TYPES.map((type) => type.value)).toEqual([
-      'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion',
+      'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea',
     ])
     expect(TIMELINE_KIT_TYPES.every((type) => type.mark && type.tone)).toBe(true)
   })
@@ -21,8 +21,13 @@ describe('timeline.mapper', () => {
       [{ id: '4', type: 'comentario', occurredAt: at, comment: { text: 'x' } }, 'Comentario'],
       [{ id: '5', type: 'intervencion', occurredAt: at, intervention: { type: 'fertilizacion' } }, 'Fertilización'],
       [{ id: '6', type: 'floracion', occurredAt: at, bloom: { startedOn: '2026-05-22', status: 'finalizada', endedOn: '2026-05-25' } }, 'Finalizada'],
+      [{ id: '7', type: 'tarea', occurredAt: at, task: { taskId: '9', type: 'riego', title: 'Regar la bandeja A3' } }, 'Tarea completada'],
     ]
     for (const [entry, title] of entries) expect(entryTitle(entry)).toBe(title)
+  })
+
+  it('una tarea sin detalle sigue titulándose como tarea completada', () => {
+    expect(entryTitle({ id: '8', type: 'tarea', occurredAt: at })).toBe('Tarea completada')
   })
 
   it('un tipo desconocido se conserva con su valor crudo como título', () => {

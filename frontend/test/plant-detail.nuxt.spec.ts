@@ -22,7 +22,9 @@ mockNuxtImport('useRoute', () => () => ({ params: { id: '882687672222443468' } }
 function serve(plant: unknown, records: unknown[] = [], statusChanges: unknown[] = [], movements: unknown[] = [], timeline: unknown[] = []) {
   const envelope = (content: unknown[]) => ({ content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 })
   api.get.mockImplementation((path: string, params?: { type?: string[] }) => Promise.resolve(
-    path.endsWith('/care-records')
+    path === '/tasks'
+      ? envelope([])
+      : path.endsWith('/care-records')
       ? envelope(records)
       : path.endsWith('/status-changes') ? envelope(statusChanges)
         : path.endsWith('/movements') ? envelope(movements)

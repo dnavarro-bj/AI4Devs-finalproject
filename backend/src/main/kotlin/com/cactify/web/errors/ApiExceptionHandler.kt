@@ -24,6 +24,9 @@ import com.cactify.application.SoilMixInUseException
 import com.cactify.application.SoilMixNotFoundException
 import com.cactify.application.SpeciesInUseException
 import com.cactify.application.TagInUseException
+import com.cactify.application.LocationHasTasksException
+import com.cactify.application.TaskNotFoundException
+import com.cactify.domain.TaskNotPendingException
 import com.cactify.application.TagMergeIntoItselfException
 import com.cactify.application.TagNotFoundException
 import com.cactify.application.SpeciesNotFoundException
@@ -148,6 +151,15 @@ class ApiExceptionHandler {
   fun onNoResource(ex: NoResourceFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, "Recurso no encontrado", request)
 
+  @ExceptionHandler(TaskNotFoundException::class)
+  fun onTaskNotFound(ex: TaskNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
+  /** Una tarea que ya no está pendiente no admite cambios: depende del estado actual, no del formato (409). */
+  @ExceptionHandler(TaskNotPendingException::class)
+  fun onTaskNotPending(ex: TaskNotPendingException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.CONFLICT, ex.message ?: "La tarea ya no está pendiente", request)
+
   @ExceptionHandler(SavedViewNotFoundException::class)
   fun onSavedViewNotFound(ex: SavedViewNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
@@ -178,6 +190,7 @@ class ApiExceptionHandler {
     LocationHierarchyCycleException::class,
     LocationHasChildrenException::class,
     LocationInMovementsException::class,
+    LocationHasTasksException::class,
   )
   fun onLocationConflict(ex: RuntimeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "La localización entra en conflicto", request)

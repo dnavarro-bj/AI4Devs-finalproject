@@ -13,16 +13,32 @@ import org.springframework.data.domain.Sort
  * [translate] devuelve el `Pageable` con el orden traducido y el identificador como desempate
  * final, de modo que el orden es siempre total y estable entre páginas.
  */
-class SortKeys(private val paths: Map<String, String>) {
+class SortKeys(
+  private val paths: Map<String, String>,
+  /**
+   * Claves públicas que ordenan por **varias** propiedades con la misma dirección: el periodo de una
+   * tarea se ordena por su fin y, a igualdad, por su inicio. Una clave está en una lista o en la otra.
+   */
+  private val multiPaths: Map<String, List<String>> = emptyMap(),
+) {
+
+  private val keys: Set<String> = paths.keys + multiPaths.keys
 
   fun translate(pageable: Pageable): Pageable {
-    val orders = pageable.sort.map { order ->
-      val path = paths[order.property]
-        ?: throw IllegalArgumentException(
-          "No se puede ordenar por '${order.property}': las claves admitidas son ${paths.keys.joinToString()}",
+    val orders = pageable.sort.toList().flatMap { order ->
+      val multi = multiPaths[order.property]
+      when {
+        multi != null -> multi.map { order.withProperty(it) }
+        else -> listOf(
+          order.withProperty(
+            paths[order.property]
+              ?: throw IllegalArgumentException(
+                "No se puede ordenar por '${order.property}': las claves admitidas son ${keys.joinToString()}",
+              ),
+          ),
         )
-      order.withProperty(path)
-    }.toList()
+      }
+    }
     return PageRequest.of(pageable.pageNumber, pageable.pageSize, Sort.by(orders + Sort.Order.asc(TIEBREAK)))
   }
 
@@ -38,8 +54,8 @@ class SortKeys(private val paths: Map<String, String>) {
       val last = parts.lastOrNull()
       val properties = if (parts.size > 1 && last != null && Sort.Direction.fromOptionalString(last).isPresent) parts.dropLast(1) else parts
       properties.filter { it.isNotEmpty() }.forEach { property ->
-        require(property in paths) {
-          "No se puede ordenar por '$property': las claves admitidas son ${paths.keys.joinToString()}"
+        require(property in keys) {
+          "No se puede ordenar por '$property': las claves admitidas son ${keys.joinToString()}"
         }
       }
     }
@@ -75,5 +91,20 @@ val SavedViewSortKeys = SortKeys(
   linkedMapOf(
     "name" to "name",
     "createdAt" to "createdAt",
+  ),
+)
+
+/**
+ * Las tareas se ordenan por periodo —`due`: fin y, a igualdad, inicio—, por antigüedad o por título.
+ * La prioridad no es una clave: se guarda como texto y ordenar alfabéticamente «alta, baja, normal»
+ * daría un orden plausible y equivocado.
+ */
+val TaskSortKeys = SortKeys(
+  paths = linkedMapOf(
+    "createdAt" to "createdAt",
+    "title" to "title",
+  ),
+  multiPaths = linkedMapOf(
+    "due" to listOf("dueTo", "dueFrom"),
   ),
 )

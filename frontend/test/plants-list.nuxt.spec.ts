@@ -239,6 +239,32 @@ describe('inventario: columnas y filtros del wireframe', () => {
     expect(bar.text()).toContain('1')
   })
 
+  it('«Crear tarea» de la selección abre el formulario con esas plantas como destino', async () => {
+    serve([plant('1', 'Bola verde'), plant('2', 'Pinchitos'), plant('3', 'Bola azul')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    const boxes = wrapper.findAll('tbody input[type="checkbox"]')
+    await boxes[0]!.setValue(true)
+    await boxes[2]!.setValue(true)
+
+    const button = wrapper.find('[data-test="bulk-create-task"]')
+    expect(button.exists()).toBe(true)
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(button.text()).toContain('2')
+
+    await button.trigger('click')
+    await settle()
+    await settle()
+
+    const dialog = wrapper.find('[data-test="task-dialog"]')
+    expect(dialog.text()).toContain('Nueva tarea')
+    expect(dialog.find('[data-test="destination-count"]').text()).toContain('2 plantas')
+    expect(dialog.find('[data-test="destination-chosen"]').text()).toContain('Bola verde')
+    expect(dialog.find('[data-test="destination-chosen"]').text()).toContain('Bola azul')
+    expect(dialog.find('[data-test="destination-chosen"]').text()).not.toContain('Pinchitos')
+  })
+
   it('el filtro de localización sí filtra: el API lo admite desde T-02', async () => {
     serve([plant('1', 'Bola verde')])
     const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })

@@ -147,3 +147,15 @@ class DuplicateSavedViewNameException(name: String, scope: String) :
  */
 class ExportTooLargeException(val rows: Long, val maxRows: Int) :
   RuntimeException("$rows filas superan el máximo de $maxRows: afina los filtros")
+
+/** La tarea pedida por la ruta no existe: 404. */
+class TaskNotFoundException(id: String) :
+  RuntimeException("La tarea '$id' no existe")
+
+/**
+ * La localización es el destino de alguna tarea —en cualquier estado, porque la historia conserva la
+ * referencia— y no puede retirarse: 409. `task.location_id` no tiene `ON DELETE`: sin esta
+ * comprobación el borrado reventaría contra la FK y el cliente recibiría un 500 previsible.
+ */
+class LocationHasTasksException(id: String) :
+  RuntimeException("La localización '$id' es el destino de alguna tarea y no se puede eliminar: hay tareas que la usan")

@@ -2,6 +2,7 @@ package com.cactify.domain
 
 import com.cactify.domain.specs.PlantSortKeys
 import com.cactify.domain.specs.SpeciesSortKeys
+import com.cactify.domain.specs.TaskSortKeys
 import org.junit.jupiter.api.Test
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -82,5 +83,30 @@ class SortKeysTest {
 
     assertEquals(listOf("sunExposure", "scientificName", "id"), orders.map { it.property })
     assertFailsWith<IllegalArgumentException> { SpeciesSortKeys.translate(PageRequest.of(0, 25, Sort.by("periodRows"))) }
+  }
+
+  // ---- Una clave pública con varias rutas (tareas: `due`) ----
+
+  private fun translateTasks(sort: Sort) = TaskSortKeys.translate(PageRequest.of(0, 25, sort)).sort.toList()
+
+  @Test
+  fun `one public key can sort by several properties with the same direction`() {
+    val orders = translateTasks(Sort.by(Sort.Order.desc("due")))
+
+    assertEquals(listOf("dueTo", "dueFrom", "id"), orders.map { it.property })
+    assertEquals(listOf(Sort.Direction.DESC, Sort.Direction.DESC, Sort.Direction.ASC), orders.map { it.direction })
+  }
+
+  @Test
+  fun `the other task keys are single and an alien one is rejected`() {
+    assertEquals(listOf("title", "id"), translateTasks(Sort.by("title")).map { it.property })
+    assertFailsWith<IllegalArgumentException> { translateTasks(Sort.by("notes")) }
+    assertFailsWith<IllegalArgumentException> { translateTasks(Sort.by("dueTo")) }
+  }
+
+  @Test
+  fun `a multiple key is valid for a saved query too`() {
+    TaskSortKeys.requireValid(listOf("due,desc", "title"))
+    assertFailsWith<IllegalArgumentException> { TaskSortKeys.requireValid(listOf("notes,asc")) }
   }
 }

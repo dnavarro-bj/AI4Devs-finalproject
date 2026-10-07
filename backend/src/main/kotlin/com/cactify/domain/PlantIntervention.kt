@@ -30,6 +30,7 @@ class PlantIntervention private constructor(
   soilMix: SoilMix?,
   notes: String?,
   occurredAt: Instant,
+  task: Task? = null,
 ) : PlantEvent(plant = plant, occurredAt = occurredAt) {
 
   @Column(name = "intervention_type", nullable = false)
@@ -49,6 +50,12 @@ class PlantIntervention private constructor(
     private set
 
   var notes: String? = notes
+    private set
+
+  /** La tarea que se completó al registrarla, si la hay. Solo la establece completar una tarea. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "task_id", updatable = false)
+  var task: Task? = task
     private set
 
   /** Reemplazo completo. Sin fecha nueva conserva la que tenía. Valida **antes** de asignar. */
@@ -85,6 +92,7 @@ class PlantIntervention private constructor(
       occurredAt: Instant?,
       clock: Clock,
       maxFutureSkew: Duration,
+      task: Task? = null,
     ): PlantIntervention {
       val cleanProduct = product.cleaned()
       val cleanPot = potSize.cleaned()
@@ -92,6 +100,7 @@ class PlantIntervention private constructor(
       return PlantIntervention(
         plant, type, cleanProduct, cleanPot, soilMix, notes.cleaned(),
         stamp(occurredAt, clock, maxFutureSkew, "de la intervención"),
+        task,
       )
     }
 

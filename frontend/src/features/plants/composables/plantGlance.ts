@@ -1,6 +1,7 @@
 import type { SummaryItem } from '@ui/UiSummaryGrid.vue'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
-import { MOCK_NEXT_TASK } from '../mocks/plantDetail.mock'
+import { overdueText, periodText } from '@features/tasks/mappers/task.mapper'
+import type { Task } from '@features/tasks/types/task.types'
 import { bloomDays, bloomMonth } from '@features/timeline/mappers/timeline.mapper'
 import type { Bloom } from '@features/timeline/types/timeline.types'
 
@@ -13,9 +14,9 @@ import type { Bloom } from '@features/timeline/types/timeline.types'
  * «Hace 18 días» es una comparación, no un hecho del universo, y un componente que consultara el
  * reloj no se podría testear sin congelar el tiempo.
  *
- * El riego, la medición y la última floración salen de datos **reales**; solo la tarea es maqueta
- * hasta T-22, y va marcada como tal. `lastBloom` es `undefined` mientras no se ha consultado y
- * `null` cuando el ejemplar nunca ha florecido: no son lo mismo.
+ * Las cuatro magnitudes son **reales**: el riego, la medición, la última floración y la próxima
+ * tarea. `lastBloom` y `nextWork` son `undefined` mientras no se han consultado y `null` /
+ * `{ task: null }` cuando no hay nada: no son lo mismo.
  */
 
 const MEASURES: { key: keyof CareRecord, unit: string }[] = [
@@ -25,7 +26,12 @@ const MEASURES: { key: keyof CareRecord, unit: string }[] = [
   { key: 'soilPh', unit: 'pH' },
 ]
 
-export function plantGlance(records: CareRecord[], now: string, lastBloom?: Bloom | null): SummaryItem[] {
+export function plantGlance(
+  records: CareRecord[],
+  now: string,
+  lastBloom?: Bloom | null,
+  nextWork?: { task: Task | null, today: string },
+): SummaryItem[] {
   // El API sirve las lecturas en orden descendente, así que la primera que cumpla es la última.
   const lastWatering = records.find((record) => record.waterAmountMl != null)
   const lastMeasured = records.find((record) => MEASURES.some((measure) => record[measure.key] != null))
@@ -38,12 +44,7 @@ export function plantGlance(records: CareRecord[], now: string, lastBloom?: Bloo
         : '—',
       note: lastWatering ? sinceLabel(lastWatering.recordedAt, now) : 'Sin riegos registrados',
     },
-    {
-      label: 'Próxima tarea',
-      value: MOCK_NEXT_TASK.value,
-      note: MOCK_NEXT_TASK.context,
-      mock: true,
-    },
+    nextTaskItem(nextWork),
     {
       label: 'Última medición',
       value: lastMeasured ? measuresOf(lastMeasured) : '—',
@@ -51,6 +52,21 @@ export function plantGlance(records: CareRecord[], now: string, lastBloom?: Bloo
     },
     bloomItem(lastBloom),
   ]
+}
+
+/** La tarea pendiente más próxima que afecta al ejemplar: qué es y cuándo toca (o cuánto lleva vencida). */
+function nextTaskItem(nextWork?: { task: Task | null, today: string }): SummaryItem {
+  if (!nextWork) return { label: 'Próxima tarea', value: '—', note: 'Sin consultar' }
+  const { task, today } = nextWork
+  if (!task) return { label: 'Próxima tarea', value: '—', note: 'Sin trabajo pendiente' }
+
+  const late = overdueText(task.dueTo, today)
+  const current = task.dueFrom <= today && today <= task.dueTo
+  return {
+    label: 'Próxima tarea',
+    value: task.title,
+    note: late ? `Vencida · ${late}` : current ? 'Hoy' : periodText(task),
+  }
 }
 
 /** Las magnitudes informadas, en una sola línea comparable: «24 °C · 31 %». */

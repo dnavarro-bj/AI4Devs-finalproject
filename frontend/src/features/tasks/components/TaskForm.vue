@@ -1,60 +1,95 @@
 <script setup lang="ts">
-/** Formulario compartido por el alta y la edición de la maqueta de tareas (T-22). */
+/**
+ * El formulario de una tarea, compartido por el alta y la edición: tipo, prioridad, título,
+ * **destino**, periodo y notas, y al pie lo que la tarea hace y no hace.
+ *
+ * **Sin hora**: el periodo son días (§24.14). El prototipo trae un campo de hora opcional del que
+ * este formulario se aparta a propósito. Un solo día es un inicio sin fin.
+ *
+ * Valida lo mínimo antes de enviar —título, fecha, orden del periodo y destino— y emite el cuerpo
+ * del API (`TaskInput`); el servidor sigue siendo quien decide.
+ */
 import {
   TASK_PRIORITY_LABELS,
   TASK_TYPE_LABELS,
   TASK_TYPE_MARKS,
   type Task,
+  type TaskInput,
   type TaskPriority,
   type TaskType,
 } from '../types/task.types'
-
-export interface TaskDraft {
-  type: TaskType
-  priority: TaskPriority
-  title: string
-  location: string
-  target: string
-  due: string
-  time: string | null
-  notes: string
-}
+import type { TaskInitial } from '../composables/useTaskWorkflow'
+import type { DestinationValue, PickablePlant } from '../composables/useTaskDestination'
 
 const props = withDefaults(defineProps<{
-  initial?: Task | null
+  /** Editar: la tarea (con su destino completo). Sin ella, es un alta. */
+  task?: Task | null
+  /** Crear: lo que ya se sabe (un día, una planta, una localización). */
+  initial?: TaskInitial | null
   today: string
   submitting?: boolean
-}>(), { initial: null, submitting: false })
+  locationOptions: { value: string, label: string }[]
+  locationCount: (id: string) => number | null
+  plantResults: PickablePlant[]
+  plantQuery: string
+  searching?: boolean
+  searchError?: string | null
+}>(), { task: null, initial: null, submitting: false, searching: false, searchError: null })
 
-const emit = defineEmits<{ submit: [draft: TaskDraft], cancel: [] }>()
+const emit = defineEmits<{ submit: [input: TaskInput], cancel: [], 'update:plantQuery': [string] }>()
 
-const type = ref<TaskType>(props.initial?.type ?? 'watering')
-const priority = ref<TaskPriority>(props.initial?.priority ?? 'normal')
-const title = ref(props.initial?.title ?? '')
-const location = ref(props.initial?.location ?? 'Toda la colección')
-const target = ref(props.initial?.target ?? 'Elige plantas o una localización')
-const due = ref(props.initial?.due ?? props.today)
-const time = ref(props.initial?.time ?? '')
-const notes = ref('')
-const errors = reactive({ title: '', due: '' })
+const type = ref<TaskType>(props.task?.type ?? props.initial?.type ?? 'riego')
+const priority = ref<TaskPriority>(props.task?.priority ?? 'normal')
+const title = ref(props.task?.title ?? props.initial?.title ?? '')
+const dueFrom = ref(props.task?.dueFrom ?? props.initial?.dueFrom ?? props.today)
+const dueTo = ref(props.task && props.task.dueTo !== props.task.dueFrom ? props.task.dueTo : '')
+const notes = ref(props.task?.notes ?? '')
+
+function initialDestination(): DestinationValue {
+  if (props.task?.target.kind === 'location') {
+    return { mode: 'location', locationId: props.task.target.location.id, plants: [] }
+  }
+  if (props.task?.target.kind === 'plants') {
+    return {
+      mode: 'plants',
+      locationId: '',
+      plants: (props.task.target.plants ?? []).map((plant) => ({ ...plant, detail: '' })),
+    }
+  }
+  if (props.initial?.plants?.length) return { mode: 'plants', locationId: '', plants: props.initial.plants }
+  return { mode: 'location', locationId: props.initial?.locationId ?? '', plants: [] }
+}
+
+const destination = ref<DestinationValue>(initialDestination())
+const errors = reactive({ title: '', dueFrom: '', dueTo: '', destination: '' })
 
 const typeOptions = Object.entries(TASK_TYPE_LABELS).map(([value, label]) => ({ value, label }))
 const priorityOptions = Object.entries(TASK_PRIORITY_LABELS).map(([value, label]) => ({ value, label }))
 
-function submit() {
+function validate(): boolean {
   errors.title = title.value.trim() ? '' : 'Escribe un título para la tarea.'
-  errors.due = due.value ? '' : 'Elige cuándo debe realizarse.'
-  if (errors.title || errors.due) return
+  errors.dueFrom = dueFrom.value ? '' : 'Elige cuándo empieza.'
+  errors.dueTo = dueTo.value && dueTo.value < dueFrom.value ? 'El fin no puede ser anterior al inicio.' : ''
+  const chosen = destination.value.mode === 'location'
+    ? Boolean(destination.value.locationId)
+    : destination.value.plants.length > 0
+  errors.destination = chosen ? '' : 'Elige una localización o al menos una planta.'
+  return !errors.title && !errors.dueFrom && !errors.dueTo && !errors.destination
+}
+
+function submit() {
+  if (!validate()) return
 
   emit('submit', {
     type: type.value,
     priority: priority.value,
     title: title.value.trim(),
-    location: location.value,
-    target: target.value,
-    due: due.value,
-    time: time.value || null,
-    notes: notes.value.trim(),
+    dueFrom: dueFrom.value,
+    ...(dueTo.value ? { dueTo: dueTo.value } : {}),
+    ...(notes.value.trim() ? { notes: notes.value.trim() } : {}),
+    ...(destination.value.mode === 'location'
+      ? { locationId: destination.value.locationId }
+      : { plantIds: destination.value.plants.map((plant) => plant.id) }),
   })
 }
 </script>
@@ -62,20 +97,9 @@ function submit() {
 <template>
   <form id="task-form" class="task-form" data-test="task-form" @submit.prevent="submit">
     <div class="task-form__grid">
-      <UiField
-        v-model="type"
-        label="Tipo"
-        as="select"
-        :options="typeOptions"
-        data-test="task-type"
-      />
-      <UiField
-        v-model="priority"
-        label="Prioridad"
-        as="select"
-        :options="priorityOptions"
-        data-test="task-priority"
-      />
+      <UiField v-model="type" label="Tipo" as="select" :options="typeOptions" data-test="task-type" />
+      <UiField v-model="priority" label="Prioridad" as="select" :options="priorityOptions" data-test="task-priority" />
+
       <div class="is-wide">
         <UiField
           v-model="title"
@@ -87,28 +111,38 @@ function submit() {
         />
       </div>
 
-      <div class="destination is-wide" data-mock="true" data-test="task-destination">
-        <span>Destino</span>
-        <div>
-          <span class="destination__mark" aria-hidden="true">⌖</span>
-          <span>
-            <strong>{{ location }}</strong>
-            <small>{{ target }}</small>
-          </span>
-          <UiButton variant="secondary" disabled>Editar destino · T-22</UiButton>
-        </div>
+      <div class="is-wide">
+        <TaskDestinationPicker
+          v-model="destination"
+          :location-options="locationOptions"
+          :location-count="locationCount(destination.locationId)"
+          :results="plantResults"
+          :query="plantQuery"
+          :searching="searching"
+          :search-error="searchError"
+          :error="errors.destination"
+          @update:query="emit('update:plantQuery', $event)"
+        />
       </div>
 
       <UiField
-        v-model="due"
-        label="Fecha"
+        v-model="dueFrom"
+        label="Empieza"
         type="date"
-        :error="errors.due"
+        :error="errors.dueFrom"
         error-test="task-due-error"
         data-test="task-due"
       />
-      <UiField v-model="time" label="Hora opcional" type="time" data-test="task-time" />
-      <div class="is-wide" data-test="task-notes-field">
+      <UiField
+        v-model="dueTo"
+        label="Termina (opcional)"
+        type="date"
+        help="Déjalo vacío si es un solo día."
+        :error="errors.dueTo"
+        error-test="task-due-to-error"
+        data-test="task-due-to"
+      />
+      <div class="is-wide">
         <UiField
           v-model="notes"
           label="Notas"
@@ -121,7 +155,7 @@ function submit() {
     </div>
 
     <div class="task-form__preview" aria-live="polite">
-      <span :class="`is-${type}`" aria-hidden="true">{{ TASK_TYPE_MARKS[type] }}</span>
+      <span aria-hidden="true">{{ TASK_TYPE_MARKS[type] }}</span>
       <p>
         <strong>{{ title.trim() || 'Nueva tarea' }}</strong>
         <small>{{ TASK_TYPE_LABELS[type] }} · {{ TASK_PRIORITY_LABELS[priority] }}</small>
@@ -129,11 +163,11 @@ function submit() {
     </div>
 
     <footer>
-      <span>La tarea no registra un cuidado hasta que se complete.</span>
+      <span data-test="task-impact">La tarea no registra un cuidado hasta que se complete.</span>
       <div>
-        <UiButton variant="secondary" @click="emit('cancel')">Cancelar</UiButton>
+        <UiButton variant="secondary" data-test="task-cancel" @click="emit('cancel')">Cancelar</UiButton>
         <UiButton type="submit" :busy="submitting" data-test="task-submit">
-          {{ initial ? 'Guardar cambios' : 'Crear tarea' }}
+          {{ task ? 'Guardar cambios' : 'Crear tarea' }}
         </UiButton>
       </div>
     </footer>
@@ -156,26 +190,15 @@ function submit() {
   grid-column: 1 / -1;
 }
 
-.destination > span {
-  display: block;
-  font-size: var(--font-size-12);
-  font-weight: 700;
-  margin-bottom: var(--space-1);
-}
-
-.destination > div {
+.task-form__preview {
   align-items: center;
-  background: var(--color-canvas);
-  border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-sm);
-  display: grid;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  display: flex;
   gap: var(--space-3);
-  grid-template-columns: auto 1fr auto;
-  min-height: 66px;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
 }
 
-.destination__mark,
 .task-form__preview > span {
   align-items: center;
   background: var(--color-brand-soft);
@@ -186,30 +209,6 @@ function submit() {
   height: 38px;
   justify-content: center;
   width: 38px;
-}
-
-.destination strong,
-.destination small {
-  display: block;
-}
-
-.destination strong {
-  font-size: var(--font-size-12);
-}
-
-.destination small {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-11);
-  margin-top: var(--space-1);
-}
-
-.task-form__preview {
-  align-items: center;
-  background: var(--color-surface-muted);
-  border-radius: var(--radius-md);
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-3);
 }
 
 .task-form__preview p,
@@ -252,15 +251,6 @@ function submit() {
 
   .is-wide {
     grid-column: auto;
-  }
-
-  .destination > div {
-    grid-template-columns: auto 1fr;
-  }
-
-  .destination :deep(.button) {
-    grid-column: 2;
-    justify-self: start;
   }
 
   .task-form > footer {

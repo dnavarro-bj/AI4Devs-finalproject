@@ -1,24 +1,33 @@
 <script setup lang="ts">
 /**
- * Una tarea como fila: casilla, tipo y prioridad, título, destino, cuándo y editar.
+ * Una tarea como fila: casilla, tipo y prioridad, título, destino, cuándo y acciones.
  *
- * Es de **dominio** y no del kit porque conoce qué es una tarea. Lo usan la agenda de tareas y la
- * del Dashboard, que es lo que la saca de la pantalla: dos pantallas con la misma fila, una sola
- * fila (ADR-014).
+ * Es de **dominio** y no del kit porque conoce qué es una tarea. Lo usan la agenda de tareas, el
+ * Dashboard y las fichas, que es lo que la saca de la pantalla: varias pantallas con la misma fila,
+ * una sola fila (ADR-014).
  *
- * No hace nada: **emite**. Completar y editar son T-22, y quien decide qué ocurre es la pantalla.
+ * No hace nada: **emite**. Quien decide qué ocurre al completar o al elegir una acción es la pantalla.
  */
-import { TASK_TYPE_LABELS, TASK_TYPE_MARKS, type Task } from '../types/task.types'
+import { priorityLevel, targetText } from '../mappers/task.mapper'
+import { TASK_PRIORITY_LABELS, TASK_TYPE_LABELS, TASK_TYPE_MARKS, type Task } from '../types/task.types'
 
 withDefaults(defineProps<{
   task: Task
   main: string
   hint?: string
   overdue?: boolean
+  /** Con acciones (editar, reprogramar, omitir, cancelar). Sin ellas, la fila solo informa. */
   editable?: boolean
 }>(), { hint: '', overdue: false, editable: true })
 
-defineEmits<{ complete: [], edit: [] }>()
+defineEmits<{ complete: [], action: [string] }>()
+
+const ACTIONS = [
+  { id: 'edit', label: 'Editar' },
+  { id: 'reschedule', label: 'Reprogramar' },
+  { id: 'skip', label: 'Omitir' },
+  { id: 'cancel', label: 'Cancelar tarea', tone: 'danger' as const },
+]
 </script>
 
 <template>
@@ -41,26 +50,26 @@ defineEmits<{ complete: [], edit: [] }>()
       <div class="task-row__meta">
         <span>{{ TASK_TYPE_LABELS[task.type] }}</span>
         <!-- La prioridad se lee, no solo se ve: el texto va dentro. -->
-        <UiPriority v-if="task.priority === 'high'" level="immediate">Alta</UiPriority>
+        <UiPriority v-if="task.priority === 'alta'" :level="priorityLevel(task.priority)">
+          {{ TASK_PRIORITY_LABELS[task.priority] }}
+        </UiPriority>
       </div>
       <h3>{{ task.title }}</h3>
-      <p>{{ task.target }} · {{ task.location }}</p>
+      <p>{{ targetText(task) }}</p>
     </div>
 
-    <time :datetime="task.due">
+    <time :datetime="task.dueFrom">
       <strong>{{ main }}</strong>
       <small v-if="hint">{{ hint }}</small>
     </time>
 
-    <UiButton
+    <UiActionMenu
       v-if="editable"
-      variant="icon"
-      label="Editar tarea"
-      data-test="edit-task"
-      @click="$emit('edit')"
-    >
-      •••
-    </UiButton>
+      label="Acciones de la tarea"
+      :actions="ACTIONS"
+      data-test="task-actions"
+      @select="$emit('action', $event)"
+    />
   </article>
 </template>
 
@@ -99,17 +108,17 @@ defineEmits<{ complete: [], edit: [] }>()
   width: 38px;
 }
 
-.task-row__symbol.is-watering {
+.task-row__symbol.is-riego {
   background: var(--color-info-soft);
   color: var(--color-info);
 }
 
-.task-row__symbol.is-sun-protection {
+.task-row__symbol.is-proteccion_sol {
   background: var(--color-warning-soft);
   color: var(--color-warning);
 }
 
-.task-row__symbol.is-repotting {
+.task-row__symbol.is-cambio_maceta {
   background: var(--color-brand-soft);
   color: var(--color-brand);
 }

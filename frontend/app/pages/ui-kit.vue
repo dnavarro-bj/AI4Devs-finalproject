@@ -26,6 +26,13 @@ const filters = ref(['Pleno sol', 'Revisar'])
 const dialogOpen = ref(false)
 const tab = ref('resumen')
 const group = ref<string | null>('sun')
+const menuChoice = ref<string | null>(null)
+const ROW_ACTIONS = [
+  { id: 'edit', label: 'Editar' },
+  { id: 'skip', label: 'Omitir' },
+  { id: 'locked', label: 'No disponible', disabled: true },
+  { id: 'cancel', label: 'Cancelar', tone: 'danger' as const },
+]
 const GROUP_NAV = [
   { id: 'all', label: 'Todas', hint: '74 especies', symbol: '⌘' },
   { id: 'sun', label: 'Pleno sol', hint: '38 especies', symbol: '☼', tone: 'warning' as const },
@@ -279,6 +286,12 @@ const SEARCH_GROUPS = [
       <UiGroupNav v-model="group" :groups="GROUP_NAV" aria-label="Grupos de cultivo guardados" />
       <UiGroupNav :model-value="null" :groups="GROUP_NAV.slice(0, 2)" aria-label="Sin ningún grupo seleccionado" />
       <p class="note">Grupo seleccionado: {{ group ?? 'ninguno' }}</p>
+
+      <!-- El menú de acciones de una fila: abre con clic o con el teclado, y una acción deshabilitada no se elige. -->
+      <div class="row">
+        <UiActionMenu label="Acciones de la tarea" :actions="ROW_ACTIONS" @select="menuChoice = $event" />
+        <p class="note">Acción elegida: {{ menuChoice ?? 'ninguna' }}</p>
+      </div>
     </section>
 
     <section class="gallery__section">

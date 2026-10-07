@@ -22,6 +22,8 @@ A 500–2000 ejemplares, y con vistas guardadas y exportación en camino, el pro
 
 **Orden con claves públicas.** `sort=<clave>,<asc|desc>`, repetible. Cada recurso declara su lista de claves públicas (`SortKeys`) y la traduce a la ruta de la entidad (`species` → `species.scientificName`); lo que no esté en la lista, una dirección distinta de `asc`/`desc` o una clave de orden ajena responde `400`. El identificador se añade al final como desempate, de modo que el orden es siempre total y estable entre páginas. Sin `sort` se conserva el orden por defecto del recurso (`@SortDefault`, ADR-009). La traducción ocurre en el servicio, antes de tocar el repositorio.
 
+**Una clave pública puede ordenar por varias propiedades**: `SortKeys` admite que una clave mapee a una lista de rutas con la misma dirección (en las tareas, `due` ordena por el fin del periodo y, a igualdad, por su inicio). La clave sigue siendo una, pública y estable; qué propiedades la componen es detalle del recurso. Se añadió con las tareas (T-22).
+
 **Una clave pública es un contrato**: quitarla rompe a quien la use (vistas guardadas incluidas); renombrar una propiedad de la entidad, no.
 
 ## Alternativas consideradas

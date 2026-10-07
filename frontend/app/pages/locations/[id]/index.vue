@@ -7,8 +7,8 @@
  *
  * **Real**: la ruta y los breadcrumbs (cada ancestro navegable), los recuentos directo y total, las
  * sublocalizaciones, las características con su ocupación, los ejemplares —con los de las
- * sublocalizaciones incluidos, y paginados— y los últimos movimientos. **Marcado con su ticket**:
- * las tareas y el próximo trabajo (T-22) y las alertas (T-23).
+ * sublocalizaciones incluidos, y paginados— y los últimos movimientos, y las **tareas**: su cifra, el
+ * próximo trabajo y crear una tarea aquí. **Marcado con su ticket**: las alertas (T-23).
  *
  * Los ejemplares se seleccionan **aquí** para moverlos: el diálogo declara el alcance antes de
  * confirmar y, si el API rechaza el lote, la selección se conserva.
@@ -26,6 +26,10 @@ import {
   LOCATION_TYPE_MARKS,
 } from '@features/locations/types/locationVocabulary'
 import { usePlants } from '@features/plants/composables/usePlants'
+import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
+import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
+import { taskTiming, overdueText, targetText } from '@features/tasks/mappers/task.mapper'
+import { TASK_TYPE_LABELS } from '@features/tasks/types/task.types'
 import { STATUS_LABELS } from '@features/plants/mappers/plantProfile'
 import { isNotFound } from '@shared/services/errorNormalizer'
 import type { LocationDetail, PlantMovement } from '@features/locations/types/location.types'
@@ -41,6 +45,10 @@ const { detail, remove, move, movements: listMovements } = useLocations()
 const { list: listPlants } = usePlants()
 const { set: setBreadcrumbs } = useBreadcrumbs()
 const toast = useToast()
+
+/** Las tareas del lugar: dirigidas a él, a sus sublocalizaciones o a plantas que están en ellas. */
+const work = useRelatedTasks(() => ({ location: id, includeDescendants: true }))
+const taskWorkflow = useTaskWorkflow(() => work.load())
 
 const location = ref<LocationDetail | null>(null)
 const plants = ref<PageResponse<PlantSummary> | null>(null)
@@ -201,7 +209,10 @@ function changePage(pageNumber: number) {
 }
 
 // Ya montada, no en `setup`: la URL del API solo es válida en el navegador (ADR-013).
-onMounted(load)
+onMounted(() => {
+  load()
+  work.load()
+})
 
 const asPlant = (row: unknown) => row as PlantSummary
 </script>
@@ -254,8 +265,8 @@ const asPlant = (row: unknown) => row as PlantSummary
         </template>
         <template #actions>
           <UiButton :to="`/locations/${id}/edit`" data-test="edit-location">Editar localización</UiButton>
-          <UiButton variant="secondary" disabled data-mock="true" data-test="create-task">
-            Crear tarea aquí · T-22
+          <UiButton variant="secondary" data-test="create-task" @click="taskWorkflow.openCreate({ locationId: id })">
+            Crear tarea aquí
           </UiButton>
           <UiButton variant="secondary" data-test="remove-location" @click="confirming = true">
             Retirar
@@ -268,7 +279,7 @@ const asPlant = (row: unknown) => row as PlantSummary
       </UiInlineError>
 
       <!--
-        La fila de métricas del prototipo. Plantas y sublocalizaciones son reales; tareas y alertas
+        La fila de métricas del prototipo. Plantas, sublocalizaciones y tareas son reales; las alertas
         se muestran marcadas y en su sitio, para que su ticket rellene un hueco previsto en vez de
         rehacer el layout.
       -->
@@ -286,7 +297,13 @@ const asPlant = (row: unknown) => row as PlantSummary
           :context="children.length ? children.map((child) => child.name).join(', ') : 'Ninguna dentro'"
           data-test="metric-children"
         />
-        <UiStatTile value="—" label="Tareas" context="Trabajo del lugar · T-22" data-mock="true" data-test="metric-tasks" />
+        <UiStatTile
+          :value="work.loaded.value ? work.total.value : '—'"
+          label="Tareas"
+          context="Pendientes del lugar y de sus plantas"
+          :to="`/tasks?location=${id}`"
+          data-test="metric-tasks"
+        />
         <UiStatTile value="—" label="Alertas" context="Incidencias · T-23" data-mock="true" data-test="metric-alerts" />
       </div>
 
@@ -415,11 +432,24 @@ const asPlant = (row: unknown) => row as PlantSummary
             </UiButton>
           </UiPanel>
 
-          <UiPanel title="Próximo trabajo" data-mock="true" data-test="tasks">
-            <p class="pending">
-              Las tareas del lugar llegan con <strong>T-22</strong>. Una tarea es trabajo
-              pendiente, no un cuidado ya ocurrido.
-            </p>
+          <UiPanel title="Próximo trabajo" data-test="tasks">
+            <UiInlineError v-if="work.error.value" data-test="tasks-error">{{ work.error.value }}</UiInlineError>
+            <ul v-else-if="work.tasks.value.length" class="next-work">
+              <li v-for="task in work.tasks.value" :key="task.id" data-test="next-work-item">
+                <strong>{{ task.title }}</strong>
+                <small>
+                  {{ TASK_TYPE_LABELS[task.type] }} · {{ targetText(task) }} · {{ taskTiming(task, work.today.value).main }}
+                  <b v-if="overdueText(task.dueTo, work.today.value)" data-test="next-work-overdue">· Vencida</b>
+                </small>
+              </li>
+            </ul>
+            <p v-else-if="work.loaded.value" class="hint" data-test="no-tasks">No hay trabajo pendiente en este lugar.</p>
+            <UiButton variant="ghost" class="panel-link" :to="`/tasks?location=${id}`" data-test="all-tasks">
+              Ver todas las tareas
+            </UiButton>
+            <UiButton variant="secondary" class="panel-link" data-test="create-task-panel" @click="taskWorkflow.openCreate({ locationId: id })">
+              ＋ Crear tarea
+            </UiButton>
           </UiPanel>
 
           <UiPanel title="Últimos movimientos" data-test="movements">
@@ -434,6 +464,8 @@ const asPlant = (row: unknown) => row as PlantSummary
           </UiPanel>
         </template>
       </UiDetailLayout>
+
+      <TaskDialogs :workflow="taskWorkflow" />
 
       <LocationMoveDialog
         :open="moveOpen"
@@ -531,10 +563,26 @@ const asPlant = (row: unknown) => row as PlantSummary
   margin: var(--space-3) 0 0;
 }
 
-.pending {
-  color: var(--color-ink-muted);
-  font-size: var(--font-size-12);
+.next-work {
+  list-style: none;
   margin: 0;
+  padding: 0;
+}
+
+.next-work li {
+  border-top: 1px solid var(--color-line);
+  padding: var(--space-2) 0;
+}
+
+.next-work small {
+  color: var(--color-ink-muted);
+  display: block;
+  font-size: var(--font-size-12);
+}
+
+/* Lo vencido se lee además de verse: «Vencida» va en el texto. */
+.next-work b {
+  color: var(--color-danger);
 }
 
 .children-list {

@@ -11,6 +11,7 @@
  * Un tipo desconocido no pinta cuerpo: la tarjeta ya lleva su título y su fecha.
  */
 import { toTimelineEvents } from '@features/care-records/composables/usePlantHistory'
+import { TASK_TYPE_LABELS, type TaskType } from '@features/tasks/types/task.types'
 import { BLOOM_STATUS_LABELS, bloomInterval } from '../mappers/timeline.mapper'
 import type { TimelineEntry } from '../types/timeline.types'
 
@@ -69,6 +70,10 @@ function editedLabel(at: string): string {
       </p>
       <p v-if="entry.bloom.notes" class="entry-body__text">{{ entry.bloom.notes }}</p>
     </template>
+
+    <p v-else-if="entry.type === 'tarea' && entry.task" class="entry-body__text" data-test="task-body">
+      {{ entry.task.title }} · {{ TASK_TYPE_LABELS[entry.task.type as TaskType] ?? entry.task.type }}
+    </p>
 
     <small v-if="entry.batchId" class="entry-body__meta" data-test="batch-note">
       Operación sobre varias plantas

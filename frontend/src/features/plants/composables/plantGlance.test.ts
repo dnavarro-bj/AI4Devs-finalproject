@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { plantGlance } from './plantGlance'
+import type { Task } from '@features/tasks/types/task.types'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
 
 /**
@@ -68,12 +69,43 @@ describe('plantGlance', () => {
     expect(find(items, 'Último riego').note).toBe('Ayer')
   })
 
-  it('marca como ejemplo solo la próxima tarea: la última floración es real', () => {
-    const items = plantGlance([], NOW, null)
+  it('ninguna magnitud es de ejemplo: la próxima tarea también es real', () => {
+    const items = plantGlance([], NOW, null, { task: null, today: '2026-09-06' })
 
-    expect(find(items, 'Próxima tarea').mock).toBe(true)
-    expect(find(items, 'Última floración').mock).toBeFalsy()
-    expect(find(items, 'Última medición').mock).toBeFalsy()
+    for (const item of items) expect(item.mock).toBeFalsy()
+  })
+
+  describe('próxima tarea', () => {
+    const task = (patch: Partial<Task> = {}): Task => ({
+      id: 't1', type: 'riego', title: 'Regar la bandeja A3', priority: 'normal', status: 'pendiente',
+      dueFrom: '2026-09-10', dueTo: '2026-09-10', origin: 'manual',
+      target: { kind: 'location', location: { id: '1', name: 'A3', path: 'A3' } },
+      createdAt: '', updatedAt: '', ...patch,
+    })
+
+    it('dice el título y cuándo es', () => {
+      const next = find(plantGlance([], NOW, null, { task: task(), today: '2026-09-06' }), 'Próxima tarea')
+
+      expect(next.value).toBe('Regar la bandeja A3')
+      expect(next.note).toBe('10 sept')
+    })
+
+    it('una tarea de hoy o de un periodo en curso es «Hoy»', () => {
+      const next = find(plantGlance([], NOW, null, { task: task({ dueFrom: '2026-09-05', dueTo: '2026-09-08' }), today: '2026-09-06' }), 'Próxima tarea')
+
+      expect(next.note).toBe('Hoy')
+    })
+
+    it('una vencida se lee como vencida, con cuánto hace', () => {
+      const next = find(plantGlance([], NOW, null, { task: task({ dueFrom: '2026-09-04', dueTo: '2026-09-04' }), today: '2026-09-06' }), 'Próxima tarea')
+
+      expect(next.note).toBe('Vencida · Hace 2 días')
+    })
+
+    it('sin trabajo pendiente lo dice, y sin consultar no inventa nada', () => {
+      expect(find(plantGlance([], NOW, null, { task: null, today: '2026-09-06' }), 'Próxima tarea')).toMatchObject({ value: '—', note: 'Sin trabajo pendiente' })
+      expect(find(plantGlance([], NOW), 'Próxima tarea')).toMatchObject({ value: '—', note: 'Sin consultar' })
+    })
   })
 
   it('la última floración dice su mes y cuánto duró', () => {

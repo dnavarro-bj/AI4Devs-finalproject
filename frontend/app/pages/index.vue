@@ -7,28 +7,28 @@
  * Presenta **trabajo pendiente, no métricas decorativas**: lo vencido va primero y cada cifra abre el
  * conjunto que cuenta, ya filtrado.
  *
- * **Híbrido, y marcado por bloque.** Real: la carga por zona, que sale de las localizaciones. De
- * ejemplo, cada uno con su ticket: la agenda (T-22), las alertas (T-23) y las cifras (T-24). Una
- * advertencia general arriba se lee una vez y se olvida; la marca va en el bloque que simula.
+ * **Híbrido, y marcado por bloque.** Real: las tareas —la agenda y las cifras de vencidas y de hoy—
+ * y la carga por zona, que sale de las localizaciones. De ejemplo, cada uno con su ticket: las
+ * alertas y su cifra (T-23) y las tareas por zona (T-24). Una advertencia general arriba se lee una
+ * vez y se olvida; la marca va en el bloque que simula.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
-import { usePendingAction } from '@shared/composables/usePendingAction'
 import { useDashboard } from '@features/dashboard/composables/useDashboard'
-import { useTasks } from '@features/tasks/composables/useTasks'
+import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
+import type { Task } from '@features/tasks/types/task.types'
 
 useHead({ title: 'Cactify · Dashboard' })
 useBreadcrumbs().set([])
 
 const {
   today, load, loadZones, zonesError,
-  overdueCount, todayCount, openAlertCount, overdueOverAWeek, flexibleToday, criticalAlerts,
-  dateLabel, agenda, alertsToShow, busiestZones, maxZoneLoad,
+  overdueCount, todayCount, openAlertCount, overdueOverAWeek, periodToday, criticalAlerts,
+  dateLabel, agenda, alertsToShow, busiestZones, maxZoneLoad, timing,
 } = useDashboard()
 
-// Cómo se cuenta cuándo es una tarea es de la feature de tareas: aquí solo se pide.
-const { timing } = useTasks()
-
-const pendingAction = usePendingAction()
+// Crear y completar son de la feature de tareas: aquí solo se abren y se recarga lo que cambió.
+const workflow = useTaskWorkflow(load)
+const asTask = (entry: unknown) => (entry as { task: Task }).task
 
 const alertSignals = computed(() => alertsToShow.value.map((alert) => ({
   id: alert.id,
@@ -50,13 +50,13 @@ onMounted(load)
       context="Primero lo vencido; después, lo que puede esperar."
     >
       <template #actions>
-        <UiButton data-test="new-task" @click="pendingAction('Crear tarea', 'T-22')">
+        <UiButton data-test="new-task" @click="workflow.openCreate()">
           <span aria-hidden="true">＋</span> Crear tarea
         </UiButton>
       </template>
     </UiPageHeader>
 
-    <MockNotice ticket="T-24" what="las cifras de trabajo" />
+    <MockNotice ticket="T-23" what="la cifra de alertas" />
     <div class="summary" data-test="work-summary" role="group" aria-label="Resumen de trabajo">
       <UiStatTile
         :value="overdueCount"
@@ -69,7 +69,7 @@ onMounted(load)
       <UiStatTile
         :value="todayCount"
         label="Para hoy"
-        :context="flexibleToday ? `${flexibleToday} sin hora fija` : 'Todas con hora'"
+        :context="periodToday ? `${periodToday} dentro de un periodo` : 'Todas de un solo día'"
         to="/tasks?due=today"
         layout="row"
       />
@@ -88,15 +88,14 @@ onMounted(load)
         <template #action>
           <UiButton variant="text" to="/tasks">Ver agenda</UiButton>
         </template>
-        <MockNotice ticket="T-22" what="las tareas" />
         <UiDateAgenda :entries="agenda" :today="today" empty-message="No hay trabajo próximo.">
           <template #entry="{ entry }">
             <TaskRow
-              :task="(entry as typeof agenda[number]).task"
-              :main="timing((entry as typeof agenda[number]).task).main"
-              :hint="timing((entry as typeof agenda[number]).task).hint"
+              :task="asTask(entry)"
+              :main="timing(asTask(entry)).main"
+              :hint="timing(asTask(entry)).hint"
               :editable="false"
-              @complete="pendingAction('Completar tarea', 'T-22')"
+              @complete="workflow.openComplete(asTask(entry))"
             />
           </template>
         </UiDateAgenda>
@@ -132,11 +131,13 @@ onMounted(load)
               />
             </li>
           </ul>
-          <!-- El prototipo cuenta también las tareas de cada zona: no hay tareas reales todavía. -->
-          <p class="zone-tasks" data-test="zone-tasks-pending">Tareas por zona · lo habilita T-22</p>
+          <!-- El prototipo cuenta también las tareas de cada zona: agregarlas por localización es del Dashboard operativo (T-24). -->
+          <p class="zone-tasks" data-test="zone-tasks-pending">Tareas por zona · lo habilita T-24</p>
         </UiPanel>
       </template>
     </UiDetailLayout>
+
+    <TaskDialogs :workflow="workflow" />
   </section>
 </template>
 
