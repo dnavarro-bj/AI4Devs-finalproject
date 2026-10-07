@@ -1,7 +1,7 @@
 # F.3 - Consultar cuidados pendientes
 
 **Tipo:** Must-Have
-**Estado:** **Parcial** — la base está en las alertas de «sin revisar» y «cuidado vencido» (T-23); falta el Dashboard operativo (`dashboard-operativo`, T-24)
+**Estado:** **Construida** (`alertas-con-ciclo-de-vida` y `dashboard-operativo`, T-23 y T-24): las plantas sin revisar y los cuidados vencidos salen de las alertas y el Dashboard las cuenta
 **Ticket:** [T-24](../tickets/T-24-dashboard-operativo-y-trabajo-por-lote.md)
 
 > Es la base del Dashboard operativo: la portada responde «¿qué requiere mi atención?», no muestra métricas decorativas.

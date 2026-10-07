@@ -81,6 +81,35 @@ class JpaLocationHierarchy : LocationHierarchy {
     }
   }
 
+  override fun pendingTaskCounts(ids: Collection<LocationId>): Map<LocationId, Long> {
+    if (ids.isEmpty()) return emptyMap()
+    val rows = entityManager.createNativeQuery(
+      """
+      WITH RECURSIVE down(root_id, id, depth) AS (
+        SELECT l.id, l.id, 0 FROM location l WHERE l.id IN (:ids)
+        UNION ALL
+        SELECT d.root_id, c.id, d.depth + 1
+          FROM down d JOIN location c ON c.parent_id = d.id
+         WHERE d.depth < $MAX_DEPTH
+      ),
+      reached(root_id, task_id) AS (
+        SELECT d.root_id, t.id FROM down d JOIN task t ON t.location_id = d.id AND t.status = 'pendiente'
+        UNION
+        SELECT d.root_id, t.id
+          FROM down d
+          JOIN plant p ON p.location_id = d.id
+          JOIN task_plant tp ON tp.plant_id = p.id
+          JOIN task t ON t.id = tp.task_id AND t.status = 'pendiente'
+      )
+      SELECT l.id, count(r.task_id) FROM location l LEFT JOIN reached r ON r.root_id = l.id WHERE l.id IN (:ids) GROUP BY l.id
+      """.trimIndent(),
+    ).setParameter("ids", ids.map { it.id }).resultList
+    return rows.associate { row ->
+      val (id, total) = row as Array<*>
+      LocationId.from((id as Number).toLong()) to (total as Number).toLong()
+    }
+  }
+
   override fun subtreeIds(id: LocationId): Set<LocationId> {
     val rows = entityManager.createNativeQuery(
       """

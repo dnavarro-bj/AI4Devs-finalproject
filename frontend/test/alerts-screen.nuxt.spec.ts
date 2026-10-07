@@ -97,6 +97,25 @@ describe('bandeja de alertas', () => {
     expect(wrapper.findAll('[data-test="alert-card"]')[0]!.attributes('data-id')).toBe('1')
   })
 
+  it('llegar con ?source= aplica el origen como filtro a la vista y quitable (así abre el Dashboard «sin revisar»)', async () => {
+    const wrapper = await open('/alerts?source=sin_revisar&status=open')
+
+    expect(alertsApiService.list).toHaveBeenCalledWith(expect.objectContaining({ source: 'sin_revisar' }))
+    expect((wrapper.find('[data-test="filter-origin"]').element as HTMLSelectElement).value).toBe('sin_revisar')
+    expect(states(wrapper)).toEqual(['nueva'])
+
+    await wrapper.find('[data-test="filter-origin"]').setValue('')
+    await flush()
+    expect(wrapper.findAll('[data-test="alert-card"]').length).toBeGreaterThan(1)
+  })
+
+  it('un ?source= que no es un origen se ignora sin romper la bandeja', async () => {
+    const wrapper = await open('/alerts?source=inventado')
+
+    expect((wrapper.find('[data-test="filter-origin"]').element as HTMLSelectElement).value).toBe('')
+    expect(wrapper.findAll('[data-test="alert-card"]')).toHaveLength(4)
+  })
+
   it('no hay ninguna marca de maqueta ni de ticket', async () => {
     const wrapper = await open()
 

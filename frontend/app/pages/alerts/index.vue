@@ -19,7 +19,7 @@ import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import { useAlerts } from '@features/alerts/composables/useAlerts'
 import { useAlertActions } from '@features/alerts/composables/useAlertActions'
 import { taskInitialFromAlert } from '@features/alerts/mappers/alert.mapper'
-import { ALERT_STATUSES, type Alert } from '@features/alerts/types/alert.types'
+import { ALERT_SOURCES, ALERT_STATUSES, type Alert } from '@features/alerts/types/alert.types'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 
 useHead({ title: 'Cactify · Alertas' })
@@ -40,6 +40,13 @@ const {
 const status = one(route.query.status)
 if (status && (status === 'all' || status === 'open' || (ALERT_STATUSES as string[]).includes(status))) {
   filters.state = status
+}
+
+// El Dashboard abre «plantas sin revisar» con `?source=sin_revisar`: el origen entra como un filtro
+// más, a la vista y quitable en su selector. Uno que no es un origen se ignora.
+const source = one(route.query.source)
+if (source && (ALERT_SOURCES as string[]).includes(source)) {
+  filters.source = source
 }
 
 const actions = useAlertActions()

@@ -1,3 +1,63 @@
+## MODIFIED Requirements
+
+### Requirement: Dashboard de trabajo
+
+La aplicación SHALL abrir en un Dashboard con la composición de la pantalla `dashboard` del prototipo: cabecera con **la fecha de hoy** y la acción de crear una tarea; debajo, una **fila de acciones rápidas**; a continuación una **fila de cuatro cifras navegables** —tareas vencidas, tareas para hoy, alertas abiertas y plantas sin revisar—; y debajo dos columnas: la **agenda** («Siguiente trabajo») como columna principal y, en la lateral, las **alertas** más graves, la **carga por zona** y la **actividad reciente**.
+
+El Dashboard SHALL presentar **trabajo pendiente, no métricas decorativas**: lo vencido va primero y cada cifra SHALL abrir el listado que representa, no una pantalla genérica. La agenda SHALL agrupar por día con el de hoy destacado, y mostrar de cada tarea su tipo, su prioridad, su título, su destino y su hora o su flexibilidad. La carga por zona SHALL verse como **barra proporcional además de como cifra**, con el número de plantas, de tareas pendientes y de alertas abiertas de cada localización.
+
+La carga por zona SHALL salir **de las localizaciones reales** del API —su nombre y su número de plantas—. Las **tareas** SHALL ser reales: la agenda SHALL mostrar las tareas pendientes más próximas y las cifras de **vencidas** y **para hoy** SHALL contar las del API con la fecha de referencia. Las **alertas** SHALL ser **reales**: la cifra SHALL ser el total de alertas abiertas del API —con un matiz para las críticas— y el bloque lateral SHALL listar las **abiertas más graves**, de la más grave a la más leve y, a igualdad, la más recientemente detectada, cada una con su categoría, su severidad, su título y su destino. **Nada en el Dashboard SHALL aparecer marcado como maqueta ni con un ticket**: el número de tareas por zona sale de `pendingTasks`, «plantas sin revisar» de las alertas abiertas de ese origen y la actividad de `GET /activity`.
+
+#### Scenario: El trabajo pendiente abre la pantalla
+
+- **WHEN** el usuario abre el Dashboard
+- **THEN** lo primero que ve tras la cabecera y las acciones rápidas son las cuatro cifras de trabajo —vencidas, para hoy, alertas abiertas y plantas sin revisar—, antes que cualquier panel
+
+#### Scenario: Una cifra abre su conjunto
+
+- **WHEN** el usuario activa la cifra de tareas vencidas
+- **THEN** llega a la pantalla de tareas **ya filtrada por vencidas**, con el filtro a la vista y quitable, y si activa la de alertas abiertas o la de plantas sin revisar llega a la bandeja con ese conjunto
+
+#### Scenario: La fecha viene de fuera
+
+- **WHEN** se monta el Dashboard con una fecha de referencia dada
+- **THEN** la cabecera, el grupo «hoy» de la agenda y la clasificación de lo vencido se calculan con esa fecha y no con el reloj del navegador
+
+#### Scenario: Carga por zona real
+
+- **WHEN** el API devuelve localizaciones con su número de plantas, de tareas pendientes y de alertas abiertas
+- **THEN** el panel de carga por zona muestra cada localización con los tres números y una barra proporcional a la que más plantas tiene
+
+#### Scenario: Las alertas son reales
+
+- **WHEN** el API tiene alertas abiertas de varias severidades
+- **THEN** la cifra cuenta todas las abiertas, el bloque lateral lista las más graves primero y ninguna aparece marcada como ejemplo
+
+#### Scenario: Sin alertas
+
+- **WHEN** no hay ninguna alerta abierta
+- **THEN** la cifra es 0 y el bloque lo dice, sin simular alertas
+
+#### Scenario: Lo que falta, declarado
+
+- **WHEN** se abre el Dashboard
+- **THEN** ningún bloque ni cifra aparece marcado con un ticket ni como dato de ejemplo
+
+#### Scenario: Las tareas son reales
+
+- **WHEN** hay tareas pendientes vencidas, de hoy y futuras
+- **THEN** la agenda las muestra, las cifras de vencidas y de hoy las cuentan, y ninguna aparece marcada como ejemplo
+
+#### Scenario: Error de carga de las alertas
+
+- **WHEN** el API de alertas falla
+- **THEN** el bloque de alertas y su cifra lo explican con la opción de reintentar, y el resto del Dashboard sigue visible
+
+#### Scenario: Error de carga de las localizaciones
+
+- **WHEN** el API de localizaciones falla
+- **THEN** el panel de carga por zona lo explica con la opción de reintentar y el resto del Dashboard sigue visible
+
 ## ADDED Requirements
 
 ### Requirement: Las cifras del Dashboard abren su conjunto

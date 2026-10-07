@@ -1,3 +1,4 @@
+import { relativeDay } from '@shared/utils/relativeDay'
 import type { TaskInitial } from '@features/tasks/composables/useTaskWorkflow'
 import type { TaskPriority, TaskType } from '@features/tasks/types/task.types'
 import {
@@ -12,7 +13,6 @@ import {
  * fecha de referencia entra por parámetro, como en el kit (ningún componente consulta el reloj).
  */
 
-const MS_PER_DAY = 86_400_000
 const SHORT_DATE = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const TITLE_MAX = 80
 const FULL_DATE_TIME = new Intl.DateTimeFormat('es-ES', {
@@ -57,13 +57,6 @@ export function fullDateTime(iso: string): string {
 
 /** Cuándo fue la última detección, en una palabra: «hoy», «ayer» o «hace 3 días». */
 export const lastSeenText = (alert: Alert, today: string): string => relativeDay(alert.lastDetectedAt, today)
-
-function relativeDay(iso: string, today: string): string {
-  const days = Math.round((dayOf(`${today}T00:00:00Z`) - dayOf(iso)) / MS_PER_DAY)
-  if (days <= 0) return 'hoy'
-  if (days === 1) return 'ayer'
-  return `hace ${days} días`
-}
 
 /** «Detectada ayer», o «Detectada 4 veces · última hace 2 días» cuando la alerta se repitió. */
 export function detectedText(alert: Alert, today: string): string {

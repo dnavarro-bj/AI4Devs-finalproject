@@ -1,15 +1,16 @@
 <script setup lang="ts">
 /**
  * El Dashboard (§4), con la composición de la pantalla `dashboard` del prototipo: «Trabajo de hoy».
- * Cabecera con la fecha y la acción de crear; **tres cifras navegables** antes que cualquier panel;
- * y dos columnas: la **agenda** como principal y, a un lado, las **alertas** y la **carga por zona**.
+ * Cabecera con la fecha y la acción de crear; **acciones rápidas**; **cuatro cifras navegables** antes
+ * que cualquier panel; y dos columnas: la **agenda** como principal y, a un lado, las **alertas**, la
+ * **carga por zona** y la **actividad reciente**.
  *
  * Presenta **trabajo pendiente, no métricas decorativas**: lo vencido va primero y cada cifra abre el
- * conjunto que cuenta, ya filtrado.
+ * conjunto que cuenta, ya filtrado. **Todo es real y nada lleva marca de maqueta.** Cada bloque carga
+ * en paralelo y falla solo, con su error y su reintento.
  *
- * **Real casi todo, y lo que no, marcado en su sitio.** Reales: las tareas —la agenda y las cifras de
- * vencidas y de hoy—, las alertas —la cifra y las más graves— y la carga por zona. De ejemplo solo el
- * número de tareas por zona (T-24), marcado en la propia tarjeta.
+ * Apartado del prototipo, que no trae estas dos piezas: la fila de acciones rápidas (§4.2) y el panel
+ * de actividad reciente (§4.1), y la cuarta cifra, «plantas sin revisar» (historia 1.16).
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useDashboard } from '@features/dashboard/composables/useDashboard'
@@ -22,12 +23,22 @@ useBreadcrumbs().set([])
 
 const {
   today, load, loadZones, zonesError,
-  overdueCount, todayCount, openAlertCount, overdueOverAWeek, periodToday, criticalAlerts,
+  overdueCount, todayCount, openAlertCount, unreviewedCount, overdueOverAWeek, periodToday, criticalAlerts,
   dateLabel, agenda, alertsToShow, busiestZones, maxZoneLoad, timing, alertsError, loadAlerts,
+  tasksError, loadTasks, activityItems, activityError, loadActivity,
 } = useDashboard()
 
 // Crear y completar son de la feature de tareas: aquí solo se abren y se recarga lo que cambió.
 const workflow = useTaskWorkflow(load)
+
+// «Registrar un cuidado por lote» abre el diálogo de lote **sin alcance**: lo primero que pide es la
+// localización, y después dice cuántas plantas afecta. Al terminar se recarga todo: una lectura puede
+// haber abierto alertas y el lote ya figura en la actividad.
+const batchOpen = ref(false)
+function batchDone() {
+  batchOpen.value = false
+  load()
+}
 const asTask = (entry: unknown) => (entry as { task: Task }).task
 
 const alertSignals = computed(() => alertsToShow.value.map((alert) => {
@@ -59,13 +70,22 @@ onMounted(load)
       </template>
     </UiPageHeader>
 
+    <nav class="quick-actions" data-test="quick-actions" aria-label="Acciones rápidas">
+      <UiButton variant="secondary" to="/plants/new" data-test="quick-add-plant"><span aria-hidden="true">＋</span> Añadir planta</UiButton>
+      <UiButton variant="secondary" data-test="quick-new-task" @click="workflow.openCreate()"><span aria-hidden="true">＋</span> Crear tarea</UiButton>
+      <UiButton variant="secondary" data-test="quick-batch" @click="batchOpen = true">Registrar un cuidado por lote</UiButton>
+      <UiButton variant="secondary" to="/tasks" data-test="quick-agenda">Abrir la agenda</UiButton>
+      <UiButton variant="secondary" to="/locations" data-test="quick-locations">Abrir las localizaciones</UiButton>
+      <UiButton variant="secondary" to="/alerts" data-test="quick-alerts">Revisar alertas</UiButton>
+    </nav>
+
     <div class="summary" data-test="work-summary" role="group" aria-label="Resumen de trabajo">
       <UiStatTile
         :value="overdueCount"
         label="Vencidas"
         :context="overdueOverAWeek ? `${overdueOverAWeek} desde hace más de una semana` : 'Ninguna con más de una semana'"
         to="/tasks?due=overdue"
-        tone="danger"
+        :tone="overdueCount ? 'danger' : 'neutral'"
         layout="row"
       />
       <UiStatTile
@@ -79,8 +99,16 @@ onMounted(load)
         :value="openAlertCount"
         label="Alertas abiertas"
         :context="criticalAlerts ? `${criticalAlerts} requiere atención inmediata` : 'Ninguna crítica'"
-        to="/alerts"
-        tone="warning"
+        to="/alerts?status=open"
+        :tone="openAlertCount ? 'warning' : 'neutral'"
+        layout="row"
+      />
+      <UiStatTile
+        :value="unreviewedCount ?? '—'"
+        label="Plantas sin revisar"
+        :context="unreviewedCount === null ? 'No se ha podido contar' : unreviewedCount ? 'Alertas de seguimiento abiertas' : 'Ninguna alerta de seguimiento abierta'"
+        to="/alerts?source=sin_revisar&status=open"
+        :tone="unreviewedCount ? 'warning' : 'neutral'"
         layout="row"
       />
     </div>
@@ -90,7 +118,13 @@ onMounted(load)
         <template #action>
           <UiButton variant="text" to="/tasks">Ver agenda</UiButton>
         </template>
-        <UiDateAgenda :entries="agenda" :today="today" empty-message="No hay trabajo próximo.">
+        <UiInlineError v-if="tasksError" data-test="tasks-error">
+          {{ tasksError }}
+          <template #action>
+            <UiButton variant="secondary" data-test="retry-tasks" @click="loadTasks">Reintentar</UiButton>
+          </template>
+        </UiInlineError>
+        <UiDateAgenda v-else :entries="agenda" :today="today" empty-message="No hay trabajo próximo.">
           <template #entry="{ entry }">
             <TaskRow
               :task="asTask(entry)"
@@ -129,7 +163,7 @@ onMounted(load)
             <li v-for="zone in busiestZones" :key="zone.id" data-test="zone-load">
               <NuxtLink :to="`/locations/${zone.id}`">
                 <strong>{{ zone.name }}</strong>
-                <small>{{ zone.plantCountTotal }} plantas</small>
+                <small>{{ zone.summary }}</small>
               </NuxtLink>
               <UiProgressBar
                 :value="zone.plantCountTotal"
@@ -139,17 +173,41 @@ onMounted(load)
               />
             </li>
           </ul>
-          <!-- El prototipo cuenta también las tareas de cada zona: agregarlas por localización es del Dashboard operativo (T-24). -->
-          <p class="zone-tasks" data-test="zone-tasks-pending">Tareas por zona · lo habilita T-24</p>
+        </UiPanel>
+
+        <UiPanel as="article" eyebrow="Actividad" title="Actividad reciente" data-test="activity-panel">
+          <UiInlineError v-if="activityError" data-test="activity-error">
+            {{ activityError }}
+            <template #action>
+              <UiButton variant="secondary" data-test="retry-activity" @click="loadActivity">Reintentar</UiButton>
+            </template>
+          </UiInlineError>
+          <p v-else-if="!activityItems.length" class="no-alerts" data-test="activity-empty">Todavía no se ha hecho nada.</p>
+          <UiSignalList v-else :items="activityItems" label="Actividad reciente" data-test="dashboard-activity" />
         </UiPanel>
       </template>
     </UiDetailLayout>
 
     <TaskDialogs :workflow="workflow" />
+    <BatchDialog
+      :open="batchOpen"
+      action="reading"
+      choose-action
+      :scope="null"
+      @done="batchDone"
+      @close="batchOpen = false"
+    />
   </section>
 </template>
 
 <style scoped>
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
 .summary {
   display: grid;
   gap: var(--space-3);
@@ -177,13 +235,8 @@ onMounted(load)
 }
 
 .zones small,
-.zone-tasks,
 .no-alerts {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
-}
-
-.zone-tasks {
-  margin: var(--space-3) 0 0;
 }
 </style>

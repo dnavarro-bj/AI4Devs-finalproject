@@ -88,14 +88,14 @@ Funcionalidades construidas y utilizables en esta entrega:
 * **Inventario a escala (T-21)**: búsqueda por código, apodo o especie, filtros combinables y orden por claves públicas, con el estado de la pantalla en la URL; **vistas guardadas** (filtros, orden y columnas) y **grupos dinámicos de especies**; **buscador global** real sobre plantas, especies, localizaciones y etiquetas; y **exportación a CSV** del resultado filtrado.
 * **Tareas (T-22)**: agenda, calendario y completadas con tareas de uno o varios ejemplares o de una localización. Una tarea es una intención, no un cuidado: al **completarla** se muestra el alcance exacto, se pueden excluir excepciones y cada planta incluida recibe su evento (y, si se quiere, el registro de agua, trasplante o poda).
 * **Alertas con ciclo de vida (T-23)**: detección por rango efectivo, por tiempo sin revisar y por cuidado vencido, con bandeja, escalada sin duplicados y tarea desde la alerta.
-* **Trabajo por lote (T-24, primera mitad)**: registrar una lectura (riego), una intervención o un comentario en todas las plantas seleccionadas, de una localización o del resultado de un filtro, con el **número exacto de plantas declarado antes de guardar** y la operación visible en la cronología de cada ficha.
+* **Dashboard operativo (T-24)**: cuatro cifras de trabajo que abren su listado filtrado, carga por zona con plantas, tareas y alertas, **actividad reciente** (cada lote es una línea) y acciones rápidas, incluida la del cuidado por lote.
+* **Trabajo por lote (T-24)**: registrar una lectura (riego), una intervención o un comentario en todas las plantas seleccionadas, de una localización o del resultado de un filtro, con el **número exacto de plantas declarado antes de guardar** y la operación visible en la cronología de cada ficha.
 * **Sistema de diseño propio**: más de 50 componentes públicos reutilizables, documentados en la galería viva `/ui-kit`, incluidos tabla, filtros, paginación, árbol, cronología, agenda, calendario, diálogo y patrones multimedia (`UiTreeNode` es una pieza interna del árbol y no se cuenta aparte).
 
 La visión completa del producto —incluidos personalización por ejemplar, fotografías, tareas,
 alertas con ciclo de vida, localizaciones jerárquicas e inventario a escala— está documentada en
 [la definición funcional y de UX](docs/producto/definicion-funcional-y-ux.md). Buena parte ya está
-construida (ver arriba); **siguen pendientes** las fotografías (T-19), el Dashboard operativo
-completo (T-24, segunda mitad) y la importación y la configuración (T-29), y no se presentan como
+construida (ver arriba); **siguen pendientes** las fotografías (T-19) y la importación y la configuración (T-29), y no se presentan como
 implementados.
 
 **Explícitamente fuera del alcance del MVP** (quedan documentadas como evolución futura del producto, no como parte de esta entrega):

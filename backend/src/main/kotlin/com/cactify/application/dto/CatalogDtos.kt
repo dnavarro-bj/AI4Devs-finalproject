@@ -28,6 +28,8 @@ data class LocationSummaryResponse(
   val plantCountTotal: Long,
   /** Las alertas abiertas de ella, de sus descendientes y de los ejemplares que alberga, con la mayor severidad. */
   val openAlerts: AlertSummaryResponse = AlertSummaryResponse(0, null),
+  /** Las tareas pendientes que la afectan: dirigidas a ella, a lo que contiene o a plantas que están dentro. */
+  val pendingTasks: Long = 0,
 )
 
 /** Un ancestro en la ruta de una localización: lo justo para un breadcrumb navegable. */
@@ -67,6 +69,8 @@ data class LocationDetailResponse(
   val openAlerts: AlertSummaryResponse = AlertSummaryResponse(0, null),
   /** Solo las de la localización y las de sus ejemplares directos, para distinguirlas de las de dentro. */
   val ownOpenAlerts: AlertSummaryResponse = AlertSummaryResponse(0, null),
+  /** Las tareas pendientes que la afectan, con las de sus sublocalizaciones y las de las plantas de dentro. */
+  val pendingTasks: Long = 0,
 )
 
 data class TagResponse(val id: String, val name: String)

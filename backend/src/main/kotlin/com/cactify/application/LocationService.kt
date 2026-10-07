@@ -98,6 +98,7 @@ class LocationService(
     val totals = hierarchy.totalPlantCounts(ids)
     val paths = hierarchy.pathsOf(ids)
     val alerts = alertQueries.openSummaryByLocation(ids, withDescendants = true)
+    val pending = hierarchy.pendingTaskCounts(ids)
 
     return PageResponse.of(page) {
       LocationSummaryResponse(
@@ -111,6 +112,7 @@ class LocationService(
         plantCount = direct[it.id] ?: 0,
         plantCountTotal = totals[it.id] ?: 0,
         openAlerts = (alerts[it.id] ?: AlertSummary.NONE).toResponse(),
+        pendingTasks = pending[it.id] ?: 0,
       )
     }
   }
@@ -214,6 +216,7 @@ class LocationService(
       plantCountTotal = totals[id] ?: 0,
       openAlerts = alertTotals.toResponse(),
       ownOpenAlerts = alertOwn.toResponse(),
+      pendingTasks = hierarchy.pendingTaskCounts(listOf(id))[id] ?: 0,
     )
   }
 

@@ -31,6 +31,8 @@ export interface LocationSummary extends Location {
   plantCountTotal: number
   /** Alertas abiertas totales —propias, de las sublocalizaciones y de sus ejemplares—. */
   openAlerts?: OpenAlerts
+  /** Tareas pendientes que afectan a la localización —propias, de sus sublocalizaciones y de plantas que están en ellas—. */
+  pendingTasks?: number
 }
 
 /** Un ancestro en la ruta de la ficha, de la raíz hacia abajo. */

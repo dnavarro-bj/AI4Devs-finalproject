@@ -25,6 +25,13 @@ interface LocationHierarchy {
   /** Cuántos ejemplares tiene cada una **contando los de todos sus descendientes**; las vacías, con cero. */
   fun totalPlantCounts(ids: Collection<LocationId>): Map<LocationId, Long>
 
+  /**
+   * Cuántas tareas **pendientes** afectan a cada una, con su descendencia: las dirigidas a ella o a una
+   * sublocalización, y las dirigidas a plantas expresas que están ahora en alguna de ellas. Una tarea
+   * cuenta **una vez** por localización aunque la alcance por varias vías. Las vacías, con cero.
+   */
+  fun pendingTaskCounts(ids: Collection<LocationId>): Map<LocationId, Long>
+
   /** Los identificadores del subárbol de una localización, **incluida ella misma**; vacío si no existe. */
   fun subtreeIds(id: LocationId): Set<LocationId>
 
