@@ -19,7 +19,7 @@ import {
   isOpen,
   type Alert,
 } from '../types/alert.types'
-import { alertSubject, closedText, detectedText, severityLevel, severityMarkLevel } from '../mappers/alert.mapper'
+import { alertSubject, closedText, detectedText, fullDateTime, severityLevel, severityMarkLevel } from '../mappers/alert.mapper'
 
 const props = defineProps<{ alert: Alert, today: string }>()
 defineEmits<{ createTask: [], review: [], resolve: [], dismiss: [] }>()
@@ -53,7 +53,7 @@ const closed = computed(() => closedText(props.alert))
           {{ subject.label }}<template v-if="subject.detail"> · <em>{{ subject.detail }}</em></template>
         </NuxtLink>
       </p>
-      <small>{{ subject.where }} · <span data-test="alert-detected">{{ detectedText(alert, today) }}</span></small>
+      <small>{{ subject.where }} · <span data-test="alert-detected">{{ detectedText(alert, today) }}</span><template v-if="fullDateTime(alert.lastDetectedAt)"> · <time :datetime="alert.lastDetectedAt" data-test="alert-detected-at">{{ fullDateTime(alert.lastDetectedAt) }}</time></template></small>
       <p v-if="alert.recommendedAction && isOpen(alert.status)" class="alert-card__action" data-test="alert-recommendation">
         {{ alert.recommendedAction }}
       </p>

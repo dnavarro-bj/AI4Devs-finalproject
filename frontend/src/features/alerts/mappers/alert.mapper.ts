@@ -15,6 +15,9 @@ import {
 const MS_PER_DAY = 86_400_000
 const SHORT_DATE = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 const TITLE_MAX = 80
+const FULL_DATE_TIME = new Intl.DateTimeFormat('es-ES', {
+  day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
+})
 
 const dayOf = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`)
 
@@ -40,6 +43,16 @@ export function alertSubject(alert: Alert): AlertSubject {
   }
   const location = alert.location!
   return { kind: 'location', label: location.name, detail: '', to: `/locations/${location.id}`, where: location.path }
+}
+
+/**
+ * El instante completo —«7 de octubre de 2026, 16:35»—, en la hora del navegador. Acompaña a «hoy» o
+ * «ayer», que dicen cuánto hace pero no cuándo. Un instante que no se puede leer devuelve cadena vacía
+ * en vez de romper la tarjeta.
+ */
+export function fullDateTime(iso: string): string {
+  const time = Date.parse(iso)
+  return Number.isNaN(time) ? '' : FULL_DATE_TIME.format(new Date(time)).replace(' a las ', ', ')
 }
 
 /** Cuándo fue la última detección, en una palabra: «hoy», «ayer» o «hace 3 días». */

@@ -4,6 +4,7 @@ import {
   alertSubject,
   closedText,
   detectedText,
+  fullDateTime,
   severityLevel,
   severityMarkLevel,
   taskInitialFromAlert,
@@ -123,5 +124,17 @@ describe('taskInitialFromAlert', () => {
 
     expect(initial.locationId).toBe('9')
     expect(initial.plants).toBeUndefined()
+  })
+})
+
+describe('fullDateTime', () => {
+  it('la fecha completa con el mes en palabras, el año y la hora', () => {
+    const text = fullDateTime('2026-10-07T14:35:00Z')
+
+    expect(text).toMatch(/^\d{1,2} de octubre de 2026, \d{2}:\d{2}$/)
+  })
+
+  it('un instante inválido no rompe la tarjeta', () => {
+    expect(fullDateTime('no es una fecha')).toBe('')
   })
 })

@@ -135,6 +135,16 @@ describe('bandeja de alertas', () => {
     expect(card(wrapper, '2').find('[data-test="alert-detected"]').text()).toBe('Detectada ayer')
   })
 
+  it('junto a «hoy» o «ayer» la tarjeta da la fecha completa de la última detección', async () => {
+    const wrapper = await open()
+
+    const when = card(wrapper, '1').find('[data-test="alert-detected-at"]')
+    expect(when.exists()).toBe(true)
+    expect(when.text()).toMatch(/^\d{1,2} de [a-záéíóú]+ de \d{4}, \d{2}:\d{2}$/)
+    expect(when.element.tagName).toBe('TIME')
+    expect(when.attributes('datetime')).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
   it('una alerta de localización muestra su nombre y su ruta y lleva a su ficha', async () => {
     const wrapper = await open()
 
