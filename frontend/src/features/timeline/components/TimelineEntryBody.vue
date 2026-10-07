@@ -11,6 +11,7 @@
  * Un tipo desconocido no pinta cuerpo: la tarjeta ya lleva su título y su fecha.
  */
 import { toTimelineEvents } from '@features/care-records/composables/usePlantHistory'
+import { ALERT_SEVERITY_LABELS } from '@features/alerts/types/alert.types'
 import { TASK_TYPE_LABELS, type TaskType } from '@features/tasks/types/task.types'
 import { BLOOM_STATUS_LABELS, bloomInterval } from '../mappers/timeline.mapper'
 import type { TimelineEntry } from '../types/timeline.types'
@@ -74,6 +75,16 @@ function editedLabel(at: string): string {
     <p v-else-if="entry.type === 'tarea' && entry.task" class="entry-body__text" data-test="task-body">
       {{ entry.task.title }} · {{ TASK_TYPE_LABELS[entry.task.type as TaskType] ?? entry.task.type }}
     </p>
+
+    <div v-else-if="entry.type === 'alerta' && entry.alert" class="entry-body__alert" :data-test="`alert-entry-${entry.id}`">
+      <p class="entry-body__text">
+        {{ ALERT_SEVERITY_LABELS[entry.alert.severity] ?? entry.alert.severity }} · {{ entry.alert.reason }}
+      </p>
+      <p v-if="entry.alert.comment" class="entry-body__text entry-body__text--comment" data-test="alert-entry-comment">
+        {{ entry.alert.comment }}
+      </p>
+      <NuxtLink :to="`/alerts?plant=${plantId}&status=all`" class="entry-body__meta" data-test="alert-entry-link">Ver las alertas del ejemplar</NuxtLink>
+    </div>
 
     <small v-if="entry.batchId" class="entry-body__meta" data-test="batch-note">
       Operación sobre varias plantas

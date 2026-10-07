@@ -5,6 +5,8 @@
  * `localizaciones-jerarquicas`): el frontend nunca los mantiene, solo los pinta.
  */
 
+import type { OpenAlerts } from '@features/alerts/types/alert.types'
+
 /** La referencia mínima a una localización: lo que otras entidades llevan embebido. */
 export interface Location {
   id: string
@@ -27,6 +29,8 @@ export interface LocationSummary extends Location {
   capacity: number | null
   plantCount: number
   plantCountTotal: number
+  /** Alertas abiertas totales —propias, de las sublocalizaciones y de sus ejemplares—. */
+  openAlerts?: OpenAlerts
 }
 
 /** Un ancestro en la ruta de la ficha, de la raíz hacia abajo. */
@@ -53,6 +57,9 @@ export interface LocationDetail extends Location {
   children: LocationChild[]
   plantCount: number
   plantCountTotal: number
+  openAlerts?: OpenAlerts
+  /** Solo las de este espacio y las de sus ejemplares directos. */
+  ownOpenAlerts?: OpenAlerts
 }
 
 /** El cuerpo del alta y de la corrección: el `PUT` es reemplazo completo. */

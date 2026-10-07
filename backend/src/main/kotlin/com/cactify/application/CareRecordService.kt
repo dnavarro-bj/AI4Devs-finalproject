@@ -24,6 +24,7 @@ class CareRecordService(
   private val careRecordRepository: CareRecordRepository,
   private val plantRepository: PlantRepository,
   private val aiRecommendationRepository: AIRecommendationRepository,
+  private val alertDetection: AlertDetectionService,
   private val clock: Clock,
   @Value("\${cactify.care-records.max-future-skew}") private val maxFutureSkew: Duration,
 ) {
@@ -54,6 +55,8 @@ class CareRecordService(
         maxFutureSkew = maxFutureSkew,
       ),
     )
+    // En la misma transacción: una alerta aparece con la lectura o no aparece (T-23).
+    alertDetection.onReading(record)
     // Recién creada: todavía no puede tener recomendación.
     return record.toResponse(null)
   }

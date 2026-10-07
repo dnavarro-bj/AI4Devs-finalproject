@@ -19,7 +19,8 @@ import { plantGlance } from '@features/plants/composables/plantGlance'
 import { ORIGIN_LABELS, germinationLabel } from '@features/plants/mappers/plantProfile'
 import { useOnVisible } from '@shared/composables/useOnVisible'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
-import { MOCK_NOTICE } from '@features/plants/mocks/plantDetail.mock'
+import { useAlertActions } from '@features/alerts/composables/useAlertActions'
+import type { AlertInput } from '@features/alerts/types/alert.types'
 import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 import { overdueText, taskTiming } from '@features/tasks/mappers/task.mapper'
@@ -88,7 +89,6 @@ const germination = computed(() => plant.value
 const acquired = computed(() => plant.value?.acquiredOn
   ? new Date(`${plant.value.acquiredOn}T00:00:00Z`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   : null)
-const noticeDismissed = ref(false)
 
 /*
  * Mientras la planta carga, el último nivel es neutro: no se inventa un nombre ni se deja el
@@ -174,6 +174,26 @@ function openDialog(state: DialogState) {
 
 const closeDialog = () => { dialog.value = null }
 
+/* Anotar una alerta sobre el ejemplar: la ficha la guarda y refresca su aviso y su cronología. */
+const alertActions = useAlertActions()
+const alertDialogOpen = ref(false)
+
+function openAlertDialog() {
+  alertActions.reset()
+  addOpen.value = false
+  alertDialogOpen.value = true
+}
+
+async function submitAlert(input: Omit<AlertInput, 'plantId' | 'locationId'>) {
+  const created = await alertActions.create({ ...input, plantId: plantId })
+  if (!created) return
+  alertDialogOpen.value = false
+  // El aviso vive en el detalle de la planta y la apertura, en la cronología: las dos se ponen al día.
+  const fresh = await detail(plantId)
+  if (fresh.success) plant.value = fresh.data!
+  await timeline.reload()
+}
+
 function editEntry(entry: TimelineEntry, source: DialogState['source'] = 'timeline', closing = false) {
   const kind = ({ comentario: 'comment', intervencion: 'intervention', floracion: 'bloom' } as const)[entry.type as 'comentario']
   if (kind) openDialog({ kind, source, entry, closing })
@@ -242,16 +262,7 @@ async function confirmRemove() {
     <template v-else-if="plant">
       <PlantHeader :plant="plant" @register-reading="readingOpen = true" @create-task="createTaskHere" @change-status="statusOpen = true" />
 
-      <UiNotice
-        v-if="!noticeDismissed"
-        severity="warning"
-        :title="MOCK_NOTICE.title"
-        data-mock="true"
-        dismissible
-        @dismiss="noticeDismissed = true"
-      >
-        {{ MOCK_NOTICE.body }} <em>(dato de ejemplo hasta T-23)</em>
-      </UiNotice>
+      <PlantAlertsNotice :alerts="plant.openAlerts ?? []" :plant-id="plant.id" />
 
       <UiTabs
         v-model="tab"
@@ -285,6 +296,7 @@ async function confirmRemove() {
               <UiButton variant="text" data-test="add-comment" @click="openDialog({ kind: 'comment', source: 'timeline' })">Comentario</UiButton>
               <UiButton variant="text" data-test="add-intervention" @click="openDialog({ kind: 'intervention', source: 'timeline' })">Intervención</UiButton>
               <UiButton variant="text" data-test="add-bloom-event" @click="openDialog({ kind: 'bloom', source: 'timeline' })">Floración</UiButton>
+              <UiButton variant="text" data-test="add-alert" @click="openAlertDialog">Alerta</UiButton>
             </div>
 
             <p v-if="timeline.loading.value" role="status">Cargando el historial…</p>
@@ -475,6 +487,15 @@ async function confirmRemove() {
       </UiDialog>
     </template>
 
+    <AlertCreateDialog
+      v-if="plant"
+      :open="alertDialogOpen"
+      :subject-label="`${plant.code} · ${plant.nickname}`"
+      :busy="alertActions.submitting.value"
+      :error="alertActions.error.value"
+      @submit="submitAlert"
+      @close="alertDialogOpen = false"
+    />
     <TaskDialogs :workflow="taskWorkflow" />
   </section>
 </template>

@@ -5,8 +5,10 @@ import { createApiDouble, settle } from './helpers/apiDouble'
 import DashboardPage from '../app/pages/index.vue'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import { installTasksFake } from './support/tasksFake'
+import { installAlertsFake, makeAlert, plantSubject, resetAlertsFake } from './support/alertsFake'
+import { alertsApiService } from '@features/alerts/services/alerts.api.service'
 import { plantsApiService } from '@features/plants/services/plants.api.service'
-import { ok } from '@shared/types/api.types'
+import { ok, fail, domainError, ErrorCodes } from '@shared/types/api.types'
 import type { LocationSummary } from '@features/locations/types/location.types'
 import type { PageResponse } from '@shared/types/api.types'
 
@@ -27,6 +29,13 @@ describe('dashboard de trabajo', () => {
   beforeEach(() => {
     useReferenceDate().value = '2026-10-07'
     installTasksFake()
+    resetAlertsFake([
+      makeAlert({ id: '1', severity: 'media', reason: 'Humedad fuera del rango efectivo', plant: plantSubject('CAT-ASTRO-12', 'Astrophytum asterias', '7') }),
+      makeAlert({ id: '2', severity: 'critica', reason: 'Temperatura por debajo del mínimo', lastDetectedAt: '2026-10-07T08:00:00Z' }),
+      makeAlert({ id: '3', severity: 'baja', status: 'revisada', reason: 'Riego retrasado', plant: plantSubject('CAT-MAMMI-07', 'Mammillaria bocasana', '8') }),
+      makeAlert({ id: '4', severity: 'critica', status: 'resuelta', reason: 'Ya cerrada' }),
+    ])
+    installAlertsFake()
     api.get.mockReset()
     api.get.mockResolvedValue(page([
       { id: '300001', name: 'Invernadero 1', code: 'LOC-I1', parentId: null, path: 'Invernadero 1', locationType: 'invernadero', capacity: null, plantCount: 2, plantCountTotal: 12 },
@@ -102,14 +111,58 @@ describe('dashboard de trabajo', () => {
     expect(wrapper.find('[data-test="agenda-panel"] [data-test="mock-notice"]').exists()).toBe(false)
     const notices = wrapper.findAll('[data-test="mock-notice"]').map((node) => node.text()).join(' ')
     expect(notices).not.toContain('T-22')
-    expect(notices).toContain('cifra de alertas')
   })
 
-  it('lo que sigue siendo de ejemplo lo declara, bloque a bloque y con su ticket', async () => {
+  it('lo único que sigue siendo de ejemplo es el número de tareas por zona, con su ticket', async () => {
     const wrapper = await open()
 
-    expect(wrapper.find('[data-test="alerts-panel"] [data-test="mock-notice"]').text()).toContain('T-23')
     expect(wrapper.find('[data-test="zone-tasks-pending"]').text()).toContain('T-24')
+    expect(wrapper.text()).not.toContain('T-23')
+    expect(wrapper.find('[data-test="alerts-panel"] [data-test="mock-notice"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="mock-notice"]').exists()).toBe(false)
+  })
+
+  it('la cifra de alertas cuenta las abiertas del API y avisa de las críticas', async () => {
+    const wrapper = await open()
+
+    const tile = wrapper.findAll('[data-test="work-summary"] a')[2]!
+    expect(tile.find('.stat-tile__value').text()).toBe('3')
+    expect(tile.text()).toContain('1 requiere atención inmediata')
+  })
+
+  it('el panel de alertas lista las abiertas más graves primero, con su destino', async () => {
+    const wrapper = await open()
+
+    const signals = wrapper.findAll('[data-test="dashboard-alerts"] li')
+    expect(signals).toHaveLength(3)
+    expect(signals[0]!.text()).toContain('Temperatura por debajo del mínimo')
+    expect(signals[0]!.text()).toContain('CAT-FEROC-08')
+    expect(wrapper.find('[data-test="dashboard-alerts"]').text()).not.toContain('Ya cerrada')
+    expect(signals[0]!.find('a').attributes('href')).toBe('/plants/5')
+  })
+
+  it('sin alertas abiertas la cifra es 0 y el panel lo dice', async () => {
+    resetAlertsFake([])
+    const wrapper = await open()
+
+    expect(wrapper.findAll('[data-test="work-summary"] a')[2]!.find('.stat-tile__value').text()).toBe('0')
+    expect(wrapper.findAll('[data-test="work-summary"] a')[2]!.text()).toContain('Ninguna crítica')
+    expect(wrapper.find('[data-test="alerts-empty"]').exists()).toBe(true)
+  })
+
+  it('si fallan las alertas, lo explica en su panel con reintento y el resto sigue visible', async () => {
+    vi.spyOn(alertsApiService, 'list').mockResolvedValueOnce(fail(domainError(ErrorCodes.SERVER_ERROR, 'Sin alertas', 500)))
+    const wrapper = await open()
+
+    expect(wrapper.find('[data-test="alerts-error"]').text()).toContain('Sin alertas')
+    expect(wrapper.find('[data-test="agenda-panel"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="work-summary"]').exists()).toBe(true)
+
+    vi.spyOn(alertsApiService, 'list').mockImplementation((await import('./support/alertsFake')).alertsFakeService.list)
+    await wrapper.find('[data-test="retry-alerts"]').trigger('click')
+    await settle(); await settle()
+    expect(wrapper.find('[data-test="alerts-error"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="dashboard-alerts"] li')).toHaveLength(3)
   })
 
   it('las cifras de vencidas y de hoy las cuenta el API con la fecha de referencia', async () => {

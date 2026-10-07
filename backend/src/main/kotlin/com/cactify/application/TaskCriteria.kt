@@ -1,5 +1,6 @@
 package com.cactify.application
 
+import com.cactify.domain.AlertId
 import com.cactify.domain.LocationId
 import com.cactify.domain.PlantId
 import com.cactify.domain.SpeciesId
@@ -29,12 +30,14 @@ class TaskCriteria(
   val includeDescendants: Boolean = false,
   plant: String? = null,
   species: List<String> = emptyList(),
+  alert: String? = null,
 ) {
   val statuses: Set<TaskStatus> = statuses.map { TaskStatus(it) }.toSet()
   val types: Set<TaskType> = types.map { TaskType(it) }.toSet()
   val priorities: Set<TaskPriority> = priorities.map { TaskPriority(it) }.toSet()
   val locationId: LocationId? = location?.takeIf { it.isNotBlank() }?.let { LocationId.from(it) }
   val plantId: PlantId? = plant?.takeIf { it.isNotBlank() }?.let { PlantId.from(it) }
+  val alertId: AlertId? = alert?.takeIf { it.isNotBlank() }?.let { AlertId.from(it) }
   val speciesIds: Set<SpeciesId> = species.map { SpeciesId.from(it) }.toSet()
   val due: Due? = due?.takeIf { it.isNotBlank() }?.let { Due(it) }
 

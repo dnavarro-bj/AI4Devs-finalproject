@@ -22,6 +22,27 @@ const rows = (): LocationSummary[] => [
   row({ id: '5', name: 'Cuarentena', plantCount: 2, plantCountTotal: 2 }),
 ]
 
+describe('buildLocationTree · alertas', () => {
+  it('un nodo con alertas abiertas las dice en su detalle, con la carga de plantas', () => {
+    const tree = buildLocationTree([
+      row({ id: '1', name: 'Invernadero 1', plantCountTotal: 62, openAlerts: { count: 3, highestSeverity: 'critica' } }),
+      row({ id: '2', name: 'Cuarentena', plantCountTotal: 1, openAlerts: { count: 1, highestSeverity: 'baja' } }),
+    ])
+
+    expect(tree.find((node) => node.id === '1')!.detail).toBe('62 plantas · 3 alertas')
+    expect(tree.find((node) => node.id === '2')!.detail).toBe('1 planta · 1 alerta')
+  })
+
+  it('sin alertas abiertas el detalle sigue siendo solo la carga', () => {
+    const tree = buildLocationTree([
+      row({ id: '1', name: 'A', plantCountTotal: 4, openAlerts: { count: 0 } }),
+      row({ id: '2', name: 'B', plantCountTotal: 4 }),
+    ])
+
+    expect(tree.map((node) => node.detail)).toEqual(['4 plantas', '4 plantas'])
+  })
+})
+
 describe('buildLocationTree', () => {
   it('anida cada localización bajo su padre, sin importar el orden de llegada', () => {
     const tree = buildLocationTree(rows())

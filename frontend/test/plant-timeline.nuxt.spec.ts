@@ -87,10 +87,10 @@ describe('cronología real de la ficha', () => {
   })
 
   it('un tipo desconocido se muestra igualmente', async () => {
-    serve([{ id: '9', type: 'alerta', occurredAt: '2026-09-01T10:00:00Z' }])
+    serve([{ id: '9', type: 'fenomeno', occurredAt: '2026-09-01T10:00:00Z' }])
     const wrapper = await mountPage()
 
-    expect(titles(wrapper)).toEqual(['alerta'])
+    expect(titles(wrapper)).toEqual(['fenomeno'])
   })
 
   it('una tarea completada aparece con su título y su tipo, y no se puede corregir ni retirar', async () => {

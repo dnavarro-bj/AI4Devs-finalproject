@@ -220,13 +220,54 @@ describe('catálogo de localizaciones', () => {
     expect(wrapper.text()).not.toContain('T-18')
   })
 
-  it('el bloque de atención del prototipo queda declarado con su ticket', async () => {
+  const withAlerts = () => nursery().map((row) => ({
+    ...row,
+    ...(row.id === '300001' ? { openAlerts: { count: 3, highestSeverity: 'critica' as const } } : {}),
+    ...(row.id === '300005' ? { openAlerts: { count: 1, highestSeverity: 'baja' as const } } : {}),
+  }))
+
+  it('«Alertas abiertas» suma las de las raíces, enlaza a la bandeja y no lleva marca de ejemplo', async () => {
+    respond(withAlerts())
+    const wrapper = await open()
+
+    const strip = wrapper.find('.metric-strip')
+    expect(strip.text()).toContain('Alertas abiertas')
+    expect(strip.text()).toContain('4')
+    expect(strip.find('a[href="/alerts"]').exists()).toBe(true)
+    expect(strip.find('[data-mock="true"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('T-23')
+  })
+
+  it('el mapa dice las alertas abiertas de cada nodo, en texto', async () => {
+    respond(withAlerts())
+    const wrapper = await open()
+
+    expect(wrapper.find('[data-test="nursery-map"]').text()).toContain('62 plantas · 3 alertas')
+  })
+
+  it('«Requieren atención» lista las zonas con alertas, las más graves primero, y enlaza a su bandeja', async () => {
+    respond(withAlerts())
+    const wrapper = await open()
+
+    const attention = wrapper.find('[data-test="attention"]')
+    expect(attention.attributes('data-mock')).toBeUndefined()
+    const items = attention.findAll('[data-test="attention-item"]')
+    expect(items.map((item) => item.text())).toEqual([
+      expect.stringContaining('Invernadero 1'),
+      expect.stringContaining('Cuarentena'),
+    ])
+    expect(items[0]!.text()).toContain('Crítica')
+    expect(items[0]!.text()).toContain('3 alertas')
+    expect(items[0]!.find('a').attributes('href')).toBe('/alerts?location=300001')
+  })
+
+  it('sin alertas, «Requieren atención» lo dice y no inventa incidencias', async () => {
     respond()
     const wrapper = await open()
 
     const attention = wrapper.find('[data-test="attention"]')
-    expect(attention.attributes('data-mock')).toBe('true')
-    expect(attention.text()).toContain('T-23')
+    expect(attention.find('[data-test="attention-none"]').exists()).toBe(true)
+    expect(attention.findAll('[data-test="attention-item"]')).toHaveLength(0)
   })
 
   it('recorre todas las páginas del catálogo para montar el mapa entero', async () => {

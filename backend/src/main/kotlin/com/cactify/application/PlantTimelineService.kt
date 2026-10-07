@@ -2,6 +2,7 @@ package com.cactify.application
 
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.TimelineEntryResponse
+import com.cactify.domain.AlertTransitionId
 import com.cactify.domain.CareRecordId
 import com.cactify.domain.PlantEventId
 import com.cactify.domain.PlantId
@@ -9,6 +10,7 @@ import com.cactify.domain.PlantMovementId
 import com.cactify.domain.PlantStatusChangeId
 import com.cactify.domain.TimelineType
 import com.cactify.domain.repos.AIRecommendationRepository
+import com.cactify.domain.repos.AlertTransitionRepository
 import com.cactify.domain.repos.CareRecordRepository
 import com.cactify.domain.repos.PlantEventRepository
 import com.cactify.domain.repos.PlantMovementRepository
@@ -34,6 +36,7 @@ class PlantTimelineService(
   private val statusChangeRepository: PlantStatusChangeRepository,
   private val movementRepository: PlantMovementRepository,
   private val eventRepository: PlantEventRepository,
+  private val alertTransitionRepository: AlertTransitionRepository,
 ) {
 
   @Transactional(readOnly = true)
@@ -56,6 +59,10 @@ class PlantTimelineService(
     byType[TimelineType.Movement]?.let { ids ->
       movementRepository.findAllByIdIn(ids.map { PlantMovementId.from(it) })
         .forEach { entries[TimelineType.Movement to it.id.id] = it.toEntry() }
+    }
+    byType[TimelineType.Alert]?.let { ids ->
+      alertTransitionRepository.findAllByIdIn(ids.map { AlertTransitionId.from(it) })
+        .forEach { entries[TimelineType.Alert to it.id.id] = it.toEntry() }
     }
     val eventTypes = listOf(TimelineType.Comment, TimelineType.Intervention, TimelineType.Bloom, TimelineType.Task)
     val eventIds = eventTypes.flatMap { byType[it].orEmpty() }

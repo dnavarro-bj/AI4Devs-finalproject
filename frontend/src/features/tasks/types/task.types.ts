@@ -44,12 +44,16 @@ export interface Task {
   dueFrom: string
   dueTo: string
   notes?: string | null
-  origin: 'manual'
+  origin: 'manual' | 'alerta'
+  /** La alerta de la que nació, si nació de una. */
+  originAlertId?: string | null
   target: TaskTarget
   /** Solo en una tarea completada. */
   completion?: { completedAt: string, affectedPlants: number } | null
   /** El motivo de una omitida o cancelada, si lo hubo. */
   closedReason?: string | null
+  /** Solo al completar una tarea con alerta de origen todavía abierta: se **propone** resolverla. */
+  suggestedAlertResolution?: { alertId: string, status: string } | null
   createdAt: string
   updatedAt: string
 }
@@ -64,6 +68,8 @@ export interface TaskInput {
   notes?: string
   locationId?: string
   plantIds?: string[]
+  /** Crear desde una alerta: queda enlazada y la alerta no cambia de estado. */
+  originAlertId?: string
 }
 
 /** Los criterios del listado, con la convención de ADR-016: repetible es «cualquiera de los valores». */

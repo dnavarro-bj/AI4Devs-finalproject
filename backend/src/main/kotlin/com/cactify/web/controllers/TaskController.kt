@@ -56,6 +56,8 @@ class TaskController(private val taskService: TaskService) {
     /** Tareas que afectan a esa planta: la nombran, o apuntan a su localización o a un ascendiente. */
     @RequestParam(required = false) plant: String?,
     @RequestParam(name = "species", required = false) species: List<String>?,
+    /** Las tareas que nacieron de esa alerta. */
+    @RequestParam(name = "alert", required = false) alert: String?,
     @SortDefault(sort = ["due"]) pageable: Pageable,
   ): PageResponse<TaskResponse> = taskService.search(
     TaskCriteria(
@@ -71,6 +73,7 @@ class TaskController(private val taskService: TaskService) {
       includeDescendants = includeDescendants,
       plant = plant,
       species = species.orEmpty(),
+      alert = alert,
     ),
     pageable,
   )

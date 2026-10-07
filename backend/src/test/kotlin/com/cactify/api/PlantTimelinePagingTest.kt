@@ -93,7 +93,7 @@ class PlantTimelinePagingTest : AbstractTimelineApiTest() {
 
   @Test
   fun `an unknown type answers 400 listing the valid ones`() {
-    timeline(createPlant(), "type" to "alerta")
+    timeline(createPlant(), "type" to "telepatia")
       .andExpect(status().isBadRequest)
       .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("floracion")))
   }

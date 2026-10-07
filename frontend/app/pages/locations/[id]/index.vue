@@ -8,7 +8,8 @@
  * **Real**: la ruta y los breadcrumbs (cada ancestro navegable), los recuentos directo y total, las
  * sublocalizaciones, las características con su ocupación, los ejemplares —con los de las
  * sublocalizaciones incluidos, y paginados— y los últimos movimientos, y las **tareas**: su cifra, el
- * próximo trabajo y crear una tarea aquí. **Marcado con su ticket**: las alertas (T-23).
+ * próximo trabajo y crear una tarea aquí, y las **alertas**: su cifra con la más grave y un bloque
+ * lateral con las abiertas, que enlaza a la bandeja filtrada por esta localización.
  *
  * Los ejemplares se seleccionan **aquí** para moverlos: el diálogo declara el alcance antes de
  * confirmar y, si el API rechaza el lote, la selección se conserva.
@@ -27,6 +28,9 @@ import {
 } from '@features/locations/types/locationVocabulary'
 import { usePlants } from '@features/plants/composables/usePlants'
 import { useRelatedTasks } from '@features/tasks/composables/useRelatedTasks'
+import { useRelatedAlerts } from '@features/alerts/composables/useRelatedAlerts'
+import { ALERT_CATEGORY_LABELS, ALERT_SEVERITY_LABELS } from '@features/alerts/types/alert.types'
+import { alertSubject, severityMarkLevel } from '@features/alerts/mappers/alert.mapper'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 import { taskTiming, overdueText, targetText } from '@features/tasks/mappers/task.mapper'
 import { TASK_TYPE_LABELS } from '@features/tasks/types/task.types'
@@ -48,6 +52,7 @@ const toast = useToast()
 
 /** Las tareas del lugar: dirigidas a él, a sus sublocalizaciones o a plantas que están en ellas. */
 const work = useRelatedTasks(() => ({ location: id, includeDescendants: true }))
+const alertsHere = useRelatedAlerts(() => ({ location: id, includeDescendants: true }))
 const taskWorkflow = useTaskWorkflow(() => work.load())
 
 const location = ref<LocationDetail | null>(null)
@@ -212,6 +217,7 @@ function changePage(pageNumber: number) {
 onMounted(() => {
   load()
   work.load()
+  alertsHere.load()
 })
 
 const asPlant = (row: unknown) => row as PlantSummary
@@ -304,7 +310,16 @@ const asPlant = (row: unknown) => row as PlantSummary
           :to="`/tasks?location=${id}`"
           data-test="metric-tasks"
         />
-        <UiStatTile value="—" label="Alertas" context="Incidencias · T-23" data-mock="true" data-test="metric-alerts" />
+        <UiStatTile
+          :value="location.openAlerts?.count ?? (alertsHere.loaded.value ? alertsHere.total.value : '—')"
+          label="Alertas"
+          :context="location.openAlerts?.highestSeverity
+            ? `La más grave: ${ALERT_SEVERITY_LABELS[location.openAlerts.highestSeverity]}`
+            : 'Ninguna abierta'"
+          :to="`/alerts?location=${id}`"
+          tone="danger"
+          data-test="metric-alerts"
+        />
       </div>
 
       <UiDetailLayout>
@@ -429,6 +444,23 @@ const asPlant = (row: unknown) => row as PlantSummary
             <p v-if="location.operationalNotes" class="notes" data-test="operational-notes">{{ location.operationalNotes }}</p>
             <UiButton variant="ghost" class="panel-link" :to="`/locations/${id}/edit`" data-test="edit-facts">
               Editar características
+            </UiButton>
+          </UiPanel>
+
+          <UiPanel title="Alertas" data-test="alerts">
+            <UiInlineError v-if="alertsHere.error.value" data-test="alerts-error">{{ alertsHere.error.value }}</UiInlineError>
+            <ul v-else-if="alertsHere.alerts.value.length" class="next-work">
+              <li v-for="alert in alertsHere.alerts.value" :key="alert.id" data-test="alert-item">
+                <strong>{{ alert.reason }}</strong>
+                <small>
+                  <UiSeverityMark :level="severityMarkLevel(alert.severity)">{{ ALERT_SEVERITY_LABELS[alert.severity] }}</UiSeverityMark>
+                  · {{ ALERT_CATEGORY_LABELS[alert.category] }} · {{ alertSubject(alert).label }}
+                </small>
+              </li>
+            </ul>
+            <p v-else-if="alertsHere.loaded.value" class="hint" data-test="no-alerts">No hay alertas abiertas en este lugar.</p>
+            <UiButton variant="ghost" class="panel-link" :to="`/alerts?location=${id}`" data-test="all-alerts">
+              Ver todas las alertas
             </UiButton>
           </UiPanel>
 

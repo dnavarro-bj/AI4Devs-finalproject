@@ -53,6 +53,8 @@ data class PlantDetailResponse(
   val careOverrides: CareOverridesResponse?,
   /** El perfil que se aplica, ya resuelto, y qué campos se apartan de la especie. */
   val effectiveCare: EffectiveCareResponse,
+  /** Sus alertas abiertas, de la más grave a la más leve. */
+  val openAlerts: List<AlertResponse> = emptyList(),
 )
 
 data class PlantSummaryResponse(
@@ -63,6 +65,9 @@ data class PlantSummaryResponse(
   val createdAt: Instant?,
   val location: LocationResponse,
   val species: SpeciesSummaryResponse,
+  /** La mayor severidad entre sus alertas abiertas: `baja`, `media` o `critica`; ausente si no tiene ninguna. */
+  @get:com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+  val attention: String? = null,
 )
 
 /**

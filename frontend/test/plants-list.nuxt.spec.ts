@@ -221,8 +221,9 @@ describe('inventario: columnas y filtros del wireframe', () => {
     const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
     await settle()
 
-    // Último riego, atención y acciones: se ven, pero no se confunden con un dato.
-    expect(wrapper.findAll('tbody [data-mock="true"]').length).toBeGreaterThanOrEqual(3)
+    // Último riego y acciones: se ven, pero no se confunden con un dato. La atención ya es real.
+    expect(wrapper.findAll('tbody [data-mock="true"]').length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.find('tbody td [data-mock="true"] small').text()).toContain('T-20')
   })
 
   it('permite seleccionar filas y ofrece las acciones masivas', async () => {
@@ -735,7 +736,48 @@ describe('inventario: filtros de especie y de cultivo, y orden', () => {
     expect(review.text()).toContain('T-20')
     expect(review.attributes('disabled')).toBeDefined()
     const attention = select.findAll('option').find((option) => option.text().includes('atención'))!
-    expect(attention.text()).toContain('T-23')
+    expect(attention.text()).not.toContain('T-23')
+    expect(attention.text()).toContain('T-24')
     expect(attention.attributes('disabled')).toBeDefined()
+  })
+})
+
+
+describe('atención de cada ejemplar en el inventario', () => {
+  const plant = (id: string, nickname: string, attention?: string): PlantSummary => ({
+    id,
+    code: `CAT-GRUSS-${id.padStart(2, '0')}`,
+    nickname,
+    createdAt: '2026-09-01T10:00:00Z',
+    location: { id: '300001', name: 'Invernadero 1' },
+    species: { id: '200001', code: 'CAT-GRUSS', scientificName: 'Echinocactus grusonii', commonName: 'Asiento de suegra' },
+    ...(attention ? { attention } : {}),
+  }) as PlantSummary
+
+  function serve(content: PlantSummary[]) {
+    api.get.mockImplementation(async (path: string) => (path === '/locations'
+      ? { content: [{ id: '300001', name: 'Invernadero 1' }], totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 25 }
+      : { content, totalElements: content.length, totalPages: 1, pageNumber: 0, pageSize: 25 }))
+  }
+
+  beforeEach(() => api.get.mockReset())
+
+  it('la severidad más alta abierta se lee en texto y con marca, no solo con color', async () => {
+    serve([plant('1', 'Crítica', 'critica'), plant('2', 'Media', 'media'), plant('3', 'Baja', 'baja')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    const cells = wrapper.findAll('[data-test="row-attention"]').map((cell) => cell.text())
+    expect(cells).toEqual(['▲ Crítica', '● Media', '○ Baja'])
+  })
+
+  it('un ejemplar sin alertas abiertas tiene la celda vacía, sin marca de ejemplo', async () => {
+    serve([plant('1', 'Tranquila')])
+    const wrapper = await mountSuspended(PlantsIndex, { route: '/plants' })
+    await settle()
+
+    expect(wrapper.find('[data-test="row-attention"]').exists()).toBe(false)
+    const row = wrapper.find('[data-test="plants-table"] tbody tr')
+    expect(row.text()).not.toContain('T-23')
   })
 })

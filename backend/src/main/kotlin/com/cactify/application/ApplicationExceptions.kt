@@ -159,3 +159,15 @@ class TaskNotFoundException(id: String) :
  */
 class LocationHasTasksException(id: String) :
   RuntimeException("La localización '$id' es el destino de alguna tarea y no se puede eliminar: hay tareas que la usan")
+
+/** La alerta pedida por la ruta no existe: 404. */
+class AlertNotFoundException(id: String) :
+  RuntimeException("La alerta '$id' no existe")
+
+/** La alerta a la que se enlaza una tarea ya está cerrada: 409. Depende del estado, no del formato. */
+class AlertClosedException(id: String) :
+  RuntimeException("La alerta '$id' ya está cerrada y no admite tareas nuevas")
+
+/** La localización tiene alertas propias y no puede retirarse: 409. */
+class LocationHasAlertsException(id: String) :
+  RuntimeException("La localización '$id' tiene alertas y no se puede eliminar")

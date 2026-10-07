@@ -1,5 +1,6 @@
 package com.cactify.domain.repos
 
+import com.cactify.domain.AlertId
 import com.cactify.domain.LocationId
 import com.cactify.domain.Task
 import com.cactify.domain.TaskId
@@ -24,6 +25,9 @@ interface TaskRepository {
 
   /** Si alguna tarea, en cualquier estado, apunta a esa localización: sostiene el `409` al retirarla. */
   fun existsByLocationId(locationId: LocationId): Boolean
+
+  /** Las tareas que nacieron de una alerta, acotadas a una página (una alerta tiene pocas). */
+  fun findByOriginAlertId(alertId: AlertId, pageable: Pageable): Page<Task>
 
   /** Cuántas plantas expresas tiene cada tarea de un bloque, en **una** consulta. */
   fun countPlantsByTaskIds(ids: Collection<TaskId>): List<TaskPlantCount>

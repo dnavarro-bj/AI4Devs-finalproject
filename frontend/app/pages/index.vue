@@ -7,13 +7,13 @@
  * Presenta **trabajo pendiente, no métricas decorativas**: lo vencido va primero y cada cifra abre el
  * conjunto que cuenta, ya filtrado.
  *
- * **Híbrido, y marcado por bloque.** Real: las tareas —la agenda y las cifras de vencidas y de hoy—
- * y la carga por zona, que sale de las localizaciones. De ejemplo, cada uno con su ticket: las
- * alertas y su cifra (T-23) y las tareas por zona (T-24). Una advertencia general arriba se lee una
- * vez y se olvida; la marca va en el bloque que simula.
+ * **Real casi todo, y lo que no, marcado en su sitio.** Reales: las tareas —la agenda y las cifras de
+ * vencidas y de hoy—, las alertas —la cifra y las más graves— y la carga por zona. De ejemplo solo el
+ * número de tareas por zona (T-24), marcado en la propia tarjeta.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useDashboard } from '@features/dashboard/composables/useDashboard'
+import { alertSubject, lastSeenText } from '@features/alerts/mappers/alert.mapper'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 import type { Task } from '@features/tasks/types/task.types'
 
@@ -23,21 +23,24 @@ useBreadcrumbs().set([])
 const {
   today, load, loadZones, zonesError,
   overdueCount, todayCount, openAlertCount, overdueOverAWeek, periodToday, criticalAlerts,
-  dateLabel, agenda, alertsToShow, busiestZones, maxZoneLoad, timing,
+  dateLabel, agenda, alertsToShow, busiestZones, maxZoneLoad, timing, alertsError, loadAlerts,
 } = useDashboard()
 
 // Crear y completar son de la feature de tareas: aquí solo se abren y se recarga lo que cambió.
 const workflow = useTaskWorkflow(load)
 const asTask = (entry: unknown) => (entry as { task: Task }).task
 
-const alertSignals = computed(() => alertsToShow.value.map((alert) => ({
-  id: alert.id,
-  title: alert.title,
-  detail: `${alert.plantCode} · ${alert.location}`,
-  trailing: alert.detected,
-  to: `/plants/${alert.plantId}`,
-  tone: alert.severity === 'critical' ? 'danger' as const : 'warning' as const,
-})))
+const alertSignals = computed(() => alertsToShow.value.map((alert) => {
+  const subject = alertSubject(alert)
+  return {
+    id: alert.id,
+    title: alert.reason,
+    detail: `${subject.label} · ${subject.where}`,
+    trailing: lastSeenText(alert, today.value),
+    to: subject.to,
+    tone: alert.severity === 'critica' ? 'danger' as const : 'warning' as const,
+  }
+}))
 
 onMounted(load)
 </script>
@@ -56,7 +59,6 @@ onMounted(load)
       </template>
     </UiPageHeader>
 
-    <MockNotice ticket="T-23" what="la cifra de alertas" />
     <div class="summary" data-test="work-summary" role="group" aria-label="Resumen de trabajo">
       <UiStatTile
         :value="overdueCount"
@@ -106,8 +108,14 @@ onMounted(load)
           <template #action>
             <UiButton variant="text" to="/alerts">Ver todas</UiButton>
           </template>
-          <MockNotice ticket="T-23" what="las alertas" />
-          <UiSignalList :items="alertSignals" label="Alertas abiertas" data-test="dashboard-alerts" />
+          <UiInlineError v-if="alertsError" data-test="alerts-error">
+            {{ alertsError }}
+            <template #action>
+              <UiButton variant="secondary" data-test="retry-alerts" @click="loadAlerts">Reintentar</UiButton>
+            </template>
+          </UiInlineError>
+          <p v-else-if="!alertSignals.length" class="no-alerts" data-test="alerts-empty">No hay ninguna alerta abierta.</p>
+          <UiSignalList v-else :items="alertSignals" label="Alertas abiertas" data-test="dashboard-alerts" />
         </UiPanel>
 
         <UiPanel as="article" eyebrow="Carga por zona" title="Localizaciones" data-test="zones-panel">
@@ -169,7 +177,8 @@ onMounted(load)
 }
 
 .zones small,
-.zone-tasks {
+.zone-tasks,
+.no-alerts {
   color: var(--color-ink-muted);
   font-size: var(--font-size-12);
 }

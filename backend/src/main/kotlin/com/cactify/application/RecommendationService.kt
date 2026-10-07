@@ -26,6 +26,7 @@ class RecommendationService(
   private val plantRepository: PlantRepository,
   private val careRecordRepository: CareRecordRepository,
   private val aiRecommendationRepository: AIRecommendationRepository,
+  private val alertDetection: AlertDetectionService,
   private val careAdvisor: CareAdvisor,
   private val transactions: TransactionTemplate,
 ) {
@@ -54,14 +55,19 @@ class RecommendationService(
     val toGenerate = facts as ToGenerate
     val advice = careAdvisor.advise(toGenerate.request)
 
-    return try {
-      val saved = transactions.execute { persist(toGenerate.careRecordId, advice) }!!
-      Generated(saved, alreadyExisted = false)
+    val saved = try {
+      transactions.execute { persist(toGenerate.careRecordId, advice) }!!
     } catch (violation: DataIntegrityViolationException) {
       // Otra petición ganó la carrera mientras hablábamos con el proveedor. La transacción que la
-      // violó está abortada, así que la relectura ocurre en una nueva.
-      Generated(findExisting(plantId, careRecordId), alreadyExisted = true)
+      // violó está abortada, así que la relectura ocurre en una nueva. Quien ganó ya hizo su parte
+      // de las alertas.
+      return Generated(findExisting(plantId, careRecordId), alreadyExisted = true)
     }
+    // Un tercer bloque, tras guardar la recomendación y fuera de la llamada al proveedor (ADR-012):
+    // un riesgo alto o medio enriquece u origina una alerta. Va **fuera** del `try` de arriba: un
+    // fallo suyo no es la carrera del `UNIQUE` y no debe confundirse con ella.
+    transactions.execute { alertDetection.onRecommendation(toGenerate.careRecordId) }
+    return Generated(saved, alreadyExisted = false)
   }
 
   private sealed interface Facts

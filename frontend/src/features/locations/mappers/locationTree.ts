@@ -18,6 +18,11 @@ export interface LocationTreeNode {
 
 const compareByName = (a: { label: string }, b: { label: string }) => a.label.localeCompare(b.label, 'es')
 const plantsLabel = (total: number) => `${total} ${total === 1 ? 'planta' : 'plantas'}`
+const alertsLabel = (total: number) => `${total} ${total === 1 ? 'alerta' : 'alertas'}`
+
+/** «62 plantas», o «62 plantas · 3 alertas» si algo abierto pide atención: lo dice en texto, no en color. */
+const detailOf = (row: LocationSummary) =>
+  row.openAlerts?.count ? `${plantsLabel(row.plantCountTotal)} · ${alertsLabel(row.openAlerts.count)}` : plantsLabel(row.plantCountTotal)
 
 /**
  * Monta el árbol a partir de las filas planas del catálogo. La carga de cada nodo es la **total**,
@@ -32,7 +37,7 @@ export function buildLocationTree(rows: LocationSummary[]): LocationTreeNode[] {
     label: row.name,
     code: row.code,
     count: row.plantCountTotal,
-    detail: plantsLabel(row.plantCountTotal),
+    detail: detailOf(row),
     mark: row.locationType ? LOCATION_TYPE_MARKS[row.locationType] : '⌖',
     children: [],
   }]))

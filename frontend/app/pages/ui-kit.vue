@@ -232,6 +232,12 @@ const SEARCH_GROUPS = [
         <UiStatus tone="neutral">Inactiva</UiStatus>
       </div>
       <div class="row">
+        <UiSeverityMark level="high">Crítica</UiSeverityMark>
+        <UiSeverityMark level="medium">Media</UiSeverityMark>
+        <UiSeverityMark level="low">Baja</UiSeverityMark>
+        <UiSeverityMark level="high" mark-only />
+      </div>
+      <div class="row">
         <UiPriority level="routine">Rutina</UiPriority>
         <UiPriority level="soon">Atender pronto</UiPriority>
         <UiPriority level="immediate">Inmediata</UiPriority>

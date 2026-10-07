@@ -6,9 +6,9 @@ import type { TimelineEntry } from '../types/timeline.types'
 const at = '2026-09-02T09:00:00Z'
 
 describe('timeline.mapper', () => {
-  it('declara los siete tipos con marca y tono', () => {
+  it('declara los ocho tipos con marca y tono', () => {
     expect(TIMELINE_KIT_TYPES.map((type) => type.value)).toEqual([
-      'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea',
+      'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea', 'alerta',
     ])
     expect(TIMELINE_KIT_TYPES.every((type) => type.mark && type.tone)).toBe(true)
   })
@@ -31,9 +31,25 @@ describe('timeline.mapper', () => {
   })
 
   it('un tipo desconocido se conserva con su valor crudo como título', () => {
-    const event = toEvent({ id: '9', type: 'alerta', occurredAt: at })
+    const event = toEvent({ id: '9', type: 'fenomeno', occurredAt: at })
 
-    expect(event).toMatchObject({ id: '9', type: 'alerta', title: 'alerta', at })
+    expect(event).toMatchObject({ id: '9', type: 'fenomeno', title: 'fenomeno', at })
+  })
+
+  it('una alerta se titula por lo que le pasó y su categoría', () => {
+    const alert = (to: string, from?: string) => ({
+      id: '9', type: 'alerta', occurredAt: at,
+      alert: { alertId: '1', category: 'humedad', severity: 'media', reason: 'Fuera de rango', to, ...(from ? { from } : {}) },
+    }) as never
+
+    expect(entryTitle(alert('nueva'))).toBe('Alerta abierta · Humedad')
+    expect(entryTitle(alert('revisada', 'nueva'))).toBe('Alerta revisada · Humedad')
+    expect(entryTitle(alert('resuelta', 'revisada'))).toBe('Alerta resuelta · Humedad')
+    expect(entryTitle(alert('descartada', 'nueva'))).toBe('Alerta descartada · Humedad')
+  })
+
+  it('una alerta sin detalle sigue titulándose como alerta', () => {
+    expect(entryTitle({ id: '9', type: 'alerta', occurredAt: at })).toBe('Alerta')
   })
 
   it('el intervalo de una floración cuenta el primer y el último día', () => {

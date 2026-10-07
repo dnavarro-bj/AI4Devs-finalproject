@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ submit: [input: TaskInput], cancel: [], 'update:plantQuery': [string] }>()
 
 const type = ref<TaskType>(props.task?.type ?? props.initial?.type ?? 'riego')
-const priority = ref<TaskPriority>(props.task?.priority ?? 'normal')
+const priority = ref<TaskPriority>(props.task?.priority ?? props.initial?.priority ?? 'normal')
 const title = ref(props.task?.title ?? props.initial?.title ?? '')
 const dueFrom = ref(props.task?.dueFrom ?? props.initial?.dueFrom ?? props.today)
 const dueTo = ref(props.task && props.task.dueTo !== props.task.dueFrom ? props.task.dueTo : '')
@@ -84,6 +84,7 @@ function submit() {
     type: type.value,
     priority: priority.value,
     title: title.value.trim(),
+    ...(!props.task && props.initial?.originAlertId ? { originAlertId: props.initial.originAlertId } : {}),
     dueFrom: dueFrom.value,
     ...(dueTo.value ? { dueTo: dueTo.value } : {}),
     ...(notes.value.trim() ? { notes: notes.value.trim() } : {}),

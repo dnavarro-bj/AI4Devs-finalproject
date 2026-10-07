@@ -35,7 +35,7 @@ class TimelineEnumsTest {
   @Test
   fun `timeline types parse their persisted values`() {
     assertEquals(
-      listOf("lectura", "cambio_estado", "movimiento", "comentario", "intervencion", "floracion", "tarea"),
+      listOf("lectura", "cambio_estado", "movimiento", "comentario", "intervencion", "floracion", "tarea", "alerta"),
       TimelineType.entries.map { it.value },
     )
     assertEquals(TimelineType.StatusChange, TimelineType("cambio_estado"))
@@ -45,8 +45,8 @@ class TimelineEnumsTest {
 
   @Test
   fun `an unknown timeline type names the valid ones`() {
-    val error = assertFailsWith<IllegalArgumentException> { TimelineType("alerta") }
+    val error = assertFailsWith<IllegalArgumentException> { TimelineType("telepatia") }
 
-    assertEquals(true, error.message!!.contains("alerta") && error.message!!.contains("lectura"))
+    assertEquals(true, error.message!!.contains("telepatia") && error.message!!.contains("lectura"))
   }
 }

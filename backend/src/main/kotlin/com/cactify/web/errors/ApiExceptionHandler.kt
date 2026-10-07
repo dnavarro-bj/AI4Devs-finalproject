@@ -26,6 +26,10 @@ import com.cactify.application.SpeciesInUseException
 import com.cactify.application.TagInUseException
 import com.cactify.application.LocationHasTasksException
 import com.cactify.application.TaskNotFoundException
+import com.cactify.application.AlertClosedException
+import com.cactify.application.AlertNotFoundException
+import com.cactify.application.LocationHasAlertsException
+import com.cactify.domain.InvalidAlertTransitionException
 import com.cactify.domain.TaskNotPendingException
 import com.cactify.application.TagMergeIntoItselfException
 import com.cactify.application.TagNotFoundException
@@ -151,6 +155,10 @@ class ApiExceptionHandler {
   fun onNoResource(ex: NoResourceFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, "Recurso no encontrado", request)
 
+  @ExceptionHandler(AlertNotFoundException::class)
+  fun onAlertNotFound(ex: AlertNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
+    body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
+
   @ExceptionHandler(TaskNotFoundException::class)
   fun onTaskNotFound(ex: TaskNotFoundException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.NOT_FOUND, ex.message ?: "Recurso no encontrado", request)
@@ -191,6 +199,9 @@ class ApiExceptionHandler {
     LocationHasChildrenException::class,
     LocationInMovementsException::class,
     LocationHasTasksException::class,
+    LocationHasAlertsException::class,
+    AlertClosedException::class,
+    InvalidAlertTransitionException::class,
   )
   fun onLocationConflict(ex: RuntimeException, request: HttpServletRequest): ResponseEntity<ErrorResponse> =
     body(HttpStatus.CONFLICT, ex.message ?: "La localización entra en conflicto", request)

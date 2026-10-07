@@ -34,8 +34,9 @@ class TaskEnumsTest {
   }
 
   @Test
-  fun `the origin starts with manual`() {
-    assertEquals(listOf("manual"), TaskOrigin.entries.map { it.value })
+  fun `the origins are manual and alert`() {
+    assertEquals(listOf("manual", "alerta"), TaskOrigin.entries.map { it.value })
+    assertEquals(TaskOrigin.Alert, TaskOrigin("Alerta"))
     assertEquals(TaskOrigin.Manual, TaskOrigin("MANUAL"))
     assertFailsWith<IllegalArgumentException> { TaskOrigin("regla") }
   }

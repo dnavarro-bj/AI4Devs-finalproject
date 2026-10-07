@@ -21,7 +21,7 @@ defineProps<{ workflow: TaskWorkflow }>()
     <TaskCompleteDialog
       :open="workflow.completion.open"
       :task="workflow.completion.task"
-      @completed="workflow.changed()"
+      @completed="workflow.completed($event)"
       @close="workflow.completion.open = false"
     />
     <TaskRescheduleDialog
@@ -36,6 +36,11 @@ defineProps<{ workflow: TaskWorkflow }>()
       :mode="workflow.closing.mode"
       @saved="workflow.changed()"
       @close="workflow.closing.open = false"
+    />
+    <AlertResolveProposal
+      :open="workflow.proposal.open"
+      :alert-id="workflow.proposal.alertId"
+      @done="workflow.proposalAnswered()"
     />
   </div>
 </template>

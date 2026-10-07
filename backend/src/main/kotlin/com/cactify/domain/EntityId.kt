@@ -163,3 +163,25 @@ data class TaskId(@Column(name = "id") override val id: Long) : EntityId<Long> {
 
   override fun toString(): String = id.toString()
 }
+
+@Embeddable
+data class AlertId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): AlertId = AlertId(TSID.fast().toLong())
+    fun from(value: Long): AlertId = AlertId(value)
+    fun from(value: String): AlertId = AlertId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}
+
+@Embeddable
+data class AlertTransitionId(@Column(name = "id") override val id: Long) : EntityId<Long> {
+  companion object {
+    fun create(): AlertTransitionId = AlertTransitionId(TSID.fast().toLong())
+    fun from(value: Long): AlertTransitionId = AlertTransitionId(value)
+    fun from(value: String): AlertTransitionId = AlertTransitionId(value.trim().toLong())
+  }
+
+  override fun toString(): String = id.toString()
+}

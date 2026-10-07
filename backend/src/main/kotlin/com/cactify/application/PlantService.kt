@@ -16,6 +16,7 @@ import com.cactify.domain.Environment
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
+import com.cactify.domain.AlertSeverity
 import com.cactify.domain.PlantId
 import com.cactify.domain.PlantOrigin
 import com.cactify.domain.PlantStatus
@@ -26,6 +27,8 @@ import com.cactify.domain.SoilMixId
 import com.cactify.domain.SpeciesId
 import com.cactify.domain.Tag
 import com.cactify.domain.TagId
+import com.cactify.domain.repos.AlertQueries
+import com.cactify.domain.repos.AlertRepository
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.PlantMovementRepository
@@ -35,8 +38,11 @@ import com.cactify.domain.repos.SoilMixRepository
 import com.cactify.domain.repos.SpeciesRepository
 import com.cactify.domain.repos.TagRepository
 import com.cactify.domain.specs.PlantSortKeys
+import com.cactify.domain.specs.AlertSpecs
 import com.cactify.domain.specs.PlantSpecs
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -58,6 +64,9 @@ class PlantService(
   private val movementRepository: PlantMovementRepository,
   private val locationHierarchy: LocationHierarchy,
   private val soilMixRepository: SoilMixRepository,
+  private val alertRepository: AlertRepository,
+  private val alertQueries: AlertQueries,
+  private val alertMapper: AlertMapper,
   private val clock: Clock,
 ) {
 
@@ -203,7 +212,11 @@ class PlantService(
   @Transactional(readOnly = true)
   fun search(criteria: PlantCriteria, pageable: Pageable): PageResponse<PlantSummaryResponse> =
     // El orden se pide con claves públicas y se traduce aquí (ADR-016), antes de tocar el repositorio.
-    PageResponse.of(plantRepository.findAll(specification(criteria), PlantSortKeys.translate(pageable))) { it.toSummary() }
+    plantRepository.findAll(specification(criteria), PlantSortKeys.translate(pageable)).let { page ->
+      // La atención de toda la página con UNA consulta agregada, no una por fila (ADR-009).
+      val attention = alertQueries.highestOpenSeverityByPlant(page.content.map { it.id })
+      PageResponse.of(page) { it.toSummary(attention[it.id]) }
+    }
 
   /**
    * Los criterios del listado como una especificación. Es **la** definición de «qué ejemplares
@@ -263,6 +276,14 @@ class PlantService(
   private fun requirePlant(id: String): Plant =
     plantRepository.findOneById(PlantId.from(id)) ?: throw PlantNotFoundException(id)
 
+  /** Sus alertas abiertas, de la más grave a la más leve y, a igualdad, la detectada más recientemente. */
+  private fun Plant.openAlerts() = alertMapper.toResponses(
+    alertRepository.findAll(
+      AlertSpecs.openOfPlant(id),
+      PageRequest.of(0, MAX_OPEN_ALERTS, Sort.by(Sort.Order.desc("severityRank"), Sort.Order.desc("lastDetectedAt"), Sort.Order.asc("id.id"))),
+    ).content,
+  )
+
   private fun Plant.toDetail() = PlantDetailResponse(
     id = id.toString(),
     code = code,
@@ -316,6 +337,7 @@ class PlantService(
         overridden = it.overridden,
       )
     },
+    openAlerts = openAlerts(),
   )
 
   private fun PlantStatusChange.toResponse() = PlantStatusChangeResponse(
@@ -326,7 +348,7 @@ class PlantService(
     occurredAt = occurredAt,
   )
 
-  private fun Plant.toSummary() = PlantSummaryResponse(
+  private fun Plant.toSummary(attention: AlertSeverity? = null) = PlantSummaryResponse(
     id = id.toString(),
     code = code,
     status = status.value,
@@ -334,5 +356,11 @@ class PlantService(
     createdAt = createdAt,
     location = LocationResponse(location.id.toString(), location.name),
     species = SpeciesSummaryResponse(species.id.toString(), species.code, species.scientificName, species.commonName),
+    attention = attention?.value,
   )
+
+  private companion object {
+    /** Tope de alertas abiertas en el detalle de un ejemplar: acotado, y ADR-009 pide un límite. */
+    const val MAX_OPEN_ALERTS = 50
+  }
 }

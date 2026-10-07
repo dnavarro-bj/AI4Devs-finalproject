@@ -19,8 +19,3 @@ export const MOCK_CONTEXT = ['Pleno sol', 'Exterior']
 /** Fotografías — las sustituye T-19. La ficha solo enseña el hueco y el recuento. */
 export const MOCK_PHOTO_COUNT = 8
 
-/** Aviso de revisión pendiente — lo sustituye T-23, cuando la alerta sea una entidad. */
-export const MOCK_NOTICE = {
-  title: 'Revisión pendiente',
-  body: 'No se registra una observación desde hace 43 días.',
-}

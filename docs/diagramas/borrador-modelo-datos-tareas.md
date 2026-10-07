@@ -117,6 +117,10 @@ erDiagram
 
 Nada de la fase anterior cambia, salvo que `PLANT_EVENT.eventType` gana los tipos nuevos.
 
+## Hecho: alertas con ciclo de vida (7 oct 2026, `alertas-con-ciclo-de-vida`)
+
+`ALERT` se construyó con `lastDetectedAt`, `occurrences` y `recommendedAction` además de lo previsto, para la regla de **una alerta abierta por condición con escalada de severidad**. **`ALERT_TRANSITION` no es satélite de `PLANT_EVENT`**: es tabla propia, que la cronología lee donde vive (una alerta de localización también tiene transiciones y no tiene planta a la que colgar un evento). Resuelto: **qué eventos generan alertas (6)** —medición, IA, manual, sin revisar y cuidado vencido, los dos últimos con un proceso programado diario—, **una alerta con varias tareas (7)**, **categoría como enum cerrado (13)** y **umbrales en configuración de la aplicación (15)**.
+
 ## Contraste con el frontend
 
 Lo que se encontró al cruzar este borrador con las pantallas del bloque 0. Aquí solo se recoge el **qué**; lo que cambia el esquema y no está decidido va a «Pendiente de decidir».

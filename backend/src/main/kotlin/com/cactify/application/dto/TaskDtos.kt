@@ -25,6 +25,10 @@ data class TaskResponse(
   val closedReason: String?,
   val createdAt: Instant?,
   val updatedAt: Instant?,
+  /** La alerta de la que nace la tarea, si nace de una. */
+  val originAlertId: String? = null,
+  /** Solo al completar, y solo si la alerta de origen sigue abierta: completar **propone** resolverla, no la resuelve. */
+  val suggestedAlertResolution: SuggestedAlertResolutionResponse? = null,
 )
 
 /**

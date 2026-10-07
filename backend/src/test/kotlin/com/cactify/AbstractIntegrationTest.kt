@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 
-@SpringBootTest
+@SpringBootTest(properties = ["cactify.alerts.scheduler.enabled=false"])
 @Testcontainers
 @ExtendWith(SpringExtension::class)
 @Transactional

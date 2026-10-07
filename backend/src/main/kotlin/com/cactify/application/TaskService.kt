@@ -2,12 +2,15 @@ package com.cactify.application
 
 import com.cactify.application.dto.PageResponse
 import com.cactify.application.dto.SpeciesSummaryResponse
+import com.cactify.application.dto.SuggestedAlertResolutionResponse
 import com.cactify.application.dto.TaskCompletionResponse
 import com.cactify.application.dto.TaskLocationResponse
 import com.cactify.application.dto.TaskPlantResponse
 import com.cactify.application.dto.TaskResponse
 import com.cactify.application.dto.TaskScopePlantResponse
 import com.cactify.application.dto.TaskTargetResponse
+import com.cactify.domain.Alert
+import com.cactify.domain.AlertId
 import com.cactify.domain.CareRecord
 import com.cactify.domain.InterventionType
 import com.cactify.domain.Location
@@ -25,6 +28,7 @@ import com.cactify.domain.TaskPriority
 import com.cactify.domain.TaskStatus
 import com.cactify.domain.TaskTarget
 import com.cactify.domain.TaskType
+import com.cactify.domain.repos.AlertRepository
 import com.cactify.domain.repos.CareRecordRepository
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
@@ -60,6 +64,8 @@ data class TaskRequest(
   /** El destino es una localización **o** unas plantas, nunca las dos ni ninguna. */
   val locationId: String? = null,
   val plantIds: List<String>? = null,
+  /** La alerta de la que nace la tarea; solo se admite al crear (un reemplazo no cambia el origen). */
+  val originAlertId: String? = null,
 )
 
 /** Reprogramar cambia solo el periodo. */
@@ -115,6 +121,7 @@ class TaskService(
   private val eventRepository: PlantEventRepository,
   private val careRecordRepository: CareRecordRepository,
   private val soilMixRepository: SoilMixRepository,
+  private val alertRepository: AlertRepository,
   private val clock: Clock,
   @Value("\${cactify.care-records.max-future-skew}") private val maxFutureSkew: Duration,
 ) {
@@ -131,6 +138,7 @@ class TaskService(
       dueTo = request.dueTo ?: request.dueFrom,
       notes = request.notes,
       target = resolveTarget(request),
+      originAlert = request.originAlertId?.let { resolveAlert(it) },
     )
     return toDetail(taskRepository.save(task))
   }
@@ -229,7 +237,10 @@ class TaskService(
       }
     }
     task.complete(completedAt, included.size)
-    return toDetail(task)
+    // Completar PROPONE resolver la alerta de origen, si sigue abierta; nunca la resuelve ni la oculta.
+    val suggestion = task.originAlert?.takeIf { it.status.isOpen }
+      ?.let { SuggestedAlertResolutionResponse(it.id.toString(), it.status.value) }
+    return toDetail(task).copy(suggestedAlertResolution = suggestion)
   }
 
   @Transactional
@@ -273,6 +284,13 @@ class TaskService(
     return TaskTarget.Plants(found.values.toSet())
   }
 
+  /** Una alerta que no existe es una referencia errónea del cuerpo (`400`); una cerrada, un conflicto de estado (`409`). */
+  private fun resolveAlert(id: String): Alert {
+    val alert = alertRepository.findOneById(AlertId.from(id)) ?: throw InvalidReferenceException("La alerta", id)
+    if (!alert.status.isOpen) throw AlertClosedException(id)
+    return alert
+  }
+
   private fun resolveMix(id: String): SoilMix =
     soilMixRepository.findOneById(SoilMixId.from(id)) ?: throw InvalidReferenceException("La mezcla de tierra", id)
 
@@ -285,6 +303,7 @@ class TaskService(
       .and(TaskSpecs.byTitleContaining(criteria.text))
       .and(TaskSpecs.overlapping(criteria.from, criteria.to))
       .and(TaskSpecs.bySpecies(criteria.speciesIds))
+      .and(TaskSpecs.byAlert(criteria.alertId))
     when (criteria.due) {
       TaskCriteria.Due.Overdue -> spec = spec.and(TaskSpecs.overdue(today))
       TaskCriteria.Due.Today -> spec = spec.and(TaskSpecs.dueOn(today))
@@ -349,6 +368,7 @@ class TaskService(
     closedReason = closedReason,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    originAlertId = originAlert?.id?.toString(),
   )
 
   private fun Location.toTarget(paths: Map<LocationId, String>) =

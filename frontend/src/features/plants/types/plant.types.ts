@@ -1,3 +1,4 @@
+import type { AlertSeverity, AlertSummary } from '@features/alerts/types/alert.types'
 import type { Tag } from '@features/catalogs/types/catalog.types'
 import type { Location } from '@features/locations/types/location.types'
 import type { SoilMixSummary } from '@features/soil-mixes/types/soilMix.types'
@@ -65,6 +66,8 @@ export interface PlantSummary {
   createdAt: string | null
   location: Location
   species: SpeciesSummary
+  /** La mayor severidad entre sus alertas abiertas; ausente si no tiene ninguna. */
+  attention?: AlertSeverity
 }
 
 export interface PlantDetail extends PlantProfile {
@@ -78,6 +81,8 @@ export interface PlantDetail extends PlantProfile {
   tags: Tag[]
   /** El perfil que se aplica: lo propio donde lo hay, lo de la especie donde no. */
   effectiveCare: EffectiveCare
+  /** Sus alertas abiertas, de la más grave a la más leve. */
+  openAlerts?: AlertSummary[]
 }
 
 /** Un cambio de estado del historial, del más reciente al más antiguo. */

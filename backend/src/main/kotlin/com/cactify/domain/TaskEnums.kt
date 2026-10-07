@@ -58,9 +58,10 @@ enum class TaskStatus(val value: String, val isClosed: Boolean) {
   override fun toString(): String = value
 }
 
-/** De dónde sale una tarea (ADR-007). Hoy solo se crean a mano; una regla o una alerta serán un origen más. */
+/** De dónde sale una tarea (ADR-007): a mano o desde una alerta. Una regla automática será un origen más. */
 enum class TaskOrigin(val value: String) {
   Manual("manual"),
+  Alert("alerta"),
   ;
 
   companion object {

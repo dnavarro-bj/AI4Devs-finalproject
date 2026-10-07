@@ -9,8 +9,9 @@
  * a esa zona, con sus sublocalizaciones como tarjetas y la carga como proporción **solo cuando hay
  * capacidad**: sin ella no se inventa una.
  *
- * Marcado con su ticket, como en el prototipo y sin dato todavía: el trabajo que requiere atención
- * (T-23).
+ * **Las alertas son reales**: la cifra suma las abiertas de las raíces —que ya cuentan a sus
+ * descendientes—, cada nodo del mapa dice las suyas en texto, y «Requieren atención» lista las zonas
+ * con alertas, las más graves primero, con enlace a la bandeja filtrada por la zona.
  */
 import { useBreadcrumbs } from '@shared/composables/useBreadcrumbs'
 import { useLocations } from '@features/locations/composables/useLocations'
@@ -19,6 +20,8 @@ import { occupancyOf } from '@features/locations/mappers/locationInput'
 import { buildLocationTree, filterLocationTree, type LocationTreeNode } from '@features/locations/mappers/locationTree'
 import { LOCATION_TYPE_MARKS } from '@features/locations/types/locationVocabulary'
 import type { LocationSummary } from '@features/locations/types/location.types'
+import { ALERT_SEVERITY_LABELS, type AlertSeverity } from '@features/alerts/types/alert.types'
+import { severityMarkLevel } from '@features/alerts/mappers/alert.mapper'
 
 useHead({ title: 'Cactify · Localizaciones' })
 useBreadcrumbs().set([{ label: 'Localizaciones' }])
@@ -104,9 +107,22 @@ const overviewIntro = computed(() => (selected.value
   ? `${selected.value.path} · ${plantsLabel(selected.value.plantCountTotal)} contando sus sublocalizaciones.`
   : `${collectionSize.value} ejemplares repartidos en ${rows.value.length} localizaciones.`))
 
+const SEVERITY_RANK: Record<AlertSeverity, number> = { critica: 3, media: 2, baja: 1 }
+
+/** Las raíces abarcan toda la colección: sus alertas ya cuentan a las de sus descendientes. */
+const openAlertTotal = computed(() => roots.value.reduce((sum, row) => sum + (row.openAlerts?.count ?? 0), 0))
+
+/** Las zonas de la vista con alertas abiertas, las más graves primero y, a igualdad, las más cargadas. */
+const needingAttention = computed(() => zones.value
+  .filter((zone) => (zone.openAlerts?.count ?? 0) > 0)
+  .sort((a, b) =>
+    SEVERITY_RANK[b.openAlerts!.highestSeverity ?? 'baja'] - SEVERITY_RANK[a.openAlerts!.highestSeverity ?? 'baja']
+    || b.openAlerts!.count - a.openAlerts!.count
+    || a.name.localeCompare(b.name, 'es')))
+
 const workSummary = computed(() => [
   { value: work.loaded.value ? work.total.value : '—', label: 'Tareas pendientes', note: 'En toda la colección', to: '/tasks' },
-  { value: '—', label: 'Alertas abiertas', note: 'Incidencias · T-23', to: '/alerts', tone: 'danger' as const, mock: true },
+  { value: openAlertTotal.value, label: 'Alertas abiertas', note: 'Incidencias en toda la colección', to: '/alerts', tone: 'danger' as const },
   { value: rows.value.length, label: 'Localizaciones', note: 'En el vivero' },
 ])
 
@@ -227,16 +243,29 @@ function select(id: string) {
           </template>
         </UiEmptyState>
 
-        <section class="attention" data-mock="true" data-test="attention">
+        <section class="attention" data-test="attention">
           <header>
             <h2>Requieren atención</h2>
             <p>Ordenadas por urgencia y carga de trabajo.</p>
           </header>
-          <div>
+          <ul v-if="needingAttention.length" class="attention-list">
+            <li v-for="zone in needingAttention" :key="zone.id" data-test="attention-item">
+              <NuxtLink :to="`/alerts?location=${zone.id}`">
+                <strong>{{ zone.name }}</strong>
+                <small>
+                  <UiSeverityMark :level="severityMarkLevel(zone.openAlerts!.highestSeverity ?? 'baja')">
+                    {{ ALERT_SEVERITY_LABELS[zone.openAlerts!.highestSeverity ?? 'baja'] }}
+                  </UiSeverityMark>
+                  · {{ zone.openAlerts!.count }} {{ zone.openAlerts!.count === 1 ? 'alerta' : 'alertas' }}
+                </small>
+              </NuxtLink>
+            </li>
+          </ul>
+          <div v-else data-test="attention-none">
             <span aria-hidden="true">○</span>
             <p>
-              <strong>Sin incidencias disponibles todavía</strong>
-              <small>Las alertas por localización llegan con T-23.</small>
+              <strong>Ninguna zona requiere atención</strong>
+              <small>No hay alertas abiertas en estas localizaciones.</small>
             </p>
           </div>
         </section>
@@ -416,6 +445,23 @@ function select(id: string) {
 
 .attention > div p {
   margin: 0;
+}
+
+.attention-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.attention-list li {
+  border-top: 1px solid var(--color-line);
+}
+
+.attention-list a {
+  color: inherit;
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
 }
 
 .attention strong,

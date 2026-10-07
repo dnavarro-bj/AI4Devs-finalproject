@@ -6,6 +6,7 @@ import { createApiDouble, settle } from './helpers/apiDouble'
 import { detail, movement, plantRow, serveLocation } from './helpers/locationFixtures'
 import LocationDetail from '../app/pages/locations/[id]/index.vue'
 import { tasksApiService } from '@features/tasks/services/tasks.api.service'
+import { alertsApiService } from '@features/alerts/services/alerts.api.service'
 import { useReferenceDate } from '@shared/composables/useReferenceDate'
 import { ok } from '@shared/types/api.types'
 import type { Task } from '@features/tasks/types/task.types'
@@ -30,6 +31,7 @@ describe('ficha de una localización', () => {
   beforeEach(() => {
     useReferenceDate().value = '2026-10-07'
     vi.spyOn(tasksApiService, 'list').mockResolvedValue(tasksPage([]))
+    vi.spyOn(alertsApiService, 'list').mockResolvedValue(ok({ content: [], totalElements: 0, totalPages: 0, pageNumber: 0, pageSize: 5 }))
     api.get.mockReset()
     api.post.mockReset()
     api.put.mockReset()
@@ -211,14 +213,47 @@ describe('ficha de una localización', () => {
       expect(tile.attributes('data-mock')).toBeUndefined()
     })
 
-    it('las alertas siguen marcadas con su ticket, en su sitio', async () => {
-      serveLocation(api, { plants: twoPlants() })
+    it('las alertas son una cifra real: cuenta las abiertas del lugar y dice la más grave', async () => {
+      serveLocation(api, { plants: twoPlants(), detail: detail({ openAlerts: { count: 3, highestSeverity: 'critica' } }) })
       const wrapper = await open()
 
       const tile = wrapper.find('[data-test="metric-alerts"]')
       expect(tile.exists(), 'falta la métrica de alertas del prototipo').toBe(true)
-      expect(tile.attributes('data-mock')).toBe('true')
-      expect(tile.text()).toContain('T-23')
+      expect(tile.attributes('data-mock')).toBeUndefined()
+      expect(tile.text()).toContain('3')
+      expect(tile.text()).toContain('Crítica')
+      expect(tile.text()).not.toContain('T-23')
+      expect(tile.attributes('href')).toBe('/alerts?location=300002')
+    })
+
+    it('el bloque lateral lista las alertas más graves y enlaza a la bandeja de la localización', async () => {
+      const list = vi.spyOn(alertsApiService, 'list').mockResolvedValue(ok({
+        content: [
+          { id: '1', source: 'medicion', category: 'temperatura', severity: 'critica', status: 'nueva', reason: 'Temperatura baja', detectedAt: '2026-10-06T00:00:00Z', lastDetectedAt: '2026-10-06T00:00:00Z', occurrences: 2,
+            plant: { id: '5', code: 'CAT-FEROC-08', nickname: 'Pelona', speciesName: 'Ferocactus gracilis', locationName: 'B1', locationPath: 'Bancada norte / B1' } },
+        ],
+        totalElements: 1, totalPages: 1, pageNumber: 0, pageSize: 5,
+      }) as never)
+      serveLocation(api, { plants: twoPlants(), detail: detail({ openAlerts: { count: 1, highestSeverity: 'critica' } }) })
+      const wrapper = await open()
+
+      expect(list).toHaveBeenCalledWith(expect.objectContaining({
+        location: '300002', includeDescendants: true, status: ['nueva', 'revisada'],
+      }))
+      const panel = wrapper.find('[data-test="alerts"]')
+      expect(panel.text()).toContain('Temperatura baja')
+      expect(panel.text()).toContain('CAT-FEROC-08')
+      expect(panel.find('[data-test="all-alerts"]').attributes('href')).toBe('/alerts?location=300002')
+      expect(panel.attributes('data-mock')).toBeUndefined()
+    })
+
+    it('sin alertas abiertas el bloque lo dice y no lleva marca de maqueta', async () => {
+      serveLocation(api, { plants: twoPlants(), detail: detail({ openAlerts: { count: 0 } }) })
+      const wrapper = await open()
+
+      expect(wrapper.find('[data-test="no-alerts"]').exists()).toBe(true)
+      expect(wrapper.find('[data-test="metric-alerts"]').text()).toContain('0')
+      expect(wrapper.text()).not.toContain('T-23')
     })
 
     it('las tareas son una cifra real: cuenta las del lugar, sus sublocalizaciones y sus plantas', async () => {

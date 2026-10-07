@@ -67,6 +67,7 @@ class Task private constructor(
   dueTo: LocalDate,
   notes: String?,
   target: TaskTarget,
+  originAlert: Alert?,
 ) : AbstractEntity<TaskId>() {
 
   @Column(name = "task_type", nullable = false)
@@ -98,7 +99,13 @@ class Task private constructor(
     private set
 
   @Column(name = "origin", nullable = false)
-  var origin: TaskOrigin = TaskOrigin.Manual
+  var origin: TaskOrigin = if (originAlert != null) TaskOrigin.Alert else TaskOrigin.Manual
+    private set
+
+  /** La alerta de la que nace la tarea, si nace de una. Una alerta puede tener varias tareas. */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "origin_alert_id", updatable = false)
+  var originAlert: Alert? = originAlert
     private set
 
   /** La localización destino, o `null` si la tarea nombra plantas. */
@@ -213,7 +220,7 @@ class Task private constructor(
     const val MAX_NOTES = 2000
     const val MAX_REASON = 500
 
-    /** Única forma de crear una tarea: pendiente y manual. Valida todo antes de construir. */
+    /** Única forma de crear una tarea: pendiente, manual o desde una alerta. Valida todo antes de construir. */
     fun create(
       type: TaskType,
       title: String,
@@ -222,11 +229,12 @@ class Task private constructor(
       dueTo: LocalDate,
       notes: String?,
       target: TaskTarget,
+      originAlert: Alert? = null,
     ): Task {
       val cleanTitle = cleanTitle(title)
       val cleanNotes = cleanNotes(notes)
       checkPeriod(dueFrom, dueTo)
-      return Task(TaskId.create(), type, cleanTitle, priority, dueFrom, dueTo, cleanNotes, target)
+      return Task(TaskId.create(), type, cleanTitle, priority, dueFrom, dueTo, cleanNotes, target, originAlert)
     }
 
     private fun cleanTitle(title: String): String {

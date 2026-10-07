@@ -133,3 +133,31 @@ class TaskOriginConverter : AttributeConverter<com.cactify.domain.TaskOrigin, St
   override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.TaskOrigin? =
     dbData?.let { com.cactify.domain.TaskOrigin(it) }
 }
+
+@Converter(autoApply = true)
+class AlertStatusConverter : AttributeConverter<com.cactify.domain.AlertStatus, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.AlertStatus?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.AlertStatus? =
+    dbData?.let { com.cactify.domain.AlertStatus(it) }
+}
+
+@Converter(autoApply = true)
+class AlertSourceConverter : AttributeConverter<com.cactify.domain.AlertSource, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.AlertSource?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.AlertSource? =
+    dbData?.let { com.cactify.domain.AlertSource(it) }
+}
+
+@Converter(autoApply = true)
+class AlertCategoryConverter : AttributeConverter<com.cactify.domain.AlertCategory, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.AlertCategory?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.AlertCategory? =
+    dbData?.let { com.cactify.domain.AlertCategory(it) }
+}
+
+@Converter(autoApply = true)
+class AlertSeverityConverter : AttributeConverter<com.cactify.domain.AlertSeverity, String> {
+  override fun convertToDatabaseColumn(attribute: com.cactify.domain.AlertSeverity?): String? = attribute?.value
+  override fun convertToEntityAttribute(dbData: String?): com.cactify.domain.AlertSeverity? =
+    dbData?.let { com.cactify.domain.AlertSeverity(it) }
+}

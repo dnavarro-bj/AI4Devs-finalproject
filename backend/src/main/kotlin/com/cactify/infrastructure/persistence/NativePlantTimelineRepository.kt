@@ -55,6 +55,8 @@ class NativePlantTimelineRepository : PlantTimelineRepository {
       SELECT 'movimiento', id, moved_at FROM plant_movement WHERE plant_id = :plantId
       UNION ALL
       SELECT event_type, id, occurred_at FROM plant_event WHERE plant_id = :plantId
+      UNION ALL
+      SELECT 'alerta', t.id, t.occurred_at FROM alert_transition t JOIN alert a ON a.id = t.alert_id WHERE a.plant_id = :plantId
     """
   }
 }

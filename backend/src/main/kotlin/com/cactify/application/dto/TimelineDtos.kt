@@ -21,6 +21,7 @@ data class TimelineEntryResponse(
   val comment: TimelineCommentResponse? = null,
   val intervention: TimelineInterventionResponse? = null,
   val bloom: TimelineBloomResponse? = null,
+  val alert: TimelineAlertResponse? = null,
   val task: TimelineTaskResponse? = null,
 )
 
@@ -54,3 +55,18 @@ data class TimelineBloomResponse(
 
 /** Una tarea completada, vista desde la historia de una planta: cuál fue y de qué tipo. */
 data class TimelineTaskResponse(val taskId: String, val type: String, val title: String)
+
+/**
+ * Un paso del historial de una alerta del ejemplar: su apertura, revisión, resolución o descarte. La
+ * entrada es **una por transición**; las ocurrencias posteriores no son eventos.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class TimelineAlertResponse(
+  val alertId: String,
+  val category: String,
+  val severity: String,
+  val reason: String,
+  val from: String?,
+  val to: String,
+  val comment: String?,
+)

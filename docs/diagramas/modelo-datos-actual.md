@@ -155,6 +155,39 @@ erDiagram
         TSID task_id FK
     }
 
+    PLANT ||--o{ ALERT : "acumula"
+    LOCATION ||--o{ ALERT : "acumula"
+    CARE_RECORD ||--o{ ALERT : "dispara"
+    ALERT ||--o{ ALERT_TRANSITION : "recorre"
+    ALERT ||--o{ TASK : "origina"
+
+    ALERT {
+        TSID id PK
+        TSID plantId FK "exactamente uno de plantId y locationId"
+        TSID locationId FK
+        enum source "medicion|sin_revisar|cuidado_vencido|manual|recomendacion_ia"
+        enum category "temperatura|humedad|luz|riego|seguimiento|otra"
+        enum severity "baja|media|critica"
+        enum status "nueva|revisada|resuelta|descartada"
+        string reason
+        string recommendedAction
+        TSID careRecordId FK "la ultima lectura que la confirma"
+        timestamp detectedAt "la primera deteccion"
+        timestamp lastDetectedAt
+        int occurrences ">= 1"
+        timestamp resolvedAt "solo resuelta"
+        string resolutionComment
+    }
+
+    ALERT_TRANSITION {
+        TSID id PK
+        TSID alertId FK
+        enum fromStatus "nulo solo en la apertura"
+        enum toStatus
+        string comment
+        timestamp occurredAt
+    }
+
     PLANT_EVENT {
         TSID id PK
         TSID plantId FK
@@ -229,6 +262,7 @@ erDiagram
 * **Ficha y estado del ejemplar (`V8`).** `plant` gana descripción, estado, germinación, adquisición y procedencia. El estado es obligatorio y uno de siete (tres **en curso**: `activa`, `cuarentena`, `enferma`; cuatro **finales**: `cedida`, `vendida`, `muerta`, `perdida`); el mes de germinación está entre 1 y 12 y **solo existe con año**; la procedencia es de una lista cerrada. Los ejemplares existentes quedaron `activa` y sin datos inventados. Cada cambio de estado se guarda en `plant_status_change` con su estado anterior, el nuevo, un motivo opcional y cuándo ocurrió; el estado actual y su historial nacen del mismo método de dominio (`Plant.changeStatus`). Las transiciones válidas viven en el dominio, no en el esquema.
 * **Ficha de cultivo y calendario de la especie (`V10`).** `species` gana descripción, exposición solar, entorno y cuatro datos de la floración esperada, **todos opcionales**: las especies existentes no tienen valor que inventar y «sin definir» es una respuesta. La exposición y las horas de luz son independientes. El entorno tiene tres valores. Nueva tabla `species_period` con un único calendario por tipo (`crecimiento`, `reposo`, `floracion`, `riego`): meses 1–12 con `CHECK`, **inicio > fin = periodo que cruza el año**, e intensidad obligatoria solo en el riego. Que dos periodos de un tipo no se solapen es una regla de conjunto y vive en el dominio. Se borra en cascada con la especie. `V11` añade el tipo **`crecimiento_maximo`** (los meses en que más crece): se superpone al crecimiento y su regla —caer dentro de él— vive en el dominio.
 * **Cuidados propios del ejemplar (`V9`).** Un ejemplar hereda la pauta de su especie y puede sobrescribir parte de ella: los rangos de humedad, temperatura y luz, la pauta de riego y la mezcla de sustrato. Son **columnas opcionales de `plant`** (prefijo `care_`) y **nulo significa «hereda»**; el borrador proponía una tabla 1-1, pero la asociación inversa no se carga perezosamente en Hibernate. El esquema solo defiende la escala (humedad 0–100, luz 0–24) y que la mezcla exista; **la coherencia de los extremos depende de la especie** y la comprueba el dominio. El detalle devuelve el perfil **efectivo** ya resuelto. Cambiar la especie conserva los valores propios.
+* **Alertas (`V16`).** `alert` es una incidencia con ciclo de vida (`nueva → revisada → resuelta | descartada`) sobre **una planta o una localización** (`CHECK` de exactamente una). Una alerta **abierta** por planta o localización, origen y categoría la defienden **dos índices únicos parciales** (las manuales quedan fuera): una nueva detección no abre otra, suma una ocurrencia, actualiza `last_detected_at` y puede subir la severidad, nunca bajarla. `alert_transition` es el historial, con **la apertura como primera fila** (`from_status` nulo); la cronología del ejemplar la lee ahí, sin copiarla a `plant_event`. `task.origin_alert_id` enlaza una tarea con la alerta que la originó: una alerta puede tener varias. Las lecturas anteriores a la migración no se reevalúan.
 * **Cronología del ejemplar (`V13`).** La espina `plant_event` solo recibe los tres tipos nuevos —comentario, intervención y floración— con un satélite por tipo, clave compartida y borrado en cascada. **Se desvía del borrador**: las lecturas, los cambios de estado y los movimientos **no** se copian a la espina; `GET /plants/{id}/timeline` los une al leer con una consulta `UNION ALL` paginada, de modo que cada tabla sigue siendo la fuente de su verdad y no hay doble escritura. Cada intervención admite solo sus datos (maceta en el trasplante, mezcla en el cambio de sustrato, producto en tratamiento y **fertilización**, que es una intervención y no un insumo de `care_record`) y lo repiten `CHECK`s. Una floración es un intervalo que puede seguir abierta: `finalizada` si y solo si tiene fin, y su instante en la cronología es su inicio a las 00:00 UTC. `batch_id` existe sin nadie que lo escriba, para que T-24 no migre la espina. La migración no fabrica eventos.
 * **Tareas (`V15`).** `task` es una **intención**, no un cuidado: crearla no escribe nada en el historial. El destino es **una localización o un conjunto de 1 a 500 plantas expresas** (`task_plant`, clave compuesta), nunca los dos —regla de conjunto en el dominio—; una tarea de localización **no guarda plantas**: su alcance se calcula al completar con las del momento. El periodo son dos fechas de calendario (`due_from`, `due_to`; un día es inicio = fin), sin hora, y «vencida» **no se almacena**: es una tarea pendiente cuyo fin ya pasó respecto a la fecha que declara el cliente. Completar escribe, en una transacción, **un evento `tarea` por planta incluida** (`plant_task_event`, satélite de `plant_event`) y, si se pide, el hecho concreto —lectura o intervención— con `task_id` enlazado; omitir y cancelar no escriben nada y conservan la tarea. `affected_plants` solo existe en las completadas. No hay `DELETE`: lo planificado se conserva. `plant_event.batch_id` sigue sin escribirse (T-24).
 * **`care_record` exige al menos una de sus cinco medidas.** Una lectura completamente vacía se rechaza con `400`; es una regla deliberada y su revisión está atada a la ingesta automática, no antes.

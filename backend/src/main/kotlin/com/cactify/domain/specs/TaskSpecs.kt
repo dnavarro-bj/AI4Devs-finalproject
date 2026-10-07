@@ -1,5 +1,7 @@
 package com.cactify.domain.specs
 
+import com.cactify.domain.Alert
+import com.cactify.domain.AlertId
 import com.cactify.domain.Location
 import com.cactify.domain.LocationId
 import com.cactify.domain.Plant
@@ -30,6 +32,10 @@ object TaskSpecs {
 
   fun byPriorities(priorities: Set<TaskPriority>): Specification<Task> =
     Specification { root, _, _ -> if (priorities.isEmpty()) null else root.get<TaskPriority>("priority").`in`(priorities) }
+
+  /** Las tareas que nacieron de esa alerta. */
+  fun byAlert(alertId: AlertId?): Specification<Task> =
+    Specification { root, _, cb -> alertId?.let { cb.equal(root.get<Alert>("originAlert").get<AlertId>("id"), it) } }
 
   /** Coincidencia parcial sobre el título, sin distinguir mayúsculas; el texto es literal (ver [LikePattern]). */
   fun byTitleContaining(text: String?): Specification<Task> =

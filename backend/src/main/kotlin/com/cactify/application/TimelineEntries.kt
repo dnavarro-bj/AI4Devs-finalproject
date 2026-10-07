@@ -4,6 +4,7 @@ import com.cactify.application.dto.CareRecordRecommendationResponse
 import com.cactify.application.dto.CareRecordResponse
 import com.cactify.application.dto.MovementLocationResponse
 import com.cactify.application.dto.SoilMixSummaryResponse
+import com.cactify.application.dto.TimelineAlertResponse
 import com.cactify.application.dto.TimelineBloomResponse
 import com.cactify.application.dto.TimelineCommentResponse
 import com.cactify.application.dto.TimelineEntryResponse
@@ -12,6 +13,7 @@ import com.cactify.application.dto.TimelineMovementResponse
 import com.cactify.application.dto.TimelineStatusChangeResponse
 import com.cactify.application.dto.TimelineTaskResponse
 import com.cactify.domain.AIRecommendation
+import com.cactify.domain.AlertTransition
 import com.cactify.domain.CareRecord
 import com.cactify.domain.PlantBloom
 import com.cactify.domain.PlantComment
@@ -67,6 +69,21 @@ internal fun PlantEvent.toEntry(): TimelineEntryResponse {
     else -> error("Tipo de evento sin entrada de cronología: ${this::class.simpleName}")
   }
 }
+
+internal fun AlertTransition.toEntry() = TimelineEntryResponse(
+  id = id.toString(),
+  type = TimelineType.Alert.value,
+  occurredAt = occurredAt,
+  alert = TimelineAlertResponse(
+    alertId = alert.id.toString(),
+    category = alert.category.value,
+    severity = alert.severity.value,
+    reason = alert.reason,
+    from = fromStatus?.value,
+    to = toStatus.value,
+    comment = comment,
+  ),
+)
 
 internal fun CareRecord.toEntry(recommendation: AIRecommendation?) = TimelineEntryResponse(
   id = id.toString(),

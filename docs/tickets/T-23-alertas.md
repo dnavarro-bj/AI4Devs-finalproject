@@ -23,6 +23,11 @@ Convertir la alerta en una incidencia operativa con ciclo de vida propio —nuev
 * La bandeja filtra por severidad y por estado.
 * Crear una tarea desde una alerta la deja enlazada a ella.
 
-## Pendiente antes de empezar
+## Resuelto
 
-Qué eventos generan alertas automáticamente y si la detección corre al escribir cada lectura o en un proceso programado (§24.10).
+* **Orígenes (§24.10):** medición fuera de rango, incidencia manual, recomendación de IA, planta sin revisar y cuidado vencido.
+* **Cuándo se detecta:** lecturas e IA, **al escribir la lectura**; sin revisar y vencido, con un **proceso programado diario**.
+* **Sin duplicados:** una alerta abierta por condición; las nuevas detecciones acumulan ocurrencias y escalan la severidad.
+* **Alerta ↔ tarea:** una alerta puede tener varias tareas; completar una propone resolverla, nunca la resuelve.
+
+Implementado por `alertas-con-ciclo-de-vida`.

@@ -44,6 +44,7 @@ enum class TimelineType(val value: String) {
   Intervention("intervencion"),
   Bloom("floracion"),
   Task("tarea"),
+  Alert("alerta"),
   ;
 
   companion object {

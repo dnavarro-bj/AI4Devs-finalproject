@@ -1,5 +1,6 @@
 package com.cactify.application
 
+import com.cactify.application.dto.AlertSummaryResponse
 import com.cactify.application.dto.LocationAncestorResponse
 import com.cactify.application.dto.LocationChildResponse
 import com.cactify.application.dto.LocationDetailResponse
@@ -10,6 +11,9 @@ import com.cactify.domain.LocationEnvironment
 import com.cactify.domain.LocationExposure
 import com.cactify.domain.LocationId
 import com.cactify.domain.LocationType
+import com.cactify.domain.repos.AlertQueries
+import com.cactify.domain.repos.AlertRepository
+import com.cactify.domain.repos.AlertSummary
 import com.cactify.domain.repos.LocationHierarchy
 import com.cactify.domain.repos.LocationRepository
 import com.cactify.domain.repos.PlantMovementRepository
@@ -36,6 +40,8 @@ class LocationService(
   private val hierarchy: LocationHierarchy,
   private val movementRepository: PlantMovementRepository,
   private val taskRepository: TaskRepository,
+  private val alertRepository: AlertRepository,
+  private val alertQueries: AlertQueries,
 ) {
 
   /** Lo que se indica al dar de alta o editar: todo texto del borde, los enums sin resolver. */
@@ -91,6 +97,7 @@ class LocationService(
     val direct = locationRepository.countPlantsByLocation(ids).associate { it.locationId to it.plantCount }
     val totals = hierarchy.totalPlantCounts(ids)
     val paths = hierarchy.pathsOf(ids)
+    val alerts = alertQueries.openSummaryByLocation(ids, withDescendants = true)
 
     return PageResponse.of(page) {
       LocationSummaryResponse(
@@ -103,6 +110,7 @@ class LocationService(
         capacity = it.capacity,
         plantCount = direct[it.id] ?: 0,
         plantCountTotal = totals[it.id] ?: 0,
+        openAlerts = (alerts[it.id] ?: AlertSummary.NONE).toResponse(),
       )
     }
   }
@@ -151,6 +159,7 @@ class LocationService(
     if (locationRepository.countChildren(location.id) > 0) throw LocationHasChildrenException(id)
     if (movementRepository.existsByLocationId(location.id)) throw LocationInMovementsException(id)
     if (taskRepository.existsByLocationId(location.id)) throw LocationHasTasksException(id)
+    if (alertRepository.existsByLocationId(location.id)) throw LocationHasAlertsException(id)
     locationRepository.delete(location)
   }
 
@@ -177,6 +186,8 @@ class LocationService(
     val ids = children.map { it.id } + id
     val direct = locationRepository.countPlantsByLocation(ids).associate { it.locationId to it.plantCount }
     val totals = hierarchy.totalPlantCounts(ids)
+    val alertTotals = alertQueries.openSummaryByLocation(listOf(id), withDescendants = true)[id] ?: AlertSummary.NONE
+    val alertOwn = alertQueries.openSummaryByLocation(listOf(id), withDescendants = false)[id] ?: AlertSummary.NONE
     return LocationDetailResponse(
       id = id.toString(),
       name = name,
@@ -201,8 +212,12 @@ class LocationService(
       },
       plantCount = direct[id] ?: 0,
       plantCountTotal = totals[id] ?: 0,
+      openAlerts = alertTotals.toResponse(),
+      ownOpenAlerts = alertOwn.toResponse(),
     )
   }
+
+  private fun AlertSummary.toResponse() = AlertSummaryResponse(count, highest?.value)
 
   private companion object {
     /** Tope de sublocalizaciones directas en la ficha: la lista es acotada por naturaleza, y ADR-009 pide un límite. */

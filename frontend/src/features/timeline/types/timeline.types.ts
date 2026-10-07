@@ -1,3 +1,4 @@
+import type { AlertCategory, AlertSeverity, AlertStatus } from '@features/alerts/types/alert.types'
 import type { CareRecord } from '@features/care-records/types/careRecord.types'
 import type { PlantStatus } from '@features/plants/types/plant.types'
 
@@ -9,10 +10,10 @@ import type { PlantStatus } from '@features/plants/types/plant.types'
  * `type` es `string` y no la unión: un tipo que el cliente no conoce llega igualmente y se muestra
  * con representación de reserva en vez de descartarse.
  */
-export type TimelineType = 'lectura' | 'cambio_estado' | 'movimiento' | 'comentario' | 'intervencion' | 'floracion' | 'tarea'
+export type TimelineType = 'lectura' | 'cambio_estado' | 'movimiento' | 'comentario' | 'intervencion' | 'floracion' | 'tarea' | 'alerta'
 
 export const TIMELINE_TYPES: TimelineType[] = [
-  'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea',
+  'lectura', 'cambio_estado', 'movimiento', 'comentario', 'intervencion', 'floracion', 'tarea', 'alerta',
 ]
 
 export type InterventionType = 'trasplante' | 'sustrato' | 'tratamiento' | 'fertilizacion' | 'poda' | 'revision'
@@ -31,6 +32,19 @@ export interface TimelineEntry {
   bloom?: Bloom
   /** Una tarea completada: lo escribe completar una tarea y no se edita desde la cronología. */
   task?: TimelineTask
+  /** Una transición de una alerta del ejemplar: su apertura, su revisión, su resolución o su descarte. */
+  alert?: TimelineAlert
+}
+
+/** El detalle de un evento `alerta`: de qué alerta es y qué le pasó. Sin `from` es su apertura. */
+export interface TimelineAlert {
+  alertId: string
+  category: AlertCategory
+  severity: AlertSeverity
+  reason: string
+  from?: AlertStatus | null
+  to: AlertStatus
+  comment?: string | null
 }
 
 /** El detalle de un evento `tarea`: qué tarea se completó. */

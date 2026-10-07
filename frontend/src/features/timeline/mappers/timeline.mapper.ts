@@ -1,5 +1,6 @@
 import type { TimelineEvent, TimelineType as KitTimelineType } from '@ui/UiTimeline.vue'
 import { STATUS_LABELS } from '@features/plants/mappers/plantProfile'
+import { ALERT_CATEGORY_LABELS } from '@features/alerts/types/alert.types'
 import type { Bloom, BloomStatus, InterventionType, TimelineEntry } from '../types/timeline.types'
 
 /**
@@ -18,6 +19,7 @@ export const TIMELINE_KIT_TYPES: KitTimelineType[] = [
   { value: 'intervencion', label: 'Intervenciones', mark: '⚒', tone: 'info' },
   { value: 'floracion', label: 'Floraciones', mark: '✣', tone: 'warning' },
   { value: 'tarea', label: 'Tareas', mark: '✓', tone: 'brand' },
+  { value: 'alerta', label: 'Alertas', mark: '⚑', tone: 'warning' },
 ]
 
 export const INTERVENTION_LABELS: Record<InterventionType, string> = {
@@ -71,9 +73,22 @@ export function entryTitle(entry: TimelineEntry): string {
       return entry.bloom ? BLOOM_STATUS_LABELS[entry.bloom.status] ?? entry.bloom.status : 'Floración'
     case 'tarea':
       return 'Tarea completada'
+    case 'alerta':
+      return alertTitle(entry)
     default:
       return entry.type
   }
+}
+
+const ALERT_TRANSITION_TITLES = {
+  nueva: 'Alerta abierta', revisada: 'Alerta revisada', resuelta: 'Alerta resuelta', descartada: 'Alerta descartada',
+} as const
+
+/** «Alerta abierta · Temperatura»: qué le pasó a la alerta y de qué categoría es. */
+function alertTitle(entry: TimelineEntry): string {
+  const alert = entry.alert
+  if (!alert) return 'Alerta'
+  return `${ALERT_TRANSITION_TITLES[alert.to] ?? 'Alerta'} · ${ALERT_CATEGORY_LABELS[alert.category] ?? alert.category}`
 }
 
 export function toEvent(entry: TimelineEntry): EntryEvent {

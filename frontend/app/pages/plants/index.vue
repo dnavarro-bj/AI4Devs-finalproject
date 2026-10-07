@@ -6,7 +6,7 @@
  * **Híbrida.** Lo real es lo que el API sirve: el listado paginado y sus filtros —localización,
  * etiqueta, estado, texto sobre código, apodo y especie, especie y características de cultivo de la
  * especie—, la ordenación por clave pública y las columnas visibles. Lo que no existe —el último
- * riego (el listado no trae lecturas), el nivel de atención (T-23), el orden por última revisión
+ * riego (el listado no trae lecturas), el orden por nivel de atención (T-24), el orden por última revisión
  * (T-20) y las acciones masivas (T-24)— va **marcado**, para que no se confunda una maqueta
  * con un dato.
  *
@@ -33,6 +33,8 @@ import SavedViewMenu from '@features/views/components/SavedViewMenu.vue'
 import type { SavedView } from '@features/views/types/view.types'
 import { useTaskWorkflow } from '@features/tasks/composables/useTaskWorkflow'
 import type { PageResponse, ServiceResponse } from '@shared/types/api.types'
+import { severityMarkLevel } from '@features/alerts/mappers/alert.mapper'
+import { ALERT_SEVERITY_LABELS } from '@features/alerts/types/alert.types'
 
 const { list } = usePlants()
 const { loadAll: loadLocations } = useLocations()
@@ -103,9 +105,10 @@ const SORT_OPTIONS = [
   { value: 'species,desc', label: 'Especie (Z–A)' },
   { value: 'location,asc', label: 'Localización (A–Z)' },
   { value: 'location,desc', label: 'Localización (Z–A)' },
-  // No existen todavía: dependen de la cronología (T-20) y de las alertas (T-23). Se ven, no se eligen.
+  // No se pueden elegir todavía: la última revisión depende de la cronología (T-20) y el orden por
+  // atención llega con el Dashboard operativo (T-24); el dato ya se sirve y se pinta, solo falta ordenar.
   { value: 'lastReview', label: 'Última revisión · T-20', disabled: true },
-  { value: 'attention', label: 'Nivel de atención · T-23', disabled: true },
+  { value: 'attention', label: 'Nivel de atención · T-24', disabled: true },
 ]
 
 /**
@@ -517,8 +520,11 @@ const asPlant = (row: unknown) => row as PlantSummary
         <span data-mock="true" class="cell-mock">— <small>T-20</small></span>
       </template>
 
-      <template #cell-attention>
-        <span data-mock="true" class="cell-mock">— <small>T-23</small></span>
+      <template #cell-attention="{ row }">
+        <!-- La severidad se lee: texto y marca propia por nivel, nunca solo color. Sin alertas abiertas, vacío. -->
+        <UiSeverityMark v-if="asPlant(row).attention" :level="severityMarkLevel(asPlant(row).attention!)" data-test="row-attention">
+          {{ ALERT_SEVERITY_LABELS[asPlant(row).attention!] }}
+        </UiSeverityMark>
       </template>
 
       <template #cell-actions="{ row }">

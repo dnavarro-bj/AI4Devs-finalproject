@@ -967,7 +967,7 @@ Estas preguntas no bloquean seguir descubriendo pantallas, pero deberán resolve
 7. ¿Se necesita registrar propagación por esqueje, hijuelo o injerto además de germinación?
 8. ¿Los comentarios pueden editarse y eliminarse, o solo corregirse conservando historial? **Resuelta**: se pueden editar y borrar, marcando «editado»; sin historial de versiones.
 9. ¿Qué tipos de cuidado entran en la primera versión?
-10. ¿Qué eventos deben generar alertas automáticamente?
+10. ¿Qué eventos deben generar alertas automáticamente? **Resuelta**: medición fuera de rango y recomendación de IA al escribir la lectura; planta sin revisar y cuidado vencido con un proceso programado diario; además la incidencia manual.
 11. ¿Se necesitan grupos manuales además de filtros dinámicos?
 12. ¿Cuántas fotografías y qué tamaños debe admitir el sistema?
 13. ¿El QR contendrá solo el código o una URL directa a la ficha?
